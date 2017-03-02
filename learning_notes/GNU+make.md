@@ -22,7 +22,7 @@
 
 **一般使用变量"obj,objs,ojects等来表示终极目标中的依赖列表"**
 	
-	objs = main.o kbd.o command.o display.o \(无空格)
+	objs = main.o kbd.o command.o display.o \(无空格)for
 		insert.o search.o files.o util.o
 	后面使用"$(objs)"引用这些变量
 
@@ -467,12 +467,15 @@
 
 	dirs := a b c d
 	files := $(foreach dir, $(dirs), $(wildcard $(dir)/*))	//等价于:files := $(wildcard a/* b/* c/* d/*)
-
+	/*下面是在buildroot顶层Makefile中(line:1024)*/
+	$(foreach b, $(sort $(nodir $(wildcard $(TOPDIR)/configs/*_defconfig))), \
+		printf  " %-35s - Build for %s \\n" $(b) $(b:defconfig=);)
 ### 7.4 if函数
 
 **$(if CONDITION, THEN-PART, ELSE-PART)**
 
-	SUBDIR += $(if $(SRC_DIR), $(SRC_DIR), /home/src)	//如果"SRC_DIR"变量值不为空，则将"SRC_DIR"目录作为一个子目录;否则将"/home/src"作为一个子目录.
+	SUBDIR += $(if $(SRC_DIR), $(SRC_DIR), /home/src)	//如果"SRC_DIR"变量值不为空，
+	则将"SRC_DIR"目录作为一个子目录;否则将"/home/src"作为一个子目录.
 
 ### 7.5 call函数
 

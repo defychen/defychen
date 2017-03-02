@@ -308,7 +308,7 @@
 
 ### 3.4 Linux内核引导
 
-*SoC内嵌bootrom,一上电bootrom即运行,其他CPU进入WFI状态等待CPU0唤醒.CPU0中的bootrom会引导bootloader,bootloader引导kernel,在kernel启动阶段CPU0发出中断唤醒其他CPU运行.*
+*SoC内嵌bootrom,一上电bootrom即运行,其他CPU进入WFI状态等待CPU0唤醒.CPU0中的bootrom会引导bootloader(在ROM中),bootloader引导kernel,在kernel启动阶段CPU0发出中断唤醒其他CPU运行.*
 
 *内核镜像zImage包括解压算法和被压缩的内核,bootloader引导kernel时利用解压算法解压zImage解出kernel进行引导.*
 
@@ -377,6 +377,57 @@
 	arm-linux-gnueabihf-gcc /*hf:硬浮点(用于加速编译);abi:(application binary interface)应用程序二进制接口.*/
 
 *公司一般通过"SSH"链接客户端与服务器.*
+***
+## 第四章 Linux内核模块
+
+*内核模块通过(insmod/lsmod/rmmod)进行模块加载/查看/卸载等操作.*
+
+*"/proc/modules"保存insmod加载的模块信息(cat /proc/modules查看),"lsmod"查看时即是调用该文件.*
+
+**"/sys/modules"目录下保存了所有已加载的驱动模块的信息,每个模块都有一个目录.**
+
+*modprobe/modprobe -r filename:加载/卸载模块时会同时加载/卸载其依赖模块,比insmod/rmmod功能更强大.*
+
+*"modinfo 模块名:获得模块信息(author、description、depends等等)."*
+
+**内核模块许可证(licnese)包括"GPL"、"GPL v2"、"GPL and addtional rights"、"Dual BSD/GPL"、"Dual MPL/GPL",常用的为"GPL v2".**
+
+*linux错误号位置:*
+
+*1-34号在./include/uapi/asm-generic/errno-base.h*
+
+*35-133号在./include/uapi/asm-generic/errno.h*
+
+*512-529号在./include/linux/errno.h*
+
+**标识为"__init"的函数如果编译进内核以及定义为"__initdata"的数据，只会在初始化阶段存在,初始化完成后就会释放它们占用的内存.**
+
+**标识为"__exit"的函数如果模块被编译进内核会直接忽略(模块被内置，就不会卸载它了).退出阶段才用的数据可以用"__exitdata"标识.**
+
+### 模块参数及导出符号
+
+**模块参数**
+
+*用于向模块传递参数(e.g.insmod xxx.ko args=xxx)*
+
+	static char *book_name = "Linux Device Driver";
+	module_param(book_name, charp, S_IRUGO);	/*module_param:表明是模块参数(charp:字符指针)*/
+	static int book_num = 4000;
+	module_param(book_num, int, S_IRUGO);	/*module_param(变量名, 变量类型, 参数读/写权限)*/
+
+*模块参数传进模块为一个全局变量,整个模块中都可以引用.同时在"/sys/modules/para"会有模块的参数目录*
+
+**导出符号**
+
+*导出符号可以被其他模块使用,只需使用前声明下.*
+
+	EXPORT_SYMBOL(符号名);	/*可以导出函数名e.g.EXPORT_SYMBOL(func_name);*/
+	EXPORT_SYMBOL_GPL(符号名);	/*符合GPL许可的模块*/
+***
+## 第五章 Linux文件系统与设备文件
+
+
+
 ***
 ## 第十一章 内存与I/O访问
 
