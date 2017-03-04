@@ -426,6 +426,112 @@
 ***
 ## 第五章 Linux文件系统与设备文件
 
+### 5.1 linux文件系统操作
+
+**系统调用**
+
+*1)创建*
+
+	int creat(const char *filename, mode_t mode);	/*filename:创建的文件名;mode:权限(S_I"R/W/X""USR/GRP/OTH"或者S_IRWX"U/G/O")*/
+	/*由于filename没有路径可以指定,一般用的比较少*/
+
+*2)打开*
+
+	int open(const char *pathname, int flags);	/*pathname:文件名(含路径);flags:标志(O_RDONLY、O_WRONLY、O_RDWR、O_NONBLOCK等)*/
+	int open(const char *pathname, int flags, mode_t mode); /*针对flags标志为:O_CREATE,融合了create(创建)函数.*/
+	
+	char dev_name[128] = {"/dev/dsc0"};
+	...
+	fd = open(dev_name, O_RDWR); /*返回文件描述符fd(为一个int类型),创建成功返回值为非负整数*/
+	if (fd < 0)
+	{
+		/*print some error message...*/
+	}
+
+*3)读写*
+
+	int read(int fd, void *buf, size_t length); /*从fd读length(以字节(size_t)为单位)个字节读到buf缓冲区,返回实际读取的字节数*/
+	int write(int fd, const void *buf, size_t length); /*将length字节数据从buf写到fd,返回实际写入的字节数*/	
+
+*4)定位*
+
+	int lseek(int fd, offset_t offset, int whence);	/*offset:偏移量(其实为int型);返回值为文件读写指针相对文件头的位置*/
+	whence取值:
+	SEEK_SET:文件开头(offset相对文件开头偏移)
+	SEEK_CUR:文件读写指针当前位置(offset相对当前位置)
+	SEEK_END:文件末尾(offset相对文件末尾)
+	/*取得文件的长度:file_length = lseek(fd, 0, SEEK_END);*/
+
+*5)关闭*
+	close(fd);
+
+*一般文件在读取完后面需要加上'\0'结束.*
+
+**C库函数操作**
+
+*...省略了*
+
+### 5.2 Linux文件系统
+
+**Linux文件系统目录结构**
+
+*/dev:该目录为系统中包含的设备文件,应用程序通过对该目录下的文件进行读写、控制以访问实际的设备.*
+
+*/proc:进程、内核信息(CPU、硬盘分区、内存信息等)放置在该目录.proc为伪文件系统proc(不是真正的文件系统)的挂载目录,proc文件系统存在与内存中.*
+
+*cat /proc/devices:获知系统中注册的设备*
+
+*/sys:sysfs文件系统映射到该目录,linux设备驱动模型中的总线、驱动、设备在该目录下有对应的节点.*
+
+**linux文件系统与设备驱动**
+
+*应用程序与VFS之间的接口是系统调用;VFS与文件系统(ext2/fat/btrfs等)、设备文件(/dev/ttyS1、/dev/sdb1、/dev/dsc0等)、特殊文件系统(/proc、/sys等)--(这些属于同一层次)之间的接口是file_operations结构体成员函数.*
+
+*字符设备上层没有文件系统(e.g. ext2),因此字符设备的file_operation由自己的设备驱动提供,像块设备由于文件系统中实现了file_operations,因此设备驱动层看不到file_operations.*
+
+**file结构体**
+
+*struct file打开文件时创建，然后传递给对文件进行操作的函数(e.g. read/write/ioctl)*
+
+*struct file结构体中的私有数据指针"private_data",用以指向用于描述设备的结构体.*
+
+*判断文件打开是以阻塞方式还是非阻塞方式:*
+
+	if (file->f_flags & O_NONBLOCK)		/*非阻塞*/
+		pr_debug("open: non-blocking\n");
+	else
+		pr_debug("open: blocking\n");	/*阻塞*/
+
+**inode**
+
+*inode是linu管理文件系统的最基本单位,也是文件系统连接任何子目录、文件的桥梁.*
+
+	/*从节点(inode)获得设备结构体*/	
+	dev = container_of(inode->i_cdev, struct light_cdev, cdev);	/*i_cdev:表示字符设备*/
+
+### 5.3 udev用户空间设备管理
+
+**devfs**
+
+*linux 2.4内核中,devfs作为对设备进行管理的文件系统(虚拟文件系统).挂载于/dev目录下,管理该目录下的所有设备.由于存在众多缺点(e.g.运行内核空间),后来没被再使用.*
+
+**sysfs**
+
+*linux 2.6以后的内核中,作为对设备进行管理的文件系统(虚拟文件系统).挂载与/sys目录下.sysfs是为了展示设备驱动模型中各组件(设备、总线、类等)的层次关系.sysfs可以被user space读写,而udev作为一个工具,利用sysfs提供的信息对dev进行相关的操作.*
+
+*linux使用struct bus_type、struct device_driver、struct device来描述总线、驱动、设备,位于"./include/linux/device.h",使用时e.g. #include <linux/device.h>*
+
+*结构体device_driver和device依附于struct bus_type,都包含有struct bus_type指针.struct bus_type中的match()函数将两者捆绑在一起.一旦绑定之后,xxx_driver的probe()函数就会执行(xxx:总线名e.g. platform、pci、i2c、spi、usb、see).*
+
+**udev**
+
+*udev是一种工具(运行在用户空间),根据系统中的硬件设备状况更新设备文件(即/dev下的设备文件),e.g.动态建立/删除设备文件.*
+
+*udev有自己的规则更新/dev下的设备文件(e.g. windows连接usb转串口设备时，udev在设备管理器中显示为:usb-serial,可以认为是udev作规则作用的结果. linux中/dev下的dsc0表示dsc设备第0个次设备).*
+
+*udev需要sysfs、tmpfs的支持,sysfs为udev提供设备入口和uevent通道，tmpfs为udev提供存放设备文件(/dev)的空间.*
+***
+## 第六章 字符设备驱动
 
 
 ***

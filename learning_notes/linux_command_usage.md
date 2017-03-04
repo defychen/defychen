@@ -50,3 +50,40 @@
 	cd /mnt/nfs/buildroot/s3922-2/buildroot/output/images
 	dd if=./main_bin.ubo of=/dev/mtdblock4	//if:需要烧写的文件;of:烧写的目标区块.
 **step4 烧写完毕，重启:reboot**
+
+## 3. tree命令
+
+*以树状图列出目录的内容,主要用于查看目录结构*
+
+**常用的为(更多可以man tree或info tree):**
+
+	tree -L 1/2/3 -d /*显示当前目录下的1/2/3级目录*/
+	tree -a /*显示所有文件和目录，对于文件和目录较少可以使用*/
+
+## 4.uname -r命令
+
+	uname -r /*查看内核版本信息*/
+
+## 5.zip命令
+
+*GNU zip---gzip(gz)和bzip2(bz2)两种压缩格式，压缩比:gzip>bzip2*
+
+*解压方法:*
+	
+	tar -xvzf filename.tar.gz	/*x:解压;v:列车解压出来的文件;z:gz格式;f:后面接文件名*/
+	tar -xvjf filename.tar.bz2	/*x:解压;v:列车解压出来的文件;j:bz2格式;f:后面接文件名*/
+
+*创建压缩包的方法:*
+
+	tar -cvjf 要创建的压缩包名(filename.tar.bz2) 包含的文件名
+	tar -cvjf test.tar.bz2 ./test/	/*将test所有文件创建成为一个test.tar.bz2的压缩包*/
+
+**由于一般用的比较多的是"bz2",因此:-xvjf/-cvjf.**
+
+## 6.重定向
+
+*"<"标准输入; "1>"标准输出; "2>"错误输出(包括warning)*
+
+	/*将标准输出到normal_output.txt;错误输出到warning.txt*/
+	make 1> ../../../normal_output.txt 2> ../../../warning.txt
+	make > ../../../see.txt 2>&1	/*">"等同于"1>",将标准输出和错误输出都输出到see.txt*/
