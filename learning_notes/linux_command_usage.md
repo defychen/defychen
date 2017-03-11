@@ -87,3 +87,18 @@
 	/*将标准输出到normal_output.txt;错误输出到warning.txt*/
 	make 1> ../../../normal_output.txt 2> ../../../warning.txt
 	make > ../../../see.txt 2>&1	/*">"等同于"1>",将标准输出和错误输出都输出到see.txt*/
+
+## 7.cp复制文件夹
+
+	cp -r source_file dest_file 
+
+## 8.linux版本控制
+
+	#include <linux/version.h>	/*进行版本选择时,必须有这个头文件*/
+	
+	#if LINUX_VERSION_CODE > KERNEL_VERSION(3,3,0)
+	#include <asm/switch_to.h>	/*当版本>3.3.0时选择"asm/switch_to.h"头文件*/
+	#else
+	#include <asm/system.h>		/*版本<3.30时使用"asm/system.h"*/
+	#endif
+
