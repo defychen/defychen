@@ -604,6 +604,14 @@
 **使用工具"automake"可以帮助我们创建一个遵循GNU make约定的Makefile.**
 
 **命令行选项变量"CFLAGS"一般放在选项的最后.**
+***
+# Makefile碰到的问题
+***
+## 1.把目录当成文件来操作
 
+	make: execvp: /zhsa022/usrhome/defy.chen/repository/work_viaccess/buildroot: Permission denied
+	/*错误原因:If you see an error like this when you run make, it means make is attempting to execute a directory, 
+	not a program. Which means you probably have extra spacing in one of your variables in your config/make files.*/
+	/*问题描述:将目录当成了文件来操作.原因:是因为在Makefile中指定buildroot路径时,后面多加了一个"空格"*/
 
 

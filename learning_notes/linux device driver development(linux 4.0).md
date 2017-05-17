@@ -683,6 +683,16 @@ cdev_del():删除一个cdev设备,在注销时调用
 		*/
 	}
 
+I/O内存(内核内存)被映射到用户内存时需要是nocache的,因此需要设置nocache标志.
+
+	/*给vma的vma_page_prot设置nocache标志*/
+	vma->vma_page_prot = pgprot_nocached(vma->vma_page_prot);	/*pgprot_nocached是一个宏*/
+	...
+
+pgprot_nocached()是禁止了相关页的cache和写缓冲(write buffer).ARM的写缓冲是一个非常小的FIFO存储器,位于CPU和主存之间,只作用于写主存.
+
+mmap()内存映射在显示、视频等设备中使用可以减少用户空间和内核空间之间的内存复制,在其他设备中使用较少.
+
 3)poll调用(主要针对非阻塞I/O)
 
 非阻塞的I/O应用程序常会使用select(用户空间调用)、poll(内核空间)来查询是否可以对设备进行无阻塞的访问.
@@ -725,7 +735,7 @@ poll(内核空间)
 		return mask;
 	}
 
-poll函数实现了调用select而阻塞的进程可以被等待队列头部唤醒.**但不会将进程阻塞!!**
+poll函数实现了调用select而阻塞的进程可以被等待队列头部唤醒.**但不会将进程阻塞(因为进程没有睡眠)!!**
 
 **ioctl函数**
 
@@ -1118,11 +1128,504 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 ### 8.2 轮询操作
 
 参见:select/poll操作
+***
+
+## 第九章 Linux设备驱动中的异步通知和同步I/O
+
+### 9.1 异步通知
+
+异步通知:在对设备进行访问时,设备在资源等就绪的状态下驱动可以主动通知应用程序进行访问.不需要应用程序查询设备状态.
+
+异步通知在原理上是进程收到信号(类似于处理器收到硬件中断).因为信号是异步的(收到信号不知道是什么时候),所以叫异步通知.
+
+**几种I/O方式比较:**
+
+1)阻塞:会导致进程睡眠(加入到等待队列中等待被唤醒),会让出时间片.
+
+2)非阻塞:select...poll系统调用,一直轮询设备,直到资源满足要求.
+
+3)异步通知:可以主动通知应用程序访问设备.
+
+*三种I/O方式可以相互补充.*
+
+### 9.2 异步编程
+
+进程间通信(IPC)就是一种利用信号来通信的机制(e.g. 在输入一串字符后,标准输入设备会释放出SIGIO信号,可由其他进程捕获并进程读取).
+
+**信号接收**
+
+linux有众多信号(SIGIO、SIGINT(Ctrl+c)、SIGTERM(kill进程))
+
+	void input_handle(int num)	/*num为信号值(此处为SIGIO)---一旦执行该程序过程中,有输入将会释放SIGIO信号,
+								该程序立马会捕捉到,并进行相应的处理*/
+	{
+		char data[MAX_LEN];
+		int len;
+
+		/*读取并输出STDIN_FILENO(是一个文件句柄)上的输入*/
+		len = read(STDIN_FILENO, data, MAX_LEN);
+		data[len] = 0;
+		printf("input available:%s\n", data);
+	}
+
+	main()
+	{
+		int oflags;	/*文件标记*/
+		
+		/*启动信号驱动机制*/
+		signal(SIGIO, input_handler);	/*para1:捕获的信号值; para2:捕获到信号后的信号处理函数*/
+		fcntl(STDIN_FILENO, F_SETOWN, getpid()); /*para1:文件句柄; para2:文件拥有者; para3:进程号(getpid()表示本进程)*/
+		oflags = fcntl(STDIN_FILENO, F_GETFL);	/*获得STDIN_FILENO文件句柄的flag*/
+		fcntl(STDIN_FILENO, F_SETFL, oflags | FASYNC);	/*为STDIN_FILENO文件增加FASYNC flag(异步通知模式标志)*/
+
+		while(1);	/*设置一个死循环,防止退出*/
+	}
+
+**信号释放**
+
+设备驱动程序中需要增加释放信号的代码,以便应用程序可以捕捉到信号.
+
+1)在设备结构体中添加fasync_struct结构体;
+		
+		struct fasync_struct *async_queue;	/*设备结构体中添加异步结构体指针*/
+
+2)实现xxx_fasync函数
+
+	int xxx_fasync(int fd, struct file *filp, int mode)
+	{
+		struct xxx_dev *dev = filp->private_data;
+		return fasync_helper(fd, filp, mode, &dev->async_queue);		
+		/*para4:fasync_struct的指针的指针(该函数由内核实现)*/
+	}
+
+3)在资源可以获得时,调用kill_fasync()释放SIGIO信号
+
+	ssize_t xxx_write(struct file *filp, const char __user *buf, size_t count, loff_t *f_pos)
+	{
+		struct xxx_dev *dev = filp->private_data;
+		...
+		/*发出异步信号*/
+		if(dev->async_queue)
+			kill_fasync(&dev->async_queue, SIGIO, POLL_IN);	/*发出信号函数*/
+			/*para1:异步结构体指针; para2:信号; para3:可读*/
+		...
+	}
+
+4)将文件从异步通知列表中删除
+
+	int xxx_release(struct inode *inode, struct file *filp)
+	{
+		/*将文件从异步通知列表中删除*/
+		xxx_fasync(-1, filp, 0);
+		...
+	}
+
+### 9.3 Linux异步I/O
+
+同步I/O:使用传统的阻塞式或者非阻塞式来操作I/O时,同一个程序不能同时操作两个或两个以上的文件I/O,每次只能对一个文件进行I/O操作.这样效率不高(CPU速度远大于I/O速度).
+
+异步I/O(AIO):在一个程序中进行I/O操作时(读/写),程序不阻塞在当前位置,而是继续往下执行.
+
+e.g. 一个程序中同时对两个文件进行读/写操作,使用异步I/O时,第一个发起读写后不会发生阻塞,继续往下执行;第二个发起读写后,也继续往下执行.最终通过检查两个读/写状态决定确定完成情况.
+
+*异步I/O是借用了多线程模型,用开启新的线程以同步的方法做I/O.*
+
+	/*异步读aio_read*/
+	#include <aio.h>	/*aio的头文件*/
+	
+	#define BUFFER_SIZE		1024
+	
+	int main()
+	{
+		struct aiocb my_aiocb;	/*aio操作所需的结构体*/
+		int fd, ret;
+
+		fd = open("file.txt", O_RDONLY);
+		if(fd < 0)
+			...
+		
+		bzero(&my_aiocb, sizeof(struct aiocb));	/*将aiocb结构体清零*/
+		my_aiocb.aio_buf = malloc(BUFFER_SIZE + 1);	/*给aiocb分配数据缓冲区*/
+		if(!my_aiocb.aio_buf)
+			...
+		
+		/*初始化aiocb结构体成员*/
+		my_aiocb.aio_fildes = fd;
+		my_aiocb.aio_nbytes = BUFFER_SIZE;
+		my_aiocb.aio_offset = 0;
+
+		/*异步读操作*/
+		ret = aio_read(&my_aiocb);
+		if(ret < 0)
+			...
+
+		while(aio_error(&my_aiocb) == EINPROGRESS)	/*等待读操作结束*/
+			continue;	/*aio_error:确定请求的状态(EINPROGRESS:请求未完成)*/
+
+		if((ret = aio_return(&my_aiocb)) > 0) {
+			print("返回值:%d\n", ret);	
+			/*aio_return:返回值等同于read/write函数返回值,返回传输的字节数;错误返回负数*/
+		} else {
+			...
+		}
+		return 0;
+	}
+
+*异步I/O(AIO)在字符设备中一般不需要实现.*
+***
+## 第十章 中断与时钟
+
+### 10.1 中断与定时器
+
+中断:CPU暂停(中断)当前程序,转去处理突发事件(急需处理的事件)就叫中断.所以中断与CPU相关.
+
+中断分为内部中断和外部中断:
+
+1)内部中断:中断源来自CPU内部(软件中断指令SDBBP、溢出、除法错误)
+
+2)外部中断:中断源来自CPU外部,即由外设提出请求.
+
+中断入口跳转两种方法:
+
+1)向量中断:CPU为不同的中断分配不同的中断号.当检测到某中断号到来时,跳转到与该中断号对应的地址去执行(由硬件提供中断服务程序入口地址).
+
+2)非向量中断:多个中断共享一个入口地址,根据中断标志来识别具体的某个中断(由软件提供中断服务程序入口地址).
+
+### 10.2 Linux中断处理程序架构
+
+中断会打断内核进程的正常调度和运行,因此要求中断服务程序进来短小精悍.
+
+linux将中断分为顶半部和底半部:
+
+顶半部(Top Half):完成尽量少、比较紧急的功能.工作包括:读取寄存器中断状态,在清除中断标志后"登记中断"---将底半部处理程序挂到该设备的底半部执行队列中去.顶半部不可被中断,属于硬件的中断服务程序,处于中断上下文中.
+
+底半部(Bottom Half):实现中断服务程序处理耗时的中断,不在硬件的中断服务程序中,处于非中断上下文中.
+
+**查看系统的中断统计信息**
+	
+	cat /proc/interrupts
+
+### 10.3 Linux中断编程
+
+**申请irq(中断)**
+
+	int devm_request_irq(struct device *dev, unsigned int irq, irq_handler_t handle, 
+		unsigned long irqflags, const char *devname, void *dev_id);
+	/*
+		para1:struct device结构体指针
+		para2:要申请的硬件中断号
+		para3:中断处理函数(顶半部),是一个回调函数,中断发生时,系统调用这个函数
+		para4:中断处理属性(触发方式):IRQF_TRIGGER_RISING/FALLING/HIGH/LOW
+		para5:...(没看懂)
+		para6:一般设置为设备结构体(表示传递给中断服务程序的私有数据)
+	*/
+	struct device *dev = &pdev->dev;
+	struct resource *irq[2];
+	struct tsio_dev *tsio;
+	irq[0] = platform_get_resource(pdev, IORESOURCE_IRQ, 0);	/*struct platform_device *pdev*/
+	ret = devm_request_irq(dev, irq[0]->start, tsio_dmq_irq, IRQF_TRIGGER_HIGH, irq[0]->name, tsio);
+使用dev_request_irq申请顶半部中断不需要显示释放,kernel自动进行资源的回收.
+
+**使能和屏蔽中断**
+
+...在哪里使用??
+
+以"local_"开头的方法作用范围为本CPU内.
+
+**底半部机制实现方式**
+
+1)tasklet
+
+tasklet底半部机制执行上下文为"软中断",运行与软中断上下文,不允许睡眠.
+
+	void xxx_do_tasklet(unsigned long);	/*定义中断低半部处理函数*/
+	DECLARE_TASKLET(xxx_tasklet, xxx_do_tasklet, 0);	/*定义一个tasklet,并将其与底半部处理函数关联*/
+	
+	void xxx_do_tasklet(unsigned long)
+	{
+		...	/*底半部处理函数*/
+	}
+
+	irqreturn_t xxx_interrupt(int irq, void *dev_id)
+	{
+		...
+		tasklet_schedule(&xxx_tasklet);	/*顶半部中调度底半部tasklet*/
+		...
+	}
+
+	int __init xxx_init(void)
+	{
+		...
+		ret = request_irq(xxx_irq, xxx_interrupt, 0, "xxx", NULL);	/*另一种申请中断方式*/
+		...
+		return IRQ_HANDLED;
+	}	
+
+	void __exit xxx_exit(void)
+	{
+		...
+		free_irq(xxx_irq, xxx_interrupt);	/*释放中断*/
+		...
+	}
+
+2)工作队列
+
+工作队列底半部机制执行上下文为"内核线程",运行进程上下文,允许睡眠.
+
+	struct work_struct xxx_wq;	/*定义一个工作队列*/
+	void xxx_do_work(struct work_struct *work);	/*定义一个底半部执行函数*/
+
+	void xxx_do_work(struct work_struct *work)
+	{
+		...	/*中断处理底半部*/
+	}
+
+	irqreturen_t xxx_interrupt(int irq, void *dev_id)
+	{
+		...
+		schedule_work(&xxx_wq);	/*顶半部调度底半部工作队列*/
+		...
+		return IRQ_HANDLED;
+	}
+
+		int __init xxx_init(void)
+	{
+		...
+		ret = request_irq(xxx_irq, xxx_interrupt, 0, "xxx", NULL);	/*另一种申请中断方式*/
+		...
+		INIT_WORK(&xxx_wq, xxx_do_work);	/*初始化工作队列,完成工作队列与底半部函数的绑定*/
+	}	
+
+	void __exit xxx_exit(void)
+	{
+		...
+		free_irq(xxx_irq, xxx_interrupt);	/*释放中断*/
+		...
+	}
+
+**硬中断:外部设备对CPU的中断**
+
+**软中断:中断底半部的一种处理机制**
+
+**信号:内核(或其他进程)对某个进程的中断**
+
+### 10.4 内核定时器
+
+**...未看...**
 
 ***
 ## 第十一章 内存与I/O访问
 
-### Cache & DMA
+### 11.1 CPU与内存、I/O
+
+内存空间:内存区域的地址空间,大小为4G(32根地址线).
+
+I/O空间:X86系统上外设使用的地址空间,大小为64K.
+
+I/O空间仅X86支持,ARM不支持.ARM针对外设和内存提供统一的编址,并且使用统一的指令去访问.
+
+**IO端口与IO内存**
+
+IO端口:(外设的)寄存器或内存位于IO空间时称为IO端口(由于ARM CPU没有IO空间,因此这个基本没什么用).
+
+IO内存:(外设的)寄存器或内存位于内存空间时,称为IO内存(ARM CPU使用).
+
+**TLB && TTW(MMU中的组件)**
+
+TLB(Translation Lookaside Buffer):转换旁路缓存,是MMU的核心部件.缓存少量的虚拟地址与物理地址的转换关系,转换表的Cache,也叫"快表".
+
+TTW(Translation Table walk):转换表漫游.当TLB缓冲没有命中时,需要通过内存转换表(多级页表)来获得虚拟地址与物理地址的转换关系.TTW成功后,会更新到TLB中.
+
+"TLB和通过TTW得到的更新的TLB"都是得到一个虚拟地址到物理地址的转换关系.最终都是在TLB条目的控制信息的控制下,当访问权限允许时,对物理地址的访问将会在cache或者内存中发生.
+
+### 11.2 Linux内存管理
+
+linux系统进程的4GB内存空间(虚拟地址空间)被分为两个部分---用户空间和内核空间.用户空间地址0~3GB(0~PAGE_OFFSET---0xC0000000(X86系统)),内核空间为3~4GB.
+
+1)用户空间:0~3GB,各个进程私有,每个进程都有自己的3GB空间.
+
+2)内核空间:3~4GB,所有进程及内核共享,因此需要做特殊的划分.
+
+**x86结构CPU上的linux内核空间划分(从低--->高)**
+
+1)物理内存映射区
+
+	3GB~3GB+896MB---映射到物理内存的0~896MB.其中的<16MB的留给DMA,16MB~896MB为常规区域.高于896MB为高端内存区域
+
+2)vmalloc(虚拟内存分配器区)
+
+	VMALLOC_START~VMALLOC_END,用于vmalloc()函数.与物理内存映射区有隔离带,与高端内存映射区也有隔离带
+
+3)高端内存映射区
+
+	PKMAP_BASE~FIXADDR_START(高端内存区),这段虚拟内存会映射全部物理内存的高端内存(896MB~4GB)
+
+4)专用页面映射区
+	
+	FIXADDR_START~FIXADDR_TOP,总尺寸和每页用途由fixed_address枚举结构在编译时预定义
+
+5)保留区
+
+	FIXADDR_TOP~4GB
+
+*如果物理内存超过4GB,需要使用CPU的扩展分页(PAE)提供64位页目录项存取4GB物理内存.有36位物理地址空间,最大配置64GB物理内存*
+
+**ARM结构CPU的linux物理地址映射**
+
+1)内核模块
+
+	3GB-16MB~3GB-2MB,实现内核模块和内核本身的短跳转
+
+2)高端内存映射区
+
+	映射到物理内存地址的高端内存(非x86的896MB~4GB),高端内存由特殊的情况划分
+
+3)DMA+常规区域内存映射
+
+	该虚拟地址映射到物理内存的常规+DMA区域.与物理内存一一对应,仅存在一个固定的偏移
+
+4)vmalloc区域
+
+	大小可配置,通过"vmallo="启动参数指定
+
+5)向量表区域
+
+	CPU vector page,向量表地址
+
+**查看内存区域剩余情况**
+
+	cat /proc/buddyinfo
+	显示:Node 0, zone   Normal     27     16      7      6      3      3      0      1      1      1     20 
+	/*
+	Normal:常规内存区域	1页空闲27个	连续2页空闲16个	连续4页空闲7个	
+	*/
+	如果:Node 0, zone   DMA     27     16      7      6      3      3      0      1      1      1     20 
+	/*则为DMA区域中的情况*/
+
+**DMA和常规区域使用下列方法进行虚拟/物理内存的转化**
+
+	virt_to_phys():虚拟内存转化为物理内存(仅适用于DMA和常规内存)
+	phys_to_virt():物理内存转化为虚拟内存(仅适用于DMA和常规内存)
+
+*高端内存换算关系复杂*
+
+### 11.3 内存存取
+
+**用户空间内存动态申请**
+
+申请:malloc()函数,释放:free()函数
+
+	void *malloc(size_t size);	//申请一段size字节大小的buffer,返回为"void *"
+	free(ptr);	//释放ptr(指针)指向的malloc内存
+	/*
+	void *ptr = malloc(SIZE);	//申请SIZE大小的内存
+	free(ptr);	//释放ptr指向的内存
+	*/
+
+malloc()和free()函数在malloc.h和stdlib.h都有.
+	
+	一般只需要:#include <stdlib.h>即可
+
+*Linux内核是按需调页(Demand Paging),malloc()申请返回时内核并没有真正给进程内存.此时读申请的内存会全部是0.只有在这个内存中写了数据之后再去读才会有真正的内容.*
+
+**内核空间内存动态申请**
+
+1)kmalloc
+
+申请的内存位于DMA和常规内存区域,物理上连续.与物理内存仅存在一个固定偏移,具有一一对应关系,转换关系简单
+
+	void *kmalloc(size_t size, int flags);	/*para1:字节大小; para2:分配标志.适用于申请小于128KB的内存*/
+	/*分配标志:
+		GFP_KERNEL:在内核空间的进程申请内存.若申请不满足,进程会睡眠等待页,引起阻塞.不能用于中断上下文或持有自旋锁的时候.
+		GFP_ATOMIC:不存在空闲页时,不等待直接返回.适用于中断处理函数、tasklet、内核定时器等非进程上下文.
+		GFP_USER/HIHGUSER/DMA(从DMA区域分配内存)...
+	*/
+	kfree(ptr);	/*内核内存释放函数*/
+
+2)__get_free_pages()
+
+linux内核最底层获得空闲内存页的方法,kmalloc中的GFP即是get_free_pages,所以一般使用kmalloc即可.
+
+3)vmalloc
+
+vmalloc只为存在于软件中(没有硬件意义)的较大的顺序缓冲区分配内存.因此vmalloc不能用于分配少量内存(e.g. 1 page以内的内存)
+
+	void *vmalloc(unsigned long size);	/*分配size字节的内存(仅在软件中使用)*/
+	void vfree(void *addr);	/*释放*/
+
+vmalloc不能用于原子上下文中,因为内部使用GFP_KERNEL标志的kmalloc.vmalloc的虚拟地址和物理地址不是一个简单的线性映射(也因为没有硬件意义)
+
+4)slab和内存池
+
+slab和内存池都是用于分配大量小对象(少量字节 < 1 page)的后备缓存计数.
+
+	/*获知当前slab的分配和使用情况*/
+	cat /proc/slabinfo
+
+### 11.4 设备I/O端口和I/O内存的访问
+
+**任何设备通常都会有控制、数据、状态等寄存器来控制设备、读写设备和获取设备状态.**
+
+ARM CPU没有I/O空间,只有内存空间.外设和内存统一编址,使用相同的指令去访问外设和内存.
+
+**I/O端口(外设寄存器位于I/O空间)---ARM CPU没有**
+
+	unsigned inb/inw/inl(unsigned port);	//从端口port读字节/字/长字(32bit)数据
+	unsigned outb/outw/outl(unsigned char byte/short word/long word, unsigned port); //将字节/字/长字写入port端口
+	void insb/insw/insl(unsigned port, void *addr, unsigned long count); 
+	/*从端口port读count数据(字节/字/长字)到addr指向的内存*/
+	void outsb/outsw/outsl(unsigned port, void *addr, unsigned long count);
+	/*将addr指向的内存中的count数据(字节/字/长字)写入port端口*/
+
+**I/O端口申请**
+
+申请和释放I/O端口,表明驱动要访问这片区域.
+
+	struct resource *request_region(unsigned long first, unsigned long n, const char *name);
+	/*对name这个设备,从first端口开始,申请n个端口.*/
+	void release_region(unsigned long start, unsigned long n);
+	/*从start开始,释放n个端口*/
+
+*有devm_request_region不需要明显的调用释放动作.*
+
+#### I/O端口访问流程
+
+	step1:request_region()------申请I/O端口区域(在设备驱动模块加载函数中进行)
+	step2:inb/outb等------------I/O端口访问(read/write/ioctl函数中进行)
+	step3:release_region()------释放I/O端口区域(在设备驱动模块的卸载函数中进行)
+	
+**I/O内存**
+
+使用之前先使用ioremap()将设备所处的物理地址映射到虚拟地址上.但现在多数使用devm_ioremap()---"devm_"开头的函数在驱动退出或出错时不需要进行释放(会自动释放).
+
+	void __iomem *devm_ioremap(struct device *dev, resource_size_t offset, unsigned long size);
+	/*将位于I/O内存的设备的物理地址映射到虚拟地址,之后可以用linux标准API来访问虚拟地址进而访问物理地址*/
+
+读I/O空间的虚拟地址函数:readb/w/l_relaxed()---读8/16/32 bit的寄存器.readb/w/l()比带"_relaxed"多一个内存屏障.
+
+写I/O空间的虚拟地址函数:writeb/w/l_relaxed()---写8/16/32 bit的寄存器.writeb/w/l()比带"_relaxed"多一个内存屏障.
+
+**I/O内存申请**
+
+申请和释放I/O内存,表明驱动要访问这篇内存区域.
+
+	struct resource *request_mem_region(unsigned long start, unsigned long len, char *name);
+	/*对于name这个设备,从start地址开始申请len个内存地址*/
+	void release_mem_region(unsigned long start, unsigned long len);
+	/*从start开始,释放len个内存地址*/
+
+*有devm_request_mem_region不需要明显的调用释放动作.*
+
+#### I/O内存访问流程
+
+	step1:request_mem_region()------申请I/O内存(在设备驱动模块加载函数中进行)
+	step2:ioremap()-----------------将寄存器物理地址映射到内核虚拟地址(在设备驱动模块加载函数中进行)
+	step3:readb/l/writeb/l----------I/O内存访问(read/write/ioctl函数中进行)
+	step4:iounmap()-----------------将映射的虚拟地址释放(在设备驱动模块的卸载函数中进行)
+	step5:release_mem_region()------释放I/O内存区域(在设备驱动模块的卸载函数中进行)
+
+
+### 11.5 Cache & DMA
 
 **Cache原理:**
 

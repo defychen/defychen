@@ -23,8 +23,16 @@
 	sed '1a drink tea' ab.txt	//第一行的下一行增加一行"drink tea"
 
 **5)代替一行或多行:**
+
+	/*只会在屏幕上显示已经修改,但是并没有真正写进文件*/
 	sed '1c Hi' ab.txt	//第一行代替为"Hi"
-	sed -n '/defy/p' ab.txt | sed 's/defy/bird/g' 
+	sed -n '/defy/p' ab.txt | sed 's/defy/bird/g' 	
+	/*如果需要写入文件,可以加上"-i"参数*/
+	sed -i '1c Hi' ab.txt	/*第一行代替为"Hi",并写入到ab.txt文件*/
+	sed -i '49c CONFIG_POSIX_MQUEUE=y' linux-m3755-demo-new-kernel.config		/*打开消息队列的宏*/
+	sed -i '/CONFIG_POSIX_MQUEUE/c CONFIG_POSIX_MQUEUE=y' linux-m3755-demo-new-kernel.config /*最好的办法*/
+	/*修改ali corp的配置:*/
+	sed -i '/CONFIG_POSIX_MQUEUE/c CONFIG_POSIX_MQUEUE=y' board/ali/c3922-demo/linux-m3755-demo-new-kernel.config
 ***
 ## 2.dd命令
 *烧写文件(kernel,rootfs等等)到特定的区块.*
@@ -102,3 +110,63 @@
 	#include <asm/system.h>		/*版本<3.30时使用"asm/system.h"*/
 	#endif
 
+## 9.ali corp自动挂载方式
+
+	#!/bin/sh
+	ifconfig eth0 down
+	ifconfig eth0 hw ether de:ad:be:ef:f1:f5
+	ifconfig eth0 up
+ 	udhcpc
+	mkdir /mnt/nfs
+	mount -t nfs -o nolock 192.168.9.202:/zhsa022/usrhome/defy.chen/gitwork/ci/ref /mnt/nfs
+	/*
+		-t nfs:是以nfs形式挂载
+		-o nolock:nfs mount默认选项包含文件锁,因此使用"-o nolock"
+	*/
+
+## 10.shell脚本
+
+	#!/bin/sh
+	#Scriptname: choice_script
+	echo "script usage"
+	echo "1.Play clear stream for VA_DMX"
+	echo "2.Play scramble stream for VA_DSCR"
+	echo "3.Play scramble stream for VA_SCHIP"
+	echo "Please choice the number..."	#提示让用户输入选择项
+	read select							#接收用户的选择
+	if [ $select = 1 ]; then			#如果用户选择了"1"
+		if [ ! -f "../../stream/choice.txt" ]; then		#如果文件不存在,就创建
+			touch "../../stream/choice.txt"
+			echo 1 > ../../stream/choice.txt			#将1重定向到文件,">"覆盖方式; ">>"追加方式
+		else
+			echo 1 > ../../stream/choice.txt
+		fi
+	elif [ $select = 2 ]; then			#用于选择了"2"
+		if [ ! -f "../../stream/choice.txt" ]; then		
+			touch "../../stream/choice.txt"
+			echo 2 > ../../stream/choice.txt
+		else
+			echo 2 > ../../stream/choice.txt
+		fi
+	elif [ $select = 3 ]; then			#用户选择了"3"
+		if [ ! -f "../../stream/choice.txt" ]; then
+			touche "../../stream/choice.txt"
+			echo 3 > ../../stream/choice.txt
+		else
+			echo 3 > ../../stream/choice.txt
+		fi
+	else
+		echo "The choice is wrong, please run this script again!"
+		exit 1	#强制退出
+	fi
+	echo "Thank you for your choice"
+
+## 11. vim的使用
+
+**替换**
+
+	:s/old/new			---将光标所在行的第一个old替换为new
+	:s/old/new/g		---将光标所在行的所有old替换为new
+	:%s/old/new/gc		---全文执行替换"后面c表示询问是否替换,可以不带c"
+	:3,10s/old/new/gic	---3到10行执行替换,"i忽略大小写,c询问"	
+	

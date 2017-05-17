@@ -26,3 +26,36 @@
 **7)push到远程仓库(github仓库):**
 
 	git push origin master	//之后会输入帐号(username),密码(password)
+***
+## git usage
+
+**1)查看历史提交版本**
+
+	git log		/*整个大目录的历史提交版本*/
+	git log .	/*查看某个目录的历史提交版本(e.g.buildroot)*/
+	git log -p ./output/build/alisee.../see/src/lld/sec/m36f/libssec_m32.a	/*查看具体某个文件的历史提交版本*/
+	e.g.如果在alidsc目录:
+	git log	/*显示./linux-PDK...这个大目录的提交版本*/
+	git log .	/*显示alidsc这个目录的提交版本,更精确*/
+
+**2)版本回退**
+
+	git reset --hard commit-number
+
+**3)查看所拉下来的PDK tag指向的分支**
+
+	1)打开所拉下来的tag: 
+		vim ./linux/alisee/alisee.mk得到tag号:PDK2.0.0-20170427
+	2)切换到alisee的目录:
+		cd ./output/build/alisee...
+	3)执行命令:
+		git branch -a --contain PDK2.0.0-20170427(tag号)
+
+**4)直接切到某个commit号**
+	
+	git checkout commit-number
+	git log .(查看是否切成功)
+
+**5)查看具体commit号以及该commit与哪个tag关联**
+
+	git log --decorate
