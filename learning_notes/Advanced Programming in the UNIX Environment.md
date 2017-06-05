@@ -215,7 +215,8 @@ perror函数:输出一些出错信息
 	#include "apue.h"
 	#include <sys/wait.h>	/*使用wait()和waitpid()函数需要这个头文件*/
 	
- 	+ static void sig_int(int);	/*自己的信号处理函数,para为信号值*/
+ 	+ 
+ 	+ ic void sig_int(int);	/*自己的信号处理函数,para为信号值*/
 
 	int main()
 	{
@@ -750,3 +751,344 @@ umask函数为进程设置文件模式创建屏蔽字(即屏蔽文件的某些�
 	umask -S		/*显示符号格式"u=rwx, g=rwx, o=rx"---将o的w权限给取消了*/
 	umask 027	/*更改文件模式创建屏蔽字(更改为"取消所属组的写、其他用户的全部权限")*/
 	umask -S		/*显示为"u=rwx, g=rx, o="*/
+
+### 4.8 函数chmod、fchmod和fchmodat
+
+用于改变现有文件的访问权限
+
+	#include <sys/stat.h>
+	int chmod(const char *pathname, mode_t mode);	/*在指定文件上改变文件权限*/
+	int fchmod(int fd, mode_t mode);	/*对打开的文件进程改变文件权限*/
+	int fchmodat(int fd, const char *pathname, mode_t mode, int flag);	/*用的较少*/
+	/*retval:成功返回0,失败返回"-1"*/
+
+**改变一个文件的权限位,进程的有效用户ID必须等于文件的所有者ID,或者该进程具有超级用户权限.**
+
+mode常量如下:
+
+	S_ISUID			设置用户ID
+	S_ISGID			设置组ID
+	S_ISVTX			保存正文(粘着位)
+
+	S_IRWXU			用户读、写、执行权限
+	S_IR/W/XUSR		用户读/写/执行权限
+	S_IRWXG			组读、写、执行权限
+	S_IR/W/XGRP		组读/写/执行权限
+	S_IRWXO			其他读、写、执行权限
+	S_IR/W/XOTH		其他读/写/执行权限
+
+实例
+
+	#include <apue.h>
+	int main(void)
+	{
+		struct stat statbuf;	/*保存文件的信息的结构体*/
+		/*关闭组执行权限和设置组ID*/
+		if(stat("foo", &statbuf) < 0)	/*获取"foo"文件的信息结构,存放在statbuf的指针中*/
+			err_sys("stat error for foo");
+		if(chmod("foo", (statbuf.st_mode & ~S_IXGRP) | S_ISGID) < 0) 
+		/*为foo关闭组执行权限和设置组ID,此时权限为"-rw-rwSrw"*/
+			err_sys("chmod error for foo");
+
+		/*设置绝对权限为"-rw-r--r--"*/
+		if(chmod("bar", S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) < 0)	/*此时权限为"-rw-r--r--"*/
+			err_sys("chmod error for bar");
+		exit(0);
+	}
+
+chmod函数更新的只是i节点最近一次被修改的时间,不会更新修改文件内容的时间."ls -l"列出的是最后修改文件内容的时间.
+
+### 4.9 函数chown、fchown、fchownat和lchown
+
+用于改变文件的用户ID和组ID.
+
+	#inclulde <unistd.h>
+	int chown(const char *pathname, uid_t owner, gid_t group);
+	int fchown(int fd, uid_t owner, gid_t group);
+	int fchownat(int fd, const char *pathname, uid_t owner, gid_t group, int flag);
+	int lchown(const char *pathname, uid_t owner, gid_t group);
+	/*retval:成功返回0,失败返回"-1"*/
+
+### 4.10 文件长度
+
+struct stat结构成员st_size表示以字节为单位的文件长度(文件包括普通文件、目录文件和符号链接).
+
+普通文件长度可以是0.
+
+目录文件长度是16/512的整数倍.
+
+符号链接文件长度是文件名的实际字节数.e.g.某个文件链接到"usr/lib",此时的符号链接文件长度为"7".
+
+### 4.11 文件截断
+
+在文件尾端截去一些数据以缩短文件.
+
+	#include <unistd.h>
+	int truncate(const char *pathname, off_t length);
+	int ftruncate(int fd, off_t length);
+	/*
+	如果该文件长度大于length,就截断超过length的部分;如果该文件长度小于lenght,就增加文件长度,增加的部分都读作0(产生文件空洞)
+	retval:成功返回0,失败返回"-1"
+	*/
+
+### 4.12 文件系统
+
+UFS:Unix file system(Unix文件系统)
+
+### 4.13 函数link、linkat、unlink、unlinkat和remove
+
+link/linkat创建一个指向现有文件的链接
+
+	#include <unistd.h>
+	int link(const char *existingpath, const char *newpath);
+	int linkat(int efd, const char *existingpath, int nfd, const char *newpath, int flag);
+	/*创建一个新目录项newpath(只创建最后一个分量,路径中的其他部分应当已经存在),并引用现有文件existingpath.
+	进而会增加一个文件的链接*/
+	/*retval:成功返回0,失败返回"-1"*/
+
+unlink/unlinkat删除一个目录项,并将文件的链接数减1
+
+	#include <unistd.h>
+	int unlink(const char *pathname);
+	int unlinkat(int fd, const char *pathname, int flag);
+	/*成功返回0,失败返回"-1"*/
+
+实例
+
+	#include "apue.h"
+	#include <fcntl.h>
+	int main(void)
+	{
+		if(open("tempfile", O_RDWR) < 0)
+			err_sys("open error");
+		if(unlink("tempfile") < 0)	/*patname为当前路径的文件名*/
+			err_sys("unlink error");
+		printf("file unlinked\n");	/*打印该句表示:解除文件链接成功,会删除该文件*/
+		sleep(15);
+		printf("done\n");
+		exit(0);
+	}
+
+	/*运行:
+		df /home	/*查看磁盘使用情况"/home"*/
+		./a.out &	/*"&"后台运行程序*/
+	*/
+
+remove:对于文件与unlink相同,对于目录与rmdir相同.
+
+	#include <stdio.h>
+	int remove(const char *pathname);	/*retval:成功返回0,失败返回"-1"*/
+
+### 4.14 函数rename和renameat
+
+文件或目录重命名(这一函数用的较少)
+
+	#include <stdio.h>
+	int rename(const char *oldname, const char *newname);
+	int renameat(int oldfd, const char *oldname, int newfd, const char *newname);
+	/*retval:成功返回0,失败返回"-1"*/
+
+### 4.15 符号链接
+
+符号链接是对一个文件的间接指针,硬链接直接指向文件的i节点(硬链接限制较多)
+
+实例(符号链接引入死循环)
+
+	mkdir foo
+	touch foo/a
+	ln -s foo foo/testdir	/*创建符号链接"foo/testdir",链接到foo目录*/
+	符号链接显示为:"lrwxrwxrwx ... testdir -> foo"---显示中的的"l"和"->"表明是一个符号链接
+
+	如果遍历这一个目录,会形成死循环(errno为ELOOP)
+	"foo" "foo/a" "foo/testdir" "foo/testdir/a" "foo/testdir/testdir" "foo/testdir/testdir/a"...死循环
+
+实例2
+
+	ln -s /no/such/file myfile	/*创建符号链接"myfile",链接到一个不存在的文件*/
+	ls myfile	/*ls可以查看到这个文件*/
+	cat myfile---No such file or directory	/*试图查看该文件,是一个符号链接,但是链接的文件不存在,因此报错*/
+	ls -l myfile		/*可以查看*/
+
+### 4.16 创建和读取符号链接
+
+symlink/symlinkat创建一个符号链接
+
+	#include <unistd.h>
+	int symlink(const char *actualpath, const char *sympath);
+	int symlinkat(const char *actualpath, int fd, const char *sympath);
+	/*创建一个指向actualpath的新目录项sympath,actualpath不要求必须存在*/
+	/*retval:成功返回0,失败返回"-1"*/
+
+readlink/readlinkat读取符号链接名字,打开符号链接本身(open会跟随符号链接,即会打开符号链接真正链接的文件)
+
+	#include <unistd.h>
+	ssize_t readlink(const char *restrict pathname, char *restrict buf, size_t bufsize);
+	ssize_t readlink(int fd, const char *restrict pathname, char *restrict buf, size_t bufsize);
+	/*执行成功返回读入buf的字节数.在buf中返回的符号链接的内容不以null字节终止*/
+
+### 4.17 文件的时间
+
+struct stat结构体的3个时间字段
+
+	st_atim		文件数据的最后访问时间		e.g.read可以更改该时间	查看"ls -lu"
+	st_mtim		文件数据的最后修改时间		e.g.write可以更改该时间	查看"ls -l"/ls
+	st_ctime	i节点状态最后更改时间		e.g.chmod/chown可以更改	查看"ls -lc"
+
+### 4.18 函数futimens、utimensat和utimes
+
+更改一个文件的访问和修改时间
+
+	#include <sys/stat.h>
+	int futimens(int fd, const struct timespec times[2]);	/*修改:times[2]应该为"*times",为一个指针*/
+	int utimensat(int fd, const char *path, const struct timespec times[2], int flag);
+	/*
+	para1:文件描述符
+	para2:
+		struct stat statbuf;
+		times[1] = statbuf.st_atim;	/*访问时间*/
+		times[2] = statbuf.st_mtim;	/*文件内容修改时间*/
+	*/
+	/*retval:成功返回0,失败返回"-1"*/
+
+utimes:对路径名进行操作(扩展用的,一般不用)
+
+	#include <sys/time.h>
+	int utimes(const char *pathname, const struct timeval times[2]);
+	struct timeval{
+		time_t tv_sec;	/*seconds秒数*/
+		long tv_usec;	/*microseconds微秒*/
+	};
+
+实例(open函数使用O_TRUNC将文件长度截断为0,但并不更改其访问和修改时间)
+
+	#include "apue.h"
+	#include <fcntl.h>
+	int main(int argc, char *argv[])
+	{
+		int i, fd;
+		struct stat statbuf;
+		struct timespec times[2];
+		for(i = 0; i < argc; i++) {
+			/*对多个文件都执行该操作*/
+			if(stat(argv[i], &statbuf) < 0) {
+				err_ret("%s: stat error\n", argv[i]);
+				continue;
+			}
+			if((fd = open(argv[i], O_RDWR | O_TRUNC)) < 0)	｛/*truncate截断*/
+				err_ret("%s: open error\n", argv[i]);
+				continue;	
+			}
+			times[0] = statbuf.st_atim;
+			times[2] = statbuf.st_mtim;
+			if(futimens(fd, times) < 0)	/*更改访问和修改时间*/
+				err_ret("%s: futimens error", argv[i]);
+			close(fd);
+		}
+		exit(0);
+	}
+
+	/*
+	date ---打印当天时间
+	ls -lu filename	---查看最后访问时间
+	ls -l filename	---查看内容修改时间
+	ls -lc filename	---查看状态更改时间
+	*/
+
+### 4.19 函数mkdir、mkdirat和rmdir
+
+mkdir/mkdirat创建目录
+
+	#include <sys/stat.h>
+	int mkdir(const char *pathname, mode_t mode);
+	int mkdirat(int fd, const char *pathname, mode_t mode);
+	/*创建空目录,".和..目录项自动创建".mode由进程的文件模式创建屏蔽字修改*/
+	/*retval:成功返回0,失败返回"-1"*/
+
+目录通常至少需要设置一个执行权限,以访问该目录中的文件名.
+
+rmdir删除一个空目录(只包含".和.."的目录),必须是空目录.
+
+	#include <unistd.h>
+	int rmdir(const char *pathname);
+	/*retval:成功返回0,失败返回"-1"*/
+
+### 4.20 函数chdir、fchdir和getcwd
+
+chdir/fchdir更改当前工作目录
+
+	#include <unistd.h>
+	int chdir(const char *pathname);
+	int fchidr(int fd);
+	/*使用pathname/fd来指定新的工作目录. retval:成功返回0,失败返回"-1"*/
+
+实例
+
+	#include "apue.h"
+	int main(void)
+	{
+		if(chdir("/tmp") < 0)	/*切到"/tmp"目录*/
+			err_sys("chdir failed");
+		printf("chdir to /tmp succeed\n");
+		exit(0);
+	}
+	/*执行该应用时,可以打印出"chdir to /tmp succeed",但是pwd(属于shell进程)仍然是原来的目录.
+	该应用程序与shell程序是两个独立的进程,互不影响*/
+
+getcwd:获得当前工作目录的完整绝对路径名
+
+	#include <unistd.h>
+	char *getcwd(char *buf, size_t size);
+	/*para1:(缓冲区)用于存放路径名; para2:buf(缓冲区)的长度*/
+	/*retval:成功返回buf指针, 失败返回"NULL"*/
+
+实例
+
+	#include "apue.h"
+	int mian(void)
+	{
+		char *ptr;
+		size_t size;
+		if(chdir("/usr/spool/uncppublic") < 0)	/*切到"/usr/spool/uncppublic"目录*/
+			err_sys("chdir failed");
+		ptr = path_alloc(&size);	/*给ptr分配size大小的buffer*/
+		if(getcwd(ptr, size) == NULL)
+			err_sys("getcwd failed");
+		printf("cwd = %s\n", ptr);	/*会打印出获得的绝对路径*/
+		exit(0);
+	}
+
+### 4.21 设备特殊文件
+
+设备号所用的数据类型是基本系统数据类型"dev_t".主设备号表示设备驱动程序,次设备号表示特定的子设备.
+
+文件系统的设备号是struct stat结构体中的"st_dev"成员;字符设备和块设备等实际设备的设备号为"st_rdev".
+
+实例
+
+	#include "apue.h"
+	#ifdef SOLARIS
+	#include <sys/mkdev.h>
+	#endif
+
+	int main(int argc, char *argv[])
+	{
+		int i;
+		struct stat buf;
+		for(i = 1; i < argvc; i++){
+			printf("%s :", argv[i]);
+			if(stat(argv[i], &buf) < 0){
+				err_ret("stat error");
+				continue;
+			}
+			printf("dev = %d/%d", major(buf.st_dev), minor(buf.st_dev));
+			if(S_ISCHR(buf.st_mode) || S_ISBLK(buf.st_mode)){
+				printf(" (%s) rdev = %d/%d", 
+				(S_ISCHR(buf.st_mode)) ? "character" : "block",
+				major(buf.st_rdev), minor(buf.st_rdev));	/*判断是否为字符/块设备,并获取字符/块设备的设备号*/
+			}
+			printf("\n");
+		}
+		exit(0);
+	}
+
+	/dev/tty[01]---shell正则表达式,shell可将其扩展为"/dev/tty0"和"/dev/tty1"

@@ -59,3 +59,15 @@
 **5)查看具体commit号以及该commit与哪个tag关联**
 
 	git log --decorate
+
+## git pull更新时的问题
+
+	Your local changes to the following files would be overwritten by merge
+	error: Your local changes to the following files would be overwritten by merge:
+		...	/*xxx file*/
+	Please, commit your changes or stash them before you can merge.
+
+	Solution method (1)
+	使用代码库中的文件完全覆盖本地工作版本
+	git reset --hard
+	git pull

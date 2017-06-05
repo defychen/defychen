@@ -475,6 +475,10 @@ linux错误号位置:
 
 	EXPORT_SYMBOL(符号名);	/*可以导出函数名e.g.EXPORT_SYMBOL(func_name);*/
 	EXPORT_SYMBOL_GPL(符号名);	/*符合GPL许可的模块*/
+
+**查看导出的符号**
+
+	cat /proc/kallsyms---导出的符号在"kallsyms"文件中
 ***
 ## 第五章 Linux文件系统与设备文件
 
@@ -1663,4 +1667,201 @@ DMA:无需CPU参与,让外设与内存直接进行双向数据传输的硬件机
 2)CPU数据到外设:CPU处理的数据结果存放到cache，此时cache中的数据还没写回到DRAM;DMA从DRAM中取数据送到外设取到的为错误的数据.
 
 	解决:DMA处理之前先进行cache_flush(刷新数据到DRAM),保证DMA取到的数据为最新的数据.
+
+## 第十八章 ARM linux设备树
+
+### 18.1 ARM设备树起源
+
+在linux 2.6中,ARM架构的板级硬件细节过多地被硬编码在arch/arm/plat-xxx和arm/arm/mach-xxx中.采用设备树后,许多硬件的细节直接通过设备树传递给linux,不需要在内核中进行大量的冗余编码.
+
+设备数由一系列被命名的节点(Node)和属性(Property)组成.
+
+设备树可以理解为画一棵电路板上CPU、总线、设备组成的树,Bootloader会将这棵树传递给内核.内核会识别并利用这棵树所包含的资源.
+
+### 18.2 设备树的组成和结构
+
+**1.DTS**
+
+DTS:Device Tree Source,是一种ASCII文本格式的设备树描述.一个dts文件对应一个ARM的设备,标准是放置在"arch/arm/boot/dts"目录.Ali的是放置在一个专门的dts文件目录下.
+
+dtsi:Soc公用的部分或者多个设备共同使用的部分写成".dtsi",类似于C的头文件.包含某个dtsi可以:
+
+	// Method 1
+	/include/ "vexpress-v2m.dtsi"
+	// Method 2	---更为常用
+	#include "as.dtsi"	---和C语言include头文件一致
+
+设备树结构模版
+
+	/ {		/*root节点*/
+		node1 {		/*root节点下的子节点"node1"*/
+			a-string-property = "A string";	/*字符串属性*/
+			a-string-list-property = "first string", "second string";	/*字符串数组属性*/
+			a-byte-data-property = [0x01 0x23 0x34 0x56];	/*二进制属性*/
+			child-node1 {	/*node1节点下的子节点"child-node1"*/
+				first-child-property;	/*空属性*/
+				second-child-property = <1>;		/*Cells属性,由u32整数组成*/
+				a-string-property = "Hello, world";
+			};
+			child-node2 {
+			};
+		};
+		node2 {		/*root节点下的子节点"node2"*/
+			an-empty-property;	/*空属性*/
+			a-cell-property = <1 2 3 4>;		/*1,2,3,4都是u32整数*/
+			child-node1 {
+			};
+		};
+	};
+
+实例
+
+	/ {
+		compatible = "acme, coyotes-revenge";	/*根节点兼容属性,通过它可以判断启动的是什么设备.*/
+		#address-cells = <1>;	/*表示这一层结构下的地址address为一个32 bit的无符号整型,对应于reg<address ...>*/
+		#size-cells = <1>;		/*表示这一层结构下的长度length为一个32 bit的无符号整型,对应于reg<... length>*/
+		interrupt-parent = <&intc>;
+
+		cpus {	/*cpu node*/
+			#address-cells = <1>;	/*cpu@0中的"reg<0>",地址为0为一个32 bit的无符号整数*/
+			#size-cells = <0>;		/*cpu@0中的"reg<0>",此处"#size-cell = <0>",因此不带长度*/
+			cpu@0 {	/*"name@address":name=cpu,address:0*/	/*name可以相同,但是address必须不一样.*/
+				compatible = "arm, cortex-a9";
+				reg = <0>
+			};
+			cpu@1 {	/*"name@address":name=cpu,address:1*/
+				compatible = "arm, cortex-a9";
+				reg = <1>
+			};
+		};
+
+		serial@101f1000 {	/*"name@address":name=serial,address:101f1000*/
+			compatible = "arm, p1011";
+			reg = <0x101f1000 0x1000>;	/*起始地址(address):0x101f1000,大小(length)为0x1000*/
+			interrupts = <1 0>;
+		};
+
+		serial@101f2000 {	/*"name@address":name=serial,address:101f2000*/
+			compatible = "arm, p1011";
+			reg = <0x101f2000 0x1000>;	/*起始地址:0x101f2000,大小为0x1000*/
+			interrupts = <2 0>;
+		};
+
+		gpio@101f3000 {	/*"name@address":name=gpio,address:101f3000*/
+			compatible = "arm, p1061";
+			reg = <0x101f3000 0x1000
+				   0x101f4000 0x0010>;
+			interrupts = <3 0>;
+		};
+
+		intc: interrupt-controller@10140000 {	/*"name@address":name=interrupt-controller,address:10140000
+												intc:为label,在驱动中可以通过"@intc"即"@label"来引用.*/
+			compatible = "arm, p1190";
+			reg = <0x10140000 0x1000>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+		};
+
+		spi@10115000 {	/*"name@address":name=spi,address:10115000*/
+			compatible = "arm, p1022";
+			reg = <0x10115000 0x1000>;
+			interrupts = <4 0>;
+		};
+
+		external-bus {	/*外部总线节点*/
+			#address-cells = <2>;	
+			/*表示这一层结构下的地址address为两个32 bit的无符号整型,对应于reg<address1 address2 ...>*/
+			#size-cells = <1>;	/*表示这一层结构下的长度length为一个32 bit的无符号整型,对应于reg<... length>*/
+			ranges = <0 0 0x10100000 0x10000	//Chipselect 1, Ethernet
+					/*external-bus这一层的address<0 0>转换到CPU内存映射的"reg<0x10100000 0x10000>"*/
+					  1 0 0x10160000 0x10000	//Chipselect 2, i2c controller
+					/*external-bus这一层的address<1 0>转换到CPU内存映射的"reg<0x10160000 0x10000>"*/
+					  2 0 0x30000000 0x1000000>;//Chipselect 3, Nor Flash
+
+			ethernet@0,0 {	/*"name@address":name=ethernet,address:0*/
+				compatible = "smc, smc91c111";
+				reg = <0 0 0x1000>;	/*address1:0(片选); address2:0(基地址); length:0x1000*/
+				interrupts = <5 2>;					
+			};
+			
+			i2c@1, 0 {	/*"name@address":name=i2c,address:1*/
+				compatible = "acme, a1234-i2c-bus";
+				#address-cells = <1>;
+				#size-cells = <0>;
+				reg = <1 0 0x1000>;
+				interrupts = <6 2>;
+				rtc@58 {
+					compatible = "maxim, ds1338";
+					reg = <58>;
+					interrupts = <7 3>;
+				};
+			};
+
+			flash@2, 0 {	/*"name@address":name=flash,address:2*/
+				compatible = "samsung, k8f1315ebm", "cfi-flash";
+				reg = <2 0 0x4000000>;	/*64MB*/
+			};
+		};
+	};
+
+**2.DTC**
+
+DTC:Device Tree Compiler,将".dts"编译成".dtb"的工具.DTC的源代码位于内核"scripts/dtc"目录中,在linux内核使能设备树的情况下,工具"DTC"就会被编译出来,对应于"script/dts/Makefile"中的"hostprogs-y := dtc"这一hostprogs目标.
+
+**3.DTB**
+
+DTB:Device Tree Blob,是".dts"被DTC编译后设备树描述的二进制格式,可由linux内核或者u-boot这样的Bootloader解析.
+
+通常Nand/SD启动映像,".dtb"文件会有一个单独的区域存放,Bootloader引导内核时会先读取该处的".dtb"文件到内存.
+
+**根节点兼容属性**
+
+	/ {
+		compatible = "manufacturer(制造商), model(型号)";		/*通过其可以知道启动的是什么设备*/
+	};
+
+	// e.g.
+	/ {
+		compatible = "alitech, 3922";	/*alitech corp, 3922芯片*/
+	};
+	
+	// driver中判断目前运行的板子或者SoC的兼容性的API:
+	if(of_machine_is_compatible("alitech, 3921"))	/*para:根节点compatible中的字符串.*/
+
+**设备节点兼容性**
+
+dts中设备节点的兼容性用于驱动和设备的绑定.
+
+	/ {
+		compatible = "ali, 3735";
+		...
+		see_bus@0 {	/*see总线*/
+			compatible = "alitech, see-bus", "simple-bus";	/*see bus驱动和see bus的device绑定.
+													后一个表征可兼容其他的简单bus*/
+			...
+			DSC@0 {
+				compatible = "alitech, dsc";	/*用于dsc设备和驱动绑定*/
+				reg = <0>;
+				dev-index = <0>;
+			};
+		};
+	};
+	
+驱动中需要与".dts"中描述的设备节点进行匹配,进而使驱动的probe()函数执行.
+
+	static const struct of_device_id see_dsc_matchtbl[] = {	/*device挂在see bus这条总线上*/
+		{ .compatible = "alitech,dsc"},	/*与dts中的需要匹配*/
+		{ },
+	};
+
+	static struct see_client_driver dsc_drv = {
+		.probe = ca_dsc_probe,
+		.remove = ca_dsc_remove,
+		.driver = {
+			.name = "DSC",
+			.of_match_table = see_dsc_matchtbl,	/*匹配上面的table*/
+			.pm = &dsc_drv_pm_ops,	/*???*/
+		},
+	};
+
 
