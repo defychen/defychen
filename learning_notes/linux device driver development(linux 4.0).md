@@ -346,10 +346,19 @@ choice...endchoice定义选择群菜单:
 1)Kconfig
 
 Kconfig在某个目录下编辑好后,需要在./arch/arm/Kconfig中添加:
-	
+
+	/*C3505目录结构*/	
 	source "drivers/Kconfig"	/*在"./arch/arm/Kconfig中添加,包括了drivers下面的Kconfig"*/
 	source "drivers/alidrivers/modules/Kconfig" /*在"./drivers/Kconfig"中添加,包括了modules下面的Kconfig*/
 	/*(drivers/alidrivers/modules/Kconfig)中描述alidsc的菜单信息*/
+
+	/*S3922目录结构*/
+	source "drivers/Kconfig"	/*在"./arch/arm/Kconfig中添加,包括了drivers下面的Kconfig"*/
+	source "drivers/alidrivers/modules/Kconfig" /*在"./drivers/Kconfig"中添加,包括了modules下面的Kconfig*/
+	source "drivers/alidrivers/modules/alirpc/Kconfig"	
+		/*在"drivers/alidrivers/modules/Kconfig"中添加,包括了alirpc下面的Kconfig*/
+	/*(drivers/alidrivers/modules/aliprc/Kconfig)中描述alidsc的菜单信息*/---因为这些都会依赖rpc模块
+	
 
 2)Makefile
 

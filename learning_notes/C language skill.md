@@ -611,3 +611,38 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 			int i;		/*int() + 4*/
 		};	/*总共16字节*/
 	#pragma pack()
+
+## 20、统计某个数所占的字节数
+
+	typedef unsigned long UINT32;
+	UINT32 key_length = 64/128/192/256;
+	UINT32 counter = 0;
+	counter = key_length >> 5;	/*计算key_length所占的字节数(e.g. 128/32 = 4byte)*/
+
+## 21、枚举变量赋值(当超出枚举定义值时)
+
+	enum PARITY_MODE{
+		EVEN_PARITY_MODE = 0,
+		ODD_PARITY_MODE = 1,
+		AUTO_PARITY_MODE0 = 2,
+		AUTO_PARITY_MODE1 = 3,
+	};
+
+	enum PARITY_MODE parity_mode;
+	parity_mode = 4;	/*不会报错,因为一般编译器会分配一个int大小给enum.所以此时它相当于int类型.*/
+
+## 22、循环左移和右移
+
+	#define ROTL(x, n)	(((x) << (n)) | ((x) >> (32 - (n))))		/*循环左移 "n" bit,针对unsigned long类型*/
+	#define ROTR(x, n)	(((x) >> (n)) | ((x) << (32 - (n))))		/*循环右移 "n" bit,针对unsigned long类型*/
+	
+	/*如果将一个4 byte(32 bit)的数交换字节序(e.g.字节序由:1 2 3 4变成:4 3 2 1)方法*/
+	1)循环右移一个字节(8 bit),得到:4 1 2 3--->留下4和2(即第1,3字节)
+		ROTR(x, 8) & (0xff00ff00)--->取其中的第1和3字节
+	2)循环左移一个字节(8 bit),得到:2 3 4 1--->留下3和1(即取第0,2字节)
+		ROTL(x, 8) & (0x00ff00ff)--->取其中的第0和2字节
+	3)最后两个步骤取"或",得到交换的字节序
+	
+	/*总结为:*/
+	#define BYTESWAP(x) ((ROTR((x), 8) & 0xff00ff00) | (ROTL((x), 8) & 0x00ff00ff))
+	
