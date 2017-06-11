@@ -209,12 +209,177 @@ tuple与list非常类似,但tuple一旦初始化就不能修改.使用"(...)"识
 
 dict:字典,键-值(key-value)存储,具有极快的查找速度.使用"{}"标识.
 
-	d = {'Michael':95, 'Bob':75, 'Tracy':85}
+	d = {'Michael':95, 'Bob':75, 'Tracy':85}	/*初始化指定"key-value"*/
 	d['Michael']	#会得到:95
+	d['Adam'] = 67		/*通过key放入"key-value"*/
+	d['Adam'] = 88		/*多次对一个key放入value,后面的会冲掉前面的值*/
+	d['Adam']		#会得到88,而非67
+	d['Thomas']		#key不存在,dict报错.显示为"KeyError: 'Thomas'"
+a
+判断dict中key存在的两种方法
 
+	// Method 1
+	'Thomas' in d	/*直接通过"in"判断,不存在返回"False"*/
+	// Method 2
+	d.get('Thomas')	/*通过dict的"get"方法,不存在返回"None".此时在交互式命令行不会显示结果*/
+	d.get('Thomas', -1)	/*不存在返回指定值"-1"*/
+	d.pop('Bob')	/*删除"key-value"*/
 
+dict相比于list查找和插入的速度快,但是浪费内存(同时存储"key-value"),是一种以空间换取时间的方法.
 
+在dict中,作为key的对象不能变(不能是list, tuple等).可以是字符串('xxx')、整数.
+
+**set**
+
+set只存储key,不存储value.使用"set([])"标识.
+
+	s = set([1, 2, 3])	/*相比较tuple,增加了"set"标识符,中间为一个"list"*/
+	s = set([1, 1, 2, 2, 3, 3])	/*去掉重复元素,因此最后显示结果为"set([1, 2, 3])"*/
+	s.add(4)	/*添加一个元素使用add方法,重复的会去掉*/
+	s.remove(4)	/*删除元素*/
+
+	s1 = set([1, 2, 3])
+	s2 = set([2, 3, 4])
+	s1 & s2		/*数学意义上的交集,显示为"set([2, 3])"*/
+	s1 | s2		/*数学意义上的并集,显示为"set([1, 2, 3, 4])"*/
+
+**可变对象和不可变对象**
+
+	a = ['c', 'b', 'a']
+	a.sort()	/*排序,最终会显示为"['a', 'b', 'c'],因此list是可变对象"*/
+	string1 = 'abc'
+	string2 = string1.replace('a', 'A')	/*将'a'代替为'A',不会改变原来的字符串"abc".因此string1
+		指向不变.replace之后相当于新创建了一个字符串"Abc"并赋值给string2.因此属于不可变对象.*/
 ***
+
+## 4、函数
+
+### 4.1 调用函数
+
+查看内置函数的帮助信息
+
+	help(abs)	/*查看求绝对值函数的帮助信息*/
+
+**abs()绝对值函数**
+
+	abs(100)	/*结果为100*/
+	abs(-20)		/*结果为20*/
+	abs(12.34)	/*结果为12.34*/
+	//错误时信息提示
+	abs(1, 2)	
+	/*TypeError: abs() takes exactly one argument (2 given).abs()接受一个参数,但是给出了两个*/
+	abs('a')
+	/*TypeError: bad operand type for abs(). 'str'.str是错误的运算(即参数)类型*/
+
+**cmp(x, y)比较函数**
+
+	cmp(1, 2)	/*para1 < para2, 返回"-1"*/
+	cmp(2, 1)	/*para1 > para2, 返回"1"*/
+	cmp(3, 3)	/*para1 = para2, 返回"0"*/
+
+**数据类型转换**
+
+	int('123')		/*字符串转换为整型,ret为123*/
+	int(12.34)		/*浮点转换为整型,ret为12*/
+	float('12.34')	/*字符串转换为浮点,ret为12.34*/
+	str(1.23)		/*浮点转换为字符串,ret为'1.23'*/
+	unicode(100)	/*整型转换为unicode,ret为u'100'---unicode编码的100*/
+	bool(1)			/*非零(或空)转换为bool,ret为True*/
+	boot('')		/*空转换为bool,ret为False*/
+
+**函数别名**
+
+	a = abs		/*变量a指向函数abs*/
+	a(-1)		/*abs别名,相当于abs(-1)*/
+
+### 4.2 定义函数
+
+	def	my_abs(x):		/*定义函数*/
+		if x >= 0:
+			return x	
+			/*return:返回.如果没有return,函数执行完毕后返回"None".---一般应该使用"return xxx"*/
+		else:
+			return -x
+
+**空函数**
+
+	def nop():
+		pass	/*pass作为占位符,定义空函数.空函数必须有"pass",常用在定义一个函数的框架.*/
+
+**参数检查**
+
+自定义的函数一般需要做参数检查处理.
+
+	def my_abs(x):
+		if not isinstance(x, (int, float)):		/*只允许整数和浮点数*/
+			raise TypeError('bad operand type')	/*抛出错误*/
+		if x >= 0:
+			return x
+		else:
+			return -x
+
+**返回多个值**
+
+其实为一个tuple,按位置赋给对应的变量.
+
+	import path	/*引入path module*/
+	
+	def move(x, y, step, angle=0):	/*angle带默认参数,放于最后*/
+		nx = x + step * math.cos(angle)		/*math module的cos函数"math.cos(angle)"*/
+		ny = y - step * math.sin(angle)
+		return nx, ny	/*返回nx, ny两个值.会组成一个tuple"(nx, ny)"*/
+
+	// 调用(返回值赋给两个变量)
+	x, y = move(100, 100, 60, math.pi / 6)
+	print x, y	/*打印"151.961524227 70.0"*/
+	// 调用(返回值赋给一个变量)
+	r = move(100, 100, 60, math.pi / 6)
+	print r		/*打印"(151.961524227 70.0)"一个tuple,因此返回值其实为一个tuple*/
+
+### 4.3 函数的参数
+
+**默认参数**
+
+	def power(x, n=2):	/*默认参数n = 2,默认参数必须置于最后*/
+		s = 1
+		while n > 0:
+			n = n - 1
+			s = s * x
+		return s
+	//调用
+	power(5)	/*会使用默认参数计算5的平方*/
+	power(5, 2)	/*明确给出计算5的平方*/
+
+	//多个默认参数:学生注册
+	def enroll(name, gender, age=6, city='Beijing'):	/*两个默认参数*/
+		print 'name: %s' % name
+		print 'gender: %s' % gender
+		print 'age: %d' % age
+		print 'city: %s' % city
+	//调用
+	enroll('Sarah', 'F')
+	enroll('Bob', 'M', 7)	/*依次赋值, 7是赋给age的值*/
+	enroll('Adam', 'M', city='Tianjin')	/*age使用默认值,city改变需要明确参数名*/
+
+默认参数使用"list"的默认出现问题,因此尽量使用不可变对象(None, int，str)
+
+	def add_end(L=[])	/*参数L带有默认值"[]",空的list*/
+		L.append('END')
+		return L	
+	//正常调用不会有问题,因为不使用默认参数
+	add_end([1, 2, 3])	/*显示为[1, 2, 3, 'END']*/
+
+	//使用默认参数调用有问题
+	add_end()	/*显示为['END']*/
+	add_end()	/*再调用依次显示为['END', 'END'].会不断往后面添加'END'*/
+	/*原因:默认参数为list是可变对象,每次使用了默认参数后会改变默认参数的值.*/
+	//默认参数必须为不可变对象
+	def add_end(L=None):	/*None(空)为不可变对象*/
+		if L is None:	/*如果使用默认参数,初始化为"[]"*/
+			L = []
+		L.append('END')
+		return L	/*此时不会出错*/
+
 ## Python logging模块
 
 默认情况下,logging将日志打印到屏幕,日志级别是WARNING.级别大小:CRITICAL>ERROR>WARNING>INFO>DEBUG>NOTSET.
