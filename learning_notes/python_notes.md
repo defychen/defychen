@@ -169,6 +169,37 @@ tuple与list非常类似,但tuple一旦初始化就不能修改.使用"(...)"识
 	t = ('a', 'b', ['A', 'B'])	#第三个元素为list，因此可以对第三个元素进行重新赋值
 	t[2][0] = 'X'	#tuple指向不便,仍然为list.但是list自身中的元素可以改变
 	t[2][1] = 'Y'
+
+**切片**
+
+切片:取list或tuple的部分元素.
+
+	L = ['Michael', 'Sarah', 'Tracy', 'Bob', 'Jack']
+	//取前3个元素,常规方法
+	[L[0], L[1], L[2]]
+	//切片方法
+	L[0:3]	/*取到3截止,但是不包括3位置的元素*/
+	L[:3]	/*从索引0开始,到3截止.包括L[0],L[1],L[2]三个元素*/
+	L[-2:]	/*取倒数元素,L[-2], L[-1]---倒数第一个元素*/
+	L[-2:-1]	/*取L[-2],到-1截止.因此就取一个*/
+
+实例
+	
+	L=range(99)	/*L=[0, 1, 2,...,99]---0~99的数列*/
+	L[:10]		/*取list L中的前10个数*/
+	L[-10:]		/*取后10个数*/
+	L[10:20]	/*前11~20个数*/
+	L[:10:2]	/*前10个数,每两个取一个*/
+	L[::5]		/*所有数,每5个取一个*/
+	L[::]		/*取整个list*/
+
+tuple和字符串也可以使用切片
+
+	// tuple
+	(0, 1, 2, 3, 4, 5)[:3]	/*取tuple的前3个(0, 1, 2)---结果仍为tuple*/
+	//字符串,一个字符一个元素
+	'ABCDEFG'[:3]	/*取前3个字符'ABC'---结果仍为字符串*/
+	'ABCDEFG'[::2]	/*每两个取一个'ACEG'*/
 	
 ### 3.2 条件判断和循环
 
@@ -250,6 +281,70 @@ set只存储key,不存储value.使用"set([])"标识.
 	string1 = 'abc'
 	string2 = string1.replace('a', 'A')	/*将'a'代替为'A',不会改变原来的字符串"abc".因此string1
 		指向不变.replace之后相当于新创建了一个字符串"Abc"并赋值给string2.因此属于不可变对象.*/
+
+### 3.4 迭代
+
+list/tuple/dict/str(字符串)等可迭代对象都可以用"for...in"来实现遍历,成这种遍历为迭代(Iteration).
+
+	//list
+	names = ['Michael', 'Tracy', 'Bob']
+	for name in names:
+		print 'name: %s' % name
+	//tuple
+	words = ('a', 'b', 'c')
+	for word in words:
+		print 'word: %s' % word	/*如果不行:print 'word:', word*/
+	//dict
+	d = ['a':1, 'b':2, 'c':3]
+	for key in d:	/*判断key是否在dict中*/
+		print key	/*打印key*/
+		print d['key']	/*打印value*/
+	/*默认迭代"key"*/
+	for vlaue in d.itervalues():	/*迭代value*/
+	for k, v in d.iteritems():		/*迭代key和value*/
+	//字符串
+	for ch in 'ABC':
+		print ch
+
+判断是否为可迭代对象
+	
+	from collections import Iterable	/*从collections模块引入Iterable*/
+	isinstance('abc', Iterable)	/*判断字符串是否为可迭代对象.返回"True"*/
+	isinstance([1, 2, 3], Iterable)	/*list可迭代,返回"True"*/
+	isinstance(123, Iterable)	/*整数不可迭代,返回"False"*/
+
+引入两个变量
+
+	for x, y in [(1, 1), (2, 4), (3, 9)]:
+		print x, y
+
+### 3.5 列表生成式
+
+用于创建列表
+
+	//传统方法
+	L = []
+	for x in range(1, 11):
+		L.append(x * x)	/*生成[1, 4, 9, ..., 100]*/
+	//使用列表生成式
+	[x * x for x in range(1, 11)]	/*也是生成[1, 4, 9,...,100]*/
+	[x * x for x in range(1, 11) if x % 2 == 0]	/*仅偶数平方*/
+	//两层循环
+	[m + n for m in 'ABC' for n in 'XYZ']	/*两个str组合的全排列*/
+
+列出当前目录下所有文件和目录名
+
+	import os	/*导入os模块*/
+	[d for d in os.listdir('.')]	/*os.listdir:列出文件和目录,('.')---表示当前目录*/
+
+把list所有字符串中的字符变成小写
+
+	L = ['Hello', 'World', 'IBM', 'Apple']
+	[s.lower() for s in L]	/*s.lower():将str字符串的字符变成小写*/
+	//list中包含字符串和整数
+	L = ['Hello', 'World', 18, 'IBM', 'Apple']
+	[s.lower() for s in L if isinstance(s, str)]	/*增加判断是否为字符串*/
+	
 ***
 
 ## 4、函数
@@ -318,6 +413,15 @@ set只存储key,不存储value.使用"set([])"标识.
 		else:
 			return -x
 
+**斐波拉切数列的函数实现**
+
+	def fib(max):
+		n, a, b = 0, 1, 1	/*赋值,会对应的赋值*/
+		for n < max:
+			print a
+			a, b = b, a + b	/*赋值,会对应的赋值*/
+			n = n + 1
+
 **返回多个值**
 
 其实为一个tuple,按位置赋给对应的变量.
@@ -379,6 +483,230 @@ set只存储key,不存储value.使用"set([])"标识.
 			L = []
 		L.append('END')
 		return L	/*此时不会出错*/
+
+**可变参数(list/tuple)**
+
+在Python函数中,传给函数的参数的个数可变称为可变参数的函数.
+
+	//list/tuple作为参数的函数定义,非可变参数
+	def calc(numbers):	/*参数为list/tuple,非可变参数*/
+		sum = 0
+		for n in numbers:
+			sum = sum + n * n
+		return sum
+	//调用,参数必须为list/tuple
+	calc([1, 2, 3])		/*使用list,结果为:14*/
+	calc((1, 3, 5, 7))	/*使用tuple,结果为:84*/
+
+	//可变参数函数定义
+	def calc(*numbers):	/*"*numbers":表示定义了一个可变参数的函数*/
+		sum = 0
+		for n in numbers:
+			sum = sum + n * n
+		return sum
+	//调用
+	calc(1, 2)	/*不能是list/tuple,结果为:5*/
+	calc()		/*传入0个参数,结果为:0*/
+	//如果参数为list/tuple,可以使用下面方法.方法1:
+	nums = [1, 2, 3]
+	calc(nums[1], nums[2], nums[3])
+	//方法2:
+	nums = [1, 2, 3]
+	calc(*nums)	/*将list/tuple变成可变参数传入"*nums"*/
+
+**关键字参数(dict)**
+
+	def person(name, age, **kw):	/*关键字参数函数定义"**kw"*/
+		print 'name: %s' % name
+		print 'age: %d' %age
+		print 'other:', kw	/*输出other时不知道类型,使用这种方式比较好*/
+
+	//调用
+	person('Michael', 30)	/*关键字参数没传,为空的dict.*/
+		/*显示为:name: Micheal* age: 30 other: {}/
+
+	person('Bob', 35, city='Beijing')	/*显示为:前面+other: {'city':'Beijing'}---为dict*/
+	person('Adam', 45, gender='M', job='Engineer')
+		/*显示为:前面+other: {'gender':'M', 'job':'Engineer'}*/
+	//dict传入的两种方法.方法1:
+	kw={'city':'Beijing', 'job':'Engineer'}
+	person('Jack', 24, city=kw['city'], job=kw['job'])
+	//方法2:
+	person('Jack', 24, **kw)	/*简化写法*/
+
+**参数组合**
+
+	def func(a, b, c=0, *args, **kw):
+		/*顺序:必选参数(a,b)、默认参数(c)、可变参数(*args),关键字参数(**kw)*/
+	
+	//调用
+	func(1, 2)	/*a=1,b=2,c=0,args=()空tuple,kw={}空dict*/
+	func(1, 2, 3)	/*c=3,其他一样*/
+	func(1, 2, 3, 'a', 'b')	/*args=('a', 'b'),其他一样*/
+	func(1, 2, 3, 'a', 'b', x=99)
+		/*args=('a', 'b'); kw={'x':99}*/
+
+	//比较常用的
+	args=(1, 2, 3, 4)
+	kw={'x':99}
+	func(*args, **kw)	/*a=1,b=2,c=3,args=(4,),kw={'x':99}*/
+	/*常用*args:表示可变参数; **kw:表示关键字参数.*/
+
+### 4.4 递归函数
+
+递归函数:在函数内部调用自身本身.
+
+	def fact(n):	/*fact:表示阶乘*/
+		if n == 1:
+			return 1
+		return n * fact(n - 1)	/*函数中调用自身本身*/
+	//调用
+	fact(1)		/*retval:1*/
+	fact(5)		/*retval:120*/
+
+**递归调用定义简单,逻辑清晰,类似循环.**
+
+	//存在的问题
+	栈溢出:递归调用内部每调用一次,都需要做入栈操作(函数的参数需要),栈会加一层栈帧.出栈会减一层栈帧.
+	一旦递归层数过多,就会出现栈溢出.
+
+**尾递归函数:函数返回时调用自身本身,而且,return语句中不能包含表达式(只有自身函数本身).**
+
+	def fact_iter(num, product):	/*尾递归函数*/
+		if num == 1:
+			return product	/*返回最终的积*/
+		return fact_iter(num - 1, num * product)		
+		/*返回递归函数本身,num-1和num*product在调用前被计算,且return中不含表达式*/
+
+	def fact(n):
+		return fact_iter(n, 1)	/*为尾递归函数*/
+
+**尾递归函数在带有对尾递归做优化的程序语言中可以防止栈溢出.但是目前大多数语言不支持(包括python).**
+***
+
+## 5、函数应用
+
+**高阶函数**
+
+高阶函数:让函数的参数能够接受别的函数.
+
+	def add(x, y, f):	/*函数参数f可以接受"abs"函数*/
+		return f(x) + f(y)
+	//调用
+	add(-5, 6, abs)	/*展开为:abs(-5) + abs(6) = 11*/
+	abs函数名也是变量,指向计算绝对值的函数
+
+### 5.1 map/reduce函数
+
+map()函数接收两个参数.一个函数,一个list.map会将函数依次作用于list中的每一个元素,将结果作为新的list返回.
+
+	def f(x):
+		return x * x
+	map(f, [1, 2, 3, 4, 5, 6, 7, 8, 9])	/*将f函数作用于list中的每一个元素*/
+	//返回值为:[1, 4, 9, 16, 25, 36, 49, 64, 81]
+
+实例
+
+	//将list中的所有数字转化为字符串
+	map(str, [1, 3, 5, 7, 9])	//结果为:['1', '3', '5', '7', '9']
+
+reduce()函数接收两个参数.一个函数,一个list.函数从list中取两个参数计算,得到返回值和list中的第三个参数作为函数的参数继续参与计算.直到最后得到返回值.
+
+	reduce(f, [x1, x2, x3, x4]) = f(f(f(x1, x2), x3), x4)
+
+	//求和
+	def add(x, y):
+		return x + y
+	reduce(add, [1, 3, 5, 7, 9])	//最终值为:25.也可以用python内置的sum()函数
+
+	//把序列1, 3, 5, 7, 9变成整数13579
+	def fn(x, y):
+		return x * 10 + y
+	reduce(fn, [1, 3, 5, 7, 9])
+
+**str(字符串)转换为int---str也为list**
+
+	def fn(x, y):
+		return x * 10 + y
+	
+	def char2num(s):
+		return {'0':0, '1':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9}[s]
+fand
+	reduce(fn, map(char2num, '13579'))	//结果为:13579
+
+	// str2int函数
+	def str2int(s):
+		def fn(x, y):
+			return x * 10 + y
+		def char2num(s):
+			return {'0':0, '1':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9}[s]
+		return reduce(fn, map(char2num, s))
+
+	//使用lambda函数简化
+	def char2num(s):
+		return {'0':0, '1':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9}[s]
+
+	def str2int(s):
+		return reduce(lambda x, y: x * 10 + y, map(char2num, s))---lambda para : expression
+
+### 5.2 filter函数
+
+filter()接收一个函数和一个list.filter会将函数依次作用于list中的每一个元素,根据返回值为True还是False决定保留还是丢弃该元素.
+
+	//删掉偶数,保留奇数
+	def is_odd(n):
+		return n % 2 == 1
+
+	filter(is_odd, [1, 2, 4, 5, 6, 9, 10, 15])	//结果为:[1, 5, 9, 15]
+
+	//删掉空字符串
+	def not_empty(s):
+		return s and s.strip()	
+		/*strip:用于移除字符串头尾指定的字符(默认为空格:e.g.' ').此处空字符串会返回False*/
+	filter(not_empty, ['A', '', 'B', None, 'C', ' '])
+
+	//尝试下:s = '' print s;以及s = ' ' print s
+	
+### 5.3 sorted函数
+
+sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;x==y返回0".也可以接受函数和list,list在前,函数在后.
+
+	//从小到大排序(默认)
+	sorted([36, 5, 12, 9, 21])	//排序完:[5, 9, 12, 21, 36]
+	//实现倒序排序
+	def reversed_cmp(x, y):
+		if x > y:
+			return -1
+		if x < y:
+			return 1
+		return 0
+	sorted([36, 5, 12, 9, 21], reversed_cmp)	//结果为:[36, 21, 12, 9, 5]
+	//list在前,函数在后.与前面的不一样
+
+字符串排序
+
+	sorted(['bob', 'about', 'Zoo', 'Credit'])	//结果为:['Credit', 'Zoo', 'about', 'bob']
+		//默认按着ASCII的大小比较,有大小写之分
+	//忽略大小写
+	def cmp_ignore_case(s1, s2):
+		u1 = s1.upper()	//将字母转变为大写,upper()和lower作用于整个字符串
+		u2 = s2.upper()	//将字母转变为大写,upper()和lower作用于整个字符串
+		if u1 > u2:
+			return 1
+		if u1 < u2:
+			return -1
+		return 0
+
+	sorted(['bob', 'about', 'Zoo', 'Credit'], cmp_ignore_case)
+	//结果为:['about', 'bob', 'Credit', 'Zoo']
+
+**字符串转换大小写函数**
+	
+	s = 'hEllo pYthon'
+	print s.upper()			//转变为大写,结果为:HELLO PYTHON
+	print s.lower()			//转变为小写,结果为:hello python
+	print s.capitalize()	//首字母大写,其余小写,结果为:Hello python
+	print s.title()			//所有单词首字母大写,其余小写,结果为:Hello Python
 
 ## Python logging模块
 
