@@ -749,6 +749,228 @@ python对匿名函数的支持有限
 
 ## 6、模块
 
+在Python中,一个".py"文件就是一个模块(module).
+
+模块放置在某个文件夹下,该文件夹称为包(package).只要文件夹名字不同,文件夹下的模块名字以及模块中的变量名可以与其他的模块相同.
+
+	abc.py---一个名字叫"abc"的模块
+	->mycompany		//顶层目录
+		->web	//
+			->__init__.py	
+		//将"mycompany.web"变成一个包,"__init__.py"可以为空.模块名为"mycompany.web".该文件必须存在
+			->utils.py	//模块名为"mycompany.web.utils".
+			->www.py		//模块名为"mycompany.web.www"
+		->__init__.py//文件夹(包目录)下面的__init__.py将"mycompany"当成一个"包".模块名为"mycompany"
+		->abc.py		//模块名为"mycompany.abc"
+		->utils.py	//模块名为"mycompany.utils",可以与"mycompany.web.utils"名字,但是模块名不同
+		->xyz.py		//模块名为"mycompany.xyz"
+
+### 6.1 导入模块
+
+	#!/usr/bin/python	//制定可执行程序路径
+	# -*- coding: utf-8	-*-		//使用utf-8编码
+
+	'a test module'		//注释
+	__author__ = 'Defy Chen'	//作者
+
+	import sys	//导入"sys"模块,使用sys变量指向sys模块.sys模块的变量argv为存储所有命令行参数的list.
+				//至少有一个元素,执行时".py"文件的名称
+	
+	def test():
+		args = sys.argv		//运行./hello.py时sys.argv就是['hello.py']
+		if len(args) == 1:
+			print 'Hello, world'
+		elif len(args) == 2:	//运行./hello.py Defy时sys.argv就是['hello.py', 'Defy']
+			print 'Hello, %s!' % args[1]
+		else:
+			print 'Too many arguments!'
+
+	if __name__ == '__main__':	//直接运行./hello.py,python中的特殊变量"__name__"就会置为"__main__"
+								//而在其他地方导入时,就会判断失败.用于测试该模块的正确性.
+		test()
+
+	//执行
+	./hello.py defy		//打印出:Hello, defy!
+	//在交互环境下,导入hello模块
+	$ python
+	>>> import hello
+	>>>     //没有任何打印,没有调用test()函数
+	>>> hello.test()      //调用test函数
+	>>> Hello, world      //打印出来了
+
+### 6.2 别名
+
+	try:	//Python IO的两套库"cStringIO"和"StringIO",接口和功能相同.cStringIO用c下的,速度快.
+		import cStringIO as StringIO	//优先导入cStringIO作为StringIO,"as"相当于别名
+	except ImportError:	//导入失败会捕获到ImportError
+		import StringIO	//失败再导入StringIO.后面的代码均可以用StringIO正常工作
+
+	//example
+	try:
+		import json	#python >= 2.6	//注释"#",2.6中有json的库
+	except ImportError:
+		import simplejson as json #python <= 2.5	//2.6之前独立第三方库
+
+### 6.3 作用域
+
+	abc, x123, PI	//公开的(public)变量或者函数名,可以直接引用
+	__xxx__		//特殊变量(e.g.__author__, __name__等).自己的变量一般不这么定义
+	_xxx或__xxx	//非公开的(private)的函数或变量(e.g._abc, __abc).不应该引用private函数或变量
+
+	def _private_1(name):	//定义private的函数,细节被隐藏
+		return 'Hello, %s' % name
+	def _private_2(name):	//细节被隐藏
+		return 'Hi, %s' % name
+	
+	def greeting(name):	//公开greeting函数.借口公开,细节隐藏.
+		if len(name) > 3:
+			return _private_1(name)
+		else:
+			return _private_2(name)
+
+**模块搜索路径**
+
+	//搜索路径在sys模块的path变量中
+	>>>import sys
+	>>>sys.path    //为一个list
+	//添加自己的搜索目录, method 1
+	>>>import sys
+	>>>sys.path.append('pathname')    //运行时修改,结束后失效
+	//method 2
+	设置环境变量PYTHONPATH---不是很清楚
+***
+
+## 7、 面向对象编程
+
+	class Student(object):	//类定义,派生于object(所有类都可以派生于object).类名大写字母开头
+		def __init__(self, name, score): 
+			//类函数必须有个参数self:表示对象本身.调用时不用传递该参数.其他在__init__中的参数必须传递
+			self.name = name	//类变量
+			self.score = score
+		def print_score(self):	//类方法,self不用传,如果有其他参数,按照正常函数传递即可.
+			print '%s: %s' % (self.name, self.score)
+
+	//调用
+	bart = Student('Bart Simpson', 59)	//实例一个对象
+	lisa = Student('Lisa Simpson', 87)	//不需要传递self参数
+	bart.print_score()	//调用对象的函数
+	lisa.print_score()	//调用对象的函数
+	//也可以临时给实例增加数据成员
+	bart.age = 8	//age非class的类变量,临时增加的数据成员.仅属于该实例,其他实例没有.
+	bart.score = 89	//外部可以自由修改一个实例的public属性
+
+**访问限制---private**
+
+	class Student(object):
+		def __init__(self, name, score):
+			self.__name = name	//"__"打头表示私有变量,外部不能再访问了
+			self.__score = score	//私有变量,外部不能再访问了
+		def print_score(self):
+			print '%s: %s' % (self.__name, self.__score)	//class内部可以访问private属性
+		def get_name(self):
+			return self.__name
+		def get_score(self):
+			return self.__score
+		def set_score(self, score):
+			if 0 <= score <= 100:	//private可以方便进行参数检查
+				self.__score = score
+			else:
+				raise ValueError('bad score')	//抛出错误
+	
+### 7.1 继承和多态
+
+	class Animal(object):	//定义一个父类
+		def run(self):
+			print 'Animal is running...'
+
+	class Dog(Animal):		//Dog类继承自Animal
+		def run(self):
+			print 'Dog is running...'	//子类run在调用中会覆盖父类的run方法---多态
+	class Cat(Animal):
+		def run(self):
+			print 'Cat is running...'
+	
+	def run_twice(animal):	//参数接受Animal对象,可以是父类,也可以是父类派生的子类
+		animal.run()
+		animal.run()
+
+	run_twice(Animal())	//传入Animal对象,调用Animal的run方法
+	run_twice(Dog())	//传入Dog对象(也是Animal对象),按照多态会调用Dog的run方法
+	run_twice(Cat())	//传入Cat对象(也是Animal对象),按照多态会调用Cat的run方法
+
+**类型判断:type()**
+
+	type(123)
+	type('str')
+	type(None)
+	type(abs)	//判断函数
+	type(a)		//判断类(a = Animal())
+	
+常用在if判断中:
+
+	import types	//导入types模块
+	type('abc') == types.StringType	//判断是否为字符型,是返回Ture
+	type([]) == types.ListType		//判断是否为list,是返回Ture
+	type(str) == types.TypeType		//所有类型都是TypeType
+
+	//使用isinstance()更简单
+	isinstance(d, Dog)	//判断d是否为Dog类,如果是返回True.否则返回False
+
+**dir()函数**
+
+	dir('ABC')	//获得字符串对象的属性和方法
+
+**@property的使用**
+
+@property主要用于简化get/set等的操作,将函数变成属性操作
+
+	class Student(object):
+		@property	//单独的"@property"相当于getter_xxx.将get方法变成属性
+		def score(self):	//此处相当于"getter_score(self)"
+			return self.__score
+
+		@score.setter	//"@xxx.setter"相当于"xxx.setter",将set方法变成属性
+		def score(self, value):	//此处相当于"setter_score(self, value)"
+			if not isinstance(value, int):
+				raise ValueError('score must be integer!')
+			if value < 0 or value > 100:
+				raise ValueError('score must between 0 ~ 100!')
+			self.__score = value
+
+	//实例化
+	s = Student()
+	s.score = 60	//实际转化为s.set_score(60)
+	s.score			//实际转化为s.get_score(),结果为60
+	s.score = 9999	//报错
+
+定义读写/只读属性方法
+
+	class Student(object):
+		@property	//相当于get_birth,只读属性
+		def birth(self):
+			return self.__birth
+		@birth.setter	//相当于birth_setter,写属性
+		def birth(self, value)
+			self.__birth = value
+		@property
+		def age(self):	//相当于get_age,只读属性
+			return 2017 - self.__birth
+
+**多重继承,也叫Mixin**
+
+	class Animal(object):
+		pass
+
+	class Mammal(Animal):	//哺乳类继承自动物类
+		pass
+	
+	class Runnable(object):	//能跑的类
+		def run(self):
+			print 'running...'
+
+	class Dog(Mammal, Runnable):	//多重继承(Mammal类和Runnable类)
+		pass
+
 ## Python logging模块
 
 默认情况下,logging将日志打印到屏幕,日志级别是WARNING.级别大小:CRITICAL>ERROR>WARNING>INFO>DEBUG>NOTSET.
