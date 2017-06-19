@@ -22,7 +22,7 @@
 
 **6)提交缓存(还在本地):**
 
-	git commit -m " "	//" "表示注释,方便自我查看
+	git commit -m "Reading note 2017/06/05"	//" "表示注释,方便自我查看
 
 **7)将本地commit后的添加到github仓库:**
 

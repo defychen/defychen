@@ -8,19 +8,32 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 	tVA_DSCR_StbSession *pStbSession;
 	pStbSession = (tVA_DSCR_StbSession *)malloc(sizeof(tVA_DSCR_StbSession));
 
+**malloc申请的内存在堆上,释放需要使用free函数.函数中的变量占的空间位于栈上,变量在函数结束后所占的空间会自动释放.**
+
+	//释放malloc申请的内存
+	free(pStbSession);
+	pStbSession = NULL;	/*释放后需要将指针置空,防止野指针*/
+
+关于在程序运行中出现"double free or corruption (out)：0x0941b450(某个地址)"
+
+	//在程序中free两次会报这个错误
+	tVA_DSCR_StbSession *pStbSession = (tVA_DSCR_StbSession *)malloc(sizeof(tVA_DSCR_StbSession));
+	free(pStbSession);	/*free第一次*/
+	free(pStbSession);	/*free第二次就会报这种错误*/
+
 ## 2、指针赋值
 
-	char *puc_key;
+	unsigned char key_buffer[16 * 2] = {0};	/*初始化key的数组全部为0*/
 	char *pEvenKey = {0xbc, 0x0c, 0x94, 0x1e, 0xbc, 0xd2, 0xa1, 0x3e, 0x89, 0xc9, 
 	0x84, 0x6a, 0x51, 0x9e, 0x90, 0x8d};
 	char *pOddKey = {0xbc, 0x0c, 0x94, 0x1e, 0xbc, 0xd2, 0xa1, 0x3e, 0x89, 0xc9,
 	0x84, 0x6a, 0x51, 0x9e, 0x90, 0x8d};
-	/*需要将pEvenKey和pOddKey拷贝给puc_key*/
-	memcpy(puc_key, pOddKey, 16);
-	memcpy(puc_key + 16, pEvenKey, 16);
+	/*需要将pEvenKey和pOddKey拷贝给key_buffer*/
+	memcpy(key_buffer, pOddKey, 16);	/*odd在前*/
+	memcpy(key_buffer + 16, pEvenKey, 16);	/*even在后*/
 	/*使用赋值是错误的:
-	puc_key = pOddKey;
-	puc_key + 16 = pEvenKey;	/*这种方式意味着将指针指向的位置变了,而不是copy内容给puc_key*/
+	key_buffer = pOddKey;
+	key_buffer + 16 = pEvenKey;	/*这种方式意味着将指针指向的位置变了,而不是copy内容给key_buffer*/
 	*/
 	
 ## 3、结构体变量赋值
