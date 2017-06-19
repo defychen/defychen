@@ -659,3 +659,11 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 	/*总结为:*/
 	#define BYTESWAP(x) ((ROTR((x), 8) & 0xff00ff00) | (ROTL((x), 8) & 0x00ff00ff))
 	
+## 23、memcpy写buffer时出现溢出
+
+	UINT32 src = 0x12345678;	//4 byte,16进制表示的数据
+	UINT8  dest = 0;
+	//下面的虽然可以正确拷贝,但是可能会出现溢出的warning
+	memcpy(&dest, (UINT8 *)&src, sizeof(UINT32));	//会拷贝src中的最后一个字节(0x78)
+	//应该改为
+	memcpy(&dest, (UINT8 *)&src, sizeof(UINT8));	//修改拷贝大小为1 byte

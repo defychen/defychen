@@ -1092,3 +1092,249 @@ getcwd:获得当前工作目录的完整绝对路径名
 	}
 
 	/dev/tty[01]---shell正则表达式,shell可将其扩展为"/dev/tty0"和"/dev/tty1"
+***
+## Chapter 5 标准I/O库
+
+**STDIN_FILENO和stdin的区别**
+
+	1)STDIN_FILENO:类型为int,打开文件的描述符(相当于fd---此处为标准输入(值为0)).属于系统调用,调用的函数包括:open/read/write/close等
+	e.g.
+	n = read(STDIN_FILENO, buf, BUFFERSIZE);	//从键盘输入
+	2)stdin:类型为FILE *,标准I/O.属于标准库处理的输入流,由标准库函数调用,包括:fopen/fread/fwrite/fclose/getc等.
+	标准库函数最终会调用系统调用(fread内部实现调用了read)
+	e.g.
+	c = getc(stdin));	//从标准输入流中输入一个字符---键盘
+
+**库函数与系统调用的区别(fopen和open的区别)**
+
+	1)库函数(fopen):属于带缓冲的打开方式(缓冲大小由机器决定),属于高级的IO,标准C函数(可移植),常用于打开普通文件.
+	2)系统调用(open):不带缓冲,低级的IO,属于系统函数(属于用户空间).一般用于打开设备文件.
+
+### 5.1 缓冲及标准I/O的使用
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	char inbuf[BUFSIZE];	//BUFSIZE常量定义在"stdio.h"中
+	int main()
+	{
+		int a;
+		char c;
+		/*不带"fflush(stdin)":用于清空标准输入/出缓冲区
+		scanf("%d", &a);
+		c = getchar();	//获得一个字符
+		printf("a = %d, c = %c \n", a, c);
+
+		测试时,输入:123abc.得到的结果为:a = 123, c = a(将整数"123"赋给a,剩下的第一个字符"a"赋给c.)
+		*/
+
+		/*带"fflush(stdin)"
+		scanf("%d", &a);	//输入的"123abc",会先将整数"123"赋给a
+		fflush(stdin);		//清空标准输入,剩下的"abc"会被清空.此时缓冲区没内容---因此必须输入两次
+		c = getchar();		//还会等待用户的输入,输入"xyz",将"x"赋给c
+		printf("a = %d, c = %c \n", a, c);
+		*/
+
+		/*输入流(stdin)与缓冲区关联
+		char a[100];
+		setbuf(stdin, inbuf);	//标准输入流"stdin"与缓冲区"inbuf"关联
+		printf("Input a string: ");
+		scanf("%s", a);
+		puts(inbuf);	//将缓冲区"inbuf"中的数据输出
+		if(0 == fflush(inbuf))	//清空缓冲区"inbuf"
+		{
+			puts(inbuf);	//此时会输出空
+		}
+		puts(inbuf);	//还是输出空
+		*/
+		return 0;
+	}
+
+### 5.2 打开流
+
+	#include <stdio.h>
+	FILE *fopen(const char *pathname, const char *mode);
+	/*para1:指定路径的文件名; para2:打开模式(常量字符串)
+	retval:成功返回文件流的指针,出错返回NULL.*/
+	/*
+	mode: r(只读)、w(只写,且不存在会创建)、a()追加、r+(读写)、w+(读写,且不存在会创建---常用)
+	*/
+	
+	//关闭
+	int fclose(FILE *fp);
+
+实例
+	
+	FILE *fp;
+	fd = fopen("hello.txt", "w+");	//以读写方式创建并打开当前目录下的"hello.txt"文件
+	//关闭
+	fclose(fd);
+
+### 5.3 读写流---不常用
+
+读字符---一次读取一个字符
+
+	#include <stdio.h>
+	int getc(FILE *fp);
+	int fgetc(FILE *fp);
+	int getchar(void);	//用于定位程序执行到哪里---较为常用
+	/*retval:成功返回下一个字符;到达文件尾或出错返回EOF(值为-1)*/
+
+写字符---一次写一个字符(使用较少)
+
+	#include <stdio.h>
+	int putc(int c, FILE *fp);
+	int fputc(int c, FILE *fp);
+	int putchar(int c);
+
+实例---用getc和putc将标准输入复制到标准输出:
+
+	#include <stdio.h>
+	int main(void)
+	{
+		int c;
+		while((c = getc(stdin)) != EOF)	//从标准输入获得一个字符,并有c来实现定位
+			if(putc(c, stdout) == EOF)	//输出获取的字符到标准输出
+				err_sys("output error");
+
+		if(ferror(stdin))	//判断标准输入出错
+			err_sys("input error");
+
+		exit(0);
+	}
+
+### 5.4 整行的I/O读写---常用
+
+读:从fopen打开的流中读一行数据到buf缓冲区
+
+	#include <stdio.h>
+	char *fgets(char *buf, int n, FILE *fp);	//从fp这一个流中将一行(不超过n-1)数据读到buf指定的缓冲区中,缓冲大小为"n"
+	/*n:指定buf的大小. retval:成功返回buf,到文件尾或出错返回NULL.*/
+
+写:将buf中的数据写入fopen打开的流文件中.
+
+	#include <stdio.h>
+	int fputs(const char *buf, FILE *fp);	//将buf中的数据写入fp这一个文件流
+	/*retval:成功返回非负值;出错返回"EOF"*/
+	
+	//fputs会将一个以null字节终止的字符串写到流中.字符串中"xxxx\0"的"\0"为字符串的终止符.
+
+实例:
+
+	#include <stdio.h>
+	#define LENGTH 100
+	int main()
+	{
+		FILE *fp;
+		char str[LENGTH];
+		
+		fp = fopen("hello.txt", "w+");	//读写创建并打开文件
+		if(fp)	//成功返回文件流的指针,为一个地址.失败返回NULL
+		{
+			fputs("hello world", fp);	//将字符串写入fp
+			fclose(fp);		//关闭fp
+		}
+
+		fp = fopen("hello.txt", "r");	//只读方式打开文件
+		fgets(str, LENGTH, fp);		//从fp中读一行到str这一个buffer中(str buffer的大小为LENGTH)
+		printf("%s\n", str);
+		fclose(fp);
+	}
+
+### 5.5 二进制I/O---一次读/写一个完整的结构
+
+	#include <stdio.h>
+	size_t fread(void *ptr, size_t size, size_t count, FILE *fp);
+	size_t fwrite(const void *ptr, size_t size, size_t count, FILE *fp);
+	/*
+	para1:从fp读数据到ptr或者将ptr的数据写入到fp
+	para2:ptr这一数据或结构的大小(使用sizeof求大小)
+	para3:读/写的元素个数
+	*/
+
+	//写数组
+	FILE *fp;
+	int buffer[] = {1, 2, 3, 4};
+	if((fp = fopen("myfile.txt", "w")) == NULL)
+	{
+		...
+	}
+	fwrite(buffer, sizeof(int), 4, fp);	//一次写入操作
+	fclose(fp);
+	//读数组
+	FILE *fp;	
+	int buffer[4] = {0};
+	if((fp = fopen("myfile", "w")) == NULL)
+	{
+		...
+	}
+	fread(buffer, sizeof(int), 4, fp);	//一次读取
+	fclose(fp);
+
+读写结构体实例
+
+	//写结构体数据到文件
+	#include <stdio.h>
+	#include <string.h>
+	#include <stdlib.h>
+
+	typedef struct{
+		int age;
+		char name[30];
+	}people;
+
+	int main()
+	{
+		FILE *fp;
+		int i;
+		people per[3];
+		per[0].age = 20;
+		per[1].age = 18;
+		per[2].age = 21;
+		strcpy(per[0].name, "li");	//strcpy(dest, src):赋值src字符串到dest
+		strcpy(per[1].name, "wang");
+		strcpy(per[2].name, "zhang");
+
+		if((fp = fopen("myfile.txt", "wb")) == NULL)
+		{
+			printf("open file fail\n");
+			exit(0);
+		}
+
+		for(i = 0; i < 3; i++)	//一次写入fp
+		{
+			if(fwrite(&per[i], sizeof(people), 1, fp) != 1)	//成功返回写入的个数
+				printf("write file fail");
+		}
+		fclose(fp);
+		return 0;
+	}
+
+	//读结构体数据
+	#include <stdio.h>
+	#include <string.h>
+	#include <stdlib.h>
+	typedef struct{
+		int age;
+		char name[30];
+	}people;
+
+	int main()
+	{
+		FILE *fp;
+		people per;
+		if((fp = fopen("myfile.txt", "rb")) == NULL)
+		{
+			printf("open file fail");
+			exit(0);
+		}
+
+		while((fread(&per, sizeof(people), 1, fp)) == 1)	//读到数据就printf,否则退出
+		{
+			printf("%d %s\n", per.age, per.name);
+		}
+
+		fclose(fp);
+		return 0;
+	}
+	
+	
