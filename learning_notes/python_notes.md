@@ -971,6 +971,51 @@ python对匿名函数的支持有限
 	class Dog(Mammal, Runnable):	//多重继承(Mammal类和Runnable类)
 		pass
 
+### 7.2 定制类
+
+**__str\__:用于打印类实例时显示的好看**
+
+	//正常打印类实例
+	class Student(object):
+		def __init__(self, name):
+			self.name = name
+	//打印类实例
+	>>>print Student('Michael')   //会得到"<__main__.Student object at 109afb190>",不好看
+	
+	//定义好"__str__()",返回一个好看的字符即可
+	class Student(object):
+		def __init__(self, name):
+			self.name = name
+		def __str__(self):
+			print 'Student object (name: %s)' % self.name
+	//打印类实例
+	>>>print Student('Michael')   //会得到"Student object (name: Michael)"
+
+	//直接敲变量还是会不好看
+	>>>s = Student('Michael')
+	>>>s       //依然会不好看"<__main__.Student object at 109afb190>"
+	//解决:在类定义最后加上下面一句即可
+	__repr__ = __str__		//为调试服务的
+
+**__iter\__:用于类的"for...in"循环,类似list或tuple**
+
+	//斐波那契数列类实现,可以作用于for循环
+	class Fib(object):
+		def __init__(self):
+			self.a, self.b = 0, 1	//初始化头两个数
+		def __iter__(self):
+			return self			//定义迭代对象.实例本身为迭代对象,故返回自己
+		def next(self):			//Python中的for循环会不断调用迭代对象的next()方法拿到循环的下一个值
+			self.a, self.b = self.b, self.a + self.b	//计算下一个值
+			if self.a > 100000	//循环退出条件
+				raise StopIteration();	//抛出"StopIteration;"---终止循环."后面有分号"
+			return self.a	//返回下一个值
+
+	//调用
+	>>>for n in Fib():
+	...		print n
+	...	//会打印出斐波那契数列
+
 ## Python logging模块
 
 默认情况下,logging将日志打印到屏幕,日志级别是WARNING.级别大小:CRITICAL>ERROR>WARNING>INFO>DEBUG>NOTSET.
