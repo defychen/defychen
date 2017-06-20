@@ -1337,4 +1337,122 @@ getcwd:获得当前工作目录的完整绝对路径名
 		return 0;
 	}
 	
-	
+### 5.6 ftell、fseek、fprintf、fscanf的使用
+
+	#include <stdio.h>
+	//ftell:显示当前文件的位置
+	long ftell(FILE *fp);	//retval:成功返回当前文件位置指示,失败返回"-1"
+	//fseek:重新定位文件的指针
+	int fseek(FILE *fp, long offset, int whence);	//retval:成功返回0,失败返回"-1"
+					//whence:SEEK_SET(文件头)、SEEK_CUR(当前位置)、SEEK_END(文件尾)
+	//fprintf:格式化输出到流
+	int fprintf(FILE *fp, const char *format, ...);	//retval:成功返回输出的字符数,失败返回负值
+		//输出时,都当作字符来处理(包括整数和字符),e.g.(整数123是3个字符---一个整数一个字符)
+	//fscanf:将流中的数据格式化输出到变量
+	int fscanf(FILE *fp, const char *format, ...);	//retval:成功返回输出到变量的项数,失败返回"-1"
+
+实例
+
+	#include <stdio.h>
+	int main()
+	{
+		int a = 123;
+		FILE *fp = fopen("myData.txt", "w");	//写方式打开,没有会创建
+		printf("LINE: %d, position: %ld\n", __LINE__, ftell(fp));
+		//情况1:向流中输入整型数	
+		fprintf(fp, "%d", a);	//会将123输入到fp中,且会变成一个一个的字符
+		//情况2:向流中输入字符串
+		fprintf(fp, "123");		//会将123输入到fp中,且会变成一个一个的字符
+		printf("LINE: %d, position: %ld\n", __LINE__, ftell(fp));	//上述两种情况的位置是一样的,都是"3"
+		
+		fprintf(fp, "%d", 456);	//会将456输入到fp中,且会变成一个一个的字符
+		printf("LINE: %d, position: %ld\n", __LINE__, ftell(fp));	//结果为"6"
+		fclose(fp);
+
+		int b;
+		fp = fopen("myData.txt", "r");
+		printf("LINE: %d, position: %ld\n", __LINE__, ftell(fp));	//读指针从头开始,因此此处为"0"
+		fscanf(fp, "%d", &b);	//将流fp中的数据输出到变量"b"
+		printf("LINE: %d, position: %ld\n", __LINE__, ftell(fp));	//读指针由fscanf更改到末尾,因此此处为"6"
+		printf("LINE: %d, a: %d\n", __LINE__, b);	//此时b的值为123456
+		fclose(fp);
+
+		int c[10] = {0};
+		fp = fopen("yourData.txt", "wb");	//二进制写方式打开,没有会创建
+		printf("LINE: %d, position: %ld\n", __LINE__, ftell(fp));	//位置为"0"
+		fwrite(c, sizeof(c), 1, fp);	//将c数组中的数据写入到fp
+		printf("LINE: %d, position: %ld\n", __LINE__, ftell(fp));	
+				//写入的数据为整型数组数据,每个占4byte.因此总共40 byte.此处为"40"
+		fclose(fp);
+
+		int d[10];
+		fp = fopen("yourData.txt", "rb");
+		printf("LINE: %d, position: %ld\n", __LINE__, ftell(fp));	//读指针从头开始,因此此处为"0"
+		fread(d, sizeof(d), 1, fp);		
+		printf("LINE: %d, position: %ld\n", __LINE__, ftell(fp));	//读指针更新到末尾,因此此处
+		fclose(fp);
+		
+		return 0;
+	}
+***
+## Chapter 6 系统数据文件和信息
+
+### 6.1 口令文件---/etc/passwd
+
+	//口令文件内容如下(以":"分隔)
+	root:x:0:0:root:/root:/bin/bash
+	...
+	defy.chen:x:1132:1132:defy.chen,S5100,8256:/zhsa022/usrhome/defy.chen:/bin/bash
+	//各字段含义
+	注册名:口令:用户标识符:组标识符:用户名:用户主目录:命令解释程序
+	//分析
+	1.注册名(login_name):"defy.chen"或"root",同一系统中注册名唯一
+	2.口令(passwd):口令保存在"/etc/shadow"文件中(root用户才能读取),在/etc/passwd中用"x"代替
+	3.用户标识符(UID):为一个数值,linux系统中唯一用户标识,与注册名一一对应.注册名用户使用方便,UID linux系统使用方便
+	4.组标识符(GID):为一个数值,用户工作组标识,表示用户属于哪个组
+	5.用户名(user_name):包含用户的有关信息,此处为"名字,部门,分机号"
+	6.用户主目录(home_directory):用户的工作目录
+	7.命令解释程序(shell):可执行程序
+
+### 6.2 阴影口令---/etc/shadow
+
+	//阴影口令文件内容如下(以":"分隔)
+	情况一:
+	root:!:16492:0:9999:7:::
+	情况二:
+	root:$6$c4tgZV1o$...:16492:0:99999:7:::
+	//各字段含义
+	账户名:密码:修改日期:密码不可改的天数:密码需要修改的期限:修改期限前N天发出警告:密码过期宽限:帐号失效日期:保留
+	//分析
+	1.账户名:root
+	2.密码:"!"表示无密码.密码字符串格式"$id$salt$encrypted",此处"id=6使用sha-512";"salt"随机字符串,增加破解难度;
+		"encrypted"加密后的数据
+	3.修改日期:上一次修改密码距离1970-01-01的天数
+	4.密码不可改的天数:为8表示距离上一次更改8天内不能再更新,为0随时可以更改
+	5.密码休要修改的期限:若为12345表示距离1970-01-01的12345天内必须修改密码,为99999则永远不用改
+	6.修改期限前N天发出警告:距离截至日期前N天会向用户发出警告
+	7.密码过期宽限:若为M表示帐号过期M内可以修改密码
+	8.帐号失效日期:若为X表示距离1970-01-01的X天之后帐号失效
+	9.保留:暂时没用
+
+### 6.3 组文件---/etc/group
+
+略
+
+### 6.4 其他数据文件
+
+	/etc/services:记录网络服务器所提供服务的数据文件
+	/etc/protocols:记录协议信息的数据文件
+	/etc/networks:记录网路信息的数据文件
+	/etc/hosts:主机
+
+### 6.5 系统表示
+
+	uname	//获得与主机和操作系统有关的信息
+	uname -a		//打印所有信息,可通过"uname --help"得到帮助
+	hostname	//获取主机名---得到结果"zhsa02"
+
+### 6.6 时间和日期例程
+
+*** 
+## Chapter 7 进程环境

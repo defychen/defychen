@@ -667,3 +667,43 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 	memcpy(&dest, (UINT8 *)&src, sizeof(UINT32));	//会拷贝src中的最后一个字节(0x78)
 	//应该改为
 	memcpy(&dest, (UINT8 *)&src, sizeof(UINT8));	//修改拷贝大小为1 byte
+
+## 24、往一段buffer中填入命令的方法(Command Queue)
+
+	typedef struct dsc_cmdq_io_format_defy
+	{
+		UINT64 cmd_data:32;	//占32 bit
+		UINT64 cmd_byte_en:4;
+		UINT64 cmd_index:16;
+		UINT64 cmd_type:4;
+		UINT64 cmd_reserved:8;
+	}DSC_CMDQ_IO_DEFY;	//命令格式
+
+	typedef struct dsc_cmdq_info_defy
+	{
+		UINT32 cmdq_id;	//command queue id
+		UINT32 cmdq_s_ptr;	//start pointer of this id(值当作指针使用)
+		UINT32 cmdq_cur_ptr;	//current point of this id(值当作指针使用)
+		UINT32 cmdq_size;		//size of cmdq, unit 16 byte
+	}DSC_CMDQ_INFO_DEFY;	//控制命令的移动(DSC_CMDQ_IO_DEFY的移动)
+
+	UINT8 cmdq_buf[512] = {0};	//一段512字节大小的buffer---用于填充command
+	DSC_CMDQ_INFO_DEFY	cmdq_info_defy;	//
+	memset(&cmdq_info_defy, 0x00, sizeof(DSC_CMDQ_INFO_DEFY));
+	cmdq_info_defy.cmdq_cur_ptr = (UINT32)cmdq_buf + sizeof(DSC_CMDQ_INFO_IO);	//移动一个IO的位置,保留给CMDQ_ID用
+	cmdq_info_defy.cmdq_s_ptr = (UINT32)cmdq_buf;	//起始指针挪到buffer头
+
+	//开始往buffer中填入命令
+	DSC_CMDQ_IO_DEFY *pcmdq_io_defy = (DSC_CMDQ_IO_DEFY *)cmdq_info_defy.cmdq_cur_ptr;	//指向同一个地址
+	pcmdq_io_defy->cmd_reserved = 0;
+	pcmdq_io_defy->cmd_type = DSC_IO_WRITE;	//表示IO写
+	pcmdq_io_defy->cmd_index = KEY_MODE_REG;		//寄存器的位置
+	pcmdq_io_defy->cmd_byte_en = 0xF;			//表示32 bit的4个字节都有效.一个bit表示对应的一个字节有效
+	pcmdq_io_defy->cmd_data = 1;				//写入寄存器的数据
+	//上面已经完成了将cmd填入buffer的操作(因为两个指针指向同一个地方,改变一个另一个也会改变)
+	cmdq_info_defy.cmdq_cur_ptr += sizeof(DSC_CMDQ_IO_DEFY);	//移动当前指针
+	
+	memcpy((UINT8 *)&(cmdq_info_defy.cmdq_cur_ptr), pcmdq_io_defy, sizeof(DSC_CMDQ_IO));
+	//将上一次的pcmdq_io_defy拷贝到下一个空间中,避免重写.只需要更改某个值即可.
+
+	 
