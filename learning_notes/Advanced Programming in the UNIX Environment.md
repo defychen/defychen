@@ -1452,7 +1452,174 @@ getcwd:获得当前工作目录的完整绝对路径名
 	uname -a		//打印所有信息,可通过"uname --help"得到帮助
 	hostname	//获取主机名---得到结果"zhsa02"
 
-### 6.6 时间和日期例程
+### 6.6 时间和日期例程---即时间编程
+
+**1)时间类型**
+
+1.格林威治时间:也叫UTC或者GMT时间.其时间刚好属于东西半球的分界线,刚好选自英国伦敦的本地时间.
+
+2.本地时间(local time):地球分为24个时区,每个时区都有自己的本地时间.北京时区为东八区,故领先UTC八个小时.
+
+	//计算方法
+	UTC + 时区差(东区为正) = local time(本地时间)		//如果为西区为负,相当于"-"
+	Date: Thurs, 31 Dec 2009 04:32:22 +0800		//北京时间
+	//UTC时间为:0432 - 0800 + 2400 = 2032---即前一天的晚上8点32分,即
+	UTC(Data: Wed, 30 Dec 2009 20:32:22 +0000	//UTC时间
+
+3.linux内核时间(日历时间):从标准时间1970年1月1日0点以来所经历的秒数.
+
+获取时间步骤:
+
+	1)先得到日历时间
+	2)再将日历时间转换为本里时间或者格林威治时间.
+
+**2)时间有关的结构体**
+
+1.struct tm---时间的主要结构体(常用)
+	struct tm{
+		int tm_sec;		//秒数
+		int tm_min;		//分钟值
+		int tm_hour;	//小时值
+		int tm_mday;	//本月第几日	
+		int tm_mon;		//本年第几月
+		int tm_year;	//tm_year+1900 = 哪一年???
+		int tm_wday;	//本周第几日
+		int tm_yday;	//本年第几日
+		int tm_isdst;	//日光节约时间
+	};
+
+2.struct timeval---秒数计算(精度低)---常用
+	struct timeval{
+		time_t tv_sec;	//秒数
+		long tv_usec;	//微秒
+	};
+
+3.struct timespec---秒数计算(精度高)
+	struct timespec{
+		time_t tv_sec;	//秒数
+		long tv_nsec;	//纳秒
+	};
+
+**3)时间函数---获取时间**
+
+1)获取日历时间---time(NULL);不填应该也可以?---暂时理解为必须填上.
+
+	#include <stdio.h>
+	#include <time.h>	//关于时间的头文件
+	int main()
+	{
+		time_t seconds = 0;
+		seconds = time((time_t *)NULL);		//获得从1970-01-01 0点到现在所经历的秒数.
+		printf("seconds = %d\n", seconds);
+		return 0;
+	}
+
+2)将日历时间转换为格林威治时间---不直观
+
+	struct tm *gmtime(const time_t *timep);	//将日历时间转换为格林威治时间,保存在"struct tm"中
+
+3)将日历时间转换为本地时间---不直观
+
+	struct tm *localtime(const time_t *timep);	//将日历时间转换为本地时间,保存在"struct tm"中
+
+实例
+
+	#include <stdio.h>
+	#include <time.h>
+	int main()
+	{
+		struct tm *gm_local;
+		time_t t;
+		t = time(NULL);	//获取日历时间
+		gm_local = localtime(&t);	//转换为本地时间,并保存在struct tm结构中
+		printf("local hour is: %d\n", gm_local->tm_hour);	//打印本地时间的小时数
+		gm_local = gmtime(&t);		//转换为格林威治时间,并保存在struct tm结构中
+		printf("UTC hour is: %d\n", gm_local->tm_hour);		//打印格林威治时间的小时数
+		return 0;
+	}
+
+**4)直观的显示时间**
+
+1)将日历时间转换为本地时间的字符串形式
+
+	char *ctime(const time_t *timep);
+	//步骤:
+	1)使用time()函数获取日历时间
+	2)使用ctime()函数直接将日历时间转换为本地时间字符串形式
+
+2)将格林威治时间转换为字符串形式
+
+	char *asctime(const struct tm *tm);	//tm为格林威治时间
+	//步骤:
+	1)使用time()函数获取日历时间
+	2)使用gmtime()函数将日历时间转换为格林威治时间
+	3)使用asctime()函数将tm格式的格林威治时间转换为字符串
+
+实例
+
+	#include <stdio.h>
+	#include <time.h>	//ISO C99标准时间头文件
+	int main()
+	{
+		time_t t;
+		struct tm *gmt;
+		char *lt_string;	//local time string(本地时间字符串)
+		char *gm_string;	//格林威治时间字符串形式
+
+		t = time(NULL);		//获取日历时间
+		lt_string = ctime(&t);	//获取得到本地时间字符串
+		gmt = gmtime(&t);	//获取格林威治时间
+		gm_string = asctime(gmt);	//将格林威治时间转换为字符串形式
+		printf("local time: %s\n", lt_strimg);
+		printf("gm time: %s\n", gm_string);
+		return 0;
+	}
+
+**5)获取从今日凌晨到现在的时间差**
+
+	int gettimeofday(struct timeval *tv, struct timezone *tz);	//获取从凌晨到现在的时间差,常用语计算事件耗时
+	/*
+	para1:存放时间差,以struct timeval结构存放; para2:常设置为NULL
+	*/
+
+实例---计算函数function()的耗时
+
+	#include <sys/time.h>	//Linux系统日期头文件,内部包含"time.h"
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <math.h>
+
+	void function()
+	{
+		unsigned int i, j;
+		unsigned long y = 0;
+		for(i = 0; i < 1000; i++)
+			for(j = 0; j < 1000; j++)
+				y++;
+	}
+
+	int main()
+	{
+		struct timeval tpstart, tpend;
+		double timeuse;
+		gettimeofday(&tpstart, NULL);
+		function();
+		gettimeofday(&tpend, NULL);
+		timeuse = 1000000 * (tpend.tv_sec - tpstart.tv_sec) + tpend.tv_usec - tpstart.tv_usec;
+		timeuse /= 1000000;
+		printf("Used time: %f\n", timeuse);
+		return 0;
+	}
+
+**6)延时函数**
+
+1.使程序睡眠n秒
+
+	unsigned int sleep(unsigned int n);
+
+2.使程序睡眠n微秒
+
+	void usleep(unsigned long n);
 
 *** 
 ## Chapter 7 进程环境
