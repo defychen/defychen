@@ -1016,6 +1016,31 @@ python对匿名函数的支持有限
 	...		print n
 	...	//会打印出斐波那契数列
 
+### 7.3 元类
+
+**type不仅可以做类型判断,还可以通过其创建类**
+
+	>>>def fn(self, name = 'world'):	#1)先定义函数
+	...	print ('Hello, %s' % name)
+	...
+	>>>Hello = type('Hello', (object, ), dict(hello=fn))   #创建Hello class
+	>>>h = Hello
+	>>>h.Hello()     #打印出"Hello, world"
+
+	//2)通过type创建class的方法(type()函数中各参数说明)
+	para 1.class的名称---首字母大写字符串
+	para 2.继承tuple---只有一个父类需要写成:(object, )---后面带逗号
+	para 3.方法名称与函数绑定---这里将函数fn绑定到方法hello上
+
+使用class创建类最终也是通过type这种方法创建的.
+
+**metaclass---用于创建类.一般不会用**
+
+创建类实例的流程是:先定义metaclass,然后创建类,最后通过类创建实例.
+***
+## 8、错误、调试和测试
+
+
 ## Python logging模块
 
 默认情况下,logging将日志打印到屏幕,日志级别是WARNING.级别大小:CRITICAL>ERROR>WARNING>INFO>DEBUG>NOTSET.
