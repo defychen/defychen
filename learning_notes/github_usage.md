@@ -55,6 +55,7 @@
 		cd ./output/build/alisee...
 	3)执行命令:
 		git branch -a --contain PDK2.0.0-20170427(tag号)
+		git branch -a //列出本地分支和远程分支
 
 **4)直接切到某个commit号**
 	
@@ -77,3 +78,18 @@
 	git reset --hard
 	git pull
 
+## github提交错误
+
+	当执行"git pull"时出现下面的提示:
+	There is no tracking information for the current branch.
+	Please specify which branch you want to merge with.
+	See git-pull(1) for details
+
+    git pull <remote> <branch>
+
+	If you wish to set tracking information for this branch you can do so with:
+
+    git branch --set-upstream-to=origin/<branch> master
+	
+	//原因:本地分支和远程分支没有建立联系.解决:
+	git branch --set-upstream-to=origin/master master	/*远程的和本地的分支都为master分支,并建立联系*/

@@ -1620,6 +1620,190 @@ getcwd:获得当前工作目录的完整绝对路径名
 2.使程序睡眠n微秒
 
 	void usleep(unsigned long n);
-
 *** 
 ## Chapter 7 进程环境
+
+**main启动**
+
+当内核执行C程序时,在调用main前先调用一个特殊的启动例程.可执行程序将此启动例程指定为程序的起始地址,接着启动例程从内核取出命令行参数和环境变量,然后执行main函数.
+
+### 7.1 main函数原型
+
+	int main(int argc, char *argv[]);
+	//argc:命令行参数个数; argv:指向命令行参数的各个指针所构成的数组.
+
+### 7.2 进程终止
+
+**5种正常终止**
+
+1)main中return
+
+2)调用exit(0)
+
+3)调用_exit或_Exit
+
+4)最后一个线程从启动例程返回
+
+5)从最后一个线程调用pthread_exit
+
+**3种异常终止**
+
+6)调用abort
+
+7)接到一个信号
+
+8)最后一个线程对取消请求做出响应 
+
+**在main中,return 0与exit(0)是等价的.**
+
+### 7.3 命令行参数
+
+**echo不会回显第0个参数,在main函数中:argv[argc]是一个空指针---即结尾为空指针**
+
+### 7.4 C程序的存储空间布局
+
+**C程序由以下几部分组成:**
+
+1)正文段---也叫代码段(code segment/text segment):存放代码的地方.通常是可共享的,所以即使频繁执行的程序(e.g.文本编辑器、C编译器和Shell等)也只需一份副本,而且通常设置为只读.保存在磁盘上.
+
+2)初始化数据段---通常称为数据段:包含程序中需要明确赋初值的变量(e.g. int maxcount = 99;).存放程序中已初始化的全局变量.保存在磁盘上.
+
+3)未初始化数据段(bss段)---也称为常量区或全局区:该段数据不指定初值也可.在执行程序之前,内核会将该段中的数据初始化为"0"或"NULL".该段存放未初始化的全局变量,因为不需要指定初值,因此不会保存在磁盘上.
+
+4)栈(stack):存放临时变量,函数地址或环境上下文信息等.
+
+5)堆(heap):动态存储分配.位于未初始化数据段(bss)和栈(stack)之间.
+
+**C程序存储空间的排布**
+
+			高地址______________
+				
+				命令行参数和环境变量
+				______________
+					栈			
+				..............
+					栈往下增长		
+			
+					堆往上增长
+				..............
+					堆
+				______________
+			
+				未初始化数据段	由exec初始化为0---不会保存在磁盘上
+					(bss)
+				______________
+				初始化数据段			由exec从
+				______________
+				正文					程序中读入
+		   低地址______________
+
+**size命令可以报告一个程序的正文段、数据段(初始化数据段)和bss(未初始化数据段)的长度(字节为单位):**
+
+	size out/vodrm_test
+	text    data     bss     dec     hex filename
+	265389   14712   14932  295033   48079 output/vodrm_test
+
+### 7.5 存储空间分配
+
+C程序有3个用于存储空间动态分配的函数:
+
+	#include <stdlib.h>
+	void *malloc(size_t size);	//分配指定字节数(size)的存储区,存储的初始值不确定.因此需要"memset();"
+	void *calloc(size_t num, size_t size);	//分配num个长度为size的连续空间(即num*size个字节大小),并且每个字节都初始化为0.
+	void *realloc(void *ptr, size_t newsize);	//增加或减少以前分配区的长度,新增的区域初始值不确定.---用的较少
+	void free(void *ptr);	//释放malloc/calloc/realloc分配的内存
+	ptr = NULL;	//一般free掉后需要将指针置空,防止野指针
+
+	//calloc()实例
+	#include <stdio.h>
+	#include <stdlib.h>
+
+	int main()
+	{
+		int i, n;
+		int *pData;
+
+		printf("Please input the numbers of you want: ");
+		scanf("%d", &i);
+
+		pData = (int *)calloc(i, sizeof(int));	//calloc()主要为数组指针分配空间
+		if(!pData)
+			exit(1);	//出错返回
+
+		for(n = 0; n < i; n++)
+		{
+			printf("Please input the #%d number:", n + 1);	//printf后面的scanf会自动换行
+			scanf("%d", &pData[n]);
+		}
+
+		printf("The numbers you have input are:");
+		for(n = 0; n < i; n++)
+			printf("%d", pData[n]);
+
+		free(pData);
+		pData = NULL;
+	
+		return 0;
+	}
+
+**泄漏(leakage)**
+
+如果一个进程调用malloc函数,但却忘记调用free函数释放使用的空间.该进程占用的存储空间就会连续不断增加,称为内存泄漏(leakage).
+
+### 7.6 函数setjmp和longjmp
+
+在C中,goto语句是不能跨越函数的.而能够实现函数跳转功能的是"setjmp和longjmp"
+
+	#include <setjmp.h>	//包含setjmp和longjmp函数的头文件
+	int setjmp(jmp_buf envbuf);	//para:缓冲区envbuf保存系统堆栈的内容,以便后续longjmp函数使用.setjmp函数初次启用返回"0"
+	void longjmp(jmp_buf envbuf, int val);
+	//para1:参数envbuf是由setjmp函数所保存的堆栈环境;para2:参数val设置setjmp函数的返回值.
+	//longjmp执行后跳转到保存envbuf参数的setjmp函数调用处,此时setjmp函数返回值就是"val"
+
+实例
+
+	#include <stdio.h>
+	#include <setjmp.h>
+
+	static jmp_buf buf;	//保存堆栈环境
+
+	void second(void)
+	{
+		printf("second\n");
+		longjmp(buf, 1);	//调回到setjmp的调用处,设置setjmp的返回值为"1"
+	}
+
+	void first(void)
+	{
+		second();
+		printf("first\n");	//该行不会执行
+	}
+
+	int main()
+	{
+		if(!setjmp(buf))	//初次调用这个函数返回"0"
+		{
+			first();	//初次调用会进入该流程
+		}else
+		{
+			printf("main\n");	//从longjmp跳回,setjmp返回"1".因此进入此行
+		}
+	}
+
+	//上述程序输出:
+	second
+	main
+
+### 7.7 资源限制
+
+**略**
+***
+## Chapter 8 进程控制
+
+
+
+***
+## Chapter 9 进程关系
+
+
+	

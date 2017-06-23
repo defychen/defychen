@@ -706,4 +706,16 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 	memcpy((UINT8 *)&(cmdq_info_defy.cmdq_cur_ptr), pcmdq_io_defy, sizeof(DSC_CMDQ_IO));
 	//将上一次的pcmdq_io_defy拷贝到下一个空间中,避免重写.只需要更改某个值即可.
 
+## 25、指针数组初始化为"NULL"
+
+	1)如果是全局的本身已经初始化为NULL
+	2)不是全局的可以写个for循环,将数组中的每个元素赋值为NULL
+	// example
+	int index;		
+	void *dscrInfo[16];
+	for(index = 0; index < 16; index++)
+	{
+		dscrInfo[index] = NULL;
+	} 
+
 	 
