@@ -1648,11 +1648,11 @@ getcwd:获得当前工作目录的完整绝对路径名
 
 **3种异常终止**
 
-6)调用abort
+6)调用abort,会产生SIGABRT信号
 
 7)接到一个信号
 
-8)最后一个线程对取消请求做出响应 
+8)最后一个线程对取消(cancellation)请求做出响应 
 
 **在main中,return 0与exit(0)是等价的.**
 
@@ -1799,6 +1799,213 @@ C程序有3个用于存储空间动态分配的函数:
 **略**
 ***
 ## Chapter 8 进程控制
+
+### 8.1 进程标识(PID)
+
+进程ID:每个进程都有唯一的一个非负整数标识,该标识称为进程ID.
+
+进程ID复用:当一个进程终止后,其进程ID会被释放成为复用的候选者.Unix采用延迟复用算法---即刚被释放的进程ID不会马上分配给新创建的进程.
+
+**进程各ID号的分配:**
+
+0:属于调度进程,被称为交换进程(swapper).是内核的一部分,不执行任何磁盘上的程序,因此也被称为系统进程.
+
+1:init进程.在"自举(???)"过程结束后由内核调用,负责启动一个Unix系统.该进程程序文件是"/sbin/init".init进程通常会读取与系统有关的初始化文件(/etc/rc*文件或/etc/initab文件,以及在/etc/init.d中的文件(现在主要是这里面的文件)),并将系统引导到一个初始状态(如多用户).init进程不会终止,且是所有孤儿进程的父进程.
+
+**返回进程ID(PID)及其他ID的操作函数:**
+
+	#include <unistd.h>
+	pid_t getpid(void);		//retval:调用这个函数的进程的PID
+	pid_t getppid(void);	//retval:调用进程的父进程的PID
+	uid_t getuid(void);		//retval:调用进程的实际用户ID
+	uid_t geteuid(void);	//retval:调用进程的有效用户ID
+	gid_t getgid(void);		//retval:调用进程的实际组ID
+	git_t getegid(void);	//retval:调用进程的有效组ID
+
+### 8、2 函数fork
+
+创建一个新进程---fork()函数
+
+	#include <unistd.h>
+	pid_t fork(void);	//retval:子进程返回0,父进程返回子进程ID;出错返回"-1"
+	/*理由:
+	1)父进程返回子进程ID:一个进程的子进程可以有多个,但是没有一个函数可以是一个进程获得其所有子进程的ID
+	2)子进程中得到返回值0:一个进程只会有一个父进程,可以通过getppid()得到父进程ID---通过ID=0的调度进程可以获得.
+	*/
+
+实例:fork函数,在子进程中对变量的修改不会影响父进程中该变量的值.
+
+	#include "apue.h"
+	
+	int globvar = 6;	//外部变量,在初始化数据段
+	char buf[] = "a write to stdout\n";
+
+	int main(void)
+	{
+		int var;	//自动变量,保存在栈中
+		pid_t pid;
+		
+		var = 88;
+		if(write(STDOUT_FILENO, buf, sizeof(buf) - 1) != sizeof(buf) - 1)	//写到标准输出
+		/*sizeof(buf) - 1:避免将终止的null字节写出.
+		sizeof():计算包括终止的null字节的缓冲区,因为sizeof中的缓冲区已用字符串进行初始化,其程度是固定的.
+			所以sizeof是编译时计算缓冲区长度.
+		strlen():计算不包括终止的null字节的字符串长度,但是需要进行一次函数调用.因此是在执行器计算的.
+		*/
+			err_sys("write error");
+
+		printf("befor fork");	//we don't flush stdout.
+		
+		if((pid = fork()) < 0)
+		{
+			err_sys("fork error");
+		}else if(pid == 0)	//子进程
+		{
+			globvar++;	//调整变量值
+			var++;
+		}else
+		{
+			sleep(2);	//父进程睡眠2s
+		}
+
+		printf("pid = %ld, glob = %d, var = %d\n", (long)getpid(), globvar, var);
+		exit(0);
+	}
+
+	//执行的结果
+	./a.out		//终端设备是行缓冲
+	a write to stdout
+	before fork
+	pid = 430, glob = 7, var = 89	//子进程的变量值改变了
+	pid = 429, glob = 6, var = 88	//父进程的变量值没有改变
+
+	./a.out > temp.out	//输出到文件是全缓冲,处于缓冲区的数据空间会复制到子进程.
+						//在调用进程终止时,才会将缓冲区中的内容写到相应文件中
+	a write to stdout
+	before fork
+	pid = 432, glob = 7, var = 89
+	before fork
+	pid = 431, glob = 6, var = 88
+
+**fork的用法:**
+
+1)一个父进程希望复制自己,使父进程和子进程同时执行不同的代码段.在网络服务器中常用---父进程等待客户端的服务请求,当请求到达时,父进程调用fork,使子进程处理该请求,父进程继续等待下一个服务请求.
+
+2)一个进程要执行不同的程序(shell中常见).e.g.子进程从fork返回后立即调用exec.
+
+### 8.4 函数vfork
+
+**vfork函数不应该再使用.**
+
+### 8.5 函数exit
+
+退出状态(exit status):进程属于正常正常终止方式终止(e.g.return、exit、_exit和_Exit终止等)叫退出状态.
+
+终止状态(termination status):属于异常终止情况终止,内核(不是进程本身)会产生一个指示其异常终止原因的终止状态.
+
+**无论是退出状态还是终止状态,该终止进程的父进程都能用wait或waitpid取得终止状态.**
+
+如果父进程在子进程之前终止,则所有子进程的父进程都改变为init进程(ID=1).该种方式叫做init进程收养.
+
+如果子进程在父进程之前终止,父进程调用wait或waitpid可以获得子进程退出之前的一些信息(子进程ID、终止状态及使用的CPU时间总量等).
+
+内核应该释放终止进程所使用的存储区,关闭所打开的文件.
+
+**僵死进程(zombie):一个已经终止、但父进程尚未对其进行善后处理(获取终止子进程的相关信息(调用wait/waitpid)、释放它占用的资源)的进程称为僵死进程.**
+
+init进程会自动调用wait函数取得子进程的终止状态,因此父进程属于init进程的子进程不存在僵死进程.
+
+### 8.6 函数wait和waitpid
+
+子进程正常或异常终止时,内核会向其父进程发送"SIGCHLD"信号.
+
+**父进程调用wait或waitpid的进程可能发生的情况:**
+
+1)如果其所有子进程都还在运行,则阻塞
+	
+2)如果任一个子进程已终止,正等待父进程获取其终止状态,则父进程取得其终止状态并立即返回
+
+3)如果该父进程没有任何子进程,则立即出错返回
+
+**wait或waitpid函数:获得进程终止状态**
+
+	#include <sys/wait.h>
+	pid_t wait(int *statloc);	//监控所有的子进程
+	/*para:整型指针存放进程终止状态,如果不需要则可设为"NULL"; retval:成功返回终止子进程的进程ID,出错返回0或-1.*/
+	pid_t waitpid(pid_t pid, int *statloc, int options);
+	/*
+	para1:监控的子进程的ID:
+	pid=-1:任一子进程,此时同wait;
+	pid>0:等待的进程ID与pid相等的子进程;
+	pid=0:等待组ID等于调用进程组ID的任一子进程;
+	pid<-1:等待组ID等于pid绝对值的任一子进程.
+	para2:存放进程终止状态; para3:一般为0.
+	retval:成功返回终止子进程的进程ID,出错返回0或-1.
+	*/
+
+实例:打印进程终止状态的说明
+
+	#include "apue.h"
+	#include <sys/wait.h>
+
+	void pr_exit(int status)	//para:wait获得的进程终止状态
+	{
+		if(WIFEXITED(status))	//解析正常终止状态的宏
+			printf("Normal termination, exit status = %d\n", WEXITSTATUS(status));
+		else if(WIFSIGNALED(status))	//解析异常退出状态的宏
+			printf("abnormal termination, signal number = %d%s\n", WTERMSIG(status),
+		#ifdef WCOREDUMP
+				WCOREDUMP(status) ? "(core file generated)": "");
+		#else
+				"");
+		#endif
+		else if(WIFSTOPPED(status))	//暂停子进程的状态的宏
+			printf("child stopped, signal number = %d\n", WSTOPSIG(status));
+	}
+
+实例:调用pre_exit,打印终止状态的各种值
+
+	#include "apue.h"
+	#include <sys/wait.h>
+	
+	int main(void)
+	{
+		pid_t pid;
+		int status;
+		
+		if((pid = fork()) < 0)
+			err_sys("fork error");
+		else if(pid == 0)	//子进程
+			exit(7);	//子进程终止,正常终止
+
+		if(wait(&status) != pid)	//等待子进程终止.父进程中返回子进程的PID,wait返回等待子进程的PID.因此两者会相等
+			err_sys("wait error");
+		pr_exit(status);	//打印状态值
+
+		if((pid = fork()) < 0)
+			err_sys("fork error");
+		else if(pid == 0)
+			abort();	//子进程异常终止
+
+		if(wait(&status) != pid)
+			err_sys("wait error");
+		pr_exit(status);
+
+		if((pid = fork()) < 0)
+			err_sys("fork error");
+		else if(pid == 0)
+			status /= 0;	//除0会产生"SIGFPE"信号,一般不会这样做
+
+		if((wait(&status)) != pid)
+			err_sys("wait error");
+		pr_exit(status);
+
+		return 0;
+	}
+	
+**waitpid可以解决僵死进程,但是感觉用的比较少.**
+
+其他的wait函数包括:waitid,wait3, wait4.
 
 
 

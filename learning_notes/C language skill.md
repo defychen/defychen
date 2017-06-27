@@ -718,4 +718,21 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 		dscrInfo[index] = NULL;
 	} 
 
-	 
+## 26、字符串直接打印对应的ASCII码值
+
+	unsigned char msg[] = "HelloWorld!23456";	//一个字符占一个字节
+	unsinged int fsize = strlen((char *)msg);	//求取字符串的长度,不包括结尾的"\0".包含在头文件"string.h"
+	printf("%d\n", fsize);		//结果为16
+	unsinged char *dataBuf = (unsigned char *)malloc(32);
+	memset(dataBuf, 0, 32);
+	strcpy((char *)dataBuf, (char *)msg);	//将msg中的每一个字符复制到dataBufz中
+	//直接按整型打印字符串
+	int i;
+	for(i = 0; i < 16; i++)
+	{
+		printf("0x%02x ", msg[i]);	//以16进制打印字符串中的每一个字符
+	}
+
+## 27、声明存放16进制数数组
+
+	unsigned char array[16] = {0};	//每个数占一个字节,且都初始化为0
