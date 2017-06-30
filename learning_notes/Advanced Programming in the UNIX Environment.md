@@ -2007,10 +2007,218 @@ init进程会自动调用wait函数取得子进程的终止状态,因此父进�
 
 其他的wait函数包括:waitid,wait3, wait4.
 
+### 8.7 竞争条件
 
+当很多进程都企图对某共享数据进行处理,但是最后的结果取决于进程运行的顺序时,这种叫做发生了竞争条件(race condition).---e.g.在fork创建进程后,父进程先运行还是子进程先运行不确定.
+
+竞争条件实例:
+
+	#include "apue.h"
+	static void charatatime(char *);
+
+	int main(void)
+	{
+		pid_t pid;
+		
+		if((pid = fork()) < 0)
+		{
+			err_sys("fork error");
+		} else if(pid == 0)
+		{
+			charatatime("output from child\n");
+		} else
+		{
+			charatatime("output from parent\n");
+		}
+		return 0;	//或者exit(0);
+	}
+
+	static void charatatime(char *str)
+	{
+		char *ptr;
+		int c;
+		
+		setbuf(stdout, NULL);	//set unbuffered---设置标准输出为不带缓冲的,每输出一个字符调用一次write
+		for(ptr = str; (c = *ptr++) != 0; )
+			putc(c, stdout);	//一个字符一个字符输出
+	}
+
+	//在运行时可能出现:
+	case 1:
+	ooutput from child
+	utput from parent
+	case 2:
+	output from child
+	output from parent
+
+更改为父进程先执行,子进程后执行:
+
+	#include "apue.h"
+	static void charatatime(char *);
+
+	int main(void)
+	{
+		pid_t pid;
+		
+	+	TELL_WAIT();
+	
+		if((pid = fork()) < 0)
+		{
+			err_sys("fork error");
+		} else if(pid == 0)
+		{
+	+	    WAIT_PARENT();		//等待父进程,父进程先执行
+			charatatime("output from child\n");
+		} else
+		{
+			charatatime("output from parent\n");
+	+       TELL_CHILD(pid);	//通知子进程
+		}
+		return 0;	//或者exit(0);
+	}
+
+	static void charatatime(char *str)
+	{
+		char *ptr;
+		int c;
+		
+		setbuf(stdout, NULL);	//set unbuffered---设置标准输出为不带缓冲的,每输出一个字符调用一次write
+		for(ptr = str; (c = *ptr++) != 0; )
+			putc(c, stdout);	//一个字符一个字符输出
+	}
+
+### 8.8 exec函数
+
+在fork后的子进程中使用exec函数族,可以载入和运行其他程序(子进程替换原有进程(子进程PID不变),和父进程做不同的事).
+
+**exec函数族**
+	
+	#include <unistd.h>
+	extern char **environ;
+	int execl(const char *pathname, const char *arg, ...);
+		//"l":希望接收以","分隔的参数列表,列表以NULL指针作为结束标志
+	int execlp(const char *filename, const char *arg, ...);
+		//"p":接收以NULL结尾的字符串数组的指针,且para1为filename
+	int execle(const char *pathname, const char *arg, ..., char *const envp[]);
+		//"e":函数传递指定参数envp,允许改变子进程环境.无后缀e,子进程使用当前环境
+	int execv(const char *pathname, char *const argv[]);
+		//"v":希望接收一个以NULL结尾的字符串数组的指针
+	int execvp(const char *filename, char *cosnt argv[]);
+		//"p":接收以NULL结尾的字符串数组的指针,且para1为filename
+	int execve(const char *pathname, char *const argv[], char *const envp[])
+		//"e":函数传递指定参数envp,允许改变子进程环境.无后缀e,子进程使用当前环境
+
+	//所有exec函数成功不返回,失败返回"-1"
+
+**实例**
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <unistd.h>
+	#include <string.h>
+	#include <errno.h>
+
+	int main(int argc, char *argv[])
+	{
+		//以NULL结尾的字符串数组的指针,适合包含"v"的exec函数参数
+		char *arg[] = {"ls", "-a", NULL};
+
+		/*创建子进程并调用函数execl.
+		* execl中希望接收以逗号","分隔的参数列表,并以NULL指针为结束标志
+		*/
+		if(fork() == 0)
+		{
+			// child process
+			printf("1-------------execl-------------\n");
+			if(execl("/bin/ls", "ls", "-a", NULL) == -1)		//载入/bin/ls文件,然后执行ls程序
+			{
+				perror("execl error");
+				exit(1);
+			}
+		}
+
+		/*创建子进程并调用execv
+		* execv中希望接收一个以NULL结尾的字符串数组的指针
+		*/
+		if(fork() == 0)
+		{
+			// child process
+			printf("2-------------execv-------------\n");
+			if(execv("/bin/ls", arg) == -1)		//载入/bin/ls文件,然后执行ls程序
+			{
+				perror("execv error");
+				exit(1);
+			}
+		}
+
+		/*创建子进程并调用execlp
+		* execlp中
+		* l希望接收以逗号","分隔的参数列表,并以NULL指针为结束标志
+		* p是一个以NULL结尾的字符串数组指针.重要是"p"会以path为环境变量查找子程序文件
+		*/
+		if(fork() == 0)
+		{
+			printf("3-------------execlp-------------\n");
+			if(execlp("ls", "ls", "-a", NULL) == -1)		//载入path下的ls文件,然后执行ls程序
+			{
+				perror("execlp error");
+				exit(1);
+			}
+		}
+
+		/*创建子进程并调用execvp
+		* v希望接收一个以NULL结尾的字符串数组的指针
+		* "p"会以path为环境变量查找子程序文件
+		*/
+		if(fork() == 0)
+		{
+			printf("4-------------execvp-------------\n");
+			if(execvp("ls", arg) == -1)
+			{
+				perror("execvp error");
+				exit(1);
+			}
+		}
+
+		/*创建子进程并调用execle
+		* l希望接收以逗号","分隔的参数列表,并以NULL指针为结束标志
+		* e函数传递指定参数envp,允许改变子进程的环境,无后缀时,子进程使用当前程序的环境
+		*/
+		if(fork() == 0)
+		{
+			printf("5-------------execle-------------\n");
+			if(execle("/bin/ls", "ls， "-a", NULL, NULL) == -1)
+			{
+				perror("execle error");
+				exit(1);
+			}
+		}
+
+		/*创建子进程并调用execve
+		* v希望接收一个以NULL结尾的字符串数组的指针
+		* e函数传递指定参数envp,允许改变子进程的环境,无后缀时,子进程使用当前程序的环境
+		*/
+		if(fork() == 0)
+		{
+			printf("6-------------execve-------------\n");
+			if(execve("/bin/ls", arg, NULL) == -1)	//这个返回需要确定？？
+			{
+				perror("execve error");
+				exit(1);
+			}
+		}
+		return 0;
+	}
 
 ***
 ## Chapter 9 进程关系
+
+***
+### Chapter 10 信号
+***
+### Chpater 11 线程
+
+
 
 
 	
