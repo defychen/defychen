@@ -93,3 +93,15 @@
 	
 	//原因:本地分支和远程分支没有建立联系.解决:
 	git branch --set-upstream-to=origin/master master	/*远程的和本地的分支都为master分支,并建立联系*/
+
+## git打tag
+
+	//方法 1
+	git tag PDK1.12.0-20170616
+	git push origin PDK1.12.0-20170616
+	//方法 2
+	git tag -a v0.0.1_20170705C  -m "update viaccess tag"
+	git push origin --tags
+
+	查看所打的tag
+	git tag

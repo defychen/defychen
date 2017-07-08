@@ -170,3 +170,20 @@
 	:%s/old/new/gc		---全文执行替换"后面c表示询问是否替换,可以不带c"
 	:3,10s/old/new/gic	---3到10行执行替换,"i忽略大小写,c询问"	
 	
+## 12. df命令
+
+查看硬盘使用情况
+
+	df -hl
+	//得到的信息如下:
+	Filesystem      Size  Used Avail Use% Mounted on
+	df: `/var/lib/lightdm/.gvfs': Permission denied
+	/dev/sda1        93G   64G   25G  72% /
+	udev             63G  4.0K   63G   1% /dev
+	tmpfs            26G   25M   26G   1% /run
+	none            5.0M     0  5.0M   0% /run/lock
+	none             63G  232K   63G   1% /run/shm
+	none            100M     0  100M   0% /run/user
+	/dev/sdb1       7.3T  6.6T  371G  95% /zhsa022	---硬盘使用
+	/dev/sda3       651G  358G  261G  58% /zhsa021	---硬盘使用
+	cgroups          63G     0   63G   0% /sys/fs/cgroup

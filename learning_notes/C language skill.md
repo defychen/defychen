@@ -823,3 +823,55 @@ pthread_join()、pthread_testcancel()、pthread_cond_wait()、pthread_cond_timew
 		return 0;
 	}
 
+## 29、宏判断
+
+	#if defined(MACOS)			//如果定义了宏"MACOS"
+	#include <sys/syslimits.h>
+	#elif defined(SOLARIS)		//如果定义了宏"SOLARIS"
+	#include <limits.h>
+	#elif defined(BSD)			//如果定义了宏"BSD"
+	#include <sys/param.h>
+	#endif
+
+## 30、UINT32和UINT8的对齐及存放
+
+	typedef unsigned long UINT32;
+	typedef unsigned char UINT8;
+	
+	UINT32 a = 0x12345678;
+	
+	printf("0x%x, 0x%x, 0x%x\n", &a, (&a)+1, ((UINT8 *)&a)+1);
+	//结果为:7fc4fa40, 7fc4fa44, 7fc4fa41.
+	//解析:UINT32---32位的数据为4字节对齐,因此其地址每次增加4
+	//UINT8---8位的数据为1字节对齐,因此其地址每次增加1.按照小端格式,低地址存放低字节数据.即:
+	//7fc4fa40---78, 7fc4fa41---56, 7fc4fa42---23, 7fc4fa43---01.每个地址存放一个字节的数据.
+
+	printf("0x%2x 0x%2x 0x%2x 0x%2x\n", *((UINT8 *)&a), *(((UINT8 *)&a)+1), *(((UINT8 *)&a)+2),
+		 *(((UINT8 *)&a)+3));
+	//所有的地址都是32 bit的.UINT32表示4字节的数据,每个地址只存一个字节的数据.因此UINT32占用连续四个地址.
+	//(UINT8 *)&a:表示将4字节对齐的a强制转为1字节对齐,然后访问每个地址的数据.
+
+**单字节与4字节对齐的相互转化**
+
+	UINT32 a = 0x12345678;
+	UINT8 b[4] = {0};
+	//4字节转化为单字节操作
+	memcpy(b, (UINT8 *)&a, sizeof(UINT32));	//拷贝4字节数据到b数组中
+	printf("The array data is: b[0] = %2x, b[1] = %2x, b[2] = %2x, b[3] = %2x\n",
+			b[0], b[1], b[2], b[3]);
+
+	//单字节转化为4字节操作
+	memcpy((UINT32 *)a, &a, sizeof(UINT32));
+	printf("The array data is: b[0] = %2x, b[1] = %2x, b[2] = %2x, b[3] = %2x\n",
+			b[0], b[1], b[2], b[3]);
+
+	//结果都为:78 56 34 12
+## 31、#ifdef __cplusplus...的使用
+
+	#ifdef __cplusplus	//"__cplusplus"是cpp中自定义宏,这个宏表明这是一段cpp的代码
+	extern "C" {	//如果是一段cpp代码,extern "C"{...}表明这段代码使用"C"来编译链接(C和C++编译链接不一样)
+	#endif
+	...
+	#ifdef __cplusplus
+	}
+	#endif

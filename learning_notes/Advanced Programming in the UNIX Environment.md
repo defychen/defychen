@@ -1646,6 +1646,8 @@ getcwd:获得当前工作目录的完整绝对路径名
 
 5)从最后一个线程调用pthread_exit
 
+	pthread_exit(NULL);
+
 **3种异常终止**
 
 6)调用abort,会产生SIGABRT信号
@@ -2210,13 +2212,1154 @@ init进程会自动调用wait函数取得子进程的终止状态,因此父进�
 		return 0;
 	}
 
+### 8.9 用户ID和组ID
+
+id命令可以显示真实有效的用户ID(UID)和组ID(GID).UID是对一个用户的单一身份标识,GID则对应多个UID.
+
+id命令的使用方法:
+
+	$ id	//直接在终端输入"id"命令即可
+	$ id -a/-G/-g	//也可以"man id"查找帮助
+
+### 8.10 解释器文件
+
+解释器文件(interpreter file):是文本文件,其起始行形式为
+
+	#!pathname [optional-argument]	//#!和pathname之间无空格,且pathname为绝对路径名
+	//例子
+	#!/bin/sh	//#!和/bin/sh之间无空格
+
+实例:调用exec执行一个解释器文件
+
+	#include <stdio.h>
+	#include <sys/wait.h>
+	#include <unistd.h>
+
+	int main(void)
+	{
+		pid_t pid;
+		if((pid = fork) < 0)
+		{
+			perror("fork");
+			return -1;
+		}else if(pid == 0)
+		{
+			if(execl("/home/sar/bin/testinterp",
+				"testinterp", "myarg1", "MY ARG2", (char *)0) < 0)
+				err_sys("execl error");
+		}
+
+		if(waitpid(pid, NULL, 0) < 0)	//para2:保存结束状态;retval:成功返回pid,失败返回"-1"
+	
+		return 0;
+	}
+
+	cat /home/sar/bin/testinterp中的内容为:
+	#!/home/sar/bin/echoarg foo
+
+	//执行后的结果为:
+	/home/sar/bin/echoarg foo /home/sar/bin/testinterp myarg1 MY ARG2
+
+### 8.11 函数system
+
+system()函数调用/bin/sh(通常为一个软连接,指向某个具体的shell---e.g.bash)来执行参数指定的命令.
+
+	#include <stdlib.h>
+	int system(const char *command);	
+	//para:命令.retval:成功返回command通过exit/return返回的值,失败返回"127"
+
+system()函数执行下面三步操作:
+
+1)fork一个子进程
+
+2)在子进程中调用exec函数去执行command
+
+3)在父进程调用wait等待子进程结束
+
+**system函数实现:**
+
+	int system(const char *cmdstring)
+	{
+		pid_t pid;
+		int status;
+
+		if(cmdstring == NULL)
+		{
+			return (1);	//如果cmdstring为空,返回非0值,一般为1
+		}
+
+		if((pid = fork()) < 0)
+		{
+			status = -1;		//fork失败,返回-1
+		}else if(pid == 0)
+		{
+			execl("/bin/sh", "sh", "-c", cmdstring, (char *)0);	
+			//shell的-c选项告诉shell取下一个命令行参数"cmdstring",而且"cmdstring"会解析成各个命令
+			_exit(127);	//exec执行失败才会返回127,exec失败才返回现在的进程,成功现在的进程就不存在了			
+		}else
+		{
+			while(waitpid(pid, &status, 0) < 0)
+			{
+				if(errno != EINTR)	//信号中断
+				{
+					status = -1;		//信号中断返回-1
+					break;
+				}
+			}
+		}
+		return status;	//waitpid成功,返回子进程的返回状态
+	}
+
+	//system函数的测试
+	#include "apue.h"
+	#include <sys/wait.h>
+
+	int main(void)
+	{
+		int status;
+		if((status = system("date")) < 0)	//date命令正常运行
+			err_sys("system() error");
+
+		pr_exit(status);
+
+		if((status = system("nosuchcommand")) < 0)	//无此命令,会返回127
+			err_sys("system() error");
+
+		pr_exit(status);
+
+		if((status = system("who; exit 44")) < 0)	//多个命令正常运行
+			err_sys("system() error");
+
+		pr_exit(status);
+
+		return 0;
+	}
+
+### 8.12 进程会计
+
+**略**
+
+### 8.13 进程时间
+
+Unix系统维护三个进程时间:
+
+1)时钟时间(墙上时钟时间)
+
+2)用户CPU时间
+
+3)系统CPU时间	---2)和3)合称为CPU时间
+
+使用times()函数可以获得父、子进程的上述3个时间
+
+	#include <sys/times.h>
+	clock_t times(struct tms *buf);
+	/*retval:成功返回时钟时间,失败返回"-1".其他两个时间保存在参数"buf"中*/
+
+struct tms
+
+	struct tms{
+		clock_t tms_utime;	//用户CPU时间
+		clock_t tms_stime;	//系统CPU时间
+		clock_t tms_cutime;	//子进程用户CPU时间
+		clock_t tms_cstime;	//子进程系统CPU时间
+	};
+
+**所有的clock_t类型的值,都可以用"sysconf(_SC_CLK_TCK)"转换成秒数---sysconf()函数返回每秒时钟滴答数.**
+
+	#include "apue.h"
+	#include <sys/times.h>
+	#include "pr_exit.h"
+
+	static void pr_times(clock_t, struct tms *, struct tms *);
+	static void do_cmd(char *);
+
+	int main(int argc, char *argv[])
+	{
+		int i;
+		setbuf(stdout, NULL);	//set unbuffered---设置标准输出为不带缓冲的
+		for(i = 1; i < argc; i++)
+			do_cmd(argv[i]);	//每个命令行参数执行一次
+
+		return 0;
+	}
+
+	static void do_cmd(char *cmd)
+	{
+		struct tms tmsstart, tmssend;
+		clock_t start, end;
+		int status;
+
+		printf("\ncommand: %s\n", cmd);
+		
+		if((start = times(&tmsstart)) == -1)		//时钟时间---起始时间
+			err_sys("time error");
+
+		if((statuc = system(cmd)) < 0)	//执行command
+			err_sys("system() error");
+
+		if((end = system(&tmsend)) == -1)	//时钟时间---结束时间
+			err_sys("time error");
+
+		pr_times(end-start, &tmsstart, &tmsend);
+		pr_exit(status);
+	}
+
+	static void pr_times(clock_t real, struct tms *tmsstart, tms * tmsend)
+	{
+		static long clktck = 0;
+		
+		if(clktck == 0)
+			if((clktck = sysconf(_SC_CLK_TCK)) < 0)	//所有时间转成秒数
+				perror("sysconf");
+
+		printf("real: %7.2f\n", real / (double)clktck);
+		printf("user: %7.2f\n", (tmsend->tms_utime - tmsstart->tms_utime) / (double)clktck);
+		printf("sys: %7.2f\n", (tmsend->tms_stime - tmsstart->tms_stime) / (double)clktck);
+		printf("child user: %7.2f\n", (tmsend->tms_cutime - tmsstart->tms_cutime) / (double)clktck);
+		printf("child sys: %7.2f\n", (tmsend->tms_sutime - tmsstart->tms_sutime) / (double)clktck);
+	}
+
+	//执行
+	./a.out "sleep 5" "date" "man bash > /dev/null"
+	//结果
+	command: sleep 5
+		real: 5.01
+		user: 0.00
+		sys: 0.00
+		child user: 0.00
+		child sys: 0.00
+	normal termination, exit status = 0
+	
+	command: date
+	Sun Feb 26 18:39:23 EST 2012
+		real: 0.00
+		user: 0.00
+		sys: 0.00
+		child user: 0.00
+		child sys: 0.00
+	normal termination, exit status = 0
+
+	command: man bash > /dev/null
+		real: 1.46
+		user: 0.00
+		sys: 0.00
+		child user: 1.32
+		child sys: 0.07
+	normal termination, exit status = 0
 ***
 ## Chapter 9 进程关系
 
+### 9.1 linux终端及终端登录过程
+
+**linux终端**
+
+shell是系统用户界面,提供了内核与用户交互的接口.它接收用户输入的命令并把它送入内核执行,再将结果显示给用户.
+
+物理终端:显示器和键盘等.因为能对系统进行控制,因此也叫物理控制台.
+
+虚拟终端:用软件方法实现多个互不干扰、独立工作的控制台界面,就实现了多个虚拟终端,也叫虚拟控制台.
+
+linux默认启动6个字符界面虚拟终端(tty1~tty6),如果有图形界面则X window在第7个虚拟终端上(tty7).
+
+处于图形界面下,可以通过"Ctrl+Alt+F(1-6)选择不同的终端,选择完后可以看到"login:"提示符",然后输入用户名和密码即可登录.如果按下"Ctrl+Alt+F7"可以回到图形界面.且各个终端互不干扰.
+
+**linux终端登录过程**
+
+1)系统启动后时,内核创建init进程,init进程使系统进入多用户状态.init进程会根据配置文件"/etc/inittab"确定需要打开哪些终端,对每一个允许登录的终端设备,init调用一次fork,所生成的子进程则执行exec(getty)程序.
+
+2)getty为终端设备调用open函数,以读写方式将终端打开.然后getty输出"login:"等信息等待用户输入用户名.
+
+3)用户输入用户名,getty工作完成,然后调用login程序,会让用户输入密码:
+
+	execle("/bin/login", "login", "-p", username, (char *)0, envp);
+
+4)密码验证无误后,login将切换目录到用户的home目录,改变该终端设备的权限以及用户的登录shell:
+
+	execl("/bin/sh", "-sh", (char *)0);
+
+5)登录shell并读取其启动文件(bsh或ksh)
+
+### 9.2 linux网络登录
+
+**略**
+
+### 9.3 进程组
+
+进程组:一个或多个进程的集合.
+
+进程组ID---正整数.
+
+相关函数:
+
+	#include <unistd.h>
+	pid_t getgrp(void);	//retval:调用进程的进程组ID
+	pid_t getpgid(pid_t pid);	//retval:成功返回pid进程的进程组ID;出错返回-1.
+	getpgid(0) = getgrp();	//pid=0表示子进程
+
+实例---子进程和父进程的进程组ID
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <unistd.h>
+
+	int main()
+	{
+		pid_t pid;
+		
+		if((pid = fork()) < 0)
+		{
+			printf("fork error");
+		}else if(pid == 0)
+		{
+			printf("The child process PID is %d.\n", getpid());		//2262
+			printf("The Group ID is %d.\n", getgrp());				//2261,进程组ID=父进程ID
+			printf("The Group ID is %d.\n", getpgid(0));			//2261,进程组ID=父进程ID
+			printf("The Group ID is %d.\n", getpgid(getpid()));		//2261,进程组ID=父进程ID
+			exit(0);
+		}
+
+		sleep(3);
+		printf("The parent process PID is %d.\n", getpid());		//2261
+		printf("The Group ID is %d.\n", getgrp());					//2261,父进程为组长进程
+	}
+
+一个进程可以为自己或子进程设置进程组ID.
+
+	#include <unistd.h>
+	int setpgid(pid_t pid, pid_t pgid);	//将一个进程pid加入一个进程组或创建一个进程组gpid
+	//retval:成功返回0,出错返回-1.
+
+实例---父进程改变自身和子进程的组ID
+
+	#include <unistd.h>
+	#include <stdio.h>
+	#include <stdlib.h>
+
+	int main()
+	{
+		pit_t pid;
+		if((pid = fork()) < 0)
+		{
+			printf("fork error\n");
+		}else if(pid == 0)
+		{
+			printf("The child process PID is %d.\n", getpid());		//2438
+			printf("The Group ID of child is %d.\n", getpgid(0));	//子进程组ID---2437,此时等于父进程ID
+			sleep(5);	
+			printf("The Group ID of child is changed to %d.\n", getpgid(0));	//子进程组ID改变为子进程本身ID---2438
+			exit(0);
+		}
+
+		sleep(1);
+		setpgid(pid, pid);	//将子进程ID加入到子进程组ID本身,即为设置子进程组ID为子进程本身
+
+		sleep(5);
+		printf("The parent process PID is %d.\n", getpid());		//2437
+		printf("The parent of parent process PID is %d.\n", getppid());		//2209
+		printf("The Group ID of parent is %d.\n", getpgid(0));		//2437
+		setpgid(getpid(), getppid());	//改变父进程的组ID为父进程的父进程ID
+		printf("The Group ID of parent is changed to %d.\n", getpgid(0));		//2209
+
+		return 0;
+	}
+
+### 9.4 会话
+
+会话:一个或多个进程的集合.开始于用户登录,终止于用户退出,此期间所有进程都属于这个会话期.
+
+建立新会话---setsid()函数
+
+	#include <unistd.h>
+	pid_t setsid(void);	//retval:成功返回进程组ID，出错返回-1
+
+1)如果调用进程是组长进程,则出错返回
+
+2)如果调用进程不是组长进程,则创建一个新会话.其发生的事情为:
+
+1.先调用fork,父进程终止,子进程调用
+
+2.子进程变成新会话首进程(Session header)
+
+3.子进程成为一个新进场组的组长进程
+
+4.子进程没有控制终端,如果之前有,则会被中断
+
+**组长进程不能成为新会话的首进程,新会话的首进程必定成为组长进程**
+
+会话ID:会话首进程的进程组ID
+
+获取会话ID:getsid()函数
+
+	#include <unistd.h>
+	pid_t getsid(pid_t pid);	//retval:成功返回会话首进程的进程组ID,出错返回-1
+
+实例
+
+	#include <unistd.h>
+	#include <stdio.h>
+	#include <stdlib.h>
+
+	int main()
+	{
+		pid_t pid;
+
+		if((pid = fork()) < 0){
+			printf("fork error");
+			exit(1);
+		}else if(pid == 0){
+			printf("The child process PID is %d.\n", getpid());		//2896
+			printf("The Group ID of child is %d.\n", getpgid(0));	//2895
+			printf("The Session ID of child is %d.\n", getsid(0));	//2209
+			sleep(10);
+			setsid();	//子进程非组长进程,子进程成为新会话首进程,且成为组长进程,且该进程组ID等于会话ID
+			printf("Changed:\n");
+			printf("The child process PID is %d.\n", getpid());		//2896
+			printf("The Group ID of child is %d.\n", getpgid(0));	//2896
+			printf("The Session ID of child is %d.\n", getsid(0));	//2896
+		}
+
+		return 0;
+	}
+
+### 9.5 控制终端
+
+会话的领头进程打开一个终端之后,该终端就成为该会话的控制终端
+
+与控制终端建立连接的会话领头进程(session header)称为控制进程
+
+一个会话只能有一个控制终端
+
+**进程属于一个进程组,进程组属于一个会话,会话可能有/没有控制终端.**
+
+### 9.6 作业
+
+Shell分前后台来控制的不是进程而是作业(job)或者进程组(process group).一个前台/后台作业("&")都可以有多个进程组成,Shell可以运行一个前台作业和任意多个后台作业,称为作业控制.
+
+作业与进程组的区别:如果作业中的某个进程又创建了子进程,则子进程不属于作业.一旦作业运行结束,Shell就把自己提到前台.如果原来的前台进程还存在(如果这个子进程还没终止),它自动变为后台进程组.
 ***
-### Chapter 10 信号
+## Chapter 10 信号
 ***
-### Chpater 11 线程
+## Chpater 11 线程
+
+### 11.1 线程的概念
+
+单线程:典型的Unix进程可以看成只有一个控制线程:一个进程在某一时刻只能做一件事情.
+
+多线程:进程拥有多个控制线程,某一时刻可以做多件事情,每个线程处理各自独立的任务.
+
+### 11.2 线程标识
+
+进程ID在整个系统中是唯一的;线程ID不同,线程ID只有在它所属的进程上下文中才有意义.
+
+线程ID使用"pthread_t"数据类型表示,linux中的"pthread_t"就是"unsigned long",其他的系统不一定是.
+
+**线程ID的比较:**
+
+	#include <pthread.h>
+	int pthread_equal(pthread_t tid1, pthread_t tid2);	//比较线程tid1和tid2是否相等
+	//retval:两个线程ID相等返回非0值;否则返回0.
+
+**获取自身线程ID:**
+
+	#include <pthread.h>
+	pthread_t pthread_self(void);	//retval:返回调用线程的线程ID
+
+### 11.3 线程创建
+
+**线程创建函数:**
+
+	#include <pthread.h>
+	int ptread_create(pthread_t *tidp, pthread_attr_t *attr, void *(*start_rtn)(void *), void *arg);
+	/*
+	para1:存放线程ID;	para2:线程属性;		para3:线程函数;
+	para4:线程函数的参数,如果需要的参数有多个,将多个参数放入一个结构体,然后传入一个结构体地址
+	retval:成功返回0,否则返回错误编号.
+	*/
+
+线程创建实例:
+
+	#include <pthread.h>
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <unistd.h>
+
+	pthread_t ntid;		//new pthread id
+
+	void printids(const char *)
+	{
+		pid_t pid;
+		pthread_t tid;
+
+		pid = getpid();			//获取pid
+		tid = pthread_self();	//获取线程ID
+		printf("%s pid: %lu, tid: %lu, (0x%lx)\n", s, (unsigned long)pid,
+			(unsigned long)tid, (unsigned long)tid);
+		//pid和tid均取unsigned long---为32bit.		"0x%lx":打印出长整型的16进制
+	}
+
+	void *thr_fn(void *arg)
+	{
+		printids("new thread:");
+		return ((void *)0);		//void *的返回可以"return ((void *)0);"
+	}
+
+	int main(void)
+	{
+		int err;
+		err = pthread_create(&ntid, NULL, thr_fn, NULL);	//成功返回0,失败返回非0(错误编号)
+			//主线程和新创建的线程的执行先后不定
+		if(err != 0)
+		{
+			err_exit(err, "can't create thread");
+		}
+
+		printids("main thread:");
+		sleep(1);	//主线程休眠.防止主线程退出后,新线程没机会运行,进程就终止了.
+		return 0;
+	}
+
+### 11.4 线程终止
+
+**1)线程终止的三种方式**
+
+1)线程的return,return值就是线程的退出码
+
+2)线程调用了pthread_exit()函数
+
+	#include <pthread.h>
+	void pthread_exit(void *rval_ptr);	//para:线程的终止状态
+	//其他线程通过pthread_join函数可以访问到pthread_exit中的参数指针
+	int pthread_join(pthread_t thread, void **rval_ptr);	//retval:成功返回0,失败返回错误编号
+	//pthread_join会让指定的线程处于阻塞状态,形成一个取消点,以便退出线程
+	//pthread_join会把指定的线程置于分离状态,以便资源可以恢复.但是如果线程已经是分离状态,则pthread_join调用会失败,返回EINVAL.
+
+	//线程分离:创建的线程的资源被回收,pthread_join获取不到线程终止状态,此时会出错
+	//线程分离函数
+	#include <pthread.h>
+	int pthread_detach(pthread_t tid);
+
+3)线程可以被同一进程中的其他线程取消
+
+**2)线程取消**
+
+1)定义:线程接收另一个线程发来的终止(取消)请求而强制终止
+
+2)方法:向目标线程发送cancel信号.但是处理cancel信号由目标线程自己决定---忽略(当禁止取消时)、立即终止(在取消点或异步模式下)、运行至cancelation-point(取消点),由不同的cancelation状态决定.
+
+线程接收到cancel信号的缺省处理是继续运行至取消点再处理(退出),或在异步方式下直接退出.
+
+**3)取消点**
+
+pthread_join()、pthread_testcancel()、pthread_cond_wait()、pthread_cond_timewait()、sem_wait()、sigwait()以及read()、write()等会引起阻塞的系统调用都是取消点(cancelation-point),而其他pthread函数不会引起cancelation动作.
+
+**4)与线程相关的pthread函数**
+	
+	1)int pthread_cancel(pthread_t thread);	//发送终止信号给pthread线程
+	//para:线程的ID; retval:成功返回0,失败返回非0.发送成功并不意味着thread会终止
+
+	2)int pthread_setcancelstate(int state, int *oldstate);	//设置本线程对cancel信号的反应---相当于本线程的属性
+	//para1---两种值:1)PTHREAD_CANCEL_ENABLE(缺省)---表示接收cancel信号并设为cancel状态;
+					2)PTHREAD_CANCEL_DISABLE---忽略cancel信号继续运行
+	//para2---不为NULL则存入原来的cancel状态以便恢复.一般为"NULL"
+
+	3)int pthread_setcanceltype(int type, int *oldtype);	//设置本线程取消动作的执行时机---相当于本线程的属性
+	//para1---两种值:1)PTHREAD_CANCEL_DEFFERED---表示收到信号后继续运行到下一个取消点再退出
+					2)PTHREAD_CANCEL_ASYCHRONOUS---表示收到信号后立即执行取消动作(退出)
+	//para1只有当cancel状态为enable时有效.para2:一般为NULL
+
+	4)void pthread_testcancel(void)		//检查本线程是否处于cancel状态.如果是则进行取消动作,否则直接退出.
+
+实例---获取线程的终止状态
+
+	#include "apue.h"
+	#include <pthread.h>
+
+	void *thr_fn1(void *arg)
+	{
+		printf("thread 1 returning\n");
+		return ((void *)1);		//线程返回
+	}
+
+	void *thr_fn2(void *arg)
+	{
+		printf("thread 2 exiting\n");
+		pthread_exit((void *)2);
+	}
+
+	int main(void)
+	{
+		int err;
+		pthread_t tid1, tid2;
+		void *tret;
+
+		err = pthread_create(&tid1, NULL, thr_fn1, NULL);
+		if(err != 0)
+			 err_exit(err, "can't create thread 1\n");
+
+		err = pthread_create(&tid2, NULL, thr_fn2, NULL);
+		if(err != 0)
+			err_exit(err, "can't create thread 2\n");
+		
+		err = pthread_join(tid1, &tret);
+		if(err != 0)
+			err_exit(err, "can't join with thread 1\n");
+		printf("thread 1 exit code %ld\n", (long)tret);
+
+		err = pthread_join(tid2, &tret);
+		if(err != 0)
+			err_exit(err, "can't join with thread 2\n");
+		printf("thread 2 exit code %ld\n", (long)tret);
+		exit(0);
+	}
+
+	//运行的结果:
+	thread 1 returning
+	thread 2 exiting
+	thread 1 exit code 1
+	thread 2 exit code 2
+
+**在pthread_create/pthread_exit如果传递结构体参数时:**
+
+1)不要使用栈上的结构体变量(因为栈变量在调用结束后其内存会被自动释放,另作他用);
+
+2)应该使用全局结构或者堆上的内存(即malloc函数分配的结构)
+
+实例---栈变量作为pthread_exit参数出现问题
+
+	#include <apue.h>
+	#include <pthread.h>
+
+	struct foo{
+		int a, b, c, d;		//可以这样写结构体成员
+	};
+
+	void printfoo(const char *s, const struct foo *fp)
+	{
+		printf("%s", s);
+		printf(" structure at 0x%lx\n", (unsigned long)fp);
+		printf(" foo.a = %d\n", fp->a);
+		printf(" foo.b = %d\n", fp->b);
+		printf(" foo.c = %d\n", fp->c);
+		printf(" foo.d = %d\n", fp->d);
+	}
+
+	void *thr_fn1(void *arg)
+	{
+		struct foo foo = {1, 2, 3, 4};	//给结构体成员赋值
+		
+		printfoo("thread 1: \n", &foo);
+		pthread_exit((void *)&foo);		//返回void *指针
+	}
+
+	void *thr_fn2(void *arg)
+	{
+		printf("thread 2: ID is %lu\n", (unsigned long)pthread_self());
+		pthread_exit((void *)0);
+	}
+
+	int main(void)
+	{
+		int err;
+		pthread_t tid1, tid2;
+		struct foo *fp;
+		
+		err = pthread_create(&tid1, NULL, thr_fn1, NULL);
+		if(err != 0)
+			err_exit(err, "can't create thread\n");
+		err = pthread_join(tid1, (void *)&fp);	//栈结构体变量fp得到状态
+		if(err != 0)
+			err_exit(err, "can't join with thread 1");
+		sleep(1);
+		printf("parent starting second thread\n");
+		err = pthread_create(&tid2, NULL, thr_fn2, NULL);
+		if(err != 0)
+			err_exit(err, "can't create thread\n");
+		sleep(1);
+		printfoo("parent: \n", fp);		
+		//栈结构体变量fp值可能已经被改变,因此最好不要使用栈变量.定义fp为全局变量或malloc出来(堆变量)
+		return 0;
+	}
+
+**线程清理处理程序(thread cleanup handler):线程安排它退出时需要调用的函数.**
+
+	#include <pthread.h>
+	void pthread_cleanup_push(void (*rtn)(void *), void *arg);	//清理入栈函数
+	//para1:清理函数,该函数可以写成"void fun(void *arg);",然后将其函数名传递给清理入栈函数
+	//e.g. pthread_cleanup_push(fun, "字符串");
+	void pthread_cleanup_pop(int execute);	//清理出栈函数
+	//该函数决定清理函数被调用与否.该函数与push必须匹配使用
+	
+	/*下面三种情况满足任意一种情况清理函数都将被调用:*/
+	1)调用pthread_exit()时;
+	2)响应取消请求;	//有cancel消息发出并相应
+	3)用非"0"execute参数调用pthread_cleanup_pop时
+
+实例---线程清理处理程序
+
+	#include <apue.h>
+	#include <pthread.h>
+
+	void cleanup(void *arg)
+	{
+		printf("cleanup: %s\n", (char *)arg);
+	}
+
+	void *thr_fn1(void *arg)
+	{
+		printf("thread 1 start\n");
+		pthread_cleanup_push(cleanup, "thread 1 first handler");
+		pthread_cleanup_push(cleanup, "thread 1 second handler");
+		printf("thread 1 push complete\n");
+		if(arg)
+			return((void *)1);
+		pthread_cleanup_pop(0);	//参数为0,在此处清理处理函数"cleanup"不会被调用
+		pthread_cleanup_pop(0);	//参数为0,在此处清理处理函数"cleanup"不会被调用
+		return((void *)1);		//return返回,清理处理函数"cleanup"不会被调用
+	}
+
+	void *thr_fn2(void *arg)
+	{
+		printf("thread 2 start\n");
+		pthread_cleanup_push(cleanup, "thread 2 first handler");
+		pthread_cleanup_push(cleanup, "thread 2 second handler");
+		printf("thread 2 push complete\n");
+		if(arg)
+			pthread_exit((void *)2);
+		pthread_cleanup_pop(0);	//参数为0,在此处清理处理函数"cleanup"不会被调用
+		pthread_cleanup_pop(0);	//参数为0,在此处清理处理函数"cleanup"不会被调用
+		pthread_exit((void *)2);	//pthread_exit返回,因此会调用清理函数"cleanup"
+	}
+
+	int main(void)
+	{
+		int err;
+		pthread_t tid1, tid2;
+		void *tret;
+
+		err = pthread_create(&tid1, NULL, thr_fn1, (void *)1);
+		if(err != 0)
+			err_exit(err, "can't create thread 1\n");
+		err = pthread_create(&tid2, NULL, thr_fn2, (void *)1);
+		if(err != 0)
+			err_exit(err, "can't create thread 2\n");
+
+		err = pthread_join(tid1, &tret);	//获取返回状态
+		if(err != 0)
+			err_exit(err, "can't join with thread 1\n");
+		printf("thread 1 exit code %ld\n", (unsinged long)tret);
+		err = pthread_join(tid2, &tret);
+		if(err != 0)
+			err_exit(err, "can't join with thread 2\n");
+		printf("thread 2 exit code %ld\n", (unsigned long)tret);
+		exit(0);
+	}
+
+	//结果:
+	thread 1 start
+	thread 1 push complete
+	thread 2 start
+	thread 2 push complete
+	cleanup: thread 2 second handler	//根据栈操作的顺序(先进后出)执行
+	cleanup: thread 2 first handler
+	thread 1 exit code 1
+	thread 2 exit code 2
+
+### 11.4 线程同步
+
+内存与寄存器的操作步骤:
+
+1)从内存单元读入寄存器;
+
+2)在寄存器中对变量进行操作;
+
+3)将新值写回内存单元.
+
+线程同步:两个或多个线程试图在同一时间修改同一变量.
+
+**1)互斥量**
+
+使用mutex(互斥量)保护数据,确保同一时间只有一个线程访问数据.得到锁的线程会正常执行,而其他试图获取锁的线程会处于阻塞状态.
+
+互斥量的声明、初始化以及销毁:
+
+	#include <pthread.h>
+	pthread_mutex_t mutex;	//声明一个互斥量
+	int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr);	//互斥量初始化函数
+	//para1:声明的互斥量; para2:互斥量属性,可以为"NULL"
+	int pthread_mutex_destroy(pthread_mutex_t *mutex);	//销毁互斥量
+	//如果动态分配的互斥量(使用malloc函数),在释放内存前不要调用"pthread_mutex_destroy"销毁该互斥量
+	//retval:所有函数成功返回0;失败返回错误编号
+
+获取/释放互斥量(加锁/解锁):
+
+	#include <pthread.h>
+	int pthread_mutex_lock(pthread_mutex_t *mutex);		//加锁
+	int pthread_mutex_trylock(pthread_mutex_t *mutex);	//尝试对互斥量加锁.成功就获得锁;失败返回EBUSY---用的比较少
+	int pthread_mutex_unlock(pthread_mutex_t *mutex);	//释放锁
+	//retval:所有函数成功返回0;失败返回错误编号
+
+实例---使用互斥量保护数据结构
+
+	#include <pthread.h>
+	#include <stdlib.h>
+
+	struct foo{
+		int f_count;	//互斥量使用计数
+		pthread_mutex_t f_lock;	//互斥量
+		int f_id;
+		...
+	};
+
+	/*为带互斥量的结构体分配空间*/
+	struct foo* foo_alloc(int id)
+	{
+		struct foo *fp;
+		if((fp = (struct foo *)malloc(sizeof(struct foo))) != NULL)
+		{
+			fp->f_count = 1;
+			fp->f_id = id;
+			/*初始化互斥量*/
+			if(pthread_mutex_init(&fp->f_lock, NULL) != 0)
+			{
+				free(fp);	//互斥量初始化失败,将malloc的内存释放
+				return (NULL);
+			}
+			...		//其他初始化
+		}
+
+		return fp;
+	}
+
+	/*对互斥量增加引用计数*/
+	void foo_hold(struct foo *fp)
+	{
+		pthread_mutex_lock(&fp->f_lock);
+		fp->f_count++;
+		pthread_mutex_unlock(&fp->f_lock);
+	}
+
+	/*减少互斥量的引用计数,如果为0则销毁互斥量*/
+	void foo_rele(struct foo *fp)
+	{
+		pthread_mutex_lock(&fp->f_lock);
+		if(--fp->f_count == 0)	//最后一次引用,就销毁,并且释放malloc的内存
+		{
+			pthread_mutex_unlock(&fp->f_lock);
+			pthread_mutex_destroy(&fp->f_lock);
+			free(fp);	//free掉malloc的内存
+		}else
+		{
+			pthread_mutex_unlock(&fp->f_lock);
+		}
+	}
+
+**2)避免死锁**
+
+使用多个互斥量时需要以相同的顺序加锁,从而避免死锁.
+
+例子---使用两个互斥量避免死锁
+
+	#include <stdlib.h>
+	#include <pthread.h>
+
+	#define NHASH		29
+	#define HASH(id)	(((unsigned long)id)%NHASH)
+
+	pthread_mutex_t hasklock = PTHREAD_MUTEX_INITIALIZER;	//静态初始化
+
+	struct foo{
+		int 			f_count;	//有hashlock保护
+		pthread_mutex_t f_lock;
+		int 			f_id;
+		struct foo		*f_next;	//构成链表,有hasklock保护
+		...		//其他成员
+	};
+
+	struct foo *fh[NHASH];
+
+	struct foo *foo_alloc(int id)	//分配空间
+	{
+		struct foo *fp;
+		int idx;
+		if((fp = (struct foo *)malloc(sizeof(struct foo))) != NULL)
+		{
+			fp->f_count = 1;
+			fp->f_id = id;
+			if(pthread_mutex_init(&fp->f_lock, NULL) != 0)
+			{
+				free(fp);
+				return NULL;
+			}
+			idx = HASH(id);
+			pthread_mutex_lock(&hashlock);
+			fp->f_next = fh[idx];
+			fh[idx] = fp;	//链表指向自身
+			pthread_mutex_lock(&fp->f_lock);		//先用动态锁锁住
+			pthread_mutex_unlock(&hashlock);	//然后释放hasklock
+			...	//其他初始化
+			pthread_muex_unlock(&fp->f_lock);
+		}
+		return fp;
+	}
+
+	struct foo *foo_find(int id)	//寻找链表中已经存在的对象
+	{
+		struct foo *fp;
+		pthread_mutex_lock(&hashlock);	//用hashlock锁住
+		for(fp = fh[HASH(id)]; fp != NULL; fp = fp->next)
+		{
+			if(fp->f_id == id)	//找到对象
+			{
+				fp->f_count++;
+				break;
+			}
+		}
+		pthread_mutex_unlock(&hashlock);
+		return fp;
+	}
+
+	void foo_rele(struct foo *fp)	//从链表中释放fp对象
+	{
+		struct foo *tfp;
+		int idx;
+		pthread_mutex_lock(&hashlock);
+		if(--fp->f_count == 0)	//计数为0,需要释放对应的fp
+		{
+			idx = HASH(fp->f_id);
+			tfp = fh[idx];	//散列表中的元素
+			if(tfp == fp)
+			{
+				fh[idx] = fp->next;
+			}else
+			{
+				while(tfp->f_next != fp)
+					tfp = tfp->next;
+				tfp->next = fp->next;
+			}
+			pthread_mutex_unlock(&hashlock);
+			pthread_mutex_destroy(&fp->f_lock);
+			free(fp);
+		}else
+		{
+			pthread_mutex_unlock(&hashlock):
+		}
+	}
+
+**3)函数pthread_mutex_timedlock**
+
+	#include <pthread.h>
+	#include <time.h>
+	int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *tsptr);
+	//para2:线程的阻塞时间(是一个绝对时间,非相对时间)---用的比较少
+	//retval:成功返回0,失败返回错误编号
+
+**4)读写锁**
+
+读写锁有三种模式:读模式加锁状态,写模式加锁状态,不加锁状态.
+
+读写锁特点:
+
+1)一次只有一个线程占有写模式读写锁,但是一次允许多个线程同时占有读模式读写锁;
+
+2)如果读写锁是写加锁状态时,在解锁之前,所有试图获取这个锁的线程都将被阻塞;
+
+3)如果读写锁是读加锁状态时,所以试图以读模式获取锁的线程都可以获得访问权,但是以写模式获取锁的线程都将被阻塞.
+
+4)当读写锁处于读模式锁住状态,如果有一个线程试图以写模式获取锁.此时读写锁通常会阻塞随后试图以读模式获取锁的请求.避免读模式长期占用锁.
+
+读写锁初始化及销毁:
+
+	#include <pthread.h>
+	int pthread_rwlock_init(pthread_rwlock_t *rwlock, const pthread_rwlockattr_t *attr);
+	//初始化读写锁.	para2:读写锁属性
+	int pthread_rwlock_destroy(pthread_rwlock_t *rwlock);	//销毁读写锁
+	//retval:成功返回0;失败返回错误编号
+
+读/写模式获取读写锁及释放锁:
+
+	#include <pthread.h>
+	int pthread_rwlock_rdlock(pthread_rwlock_t *rwlock);	//读模式获取读写锁
+	int pthread_rwlock_wrlock(pthread_rwlock_t *rwlock);	//写模式获取读写锁
+	int pthread_rwlock_unlock(pthread_rwlock_t *rwlock);	//释放读写锁
+	//retval:成功返回0;失败返回错误编码
+
+	int pthread_rwlock_tryrdlock(pthread_rwlock_t *rwlock);	
+	//尝试以读模式获得读写锁,成功就获取读写锁并返回0;失败不阻塞返回错误EBUSY
+	int ptrehad_rwlock_trywrlock(pthread_rwlock_t *rwlock);
+	//尝试以写模式获得读写锁,成功就获取读写锁并返回0;失败不阻塞返回错误EBUSY
+
+实例---使用读写锁
+
+	#include <stdlib.h>
+	#include <pthread.h>
+	struct job{
+		struct job *j_next;
+		struct job *j_prev;
+		pthread_t j_id;		//线程ID,告知哪个线程处理这个job
+		...		//其他成员
+	};
+
+	struct queue{	//工作队列
+		struct job *q_head;
+		struct job *q_tail;
+		pthread_rwlock_t q_lock;	//读写锁
+	};
+
+	//初始化一个工作队列
+	int queue_init(struct queue *qp)
+	{
+		int err;
+		qp->q_head = NULL;
+		qp->q_tail = NULL;
+		err = pthread_rwlock_init(&qp->q_lock, NULL);	//初始化读写锁
+		if(err != 0)
+			return err;
+		...	//其他初始化
+		return 0;
+	}
+
+	//在队列头部插入工作
+	void job_insert(struct queue *qp, struct job *jp)
+	{
+		pthread_rwlock_wrlock(&qp->q_lock);	//以写模式获取读写锁
+		jp->j_next = qp->q_head;		//next指向头
+		jp->j_prev = NULL;			//prev指向NULL
+		if(qp->q_head != NULL)
+			qp->q_head->j_prev = jp;		//head的prev指向jp
+		else
+			qp->q_tail = gp;		//表示链表list为空
+		qp->q_head = jp;		//head指向新的jp
+		pthread_rwlock_unlock(&qp->q_lock);	//释放读写锁
+	}
+
+	//在队列尾部插入job
+	void job_append(struct queue *qp, struct job *jp)
+	{
+		pthread_rwlock_wrlock(&qp->q_lock):
+		jp->j_next = NULL;		//next指向NULL
+		jp->prev = qp->q_tail;	//prev指向尾
+		if(qp->q_tail != NULL)
+			qp->q_tail->next = jp;	//tail的next指向jp
+		else
+			qp->q_head = jp;		//空链表list
+		qp->q_tail = jp;
+		pthread_rwlock_unlock(&qp->q_lock);
+	}
+
+	//从一个队列中移除job
+	void job_remove(struct queue *qp, struct job *jp)
+	{
+		pthread_rwlock_wrlock(&qp->q_lock);
+		if(jp == qp->q_head)
+		{
+			qp->q_head = jp->j_next;
+			if(qp->q_tail == jp)
+				qp->q_tail = NULL;
+			else
+				jp->j_next->j_prev = jp->prev;
+		}else if(jp == qp->q_tail)
+		{
+			qp->q_tail = jp->j_prev;
+			jp->j_prev->j_next = jp->j_next;
+		}else
+		{
+			jp->j_prev->j_next = jp->j_next;
+			jp->j_next->j_prev = jp->j_prev;
+		}
+		pthread_rwlock_unlock(&qp->q_lock);
+	}
+
+	//对于一个给定的线程ID找到对应job
+	struct job *job_find(struct queue *qp, pthread_t id)
+	{
+		struct job *job;
+		if(pthread_rwlock_rdlock(&qp->q_lock) != 0)
+			return NULL;
+		for(jp = qp->head; jp != NULL; jp = jp->j_next)
+			if(pthread_equal(jp->j_id, id))
+				break;
+
+		pthread_rwlock_unlock(&qp->q_lock);
+		return jp;
+	}
+
+**5)超时的读写锁**
+
+	#include <pthread.h>
+	#include <time.h>
+	int pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock, const struct timespec *tsptr);
+	int pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock, const struct timespec *tsptr);
+	//para2:线程的阻塞时间(是一个绝对时间,非相对时间)---用的比较少
+	//retval:成功返回0,失败返回错误编号
+
+**6)条件变量**
+
+条件变量是线程同步的一种机制.条件变量与互斥量一起使用,允许线程等待特定的条件发生.
+
+条件变量的初始化及销毁:
+
+	#include <pthread.h>
+	pthread_cont_t cond;	//表示一个条件变量
+	int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr);
+	//初始化条件变量;		para2:条件变量属性,可以为"NULL"
+	int pthred_cond_destroy(pthread_cond_t *cond);	//销毁一个条件变量
+	//retval:成功返回0,失败返回错误编号
+
+条件变量的等待:
+	
+	#include <pthread.h>
+	int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
+	//等待条件,此时会对互斥量进行解锁,线程进入休眠同时会不断检测条件.一旦条件满足该函数会返回互斥量再次被锁住
+	int pthread_cond_timedwait(pthread_cont_d *cond, pthread_mutex_t *mutex, const struct timespec *tsptr);
+	//超时条件变量
+	//retval:成功返回0,失败返回错误编号
+
+条件变量的发送(唤醒休眠的等待进程):
+
+	#include <pthread.h>
+	int pthread_cond_signal(pthread_cond_t *cond);	//唤醒一个以上的线程
+	int pthread_cond_broadcast(pthread_cond_t *cond);	//唤醒所有的等待条件的线程
+	//retval:成功返回0;失败返回错误编号
+
+实例---条件变量的使用
+
+	#include <pthread.h>
+	struct msg{
+		struct msg *m_next;
+		...	//其他结构体成员
+	};
+
+	struct msg *workq;
+
+	pthread_cond_t qready = PTHREAD_COND_INITIALIZER;	//静态条件变量初始化
+	pthread_mutex_t qlock = PTHREAD_MUTEX_INITIALIZER;	//静态互斥量初始化
+
+	void process_msg(void)
+	{
+		struct msg *mp;
+		for(;;)
+		{
+			pthread_mutex_lock(&qlock);
+			while(workq == NULL)	//workq作为条件变量
+				pthread_cond_wait(&qready, &qlock);	//等待条件变量
+			mp = workq;
+			workq = mp->m_next;
+			pthread_mutex_unlock(&qlock);
+			//会继续处理下一个msg
+		}
+	}
+
+	void enqueue_msg(struct msg *mp)
+	{
+		pthread_mutex_lock(&qlock);
+		mp->m_next = workq;
+		workq = mp;
+		pthread_mutex_unlock(&qlock);	//锁可以放到信号发送之后,此处因为发送信号不需要占用互斥量
+		pthread_cond_signal(&qready);
+	}
+
+***
+### Chpater 12 线程控制
 
 
 
