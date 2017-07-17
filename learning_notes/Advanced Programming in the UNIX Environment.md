@@ -2987,7 +2987,7 @@ pthread_join()、pthread_testcancel()、pthread_cond_wait()、pthread_cond_timew
 	int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr);	//互斥量初始化函数
 	//para1:声明的互斥量; para2:互斥量属性,可以为"NULL"
 	int pthread_mutex_destroy(pthread_mutex_t *mutex);	//销毁互斥量
-	//如果动态分配的互斥量(使用malloc函数),在释放内存前不要调用"pthread_mutex_destroy"销毁该互斥量
+	//如果动态分配的互斥量(使用malloc函数),在释放内存前要调用"pthread_mutex_destroy"销毁该互斥量
 	//retval:所有函数成功返回0;失败返回错误编号
 
 获取/释放互斥量(加锁/解锁):
@@ -3302,7 +3302,7 @@ pthread_join()、pthread_testcancel()、pthread_cond_wait()、pthread_cond_timew
 	pthread_cont_t cond;	//表示一个条件变量
 	int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr);
 	//初始化条件变量;		para2:条件变量属性,可以为"NULL"
-	int pthred_cond_destroy(pthread_cond_t *cond);	//销毁一个条件变量
+	int pthread_cond_destroy(pthread_cond_t *cond);	//销毁一个条件变量
 	//retval:成功返回0,失败返回错误编号
 
 条件变量的等待:

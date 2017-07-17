@@ -187,3 +187,5 @@
 	/dev/sdb1       7.3T  6.6T  371G  95% /zhsa022	---硬盘使用
 	/dev/sda3       651G  358G  261G  58% /zhsa021	---硬盘使用
 	cgroups          63G     0   63G   0% /sys/fs/cgroup
+
+## 13. wget命令

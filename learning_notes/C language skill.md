@@ -875,3 +875,16 @@ pthread_join()、pthread_testcancel()、pthread_cond_wait()、pthread_cond_timew
 	#ifdef __cplusplus
 	}
 	#endif
+
+## 32、结构体中数组的赋值
+
+	struct test{
+		unsigned int test_element[2];
+	};
+	
+	struct test myTest = {
+		0x12345678, 0x87654321,
+	};	//会自动填充结构体中数组的每一个元素
+
+	printf("Test result: 0x%x, 0x%x\n", myTest.test_element[0], myTest.test_element[1]);
+	//会打印出:Test result: 0x12345678, 0x87654321

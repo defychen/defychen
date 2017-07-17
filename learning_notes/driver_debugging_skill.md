@@ -27,6 +27,7 @@
 **4)重定向debug信息:**
 
 	echo -n "file ca_dsc_ioctl.c +p" > /dev/debugfs/dynamic_debug/control	//file为某个文件
+	echo -n "module alidsc +p" > /dev/debugfs/dynamic_debug/control			//module为整个dsc模块
 	或:echo -n "func dsc_fetch_subdevice +p" > /sys/kernel/debug/dynamic_debug/control	//func为具体的某个函数
 
 **5)dmesg显示调试信息.**
@@ -54,6 +55,14 @@
 
 	dev_dbg(s->dsc->dev, "%s\n", __func__);
 	/*para1:struct device的指针; para2:其他的信息.  (para1和para2之间用","隔开)*/
+
+**dev_dbg在driver probe中是没有效果的,因为此时dynamic printk还不起作用.在probe中应该使用dev_info(通知消息)、dev_err(错误消息).**
+
+**6)调整printk打印等级:**
+
+	//查看打印等级
+	cat /proc/sys/kernel/printk		//显示为:7       4       1       7.第一个数字"7"表示等级为7.
+	echo 15 > /proc/sys/kernel/printk		//调整等级为"15"
 
 ***
 ## Q2:"字节对齐"/"2字节对齐"/"4字节对齐"/"8字节对齐":

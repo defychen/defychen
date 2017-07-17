@@ -1040,8 +1040,142 @@ python对匿名函数的支持有限
 ***
 ## 8、错误、调试和测试
 
+Python的"pdb"以单步方式执行代码.
 
-## Python logging模块
+### 8.1 try...except...finally错误处理机制
+
+	try:
+		print 'try...'		//此句打印
+		r = 10 / 0			
+		//1)此处除"0"错误,会直接跳到except,后面语句不执行; 2)如果0改成2,后面的语句会执行,并且会跳过except直接执行finally
+		print 'result: ', r
+	except ZeroDivisionError, e:	//捕获除0错误. "e":保存错误信息---自动保存的
+		print 'except: ', e
+	finally:			//有finally时,finally语句块肯定会执行
+		print 'finally...'
+	print 'END'		//此处语句也会执行
+	
+	//因此结果为:
+	try...
+	except: integer division or modulo by zero
+	finally...
+	END
+	//如果0改成2结果为:
+	try...
+	result: 5
+	finally...
+	END
+
+**多个except捕获错误及else使用:**
+
+	try:
+		print 'try...'
+		r = 10 / int('a')	//强制转换int('a')---此处会抛出"ValueError"的错误
+		print 'result: ', r
+	except ValueError, e:	//捕获ValueError的错误
+		print 'ValueError: ', e
+	except ZeroDivisionError, e:	//除0错误
+		print 'ZeroDivisionError: ', e
+	else:	//其实捕获错误相当于条件判断"if",因此没有错误可以使用"else"
+		print 'No error!'
+	finally:
+		print 'finally...'
+	print 'END'
+
+**错误类也具有继承关系:**
+	
+1)ValueError继承自StandardError
+
+2)StandardError继承自BaseException(所有的错误都继承自"BaseException")
+
+实例---try...except跨越多层调用
+
+	def foo(s):
+		return 10 / int(s)
+	def bar(s):
+		return foo(s) * 2
+	def main:
+		try:
+			bar('0')
+		except StandardError, e:	//多层调用,但是可以在合适的层次去捕获错误
+			print 'Error!'
+		finally:
+			print 'finally...'
+
+	main()	//调用
+
+### 8.2 调用堆栈
+
+显示一些错误跟踪信息:
+
+	Traceback (most recent call last):
+		File "err.py", line 11, in <module>
+			main()
+		File "err.py", line 9, in main
+			bar('0')
+		File "err.py", line 6, in bar
+			return foo(s) * 2
+		File "err.py", line 3, in foo
+			return 10 / int(s)			//错误最终定位点
+	ZeroDivisionError: integer division or modulo by zero	//错误的最终原因
+
+### 8.3 记录错误
+
+Python内置的logging模块记录错误信息,并且可以让程序继续执行下去
+
+	import logging
+	
+	def foo(s):
+		return 10 / int(s)
+	def bar(s):
+		return foo(s) * 2
+	def main():
+		try:
+			bar('0')
+		except StandardError, e:	//捕获标准错误
+			logging.exception(e)	//调用logging.exception来记录错误信息,程序会继续执行
+	main()
+	print 'END'	//出现了错误,但是程序会继续执行.该句按照python程序逻辑从上往下会继续执行
+
+logging还可以将错误记录到日志文件,见后面的logging模块.
+
+### 8.4 抛出错误
+
+	class FooError(StandardError):	//需要自己定义错误类
+		pass
+	
+	def foo(s):
+		n = int(s)
+		if n == 0:
+			raise FooError('invalid value: %s' % s)		//抛出错误"raise"
+		return 10 / n
+
+一般使用内置的错误类型即可,不需要自己定义错误.
+
+### 8.5 调试
+
+**方法 1---使用print**
+
+使用print,使用之后需要删掉
+
+**方法 2---使用断言assert**
+
+	def foo(s):
+		n = int(s)
+		assert n != 0, 'n is zero!'	//1)assert为真,自动跳过该行语句继续执行; 2)为假,抛出"AssertionError"错误并退出
+		return 10 / n
+	def main():
+		foo('0')
+	//结果
+	Traceback (most recent call last):
+	...
+	AssertionError: n is zero!	//由于断言为假(失败),抛出该错误
+
+关掉assert断言:
+	
+	python -O err.py		//加上大写字母"O"---优化选项,关闭assert(所有的assert语句当作pass语句)
+
+**方法 3---logging**
 
 默认情况下,logging将日志打印到屏幕,日志级别是WARNING.级别大小:CRITICAL>ERROR>WARNING>INFO>DEBUG>NOTSET.
 
@@ -1064,6 +1198,315 @@ python对匿名函数的支持有限
 	...(一些前缀) DEBUG This is debug message
 	...(一些前缀) INFO This is info message
 	...(一些前缀) WARNING This is warning message
+
+**方法 4---pdb**
+
+	//启动
+	python -m pdb err.py		//要以"-m pdb"参数启动,会定位到下一行需要执行的代码
+	l---命令"l":小写字母"L",查看代码
+	n---命令"n":单步执行代码
+	p s---命令"p 变量名":查看变量
+	q---命令"q":结束调试,退出程序
+	c---命令"c":继续运行
+
+**方法 5---pdb.set_trace()**
+
+pdb.set_trace():设置一个断点
+
+	import pdb	//导入pdb模块
+	
+	s = '0'
+	n = int(s)
+	pdb.set_trace()		//程序运行到此处会自动暂停并进入pdb调试环境,进而可以用pdb命令调试程序
+	print 10 / n
+
+该方法不适合代码较多的场合
+
+### 8.6 单元测试
+
+**略**
+
+### 8.7 文档测试
+
+**暂时没看**
+***
+## 9 IO编程
+
+同步IO:相当于每个步骤依序进行,后面的必须等待前面的完成(等待过程是阻塞的过程).e.g.CPU输出100M数据只需要0.01s,磁盘接收这100M数据需要10s.同步情况下,CPU会阻塞等待这100M数据写完在往下执行.
+
+异步IO:当某个步骤出现阻塞,后面的程序不会一直等待阻塞的程序执行完毕,而是继续往下执行.e.g.CPU不等待,只是通知磁盘"写",后续代码接着执行.
+
+同步/异步区别在于是否等待IO执行的结果.异步性能高,但是编程模型复杂.因此Python中同步用的比较多.
+
+### 9.1 读文件
+
+磁盘读写文件都是由操作系统提供.其过程为请求操作系统打开一个文件,返回一个文件描述符,然后透过这个文件描述符从文件中读取数据或写入数据到文件中.
+
+**读文件**
+
+	f = open('./defy/test.txt', 'r')	//'r':表示读. 如果文件不存在会抛出"IOError"错误
+	f.read()	//一次性把内容全部读到内存,使用字符串"str"对象表示
+	f.close()	//关闭文件.出错会抛出"IOError"
+	
+保证无论出错与否都能关闭文件:
+
+	// method 1
+	try:
+		f = open('./defy/test.txt', 'r')
+		print f.read()	//因为f.read()返回"str"字符串
+	finally:	//无论如何finally中的代码都会执行
+		if f:	//判断f是否存在,存在返回真
+			f.close()
+	// method 2
+	with open('./defy/test.txt', 'r') as f:
+		print f.read()	//这种方法不用调用f.close(),系统自动调用.代码简洁
+
+**read()的变种**
+
+	f.read(size)	//每次读取size个字节的内容
+	f.readline()	//每次读取一行内容
+	f.readlines()	//一次读取所有内容,并按行返回list---所有行都放入一个list中,可以遍历该list
+
+实例---readlines()
+
+	for line in f.readlines():	//按行遍历读入的内容的list
+		print(line.strip())		//将末尾的'\n'去掉
+
+其他模式读文件:
+
+	f = open('./defy/test.jpg', 'rb')	//"rb"模式读二进制文件(e.g.图片、视频等)
+	/*非ASCII编码的文本文件以二进制打开后需要转换编码:*/
+	f = open('./defy/gbk.txt', 'rb')	//gbk编码的文件
+	f.read().decode('gbk')				//读的时候进行gbk解码
+	//或者自动解码
+	import codecs		//编码自动转换模块
+	with codecs.open('./defy/gbk.txt', 'rb', 'gbk') as f:	//gbk编码转换
+		f.read()
+	
+### 9.2 写文件
+
+	f = open('./defy/test.txt', 'w')	//w:写文本文件; 'wb':写二进制文件
+	f.write('Hello, world!')		//写入字符串.不会立即写入磁盘,先放在内存缓存起来,空闲时再写入
+	f.close()		//关闭文件.此时会把处在缓存中的数据全部写入磁盘
+
+**最保险的方法**
+
+	with open('./defy/test.txt', 'w') as f:
+		f.write('Hello, world!')	//这种方法不用调用f.close(),系统自动调用.代码简洁
+***
+## 10 os模块
+
+**os模块**
+
+	import os	//导入os模块
+	os.name		//操作系统名字(如果为posix---说明系统是linux/Unix/Mac os X; 如果为nt则是windows)
+	os.uname()	//获取系统详细信息,windows上没有
+	os.environ	//查看操作系统定义的环境变量,为一个dict
+	os.getenv('PATH')	//获取环境变量调用"os.getenv('导出的环境变量')"函数
+	os.rename('test.txt', 'test.py')	//文件重命名
+	os.remove('test.py')				//删除文件
+
+**os.path模块**
+
+	import os.path
+	os.path.abspath('.')	//列出当前目录的绝对路径
+	//在某个目录下创建新目录步骤:
+	1)os.path.join('/user/defy', 'testdir')		
+	//先将新目录的完整路径表示出来.第一个通常为绝对路径(也可以用相对路径).两个路径会合成为一个
+	2)os.mkdir('/user/defy/testdir')			//创建一个目录
+	os.rmdir('/user/defy/testdir')				//删除一个目录
+
+	//拆分路径
+	os.path.split('/user/defy/testdir/file.txt')
+	/*拆分得到('/user/defy/testdir', '.file.txt')---最后一级为目录或文件名*/
+	//得到扩展名
+	os.path.splitext('/user/defy/testdir/file.txt')
+	/*得到('/user/defy/testdir/file', '.txt')---最后一级为扩展名*/
+
+实例---列出当前目录下的所有目录或所有.py文件
+
+	[x for x in os.listdir('.') if os.path.isdir(x)]	//列出所有目录
+	
+	[x for x in os.listdir('.') if os.path.isfile(x) and os.path.splitext(x)[1] == '.py']
+	//列出所有的.py文件---os.path.split(x)返回的为tuple,因此"os.path.splitext(x)[1]"相当于取后面的扩展名
+***
+## 11 序列化及JSON
+
+**略**
+***
+## 12 进程和线程
+
+### 12.1 多进程(multiprocessing)
+
+**1)fork方法---windows没有**
+
+	import os	//os模块
+	print 'Process (%s) start...' % os.getpid()		//得到主进程的PID,使用"%d"也可以.也许"%s"兼容性好
+	pid = os.fork()		//创建子进程,返回两次
+	if pid == 0:
+		print 'I am child process (%s) and my parent is %s.' % (os.getpid(), os.getppid())
+		//os.getppid()---得到父进程的PID
+	else:
+		print 'I (%s) just created a child process (%s).' % (os.getpid(), pid)
+
+**2)multiprocessing---跨平台的多进程模块**
+
+	from multiprocessing import Process	//从multiprocessing导入Process类,该类用于创建一个子进程
+	import os
+	
+	#子进程执行的函数代码
+	def run_proc(name):
+		print 'Run child process %s (%s)...' % (name, os.getpid())
+
+	if __name__ == '__main__':	//直接运行"./hello.py",python中的特殊变量"__name__"就会置为"__main__"
+								//在其他地方导入时,就会判断失败,用于单独测试某模块的正确性
+		print 'Parent process %s.' % os.getpid()
+		p = Process(target=run_proc, args=('test',))	//创建一个进程实例.target:指定子进程需要执行的函数
+											//args:子进程执行的函数参数,是一个tuple.只有一个时需要加逗号('test',)
+		print 'Process will start.'
+		p.start()			//启动子进程
+		p.join()			//等待子进程结束在继续往下运行,常用于进程间同步
+		print 'Process end.'
+
+**3)进程池Pool---用于批量创建子进程**
+
+	from multiprocessing import Pool
+	import os, time, random
+
+	def long_time_task(name):
+		print 'Run task %s (%s)...' % (name, os.getpid())
+		start = time.time()		//得到当前时间,为秒数
+		time.sleep(random.random() * 3)		//random.random()---得到随机值(0~1); time.sleep()进程睡眠
+		end = time.time()
+		print 'Task %s runs %0.2f seconds.' % (name, (end - start))	//得到运行时间
+
+	if __name__ == '__main__':
+		print 'Parent process %s.' % os.getpid()
+		p = Pool()		//创建一个进程池p
+		for i in range(5):
+			p.apply_async(long_time_task, args=(i, ))	//进程池指定运行函数使用"p.apply_async(func, args)"
+		print 'Waiting for all subprocess done...'
+		p.close()	//join之前必须调用close,然后就不能再继续添加新的进程了
+		p.join()
+		print 'All subprocess done.'
+
+	//结果
+	Parent process 669.
+	Waiting for all subprocess done...
+	Run task 0 (671)...
+	Run task 1 (672)...
+	Run task 2 (673)...
+	Run task 3 (674)...		//后面没有紧跟着task 4,是因为CPU核心数为4,最多同时执行4个进程
+	Task 2 runs 0.14 seconds.
+	Run task 4 (673)...
+	Task 1 runs 0.27 seconds.
+	Task 3 runs 0.86 seconds.
+	Task 0 runs 1.41 seconds.
+	Task 4 runs 1.91 seconds.
+	All subprocess done.
+
+**4)进程间通信---Queue/Pipes等方式**
+
+	from multiprocessing import Process, Queue	//使用Queue实现进程间通信
+	import os, time, random
+	
+	#写数据进程执行的代码
+	def write(q):
+		for value in ['A', 'B', 'C']:
+			print 'Put %s to queue...' % value
+			q.put(value)		//队列写数据"q.put(...)"
+			time.sleep(random.random())
+
+	#读数据进程执行的代码
+	def read(q):
+		while True:		//死循环
+			value = q.get(True)		//参数True会导致:如果队列中没有数据是调用线程暂停,直至有数据会继续
+									//如果为False会导致:如果队列中为空,会引发异常.所以一般为True
+			print 'Get %s from queue.' % value
+
+	if __name__ == '__main__':
+		#父进程创建Queue,并传给子进程
+		q = Queue()		//创建Queue
+		pw = Process(target=write, args=(q,))
+		pr = Process(target=read, args=(q,))
+		#启动写进程,写入数据
+		pw.start()
+		#启动读进程,读取数据
+		pr.start()
+		#等待pw(写进程)结束
+		pw.join()
+		#pr(读进程是死循环),需要强行终止
+		pr.terminate()		//强行终止死循环进程
+
+### 12.2 多线程---threading模块
+
+	import time, threading		//导入threading(多线程)模块
+	
+	#新线程执行代码
+	def loop():
+		print 'thread %s is running...' % threading.current_thread().name
+			//任何一个线程都可以通过threading.current_thread().name获得当前线程名
+		n = 0
+		while n < 5:
+			n = n + 1
+			print 'thread %s >>> %s' % (threading.current_thread().name, n)
+			time.sleep(1)
+		print 'thread %s ended.' % threading.current_thread().name
+
+	print 'thread %s is running...' % threading.current_thread().name
+	t = threading.Thread(target=loop, name='LoopThread')	//创建线程.Target=线程函数名;name=传递的线程名
+	t.start()		//启动线程
+	t.join()		//等待子线程结束
+	print 'thread %s ended.' % threading.current_thread().name
+
+	//结果:
+	thread MainThread is running...		//主线程名字"MainThread"
+	thread LoopThread is running...		//如果没有指定name,系统默认名字为"Thread-1", "Thread-2",...	
+	thread LoopThread >>> 1
+	thread LoopThread >>> 2
+	thread LoopThread >>> 3
+	thread LoopThread >>> 4
+	thread LoopThread >>> 5
+	thread LoopThread ended.
+	thread MainThread ended.
+
+### 12.3 threading.Lock()---线程锁
+
+多个线程对同一资源(全局变量)访问时,可能会把值修改的混乱.需要增加一个threading.Lock()，让访问该资源按单一线程执行.
+
+	import time, threading
+	
+	#银行存款
+	balance = 0
+
+	lock = threading.Lock()		//线程锁
+	
+	def change_it(n):
+		#先存后取,结果为0
+		global balance	//表明为全局变量
+		balance = balance + n
+		balance = balance - n
+
+	def run_thread(n):		//线程带参数n
+		for i in range(1000):
+			#change_it函数会修改全局变量,加锁后只允许单线程执行,保护该资源
+			lock.acquire()	//获得锁,后面的代码是单线程执行
+			try:
+				change_it(n)	//调用修改全局变量的函数
+			finally:		//finally中的代码肯定会执行,此处目的是释放锁
+				lock.release()	//释放锁
+
+	t1 = threading.Thread(target=fun_thread, args=(5,))		//创建带参数的线程
+	t2 = threading.Thread(target=fun_thread, args=(8,))
+	t1.start()		//启动线程t1
+	t2.start()		//启动线程t2
+	t1.join()		//等待线程1结束
+	t2.join()		//等待线程2结束
+	print balance
+
+**操作系统出现硬盘狂响,点窗口无反应是因为开的任务(进程/线程)过多,操作系统忙着切换任务,此时根本没有时间去执行任务.**
+
+
 
 **eval()函数**
 
