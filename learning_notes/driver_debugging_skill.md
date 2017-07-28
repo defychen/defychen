@@ -29,7 +29,7 @@
 	echo -n "file ca_dsc_ioctl.c +p" > /dev/debugfs/dynamic_debug/control	//file为某个文件
 	echo -n "module alidsc +p" > /dev/debugfs/dynamic_debug/control			//module为整个dsc模块
 	或:echo -n "func dsc_fetch_subdevice +p" > /sys/kernel/debug/dynamic_debug/control	//func为具体的某个函数
-
+	echo -n "module alikl +p" > /dev/debugfs/dynamic_debug/control
 **5)dmesg显示调试信息.**
 
 **dev_xxx函数:---用法都是一样的.**

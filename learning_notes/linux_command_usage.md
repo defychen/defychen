@@ -188,4 +188,34 @@
 	/dev/sda3       651G  358G  261G  58% /zhsa021	---硬盘使用
 	cgroups          63G     0   63G   0% /sys/fs/cgroup
 
+## 13、head命令
+
+	/*
+	ts流文件都是二进制文件,像:	47 51 20 30 07 90 00 00 00 1C...	//每个代表一个byte
+	一个ts流文件为31182808 byte(ls -l命令显示的文件大小以byte为单位),在ultraEdit中显示为:1DBCFD8数据
+	如果需要截取450448 byte,使用head命令截取
+	*/
+	head -c 450448 xxx.ts > test.ts		//截取xxx.ts中的450448 byte到test.ts中
+
+## 14、nm命令
+
+	nm vodrm_test	//查看函数库、可执行文件或目标文件里包含哪些函数.
+
+## 15、重定向和管道
+
+	//重定向
+	1)将标准输出和标准错误输出分别重定向到不同的文件中:
+		kill -HUP 1234 > killout.txt 2> killerr.txt	//将标准输入重定向到killout.txt;将标准错误输出重定向到killerr.txt
+	2)将标准输出和标准错误输出重定向到同一个文件:
+		kill -l 1234 > killouterr.txt 2>&1		//2--标准错误; >--冲定向; &1--和1(标准输出一样)
+
+	//管道
+	ls -l | head -n 5		//显示ls -l的前5行
+	grep linux . -nr | more		//按页显示查找到的字符串,没有grep linux . -nr好看
+
+## 16、which命令
+
+	which命令用于查找并显示给定命令的绝对路径.
+	which ls	//显示为"/bin/ls"
+
 ## 13. wget命令
