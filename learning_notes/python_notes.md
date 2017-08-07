@@ -1505,9 +1505,243 @@ pdb.set_trace():设置一个断点
 	print balance
 
 **操作系统出现硬盘狂响,点窗口无反应是因为开的任务(进程/线程)过多,操作系统忙着切换任务,此时根本没有时间去执行任务.**
+***
+## 13 摘要算法(SHA/MD5)
 
+Python的hashlib提供了常用的摘要算法(MD5, SHA1等).
 
+摘要算法:又称哈希算法、散列算法.通过一个函数,将任意长度的数据转换成一个长度固定的16进制表示的字符串.
 
+目的:摘要算法通过摘要函数f()对任意长度的数据data计算出固定长度的摘要digest.目的是为了发现源数据是否被篡改过.摘要函数f(data)是一个单向函数,计算f(data)很容易,但通过digest反推data却很难.
+
+实例:---计算一个字符串的MD5值.
+
+	import hashlib
+	md5 = hashlib.md5()		//得到hashlib库中的md5函数
+	md5.update('how to use md5 in python hashlib?')		//md5.update(''):将字符串写入md5的一段buffer---添加字符串
+	print md5.hexdigest()		//md5.hexdigest()---开始计算得到md5值
+
+	//结果为:d26a53750bc40b38b65a520292f69306
+
+分块多次调用update(),最终的md5值都是一样的:
+	import hashlib
+	md5 = hashlib.md5()
+	md5.update('how to use md5 in ')
+	md5.update('python hashlib?')
+	print md5.hexdigest()
+
+**MD5:最常见的摘要算法,速度快,生成的长度是32个16进制字符串(128 bit).**
+
+实例---SHA1调用
+
+	import hashlib
+	sha1 = hashlib.sha1()	//得到hashlib库中的sha1函数
+	sha1.update('how to use sha1 in ')
+	sha1.update('python hashlib?')
+	print sha1.hexdigest()		//计算得到sha1值
+
+**SHA1:生成的长度是40个16进制的字符串(160 bit).**
+
+**摘要算法不是加密算法,不能用于加密---因为无法通过摘要反推明文.**
+***
+## 14 网络编程
+
+网络通信:就是两台计算机上的两个进程之间的通信.(e.g.本地浏览器进程与新浪服务器上的某个web服务进程在通信;QQ进程与腾讯的某个服务器上的某个进程在通信).
+
+Python进行网络编程,就是在Python程序本身这个进程内,连接别的服务器进程的通信端口进程通信.
+
+### 14.1 TCP/IP简介
+
+IP地址:每台计算机的唯一标识(对应计算机的网络接口---也就是网卡).
+
+互联网中通过给固定地区分配固定的IP地址,来实现全球的网络互联.处于某个地区内部的互联网,通过给地区的子区域分配IP地址,实现区域内部互联,如果与地区之外的区域通信,可通过分配给该地区的固定IP地址实现通信.
+
+**IP协议:**
+
+1)负责将数据从一台计算机通过网络发送到另一台计算机.数据被分割成一小块一小块,以IP包的形式发送出去.
+
+2)在传输过程中,由于存在多条线路.路由器负责选择一条路径将IP包转发出去.
+
+3)IP包特点是按块发送(IP包),途经多个路由.但不能保证到达,也不能保证顺利到达.
+
+**TCP协议:**
+
+1)建立在IP协议之上.负责在两台计算机之间建立可靠连接,保证数据包顺利到达.
+
+2)TCP协议会通过握手建立连接,然后对每个包编号,确保对方按顺序收到,如果包丢失就重发.
+
+3)其他更高级的协议(HTTP协议、SMTP协议)都是建立在TCP协议之上的.
+
+**IP包的组成:**
+
+1)传输的数据---最基本的组成;
+
+2)源IP地址和目标IP地址---识别通信的计算机;
+
+3)源端口和目标端口---端口用于区分同一台计算机上的不同网络程序,即每个网络程序都会向操作系统申请唯一的端口号.
+
+因此,两个进程在两台计算机之间建立网络连接就需要各自的IP地址和各自的端口号.
+
+### 14.2 TCP编程
+
+socket:表示打开了一个网络连接.
+
+**客户端:**
+
+主动发起连接的叫客户端,被动相应连接的叫服务器.
+
+实例:
+
+	import socket	//导入socket库
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)	
+	//创建一个socket,AF_INET:IPv4协议(IPv4---AF_INET6);SOCK_STREAM:面向流的TCP协议
+	s.connect(('www.sina.com.cn', 80))	//IP地址+端口号.---IP地址可由域名"www.sina.com.cn"自动转换
+	//端口号分类:80 web服务标准端口;25 SMTP服务端口;21 FTP服务端口.端口号<1024---Internet标准服务端口;>1024可以任意使用.
+	s.send('GET / HTTP/1.1\r\nHost: www.sina.com.cn\r\nConnection: close\r\n\r\n')
+	//发送数据---此处为请求首页内容.
+	
+	//接收数据
+	buffer = []		//接收数据buffer
+	while True:		//死循环
+		d = s.recv(1024)	//每次最大接收1K byte数据
+		if d:
+			buffer.append(d)	//当接收到的数据不为空,添加到buffer
+		else:
+			break				//为空跳出while
+	data = ''.join(buffer)		//将buffer中的数据放到data中
+	s.close()		//关闭socket连接
+	
+	//解析接收到的数据
+	header, html = data.split('\r\n\r\n', l)	//????
+	print header
+	//将接收到的数据写入文件
+	with open('sina.html', 'wb') as f:
+		f.write(html)		//将html写入sina.html文件,然后直接打开sina.html文件即可	
+
+**服务器:**
+
+1)创建一个基于IPv4和TCP协议的Socket:
+
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+2)绑定监听的IP地址和端口:
+
+	s.bind(('127.0.0.1', 9999))
+	//1)IP地址:服务器有多块网卡,每块网卡对应一个IP地址.bind中的IP地址区域填写"0.0.0.0"表示本服务器所有的IP地址.
+		"127.0.0.1"表示本机地址.此时客户端必须同时在本机运行才能连接上,外部计算机无法连接.
+	//2)端口:端口号<1024需要管理员权限才能绑定.>1024可以任意绑定
+
+3)监听端口:
+	
+	s.listen(5)	//参数表示最大的连接数量,为设置s的一种属性.经过这个设置后socket就可以等待客户端的连接了.
+	print 'Waiting for connection...'
+
+4)接收客户端连接,并创建线程处理客户端连接:
+
+	while True:		//使用死循环来接收客户端连接
+		sock, addr = s.accept()		//s.accept()等待并返回一个客户端连接.
+		//sock:表示一个客户端的socket; addr:包含客户端的IP地址(此处为127.0.0.1,与服务器相同)和客户端的端口
+		t = threading.Thread(target=tcplink, args=(sock, addr))	//创建处理客户端连接的线程
+		t.start()		//启动线程
+
+5)处理客户端连接的线程
+
+	def tcplink(sock, addr):
+		print 'Accept new connection from %s:%s...' % addr	//打印出客户端的IP和端口
+		sock.send('Welcome')	//给客户端发送欢迎信息
+		while True:
+			data = sock.recv(1024)	//接收最大数据1024 byte
+			time.sleep(1)			//睡眠1s
+			if data == 'exit' or not data:	//发送'exit'或没有数据就退出线程循环---进而结束该线程
+				break
+			sock.send('Hello, %s' % data)	//添加Hello头发送给客户端
+		sock.close()	//关闭socket
+		print 'Connection from %s:%s closed.' % addr
+
+**实例---客户端/服务器的TCP连接**
+
+	//服务器程序:echo_server.py
+	#!/usr/bin/python	//指定python程序的位置,此时可以直接"./echo_server.py"调用,否则必须"python echo_server.py"
+	import socket, time, threading	//会使用socket,time,threading等模块
+	
+	def tcplink(sock, addr):
+		print 'Accept a new connection from %s:%s...' % addr
+		sock.send('Welcome')
+		while True:
+			data = sock.recv(1024)
+			time.sleep(1)
+			if data == 'exit' or not data:
+				break
+			sock.send('Hello, %s' % data)
+		sock.close()
+		print 'Connection from %s:%s closed.' % addr
+	
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	#bind ip+port(server)
+	s.bind(('127.0.0.1', 9999))		//仅限于本机的连接
+	#listen port & set listen attribute.
+	s.listen(5)
+	print 'Waiting for connection...'
+	while True:
+		#accept a new connection
+		sock, addr = s.accept()
+		#create a new threading to deal with TCP connection
+		t = threading.Thread(target=tcplink, args=(sock, addr))
+		t.start()
+
+	//客户端程序:echo_client.py
+	#!/usr/bin/python
+	import socket
+
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	#create connect
+	s.connect(('127.0.0.1', 9999))
+	#receive welcome message
+	print s.recv(1024)
+	for data in ['Defy', 'Tracy', 'Sarah']:
+		#send data
+		s.send(data)
+		print s.recv(1024)
+	s.send('exit')	//结束发送
+	s.close()
+
+**服务器程序会永远accept客户端(一种死循环,无限运行下去),结束客户端需要使用"Ctrl+C"**
+
+### 14.3 UDP编程
+
+**UDP协议特点:**
+
+1)不需要建立连接,只需要知道对方的IP地址和端口号,就可以直接发送数据包;
+
+2)传输数据不如TCP可靠.但是速度比TCP快,适用于要求及时但是不要求可靠到达的场合(e.g.QQ等).
+
+**实例---客户端/服务器的UDP连接**
+
+	//服务器:udp_server.py
+	#!/usr/bin/python
+	import socket
+	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	#bind port
+	s.bind(('127.0.0.1', 9999))
+	print 'Bind UDP on 9999...'
+	#receive data
+	while True:
+		data, addr = s.recvfrom(1024)	//服务器端接收数据使用"s.recvfrom(1024)"
+		print 'Received from %s:%s...' % addr
+		s.sendto('Hello, %s!' % data, addr)	//s.sendto(data, addr).参数1:需要发送的数据;参数2:IP+端口
+
+	//客户端:udp_client.py
+	#!/usr/bin/python
+	import socket, time
+	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	for data in ['Defy', 'Tracy', 'Sarah']:
+		#send data to server
+		s.sendto(data, ('127.0.0.1', 9999))
+		time.sleep(1)	//睡眠1s
+		#receive data
+		print s.recv(1024)	//客户端接收数据使用"s.recv(1024)"
+	s.close()
+	
 **eval()函数**
 
 	params = ['open_keys_test', 'check_set_format', 'check_kl_algo']

@@ -247,4 +247,289 @@ write-back:当write数据时,CPU的数据只写到cache中,并将相应的cache 
 
 5)TLB(页表缓冲)里的转换表(页表文件)包含虚拟页地址(virtual page number, VPN)和物理页地址(physical page number, PFN).
 ***
-# 2.See MIPS Run
+# 2.memory mapping
+
+## 2.1 linux内核物理内存的描述
+
+### 1.页
+
+内存通常把"物理页"作为内存管理的基本单位,MMU把虚拟地址转为物理地址通常以"页"为单位进行处理的.
+
+linux系统初始化的时候,为每个物理页面创建一个page对象,所有的page对象指针存放在一个mem_map[]数据中.一般32位系统每个page是4KB.
+
+							physical memory
+		0xFFFF_FFFF----------------------------------
+						page (2^20-1)	---总共有2^20个page
+		0xFFFF_F000----------------------------------	
+	((2^20-1)*4KB)
+													 #define __pfn_to_page(pfn)	(mem_map + (pfn))
+		0xxxxx_xxxx----------------------------------#define __page_to_pfn(page)	((unsigned long)((page)-mem_map))
+							page n			#define page_to_phys(page) ((dma_addr_t)page_to_pfn(page)<<PAGE_SHIFT)
+		0x1000 * n ----------------------------------	
+		(n * 4KB)			.......
+		0xxxxx_xxxx----------------------------------
+							page 2
+		0x0000_2000----------------------------------		
+		(2 * 4KB)			page 1
+		0x0000_1000----------------------------------	
+		(1 * 4KB)			page 0
+		0x0000_0000----------------------------------	<-----struct page * mem_map
+		(0 * 4KB)
+
+### 2.区
+
+内核将物理内存分为三个区:ZONE_DMA、ZONE_NORMAL、ZONE_HIGHMEM.
+
+x86结构物理地址空间布局:
+
+![x86_phys_layout](http://i.imgur.com/efrsB2z.png)
+
+### 3.虚拟地址与物理地址映射
+
+在linux中,虚拟地址/线性地址/逻辑地址都是一样.
+
+虚拟地址与物理地址映射(x86 architecture):
+
+![va_to_phys address mapping](http://i.imgur.com/rT6kFuT.png)
+
+## 2.2 memory mapping
+
+512MB DDR物理地址划分
+
+	0x0000_0000	 ----------------------------------
+				|
+				|	linux main memory range 0
+				|
+	0x01CF_F000	 ----------------------------------
+				|	Reserved
+	0x01D0_0000	 ----------------------------------
+				|
+				|	xxx CPU private memory
+				|
+	0x0200_0000	 ----------------------------------
+				|
+				|	linux main memory range 1
+				|
+	0x1000_0000	 ----------------------------------
+				|	reserved
+	0x1800_0000	 ----------------------------------
+				|
+				|	IO space(IO 空间)
+				|
+	0x2000_0000	 ----------------------------------
+				|
+				|	reserved
+				|
+	0x8000_0000	 ----------------------------------
+				|
+				|	Unused DDR high  mem range
+				|
+	0x9000_0000	 ----------------------------------
+				|
+				|	linux hign  mem
+				|
+	0xA000_0000	 ----------------------------------
+
+	/*dts中的表示:*/
+	/ {
+		/*linux main memory range 0*/
+		memory@0{
+			device_type = "memory";
+			reg = <0x00000000 0x01CFF000>;
+		};
+		/*linux main memory range 1*/
+		memory@0x02000000{
+			devicey_type = "memory";
+			reg = <0x02000000 0x0E000000>;
+		};
+		/*linux high memory range*/
+		memory@0x90000000{
+			device_type = "memory";
+			reg = <0x90000000 0x10000000>;
+		};
+	};
+
+linux中看到的physical address(pa)不是真正的物理内存地址.pa地址只是出了MMU到达北桥(North Bridge)的地址,北桥访问真正的内存硬件或者外设还需要做地址映射.这个映射对于CPU而言是"完全透明的".
+
+linux中,把真正的内存地址称为DMA地址,使用dma_addr_t描述.有些IP核可以不通过CPU而直接访问memory,这种IP核就必须知道memory的真实地址(即DMA地址),而不是北桥地址(pa).
+
+	1)main cpu应该传递一个什么地址给see cpu?
+	--->main cpu应该传递虚拟地址对应的pa(北桥地址)给see cpu.
+	2)see cpu应该怎么处理这个地址呢?
+	--->see cpu应该将接收到的pa(北桥地址)转成va(虚拟地址).
+	3)如果main cpu写了某个内存地址,但是see cpu不需要访问,但是某个IP核的DMA需要访问这个地址,main cpu应该传递什么地址到see呢?
+	--->main cpu传递dma地址到see cpu,see cpu不做处理,直接将该地址配给对应的IP核的寄存器即可.
+
+**进程对应的内存空间中的5种数据区:**
+
+1)代码段:用来存放可执行文件的操作指令,是可执行程序在内存中的镜像;
+
+2)数据段:用来存放可执行文件中已初始化的全局变量,也就是说存放程序静态分配的变量和全局变量;
+
+3)BSS段:包含了程序中未初始化的全局变量,在内存中bss段全部置0;
+
+4)堆(heap):用于存放进程运行中动态分配的内存段,大小不固定,可动态扩张或缩减.malloc等新分配内存会被动态添加到堆上(堆被扩张);free等释放内存会从堆中剔除(堆被缩减);
+
+5)栈(stack):存放程序临时创建的局部变量.栈特别适用于保存/恢复调用现场.
+
+### 2.3 用户空间内存划分
+
+实例1---进程内存区域地址:
+
+	#include <stdio.h>
+	#include <malloc.h>
+	#include <unistd.h>
+	
+	int bss_var;	//bss段
+	int data_var0 = 1;	//数据段
+	
+	int main(int argc, char *argv[])
+	{
+		/*code segment*/
+		printf("below are addresses of types of process'mem\n");
+		printf("Text location:\n");
+		printf("\tAddress of main(code segment): %p\n", main);
+		printf("-------------------------");		
+		
+		/*stack segment*/
+		int stack_var0 = 2;
+		printf("Stack location:\n");
+		printf("\tInitial end of stack:%p\n", &stack_var0);
+
+		int stack_var1 = 3;
+		printf("\tnew end of stack:%p\n", &stack_var1);
+		printf("-------------------------");
+		
+		/*data segment*/
+		printf("Data location:\n");
+		printf("\tAddress of data_var(Data segment):%p\n", &data_var0);
+		
+		static int data_var1 = 4;
+		printf("\tNew end of data_var(Date segment):%p\n", &data_var1);
+		printf("-------------------------");
+
+		/*BSS segment*/
+		printf("BSS segment:\n");
+		printf("\tAddress of bss_var(bss segment):%p\n", &bss_var);
+		printf("-------------------------");
+
+		/*Heap segment*/
+		printf("Heap location:\n");
+		char *str = (char *)malloc(sizeof(char) * 10);
+		printf("\tInitial heap end:%p\n", str);
+		char *buf = (char *)malloc(sizeof(char) * 10);
+		printf("\tnew heap end:%p\n", buf);
+
+		/*另一种方式:*/
+		/*
+		char *b = sbrk((ptrdiff_t)0);
+		printf("Heap location:\n");
+		printf("Initial end of heap:%p\n", b);
+		
+		brk(b+4);
+		b=sbrk((ptrdiff_t)0);
+		printf("\tnew end of heap:%p\n", b);
+		*/
+		return 0;
+	}
+
+	/*测试得到结果:*/
+	below are addresses of types of process's mem
+	Text location:
+        Addresses of main(code segment):0x406990
+	------------------------
+	Stack location:
+        Initial end of stack: 0x7ff71dfc
+        new end of stack: 0x7ff71e00		//stack向上生长(0x7ff71dfc->0x7ff71e00)
+	------------------------
+	Data location:
+        Address of data_var(data segment):0x4521a0
+        New end of data_var(data segment):0x4521a4
+	------------------------
+        Address of bss_var: 0x4549c8
+	------------------------
+	Heap location:
+        Initial end of heap:0xb0e000
+        New end of heap: 0xb0e004		//heap也是向上生长(0xb0e000->0xb0e004).很奇怪
+
+1)查看程序各个段的大小:
+
+	size 程序名---size basic
+
+2)查看程序相关信息:
+
+	readelf -h 程序名---readelf -h basic
+
+实例2---测试进程分配内存大小(heap堆内存)
+
+	int max_alloc(void)
+	{
+		int MB = 0;
+		while(malloc(1<<20))	//1<<20为MB
+			++MB;
+
+		printf("Maximum allocated %d MB\n", MB);
+		return 0;
+	}
+
+	/*测试结果:*/
+	Maximum allocated 2037 MB	---2GB的用户空间(mips上是2GB用户空间,2GB内核空间)
+	在另一款芯片上显示为(arm上为3:1):
+	Maximum allocated 3040 MB	---3GB的用户空间(arm上是3GB用户空间,1GB内核空间)
+
+### 2.3 内核内存划分
+
+	#include <linux/module.h>
+	#include <linux/kernel.h>
+	#include <linux/mm.h>
+	#include <linux/init.h>
+
+	static int mem_alloc_page(void)
+	{
+		struct page *p = NULL;	//page结构体,4KB---系统内存的最小单位s
+		void *addr;		//虚拟地址
+		unsigned long paddr;	//物理地址
+
+		p = alloc_page(GFP_KERNEL);		//分配一个page的内核空间
+		if(!p)
+			return -ENOMEM;
+		
+		printk("Alloc page:\n");
+		printk("\tAddress of page:%p\n", p);	//打印出申请的page的地址
+		
+		vaddr = page_address(p);	//将申请的page转成虚拟地址
+		printk("\tAddress of page_address:%p\n", vaddr);	//打印出虚拟地址
+
+		paddr = virt_to_phys(vaddr);	//虚拟地址转成物理地址
+		printk("\tAddress of virt_to_phys:%lx\n", paddr);	//打印出物理地址
+		
+		put_page(p);	//将申请的page释放掉
+		return 0;
+	}
+
+	static int mem_test_init(void)
+	{
+		mem_alloc_page();
+		printk("init success!\n");
+		return 0;
+	}
+
+	static void mem_test_exit(void)
+	{
+		printk("exit success!\n");
+	}
+
+	MODULE_LICENSE("GPL);
+
+	module_init(mem_test_init);
+	module_exit(mem_test_exit);
+
+	/*测试结果*/
+	alloc_page:
+        Address of page:efddd6e0
+        Address of page_address:ef2b7000	//arm申请的内核空间内存是从3G(0xC000_0000)开始.
+        Address of virt_to_phys:af2b7000	//arm的虚拟地址转成物理地址需要经过mmu。因此不是单纯的减掉某个值(mips是这样)
+	init success!
+
+***
+# 3.See MIPS Run
