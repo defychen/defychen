@@ -437,7 +437,7 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 	struct list_head score_head; /*声明一个链表头*/
 	*/
 
-**2.创建链表,即初始化链表**
+**2.创建链表,即初始化链表头**
 	
 	static inline void INIT_LIST_HEAD(struct list_head *list)
 	{
@@ -465,14 +465,15 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 
 	static inline void list_add(struct list_head *new, struct list_head *head)
 	{
-		__list_add(new, head, head->next);	/*在head和head->next之间插入new*/
+		__list_add(new, head, head->next);	
+		/*在head和head->next之间插入new(new节点为链表元素,一般为自己声明的带struct list_head元素的结构体)*/
 	}
 
 **4.在链表尾插入节点**
 
 	static inline void list_add_tail(struct list_head *new, struct list_head *head)
 	{
-		__list_add(new, head->prev, head);
+		__list_add(new, head->prev, head);	//new节点为链表元素,一般为自己声明的带struct list_head元素的结构体
 	}
 
 **5.删除节点**
@@ -500,8 +501,8 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 		container_of(ptr, type, member)
 
 	/*
-	ptr:为struct list_head *类型,一般配合list_for_each(pos, head)遍历使用
-	type:自己定义的链表类型(自定义链表包含struct list_head *),e.g. struct score.
+	ptr:为struct list_head *类型(也就是链表头).一般配合list_for_each(pos, head)遍历使用---会不断更新链表头放在pos里
+	type:自己定义的链表类型(自定义链表包含struct list_head *)e.g. struct score,在之前会调用插入节点将自定义类型插入进链表头.
 	member:自定义链表包含的内核链表链接域,e.g.list
 	*/
 
@@ -510,7 +511,7 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 	#define list_for_each(pos, head)	\
 		for (pos = (head)->next; pos != (head); pos = pos->next)
 	/*
-	pos:为struct list_head *类型,自动更新
+	pos:为struct list_head *类型(链表头类型),会自动不断更新
 	head:链表头
 	*/
 
@@ -529,11 +530,11 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 		struct list_head list;	/*kernel list*/
 	};
 
-	struct list_head score_head;	/*list head*/
+	struct list_head score_head;	/*list head---一般会调用INIT_LIST_HEAD(&score_head);进行初始化*/
 	
 	/*define three list node, then insert into the list*/
 	struct score stu1, stu2, stu3;
-	struct list_head *pos;	/*define a pos pointer*/
+	struct list_head *pos;	/*define a pos pointer---保存list_for_each遍历得到的链表头信息*/
 	struct score *tmp;	/*define a temporary struct score variable*/
 
 	static int mylist_init(void)
@@ -888,3 +889,12 @@ pthread_join()、pthread_testcancel()、pthread_cond_wait()、pthread_cond_timew
 
 	printf("Test result: 0x%x, 0x%x\n", myTest.test_element[0], myTest.test_element[1]);
 	//会打印出:Test result: 0x12345678, 0x87654321
+
+## 33、数组中指定对应元素的值
+
+	unsigned char test[] = {
+		[5] = 4,		//指定test[5]=4---第6个元素值为4
+		[4] = 6,		//指定test[4]=6---第5个元素值为6
+		[3] = 3,		//指定test[3]=3---第4个元素值为3
+						//指定的值之间用分号","分隔.其他没有被指定的都被初始化为"0"
+	};

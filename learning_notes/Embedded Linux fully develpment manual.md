@@ -1,0 +1,284 @@
+# Embedded Linux Fully Development Manual
+
+# 第1篇 嵌入式Linux开发环境构建篇
+***
+# 第2篇 ARM9嵌入式系统基础实例篇
+
+## Chapter 5 GPIO接口
+
+### 5.1 GPIO硬件介绍
+
+GPIO(General Purpos I/O ports):通用输入/输出端口.可以通过这些端口输出高低电平/读入引脚状态(高低电平).
+
+S3C2440有130个I/O端口,分为GPA、GPB、...、GPJ.
+
+**5.1.1 通过寄存器来操作GPIO引脚**
+
+1)GPxCON寄存器---配置(Configure)寄存器,即选择引脚功能.
+
+	1)GPACON---每一位对应一根引脚(共23跟引脚).当某个置0时,相应引脚为输出引脚,此时可以在GPADAT中相应为写1或0让该引脚输出
+	高/低电平;当某个置1时,相应引脚为地址线/或用于地址控制(此时GPADAT无用).一般GPACON全设为1,用于访问外部存储器件.
+	2)GPxCON(B~J):每两位控制一根引脚.00(输入)、01(输出)、10(特殊功能)、11(reserved).
+
+2)GPxDAT寄存器---数据(Data)寄存器,读写引脚.
+
+	1)如果引脚设为输入,读对应的GPxDAT寄存器可知相应引脚的电平的状态为高电平还是低电平.
+	2)如果引脚设为输出,写对应的GPxDAT寄存器可令相应的引脚输出高电平或低电平.
+
+3)GPxUP寄存器---上拉(Up)寄存器,保护.
+
+	1)GPxUP某位为1时,相应引脚内部无上拉电阻.
+	2)GPxUP某位为0时,相应引脚使用内部上拉电阻.
+
+![](http://i.imgur.com/1DrbR2Z.png)
+
+上拉电阻/下拉电阻作用---当GPIO引脚处于第三态(非输出高低电平(只有在输出才存在),处于高阻态,即相当于没接芯片)时,此时的电平状态有上拉/下拉电阻确定.
+
+**5.1.2 使用软件来访问硬件**
+
+1)访问单个引脚
+
+单个引脚的操作有3中:输出高低电平、检测引脚状态(输入)、中断.---最终都是通过读写寄存器来完成.
+
+![](http://i.imgur.com/9PYXAYH.png)
+
+实例---点亮LED1
+
+	#define GPBCON		(*(volatile unsigned long *)0x56000010)		//GPB的配置寄存器	
+	//volatile:确保每次去内存中读取变量的值,而不是从cache或寄存器中读取
+	#define GPBDAT		(*(volatile unsigned long *)0x56000014)		//GPB的数据寄存器
+	GPBCON = ((GPBCON | (1<<10)) & (~(1<<11)));		//GPBCON的[11:10] = 01为设置GPB5为输出
+	GPBDAT &= (~(1<<5))		//GPBDAT[5]=0表示设置GPB5输出低电平,此时点亮LED1.
+
+2)以总线方式访问硬件---Nor Flash
+
+![](http://i.imgur.com/0OPatOe.png)
+
+地址线ADD1~ADDR20,可寻址1MB的大小,因此Nor Flash大小为1MB.
+
+	1)缓冲器作用:提高驱动能力、隔离前后级信号;
+	2)Nor Flash(AM29LV800BB)的片选信号使用S3C2410/S3C2440的nGCS0信号.当CPU发出的地址信号处于0x0000_0000~0x07FFF_FFFF时,
+	nGCS0信号有效(低电平有效),此时Nor Flash被选中(因为Nor Flash的地址范围刚好在这段区域).
+	3)当nGCS0信号有效时,CPU发出的处于Nor Flash的地址范围的地址会送到Nor Flash.当需要写Nor Flash时,nWE信号为低,数据由CPU发给
+	Nor Flash;当需要读Nor Flash时,nWE信号为高,数据由Nor Flash发给CPU.
+	4)图中的读写地址线16根(D0~D15),因此读写操作都是以16 bit(2 byte)为单位.
+
+实例1---地址对齐的16 bit读操作(2 byte读)
+
+	unsigned short *pwAddr = (unsigned short *)0x2;	//0x2(10)地址.因为CPU上是从ADDR1~ADDR20(ADDR0为0,
+		//但没有接到Nor Flash上),因此传到Nor Flash的A0~A19为1,0,...,0.Nor FLash上接收到的地址为0x1(第一个16 bit).
+		//但由于Nor Flash是16 bit对齐,因此该地址需要"*2",即最终操作的地址为:0x1*2=0x2.
+	unsgined short wVal;
+	wVal = *pwAddr;		//读取Nor Flash上0x1位置的数据---真正读取Nor Flash的地址为:0x2(10B),0x3(11B)---一次2byte数据.
+
+	//Nor Flash:因为数据线是16根(外设位宽16),因此在对Nor Flash进行操作时是地址2 byte对齐的,每次读写2 byte数据.
+			读写时只需要地址2 byte对齐即可,硬件有自己的转换方法
+	//DRAM:数据线32根(位宽32),对DRAM操作时是地址4 byte对齐.每次读写4 byte数据.读写时只需要地址4 byte对齐即可,
+			硬件有自己的转换方法.
+	//CPU位数:表示CPU一次性可以处理的字节数(e.g.32位CPU一次处理4 byte的数据).
+
+实例2---地址不对齐的16 bit读(会有异常,一般不要这样操作)
+
+	unsigned shor *pwAddr = (unsigned short *)0x1;		//0x1此时不是地址2 byte对齐,会导致异常.
+		//要读到0x1位置的数据.需要异常处理函数.先读0x0---得到0x00,0x01两字节数据;在读0x2---得到0x10,0x11量字节数据.
+		//再取0x01,0x10组成一个16 bit的数据返回.
+
+实例3---8 bit读操作(地址2 byte对齐)
+
+	unsigned char *pucAddr = (unsigned char *)0x6;	//0x6为2 byte对齐的地址.
+	unsigned char ucVal;	//8 bit的数据一般声明为"unsigned char"
+	ucVal = *pucAddr;	//pucAddr得到2 byte数据,会将低字节(即0x6地址的数据)赋给变量ucVal.0x7地址的数据丢掉.
+
+实例4---32 bit读操作(地址2 byte对齐)
+
+	unsigned int *pdAddr = (unsigned int *)0x6;	//读取0x6和0x8地址上的数据(32 bit---4 byte)
+	unsigned int udwVal;	//32 bit的数据一般声明为"unsigned int"
+	udwVal = *pdAddr;
+
+
+实例5---16 bit写操作
+
+	unsigned short *pwAddr = (unsigned short *)0x6;
+	*pwAddr = 0x1234;		//给0x6写入0x1234(16 bit)---只需要给地址中的内容赋值即可.
+
+### 5.2 GPIO操作实例:LED和按键
+
+**实例1---使用汇编代码点亮一个LED**
+
+	/*led_on.S---汇编代码*/
+	.text
+	.global _start
+	_start:
+		LDR	R0, =0x56000010		@LDR指令总是由右向左loader(<---).设置R0为GPBCON寄存器.设置寄存器使用"LDR"指令
+		MOV R1, #0x00000400		@设置寄存器R1的值为立即数(#标识)0x00000400.设置寄存器为某个值使用"MOV"指令
+		STR R1, [R0]			@STR指令总是从左向右(--->).将R1的立即数写入到[R0]寄存器中.
+		//上面是配置GPB5用于输出
+		LDR R0, =0x56000014		@设置R0为GPBDAT寄存器
+		MOV R1, #0x00000000		@让GPBDAT(5)输出0,点亮LED1.如果改变值为0x00000020([5]=1)---熄灭
+		STR R1, [R0]			@LED1点亮
+	MAIN_LOOP:
+		B MAIN_LOOP				@死循环
+
+Makefile内容:
+
+	led_on.bin:led_on.S
+		arm-linux-gcc -g -c -o led_on.o led_on.S		//编译
+		arm-linux-ld -Ttext 0x00000000 -g led_on.o -o led_on.elf		//连接
+		arm-linux-objcopy -O binary -S led_on_elf led_on.bin		
+		//将elf格式的可执行文件led_on_elf转成二进制可执行文件led_on.bin
+
+**实例2---使用C语言代码点亮一个LED**
+
+C程序执行的第一条指令并不在main函数中,在生成一个C程序的可执行文件时,编译器通常会在C代码中加上几个启动文件的代码(e.g. crt1.o、ctri.o、crtend.o等等---都是标准库文件).这些代码主要用于设置C程序的堆栈等,然后再调用main函数.
+
+由于在裸板上启动代码无法运行(此时堆栈等无法设置,main函数无法调用),因此需要自己编写一个设置堆栈、跳转main函数的启动文件.
+
+	//启动文件crt0.S---设置堆栈,跳转到C程序的main函数
+	.text
+	.global _start
+	_start:
+		ldr r0, =0x53000000		@r0设为watchdog寄存器地址
+		mov r1, #0x0			@r1存放立即数
+		str r1, [r0]			@写入0,清watchdog.否则CPU会不断重启
+		
+		ldr sp, =1024*4			@设置堆栈大小最大到4K.现在可用内存为0~4K---steppingstone
+								@nandflash中的代码在复位后会搬到CPU内部的ram中,此ram只有4K
+
+		bl main					@调用C程序中的main函数(跳转).C程序执行前必须设置好栈.
+		halt_loop:
+			b halt_loop			@死循环
+
+	//C程序led_on_c.c
+	#define GPBCON		(*(volatile unsigned long *)0x56000010)
+	#define GPBDAT		(*(volatile unsigned long *)0x56000014)
+
+	int main()
+	{
+		GPBCON = 0x00000400;	//设置GPB5为输出,[11:10]=01
+		GPBDAT = 0x00000000;	//GPB5输出0,LED1点亮
+
+		return 0;
+	}
+
+	//反汇编:arm-linux-objdump -d a.out...
+
+**实例3---使用按键来控制LED**
+
+	#define GPBCON		(*(volatile unsigned long *)0x56000010)
+	#define GPBDAT		(*(volatile unsigned long *)0x56000014)
+	#define GPFCON		(*(volatile unsigned long *)0x56000050)
+	#define GPFDAT		(*(volatile unsigned long *)0x56000054)
+	#define GPGCON		(*(volatile unsigned long *)0x56000060)
+	#define GPGDAT		(*(volatile unsigned long *)0x56000054)
+
+	//配置GPB5~8全部为输出
+	#define GPB5_OUT	(1<<(5*2))		//配置[11:10]=01---LED1
+	#define GPB6_OUT	(1<<(6*2))		//配置[13:12]=01---LED2
+	#define GPB7_OUT	(1<<(7*2))		//配置[15:14]=01---LED3
+	#define GPB8_OUT	(1<<(8*2))		//配置[17:16]=01---LED4
+
+	//配置GPF2、GPF0、GPG3、GPG11为输入
+	#define GPF0_IN		(~(3<<(0*2)))		//配置[01:00]=00---K4
+	#define GPF2_IN		(~(3<<(2*2)))		//配置[05:04]=00---K3
+	#define GPG3_IN		(~(3<<(3*2)))		//配置[07:06]=00---K2
+	#define GPG11_IN	(~(3<<(11*2)))		//配置[23:22]=00---K1
+
+	int main()
+	{
+		unsigned long dwDat;
+		GPBCON |= (GPB5_OUT | GPB6_OUT | GPB7_OUT | GPB8_OUT);	//GPB对应引脚设为输出
+		GPFCON |= (GPF0_IN | GPF2_IN);		//GPF对应的引脚设为输入
+		GPGCON |= (GPG3_IN | GPG11_IN);		//GPG对应的引脚设为输入
+
+		while(1)
+		{
+			//检测按下状态
+			dwDat = GPGDAT;
+			
+			if(dwDat & (1<<11))			//表示K1没有被按下
+				GPBDAT |= (1<<5);		//LED1熄灭
+			else						//表示K1被按下
+				GPBDAT &= (~(1<<5));	//点亮LED1
+
+			if(dwDat & (1<<3))			//K2没有被按下
+				GPBDAT |= (1<<6);		//LED2熄灭
+			else
+				GPBDAT &= (~(1<<6));	//点亮LED2
+
+			dwDat = GPFDAT;
+			
+			if(dwDat & (1<<2))			//K3没有被按下
+				GPBDAT |= (1<<7);		//LED3熄灭
+			else
+				GPBDAT &= (~(1<<7));	//点亮LED3
+			
+			if(dwDat & (1<<0))			//LED4没有被按下
+				GPBDAT |= (1<<8);		//LED4熄灭
+			else
+				GPBDAT &= (~(1<<8));	//点亮LED4
+		}
+	
+		return 0;
+	}
+***
+## Chapter 6 存储控制器
+
+### 6.1 使用存储控制器访问外设的原理
+
+1.S3C2410/S3C2440按BANK来划分地址空间(每个BANK为128MB),有8个BANK供1GB的地址空间.
+
+2.S3C2410/S3C2440对外引出27根地址线ADDR0~ADDR26,其访问范围为128MB(刚好一个BANK大小).CPU还对外引出8根片选信号线(nGCS0~nGCS7---低电平有效,会选中对应的BANK),对应于BANK0~BANK7(8个BANK),构成1GB的地址空间.
+
+**S3C2410/S3C2440存储控制器地址空间分布图---物理地址空间**
+
+	-----------------------------------------------------------------------------------------------------
+					OM[1:0]=01,10		
+				---------------------
+					Boot Internal
+					 SRAM(4KB)								OM[1:0]=00	
+	0x4000_0000	---------------------					---------------------
+					SROM/SDRAM								SROM/SDRAM				2MB/4MB/8MB/16MB---BANK7
+					  (nGCS7)								  (nGCS7)				/32MB/64MB/128MB(可变)
+	0x3800_0000	---------------------					---------------------
+					SROM/SDRAM								SROM/SDRAM				2MB/4MB/8MB/16MB---BANK6
+					  (nGCS6)								  (nGCS6)				/32MB/64MB/128MB(可变)
+	0x3000_0000	---------------------					---------------------
+					   SROM									    SROM				
+					  (nGCS5)								  (nGCS5)				128MB(固定)BANK5
+	0x2800_0000	---------------------					---------------------
+					   SROM									    SROM				
+					  (nGCS4)								  (nGCS4)				128MB(固定)BANK4
+	0x2000_0000	---------------------					---------------------
+					   SROM										SROM				
+					  (nGCS3)								  (nGCS3)				128MB(固定)BANK3
+	0x800_0000	---------------------					---------------------
+					   SROM										SROM				
+					  (nGCS2)								  (nGCS2)				128MB(固定)BANK2
+	0x1000_0000	---------------------					---------------------
+					   SROM										SROM				
+					  (nGCS1)								  (nGCS1)				128MB(固定)BANK1
+	0x0800_0000	---------------------					---------------------
+					   SROM									Boot Internal				
+					  (nGCS0)								  SRAM(4KB)				128MB(固定)BANK0
+	0x0000_0000	---------------------					---------------------
+
+		[Not using NAND Flash for Boot ROM]				[Using NAND flash for Boot ROM]
+	-----------------------------------------------------------------------------------------------------
+	//从上图可以看到,CPU可访问的物理地址为1GB---0~29的地址范围
+
+S3C2410/S3C2440的寄存器地址范围处于0x4800_0000~0x5FFF_FFFF.
+
+	//S3C2440几个重要的功能部件的寄存器地址范围
+			---------------------------------------------------
+			功能部件				起始地址				结束地址
+			---------------------------------------------------
+			中断控制器		0x4A00_0000				0x4A00_001C
+			---------------------------------------------------
+				DMA			0x4B00_0000				0x4B00_00E0
+			---------------------------------------------------
+			Watchdog		0x5300_0000				0x5300_0008
+			---------------------------------------------------
+				IIC			0x5400_0000				0x5400_000C
+			---------------------------------------------------
+				...			...						...
+			---------------------------------------------------
