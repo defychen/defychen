@@ -88,10 +88,41 @@ Eclipse是IBM公司开发的IDE集成开发工具,是Java集成开发工具之�
 		 * @param args
 		 */
 		private static String say="I must learn Java well!";	//自己编辑的代码
-		public static void main(String[] args){
+		public static void main(String[] args){	
+			//String[] args:表示字符串数组args,也可以写成String args[]---一般固定使用"String[] args".
 			// TODO Auto-generated method stub
 			System.out.println("Hello Java, " + say);	//输出文字信息到控制台
 		}
 	}
 ***
 ## Chapter 3 Java语言基础
+
+### 3.1 Java程序基本结构
+
+	package Mr;	//定义类所在的包"Mr",包的关键字"package".
+	public class Example{	
+		//创建类使用"public class Xxx"---此处类名Example(类名首字母大写).一般类和方法才加上"public"权限
+		static int ONE = 1;	//定义类的成员变量
+		public static void main(String[] args){	//定义主方法,字符串数组args
+			String var = "Hello";	//String:字符串类.创建字符串对象.String---首字母大写,为一个类
+			System.out.println(ONE);  //System:系统类名.out是System类提供的一个标准输出流.println是out提供的方法,输出信息
+			System.out.println(var);  //控制台输出
+		}
+	}
+
+### 3.2 基本数据类型
+
+**整数类型**
+
+	public class Number{
+		public static void main(String[] args){
+			byte mybyte = 124;			//byte型变量,占用一个字节
+			short myshort = 32564;		//short型变量,占用两个字节
+			int myint = 45784612;		//int型变量,占用4个字节
+			long mylong = 46789451L;	//long型变量,占用8个字节.且必须数字后面有"L/l"---46789451L
+			long result = mybyte + myshort + myint + mylong;
+			System.out.println("The result of sum: "+result);	//输出结果"92606751"
+		}
+	}
+
+
