@@ -325,3 +325,97 @@ S3C2410/S3C2440的寄存器地址范围处于0x4800_0000~0x5FFF_FFFF.
 	2)SDRAM内部有4个表格,称为L-Bank(逻辑Bank),由两根地址线控制
 	3)搜寻方法是先确定表格,再由行、列确定存储单元,每个存储单元存放4字节数据(4字节对齐).因此才有总容量64MB
 
+### 6.2 存储控制器操作实例: 使用SDRAM
+
+从Nand Flash启动CPU时,CPU会通过内部的硬件将Nand Flash开始的4KB数据复制到CPU内部的RAM中(该段RAM称为Steppingstone,起始地址为0),然后跳转到该段RAM中执行.
+
+程序编写步骤:
+
+1)使用汇编设置好存储控制器,使外接的SDRAM可用---物理地址每段划分及每段的相应配置
+
+2)把程序本身从Steppingstone复制到SDRAM处
+
+3)跳转到SDRAM中执行
+
+**程序代码**
+
+	//head.S:设置SDRAM,将程序复制到SDRAM,然后跳转到SDRAM继续执行
+	.equ		MEM_CTL_BASE		0x48000000		//存储控制寄存器基址---用于配置每个BANK的作用
+	.equ		SDRAM_BASE			0x30000000		//SDRAM的基址(物理地址)
+	
+	.text
+	.global _start
+	_start:
+		bl disable_watch_dog		@关闭watchdog,否则CPU会不断重启
+									@代码段的起始地址(0x3000_0000-在Makefile中指定),SDRAM中的位置.
+		bl memsetup					@设置存储控制器---0x3000_0004(4 byte对齐??).在steppingstone里是4
+		bl copy_steppintstone_to_sdram	@复制代码到SDRAM中---0x3000_0008
+		ldr pc, =on_sdram			@跳到SDRAM继续执行---0x3000_000C.on_sdram在连接时会被确定为0x3000_0010
+	on_sdram:						
+		ldr sp, =0x34000000			@设置栈---解析该指令时,其地址会解析为:0x3000_0010.
+		bl main						@跳转到main函数执行
+
+	halt_loop:
+		b halt_loop
+
+	/*后面的指令都是由位置无关的指令跳转到,因为全部在steppingstone里执行*/
+	disable_watch_dog:			@bl跳转是位置无关的相对跳转指令,因此这些均在Steppingstone里执行---无地址信息
+		mov r1, #0x53000000		@watchdog寄存器0x5300_0000,该指令等价于ldr r1, =0x53000000.此时r1=0x5300_0000
+		mov r2, #0x0			@r2=0x0
+		str r2, [r1]			@将r2的值(0x0)写入到[r1]这个地址里,即让0x5300_0000里的值为0x0.
+		mov pc, lr				@让PC指针指向lr(链接位置).每次跳转会将返回地址放入lr指令.因此返回只需要mov pc, lr即可
+
+	copy_steppingstone_to_sdram:
+		@复制steppingstone的4KB数据到SDRAM中
+		@steppingstone的起始地址为0x0000_0000，SDRAM的起始地址为0x3000_0000
+		mov r1, #0				@r1保存steppingstone中的地址
+		ldr r2, =SDRAM_BASE		@r2保存SDRAM中的地址
+		mov r3, #4*1024			@r3保存steppingstone的终止地址(即4K处的地址)
+	1:		@实现循环
+		ldr r4, [r1], #4		@实现将r1的4 byte数据复制到r4,并让r1地址+4
+		str r4, [r2], #4		@实现将r4的4 byte数据复制到r2,并让r2地址+4
+		//上面两步实现将steppingstone的数据以4 byte为单位复制到SDRAM
+		cmp r1, r3				@检测r1地址与r3是否相等,决定数据是否复制完成
+		bne 1b					@bne:检测结果不为0,1b:跳转到1
+		mov pc, lr				@返回
+
+	/*初始化SDRAM*/
+	memsetup:		@配置存储控制器的寄存器以便使用SDRAM等外设---使用物理地址挂上的设备需要配置存储控制器的一些寄存器
+		mov r1, #MEM_CTL_BASE	@存储控制器的13个寄存器的起始地址
+		adrl r2, mem_cfg_val	@adr:指定地址,后面的l:表示数据为long.相当于r2存放mem_cfg_val标号的地址地址
+		add r3, r1, #52			@r1+52(13*4---13个寄存器,每个寄存器4byte).然后存放到r3.此时r3为存储控制器的终止地址
+	1:	@实现循环
+		ldr r4, [r2], #4		@复制r2的4 byte到r4,并让r2地址+4
+		str r4, [r1], #4		@复制r4的4 byte到r1,并让r1地址+4
+		cmp r1, r3				@判断是否设置完13个寄存器
+		bne 1b					@没有完成,继续
+		mov pc, lr				@返回
+
+	.align 4		@声明为4 byte对齐
+	mem_cfg_val:
+		@ 存储控制器13个寄存器的设置值
+		.long	0x22011110			@BWSON寄存器的设置值
+		.long	0x00000700			@BANKCON0寄存器的设置值
+		.long	0x00000700			@BANKCON1寄存器的设置值
+		.long	0x00000700			@BANKCON2寄存器的设置值
+		.long	0x00000700			@BANKCON3寄存器的设置值
+		.long	0x00000700			@BANKCON4寄存器的设置值
+		.long	0x00000700			@BANKCON5寄存器的设置值
+		.long	0x00018005			@BANKCON6寄存器的设置值
+		.long	0x00018005			@BANKCON1寄存器的设置值
+		.long	0x008C07A3			@REFRESH寄存器的设置值
+		.long	0x000000B1			@BANKSIZE寄存器的设置值
+		.long	0x00000030			@MRSRB6寄存器的设置值
+		.long	0x00000030			@MRSRB7寄存器的设置值
+
+**Makefile**
+
+	sdram.bin : head.S leds.c		//leds.c与之前的一样
+		arm-linux-gcc -c -o head.o head.S
+		arm-linu-gcc -c -o leds.o leds.c
+		arm-linux-ld -Ttext 0x30000000 head.o leds.o -o sdram.elf
+		//arm-linux-ld:指定链接; -Ttext 0x3000000:指定代码段起始地址
+		arm-linux-objcopy -O binary -S sdram_elf sdram.bin	//复制sdram_elf成sdram.bin
+		arm-linux-objdump -D -m arm sdram_elf > sdram.dis	//反汇编
+	clean:
+		rm -f sdram.dis sdram.bin sdram_elf *.o

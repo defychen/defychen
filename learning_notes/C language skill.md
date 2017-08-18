@@ -35,6 +35,29 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 	key_buffer = pOddKey;
 	key_buffer + 16 = pEvenKey;	/*这种方式意味着将指针指向的位置变了,而不是copy内容给key_buffer*/
 	*/
+
+	//结构体指针赋值
+	typedef struct test_device1{
+		struct test_device1 *next;
+		char name[16];
+	}test_device1;
+
+	typedef struct test_device2{
+		struct test_device2 *next;
+		char name[16];
+		int a;
+	}test_device2;
+
+	test_device1 *pDevice1;
+	test_device2 *pDevice2;
+	pDevice1 = (test_device1 *)malloc(sizeof(test_device2));	
+	//因为test_device2大小比test_device1大,因此malloc大的结构体
+	char a[16] = {"I am Defy Chen"};	//字符串初始化
+	memcpy(pDevice1->name, a, 16);
+	
+	pDevice2 = (test_device1 *)pDevice1;	//将pDevice1指针赋值给pDevice2
+	printf("file:%s, func:%s, line:%d, name: %s\n", __FILE__, __func__, __LINE__, pDevice2->name);
+	//可以通过pDevice2访问到正确的name.只要name之前的其他成员占用空间一样.
 	
 ## 3、结构体变量赋值
 
@@ -335,7 +358,8 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 		int b;
 	};
 
-	test test1[5] = {0};	/*全部成员初始化为0*/
+	test test1[5] = {0};	/*全部成员初始化为0*/---这样初始化会出现warning
+	test test1[5] = {{0}};	//这样初始化不会出现warning
 
 ## 15、bit位的表示
 
@@ -717,7 +741,7 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 	for(index = 0; index < 16; index++)
 	{
 		dscrInfo[index] = NULL;
-	} 
+	}
 
 ## 26、字符串直接打印对应的ASCII码值
 
@@ -898,3 +922,66 @@ pthread_join()、pthread_testcancel()、pthread_cond_wait()、pthread_cond_timew
 		[3] = 3,		//指定test[3]=3---第4个元素值为3
 						//指定的值之间用分号","分隔.其他没有被指定的都被初始化为"0"
 	};
+
+## 34、指针和结构体指针所占空间的大小
+
+	struct test_device{
+		struct test_device *next;	//为一个结构体指针,属于指针.在32 bit机器中占4 byte
+		char *p;					//指针,在32 bit机器中占4 byte
+		char w;						//声明一个字符,单独打印是占一个byte.但是在此结构体中对自动4 byte对齐,因此占4byte
+		/*
+		char w[7];					//如果为这种情况,默认是7byte.但是放在对齐中会采用对齐方式存储(8 byte).
+		*/
+		unsigned int (*)open(void);	//函数指针,也是占4 byte
+		unsigned int type;			//占4 byte
+	};
+
+	printf("size: %d\n", sizeof(struct test_device));	//大小为20 byte
+
+**sizeof()求指针和数组的区别**
+	
+	unsigned char test[128] = {0};
+	unsigned char *pTest = NULL;
+	printf("array size: %d, pointer size: %d\n", sizeof(test), sizeof(pTest));
+	//结果为:array size: 128, pointer size: 4.
+	/*解析:
+		1)sizeof(数组名):此时为统计数组的大小
+		2)sizeof(指针):此时为计算指针本身所占用的空间,4 byte.---此处的指针包括结构体指针	
+	*/	
+
+## 35、求字符串长度的函数strlen
+
+	char a[] = {"I am Defy Chen"};	//总共占14个字符
+	printf("strlen: %d\n", strlen(a));	//strlen求出的长度为14.如果需要访问最后一个字符:a[strlen(a)-1];
+
+## 36、char字符相加
+
+	char a = 0;
+	a = a + 1;	//或者a = a + (char)1;
+	printf("value: %d\n", a);	//得到的值为1---正确相加.
+
+## 37、union和struct的初始化
+
+	union test_union{
+		int a;
+		char b;
+	};
+
+	struct test_struct{
+		int a;
+		char b;
+	};
+
+	union test_union test1 = {0};	//联合体变量直接初始化为"{0}".
+	struct test_struct test1 = {0};	//结构体变量直接初始化为"{0}".
+	union test_union *pTest1 = NULL;	//联合体指针直接初始化为NULL
+	struct test_struct *pTest2 = NULL;	//结构体指针直接初始化为NULL
+
+## 38、对于定义了但是没有使用的变量/函数warning的清除
+
+	//在编译时,经常会碰到有变量/函数定义了但是没有地方使用(但是又需要保留,因为有特殊的场合使用,一般不使用)
+	__attribute__((unused)) UINT32 ret_val = 0;		//定义了变量但是不会使用,可用于清除warning和secure coding的报错
+	static __attribute__((unused)) void xxx_fun(void)	//定义了函数但是不会使用
+	{
+		...
+	}
