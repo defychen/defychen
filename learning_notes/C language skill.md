@@ -250,15 +250,17 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 
 ## 11、char、short、long的使用
 
-**字(WORD):2个字节组成一个字.**
+**WORD:字通常为4 byte.**
 
-**双字(DWORD):4个字节组成一个双字.**
+**DWORD:双字通常为8 byte.**
 
-一般字节、字、双字的定义为:
+一般字节、半字、字的定义为:
 
-	typedef unsigned char BYTE;		/*无符号char型定义为字节*/
-	typedef unsigned short WORD;	/*无符号short型定义为字*/
-	typedef unsigned long DWORD;	/*无符号long型定义为双字*/
+	typedef unsigned char UINT8;		/*无符号char型定义为UINT8*/
+	typedef unsigned short UINT16;	/*无符号short型定义为UINT16*/
+	typedef unsigned long UINT32;	/*无符号long型定义为UINT32*/
+
+**字为32 bit(4字节);半字为16 bit(2字节); 字节为8 bit(1字节)**
 
 ## 12、driver开发中取某个地址的内容
 
