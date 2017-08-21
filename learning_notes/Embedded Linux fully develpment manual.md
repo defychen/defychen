@@ -512,3 +512,261 @@ CPU运行过程中,检测外设发生某些不预期事件的方法:
 	3)在ISR中通过读取中断控制器、外设相关寄存器识别具体中断,进行相应处理;
 	4)清理中断:通过读写中断控制器、外设相关寄存器来清理中断;
 	5)恢复被中断程序,继续执行.
+
+**中断处理流程及相关中断控制器寄存器**
+
+1)处理流程:
+
+![](http://i.imgur.com/9exhaJv.png)
+
+	1)Request sources:中断源,分为带子寄存器和非带子寄存器;
+	2)SUBSRCPND(SUB SOURCE PENDING)寄存器:0X4A000018---用来标识INT_RXD0、INT_TXD0等中断的发生.针对子中断,
+		子中断还会汇集到SRCPND(多个SUBSRCPND汇集到SRCPND的某一位).清除某个中断时,往对应位写"1"即可令该位为0,写0无效果.
+	3)SUBMASK:真正的名字为INTSUBMSK(INTERRUPT SUB MASK)寄存器:	0X4A00001C---屏蔽SUBSRCPND标识的中断,
+		某位为1对应的中断被屏蔽.
+	4)SRCPND寄存器:0X4A000000---标识某一个/某一类中断发生.清除往对应位写1.
+	5)INTMSK寄存器:0X4A000008---屏蔽SRCPND寄存器所标识的中断.设为1即屏蔽.只能屏蔽IRQ中断,不能屏蔽FIQ中断.
+	6)INTMOD寄存器:0X4A000004---标识FIQ中断,某位为1对应的中断即为FIQ.同一时间里,INTMOD只能有一位设为1.
+	7)PRIORITY寄存器:0x4A00000C---处理IRQ中断的优先级.
+	8)INTPND寄存器:0X4A000010---经过优先级处理后的IRQ中断最终会在INTPND寄存器对应位置1,同一时间该寄存器只有一位被置1;
+		在ISR(中断处理函数中)可以根据这个位确定是哪个中断,清中断往该位写1.
+	9)INTOFFSET寄存器:0x4A000014---用来标识INTPND寄存器哪位被置1(INTPND寄存器中位[x]=1,INTOFFSET寄存器的值为x(0~31)).
+		在ISR中使用该寄存器.清除SRCPND、INTPND寄存器时,该寄存器自动被清除.
+
+2)如果为外部中断,Request sources还需要从外部中断源过来(e.g. EINT0~EINT23),此时还包括EINTPEND和EINTMASK的设置.
+
+	EINTPEND:0x560000A8
+	EINTMASK:0x560000A4
+
+### 9.2 中断控制器操作实例:外部中断
+
+**S3C2440异常向量表:**
+
+![](http://i.imgur.com/UdiqJgJ.png)
+
+1)head.S代码---设置中断向量表
+
+	@***********************************************
+	@File:head.S
+	@功能:初始化,设置中断模式、系统模式的栈,设置好中断处理函数
+	@***********************************************
+	IMPORT	Main	;声明外部函数.IMPORT伪操作,告诉编译器Main是在别的源文件中定义的
+	IMPORT init_led
+	IMPORT init_irq
+	IMPORT EINT_Handle	;ISR---中断处理函数.";"为注释
+	IMPORT disable_watch_dog
+
+	AREA head, CODE, READONLY
+	ENTRY
+	CODE32
+	
+	.text
+	.global _start
+	_start:		/*程序开始*/
+	@***********************************************
+	@异常向量表(Exception Vectors),本程序只使用Reset和HandleIRQ,其他异常没有使用
+	@***********************************************
+		b	Reset	/*Reset---0x0000_0000.系统一上电就在此处,并跳去Reset标号执行*/
+	HandleUndef:
+		b	HandleUndef		/*未定义指令终止异常的向量地址:0x0000_0004.此处地址为该值*/
+	HandleSWI:
+		b	HandleSWI		/*管理模式向量地址:0x0000_0008.通过SWI指令进入该模式*/
+	HandlePrefetchAbort:
+		b	HandlePrefetchAbort		/*指令预取终止异常地址:0x0000_000C*/
+	HandleDataAbort:
+		b	HandleDataAbort			/*数据访问终止异常地址:0x0000_0010*/
+	HandleNotUsed:
+		b	HandleNotUsed			/*保留:0x0000_0014*/
+	
+		b	HandleIRQ				/*IRQ中断异常地址:0x0000_0018.产生该异常时,CPU的PC指针指向0x0000_0018,*/
+									/*之后跳去HandleIRQ标号执行*/
+	HandleFIQ:
+		b	HandleFIQ				/*FIQ异常地址:0x0000_001C*/
+
+	@*****************Reset******************************
+	Reset:		/*完成一些初始化*/
+		ldr	sp, =4096		@设置栈指针,C函数调用前需要设置好栈
+		bl	disable_watch_dog	@关watchdog,否则CPU会不断重启
+
+		msr	cpsr_c, #0xd2	@CPSR值为0xd2([7:6]=00;[4:0]=10010)
+		ldr	sp, =3072		@设置中断模式的栈指针
+
+		msr cpsr_c, #0xdf	@进入系统模式
+		ldr sp, =4096		@设置系统模式栈指针.系统复位CPU即处于系统模式,前面已经设置,该句可省略
+
+		bl init_led			@调用初始化LED管脚函数
+		bl init_irq			@调用中断初始化函数
+		msr cpsr_c, #0x5f	@I-bit=0,开IRQ中断.处于系统模式
+
+		ldr lr, =halt_loop	@设置返回地址
+		ldr pc, =main		@调用main函数,如果main返回时就会回到上述设置的返回地址
+		
+	halt_loop:
+		b halt_loop
+	@*****************IRQ******************************
+	HandleIRQ:
+		sub lr, lr, #4				@计算返回地址
+		stmdb sp!, {r0-r12, lr}		@保存使用到的寄存器,sp为sp_irq(中断模式下的sp).初始值为3072
+
+		ldr lr, =int_return			@设置调用ISR即EINT_Handle函数后的返回地址
+		ldr pc, =EINT_Handle		@调用中断服务函数EINT_Handle,在interrupt.c中
+	int_return:
+		ldmia sp!, {r0-r12, pc}^		@中断返回,^表示将spsr的值复制到cpsr
+	END		@结束
+
+2)init.c代码---进行一些初始化
+
+	#include "s3c24xx.h"
+	//配置GPB5~8全部为输出
+	#define GPB5_OUT	(1<<(5*2))		//配置[11:10]=01---LED1
+	#define GPB6_OUT	(1<<(6*2))		//配置[13:12]=01---LED2
+	#define GPB7_OUT	(1<<(7*2))		//配置[15:14]=01---LED3
+	#define GPB8_OUT	(1<<(8*2))		//配置[17:16]=01---LED4
+
+	//配置GPF2、GPF0、GPG3、GPG11为10---表示EINT(外部中断)
+	#define GPF0_IN		(2<<(0*2))		//GPF配置[01:00]=10---EINT0---K4
+	#define GPF2_IN		(2<<(2*2))		//GPF配置[05:04]=10---EINT2---K3
+	#define GPG3_IN		(2<<(3*2))		//GPG配置[07:06]=10---EINT11---K2
+	#define GPG11_IN	(2<<(11*2))		//GPG配置[23:22]=10---EINT19---K1
+
+	//关闭watchdog
+	void disable_watch_dog(void)
+	{
+		WTCON = 0;	//关闭watchdog,往寄存器写0即可
+	}
+
+	void init_led()
+	{
+		GPBCON = GPB5_OUT | GPB6_OUT | GPB7_OUT | GPB8_OUT;
+		GPBDAT = 0xffff;	//初始化GPBDAT为0xffff,熄灭LED
+	}
+
+	/*
+	 * 初始化GPIO引脚为外部中断.
+	 * GPIO引脚用作外部中断时,默认低电平触发(因此一旦按下按键,就会触发外部中断)、IRQ方式(因此不需要设置INTMOD)
+	*/
+	void init_irq()
+	{
+		GPFCON = GPF0_IN | GPF2_IN;		//配置为EINT(外部中断)引脚
+		GPGCON = GPG3_IN | GPG11_IN;	//配置为EINT(外部中断)引脚
+		
+		//对于EINT11、EINT19,需要在EINTMASK寄存器使能他们(写0---enalbe interrupt),对外部中断源不屏蔽
+		//设置外部中断屏蔽寄存器
+		EINTMASK &= (~(1<<11)) & (~(1<<19));	//因为INT0、EINT2处于reserved,是使能的
+
+		/*
+		 *	设定优先级:
+		 *	EINT0、EINT2接到ARBITER0上(只有REQ1~REQ4,没有REQ0和REQ5),需要设置ARBITER0中REQ1(EINT0)、REQ3(EINT2)的优先级
+		 *	ARB_SEL0 = 00b, ARB_MODE0 = 0:REQ1 > REQ3,即EINT0 > EINT2
+		 *	其他ARBITER不需设置.EINT11和EINT19属于EINT8~EINT23,都接在ARBITER1的REQ1上.
+		 *	最终优先级为:EINT0 > EINT2 > EINT11和EINT19(相同优先级)
+		*/
+		PRIORITY = ((PRIORITY & (~0x01)) & (~(0x3 << 7));
+
+		//使能EINT0、EINT2、EINT8_23.设置内部中断屏蔽寄存器
+		INTMSK &= (~(0x1<<0)) & (~(0x1<<2)) & (~(0x1<<5));	//INTMSK的[0],[2],[5]=0
+	}
+
+3)interrupt.c---中断处理函数(ISR---也叫中断服务函数)
+
+	#include "s3c24xx.h"
+
+	void EINT_Handle()
+	{
+		unsigned long oft = INTOFFSET;	//INTOFFSET:标识具体的中断号(INTPND哪一位被置1)---针对IRQ
+		unsigned long val;			//用于进一步判断中断号
+
+		switch(oft)
+		{
+			case 0:		//EINT0,表示K4被按下
+			{
+				GPBDAT |= (0x0f << 5);	//所有LED熄灭
+				GPBDAT &= (~(1<<8));	//LED4点亮
+				break;
+			}
+			case 2:		//EINT2,表示K3被按下
+			{
+				GPBDAT |= (0x0f << 5);	//所有LED熄灭
+				GPBDAT &= (~(1<<7));	//LED3点亮
+				break;
+			}
+			case 5:		//EINT11或EINT19,表示K2或K1被按下
+			{
+				GPBDAT |= (0x0f << 5);	//所有LED熄灭
+				//进一步判断K1还是K2被按下
+				val = EINTPEND;		//外部PEND寄存器,区分EINT8~EINT23
+				if (val & (1<<11))	//EINT11,表示K2被按下
+					GPBDAT &= (~(1<<6));	//LED2点亮
+
+				if (val & (1<<19))	//EINT19,表示K1被按下
+					GPBDAT &= (~(1<<5));	//LED1点亮
+
+				break;
+			}
+			default:
+				break;
+		}
+
+		//清除中断
+		//对于外部中断,如果在EINT8~EINT23之间,应该为:EINTPEND--->SRCPND--->INTPND
+		//EINT0~EINT7,应该为:SRCPND--->INTPND
+		if (oft == 5)
+			EINTPEND = (1<<11) | (1<<19);	//最原始的位置---EINTPEND
+		SRCPND = 1 << oft;
+		INTPND = 1 <<oft;
+	}
+
+4)main.c---死循环
+
+	int main()
+	{
+		while(1);
+		return 0;
+	}
+
+5)s3c24xx.h---定义一些寄存器
+
+	/*****************s3c24xx.h******************************/
+	
+	/*Watch dog register*/
+	#define		WTCON				(*(volatile unsigned long *)0x53000000)
+
+	/*SDRAM register*/
+	#define		MEM_CTL_BASE		0x48000000
+	#define		SDRAM_BASE			0x30000000
+
+	/*NAND Flash register*/
+	#define		NFCONF				(*(volatile unsigned long *)0x4e000000)
+	#define		NFCMD				(*(volatile unsigned long *)0x4e000004)
+	#define		NFADDR				(*(volatile unsigned long *)0x4e000008)
+	#define		NFDATA				(*(volatile unsigned long *)0x4e00000c)
+	#define		NFSTAT				(*(volatile unsigned long *)0x4e000010)
+
+	/*GPIO register*/
+	#define		GPBCON				(*(volatile unsigned long *)0x56000010)
+	#define		GPBDAT				(*(volatile unsigned long *)0x56000014)
+	#define		GPFCON				(*(volatile unsigned long *)0x56000050)
+	#define		GPFDAT				(*(volatile unsigned long *)0x56000054)
+	#define		GPFUP				(*(volatile unsigned long *)0x56000058)
+	#define		GPGCON				(*(volatile unsigned long *)0x56000060)
+	#define		GPGDAT				(*(volatile unsigned long *)0x56000064)
+	#define		GPGUP				(*(volatile unsigned long *)0x56000068)
+	#define		GPHCON				(*(volatile unsigned long *)0x56000070)
+	#define		GPHDAT				(*(volatile unsigned long *)0x56000074)
+	#define		GPHUP				(*(volatile unsigned long *)0x56000078)
+
+	/*interrupt register*/
+	#define 	SRCPND				(*(volatile unsigned long *)0x4A000000)
+	#define		INTMOD				(*(volatile unsigned long *)0x4A000004)
+	#define		INTMSK				(*(volatile unsigned long *)0X4A000008)
+	#define		PRIORITY			(*(volatile unsigned long *)0X4A00000C)
+	#define		INTPND				(*(volatile unsigned long *)0X4A000010)
+	#define		INTOFFSET			(*(volatile unsigned long *)0X4A000014)
+	#define		SUBSRCPND			(*(volatile unsigned long *)0X4A000018)
+	#define		INTSUBMSK			(*(volatile unsigned long *)0X4A00001C)
+
+	/*external interrupt register*/
+	#define		EINTMASK			(*(volatile unsigned long *)0x560000A4)
+	#define		EINTPEND			(*(volatile unsigned long *)0x560000A8)
+***
+## Chapter 9 中断体系结构
