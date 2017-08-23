@@ -420,6 +420,11 @@ S3C2410/S3C2440的寄存器地址范围处于0x4800_0000~0x5FFF_FFFF.
 	clean:
 		rm -f sdram.dis sdram.bin sdram_elf *.o
 ***
+## Chapter 7 内存管理单元MMU
+
+
+
+***
 ## Chapter 9 中断体系结构
 
 ### 9.1 S3C2410/S3C2440中断体系结构
@@ -769,4 +774,98 @@ CPU运行过程中,检测外设发生某些不预期事件的方法:
 	#define		EINTMASK			(*(volatile unsigned long *)0x560000A4)
 	#define		EINTPEND			(*(volatile unsigned long *)0x560000A8)
 ***
-## Chapter 9 中断体系结构
+## Chapter 17 构建linux根文件系统
+
+### 17.1 linux文件系统概述
+
+linux系统将磁盘、Flash等存储设备划分为若干个分区,在不同的分区存放不同类别的文件(类似于windows的C/D/E盘).
+
+	//linux分区
+	1.boot分区---存放boot文件
+	2.kernel分区---存放linux系统文件
+	3.rootfs分区---存放根文件系统文件,在系统启动后会将这个分区挂载(mount)到"/"目录(根目录)
+
+**1. linux支持多种文件系统类型:**
+
+	1.实际在分区存在的文件系统类型:fat16、fat32、NTFS、ext2、ext3、ext4、jffs2、yaffs等;
+		这种文件系统由特定的工具制作.不同的类型具有的性能、系统资源占有率、处理速度等不相同.
+	2.虚拟的文件系统类型:proc、sysfs等;
+		这种文件系统并不存储在实际的设备上,只是在访问时由内核临时生成
+		e.g./proc/uptime文件,cat /proc/uptime得到两个时间(系统启动运行的秒数和空闲的秒数)
+
+**2. linux根文件系统目录结构**
+
+1./bin目录
+
+存放所有用户(系统管理员和一般用户)都可以使用的、基本的命令./bin目录必须和根文件系统在同一个分区.
+
+	cat、chgrp、chmod、cp、ls...等命令
+
+2./sbin目录
+
+存放系统命令,只有管理员才能够使用的命令./sbin目录也必须和根文件系统在同一个分区.
+
+	shutdown、reboot、fdisk、fsck等
+
+3./dev目录
+
+存放设备文件.通过读写该目录下的某个设备文件实现操作某个具体的硬件设备.
+
+	1)透过/dev/ttySAC0文件可以操作串口0;
+	2)透过/dev/mtdblock1可以访问MTD设备(Nand Flash、Nor Flash等)的第2个分区.
+
+设备文件的创建---使用mknod命令创建
+
+	mknod /dev/ttySAC0 c 4 64
+	mknod /dev/hda1 b 3 1
+
+4./etc目录
+
+存放各种配置文件
+
+5./lib目录
+
+存放共享库和可加载模块(驱动程序),共享库用于启动系统、运行根文件系统中的可执行程序(/bin、/sbin目录下的程序).
+
+	libc.so.*---动态链接C库
+	ld*---链接器、加载器
+	modules---内核可加载模式存放的目录
+
+/usr/lib、/var/lib等存放的是非根文件系统所必须的库文件.
+
+6./home目录、/root目录
+
+/home---存放普通用户相关的配置文件
+
+/root---根用户目录
+
+7./usr目录
+
+存放共享的、只读的程序和数据./usr目录的内容可以存在另一个分区中,可以在系统启动后再挂载到/usr目录下
+
+	/usr/bin---用户命令
+	/usr/inclue---C程序头文件
+	/usr/lib---库文件
+
+8./var目录
+
+存放可变的数据
+
+9./proc目录
+
+是一个空目录,作为proc文件系统的挂载点.proc文件系统是一个虚拟的文件系统,没有实际的存储设备,里面的目录、文件都是由内核临时生成的,用来表示系统的运行状态.
+
+	//挂载proc文件系统
+	mount -t proc none /proc
+	/*一般在/etc/fstab进行设置实现自动挂载*/
+
+10./mnt目录
+
+用于临时挂载某个文件系统的挂载点.通常为空目录
+
+11./tmp目录
+
+存放临时文件,通常是空目录.一些需要生成临时文件的程序就使用到/tmp目录.
+
+	/*为了减少对flash的操作,在/tmp目录挂载内存文件系统*/
+	mount -t tmpfs none /tmp
