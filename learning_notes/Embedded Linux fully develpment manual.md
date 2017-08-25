@@ -869,3 +869,137 @@ linux系统将磁盘、Flash等存储设备划分为若干个分区,在不同的
 
 	/*为了减少对flash的操作,在/tmp目录挂载内存文件系统*/
 	mount -t tmpfs none /tmp
+
+### 17.2 移植Busybox
+
+Busybox可以将众多的Unix命令(ls、cp...等)集合到一个很小的可执行程序中.
+
+内核启动的第一个进程是init进程(进程ID为1),该程序位于"/sbin/init".
+
+**编译安装Busybox**
+
+1)解压
+
+	tar -xvjf busybox-1.25.1.tar.bz2
+
+2)配置Busybox
+	
+	/*进入busybox-1.25.1目录后*/
+	make menuconfig--->进入配置界面,配置选项说明:
+	1.Busybox Settings--->General Configuration
+		一些通用的设置,不需理会
+	2.Busybox Settings--->Build Options
+		编译选项、连接方式等
+	3.Busybox Settings--->Debugging Options
+		调试选项,默认即可(一般没有选上的)
+	4.Busybox Settings--->Installation Options
+		Busybox的安装路径,不需设置
+	5.Busybox Settings--->Busybox Library Tuning
+		Busybox性能微调(e.g.设置控制台可以输入的最大字符个数, tab不全功能),一般默认即可
+	6.Archival Utilities
+		压缩、加压缩工具
+	7.Coreutils
+		核心命令(e.g.ls、cp等)
+	8.Console Utilities
+		控制台相关命令(e.g.clear命令),不需理会
+	9.Debian Utilities
+		Debian(linux一种发型版本)的命令,不需理会
+	10.Editors
+		编辑命令,一般都选中vi
+	11.Finding Utilities
+		查找命令,一般不用
+	12.Init Utilies
+		init程序配置选项,默认即可
+	13.Login/Password Management Utilities
+		登录、用户帐号/密码等方面的命令
+	14.Linux Ext2 FS Progs
+		Ext2文件系统的一些工具
+	15.Linux Module Utilities
+		加载/卸载模块的命令,一般都选中
+	16.Linux System Utilities
+		一些系统命令(dmesg---显示内核打印信息命令、fdisk---分区命令)
+	17.Miscellaneous Utilities
+		一些不好分类的命令
+	18.Networking Utilities
+		网络方面的命令(telnetd、ping、ftfp等)
+	19.Process Utilities
+		进程相关命令(ps,free(查看内存使用情况)、kill、top等)
+	20.Shells
+		多种shell,一般选中ash
+	21.System Logging Utilities
+		系统记录(log)方面的命令
+	22.ipsvd Utilities
+		监听TCP、DPB端口,发现有新的连接时启动某个程序
+
+3)编译Busybox
+
+	/*注意Busybox顶层Makefile中的ARCH和CROSS_COMPILE,需要与CPU匹配*/
+	make	/*执行make命令即可编译Busybox*/
+
+4)安装
+	
+	make CONFIG_PREFIX=pathname install		/*在pathname路径下安装Busybox*/
+	//e.g. make CONFIG_PREFIX=./../test install	//在./../test目录下安装Busybox
+	//会在./../test目录下有"bin  linuxrc  sbin  usr"这几个目录,里面都是一些linux的命令
+
+### 17.3 使用glibc库
+
+**需再深入**
+
+### 17.4 构建根文件系统
+
+Busybox构建了"bin/、linuxrc/、sbin/、usr/"等目录;glibc库建立了"lib/"目录.剩下的目录按如下进行构建:
+
+**1.etc/目录:**
+
+init进程根据/etc/inittab文件创建其他子进程.
+
+1)etc/inittab文件
+
+	::sysinit:/bin/mount -t proc proc /proc	/*sysinit:系统启动后最先执行;	/bin/mount:执行的命令.此处表示挂载proc*/
+	::sysinit:/bin/mkdir -p /dev/pts
+	::sysinit:/bin/mkdir -p /dev/shm
+	::sysinit:/bin/mount -a
+	::sysinit:/bin/hostname -F /etc/hostname
+	::sysinit:/etc/init.d/rcS		/*执行/etc/init.d/rcS这一个脚本*/
+	
+	ttyS0::respawn:-/bin/sh		/*启动shell(/bin/sh),以ttyS0作为控制台*/
+	
+	::ctrlaltdel:/sbin/reboot	/*ctrl+alt+del重启,命令行无此应用*/
+	32 null::shutdown:/etc/init.d/rcK
+	33 null::shutdown:/bin/umount -a -r
+	34 null::shutdown:/sbin/swapoff -a
+
+2)etc/init.d/rcS文件
+
+	for i in /etc/init.d/S??* ;do		//遍历/etc/init.d/S??(S打头的文件)
+	
+	     # Ignore dangling symlinks (if any).
+	      [ ! -f "$i" ] && continue
+	 
+	      case "$i" in
+	         *.sh)
+	             # Source shell script for speed.
+	             (
+	                 trap - INT QUIT TSTP
+	                 set start
+	                 . $i
+	             )
+	             ;;
+	         *)
+	             # No sh extension, so fork subprocess.
+	             $i start		//根据遍历的结果,创建子进程
+	             ;;
+	     esac
+	done   
+
+3)etc/fstab文件
+
+表示在执行/etc/inittab中mount -a命令后将挂载的文件的系统:
+	# <file system> <mount pt>     <type>   <options>         <dump> <pass>
+	proc            /proc          proc     defaults          0      0
+	devpts          /dev/pts       devpts   defaults,gid=5,mode=620   0      0
+	tmpfs           /dev/shm       tmpfs    mode=0777         0      0
+	tmpfs           /tmp           tmpfs    mode=1777         0      0
+	tmpfs           /mnt           tmpfs    mode=0777         0  0
+	sysfs           /sys           sysfs    defaults          0      0  

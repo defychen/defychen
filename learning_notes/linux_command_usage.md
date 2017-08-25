@@ -78,8 +78,8 @@
 
 *解压方法:*
 	
-	tar -xvzf filename.tar.gz	/*x:解压;v:列车解压出来的文件;z:gz格式;f:后面接文件名*/
-	tar -xvjf filename.tar.bz2	/*x:解压;v:列车解压出来的文件;j:bz2格式;f:后面接文件名*/
+	tar -xvzf filename.tar.gz	/*x:解压;v:列出解压出来的文件;z:gz格式;f:后面接文件名*/
+	tar -xvjf filename.tar.bz2	/*x:解压;v:列出解压出来的文件;j:bz2格式;f:后面接文件名*/
 
 *创建压缩包的方法:*
 
