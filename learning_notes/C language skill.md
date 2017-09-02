@@ -987,3 +987,37 @@ pthread_join()、pthread_testcancel()、pthread_cond_wait()、pthread_cond_timew
 	{
 		...
 	}
+
+## 39. 在二维数组中*a, a, a[0], a[0][0], a[1], &a[1]的区别
+
+	在二维数组a[x][y]中:
+	1)*a:表示以a[0][0]为首元素的一维数组.可带一个索引:(*a)[i]即a[0][i]
+	2)a:表示以a[0][0]为首元素的二维数组.可带两个索引:a[i][j]
+	3)a[0]:同*a---一维数组
+	4)a[0][0]:首元素
+	5)a[1]:表示以a[1][0]为首元素的一维数组.可带一个索引
+	6)&a[1]:表示以a[1][0]为首元素的二维数组.可带两个索引:(&a[1])[i][j]即a[1+i][j]
+
+	//e.g.
+	static unsigned char protectingKey[4][16] = {  
+			{0},				
+			{0},
+			{0},
+			{0}
+	};
+	unsigned char pk1[16] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+	unsigned char pk2[16] = {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2};
+
+	memcpy(&protectingKey[0], pk1,16);	//将pk1拷贝到以protectingkey[0][0]为首元素的二维数组中
+	//此处用:memcpy(protectingkey[0], pk1, 16);	---将pk1拷贝到以protectingkey[0][0]为首元素的一维数组中 
+	memcpy(&protectingKey[1], pk2,16);	//将pk2拷贝到以protectingkey[1][0]为首元素的二维数组中
+	//此处用:memcpy(protectingkey[1], pk2, 16);	---将pk2拷贝到以protectingkey[1][0]为首元素的一维数组中
+	//上述两种方法得到的结果一样
+	/*
+	最终protectingkey[4][16] = {
+		{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+		{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+		{0},
+		{0}
+	};
+	*/

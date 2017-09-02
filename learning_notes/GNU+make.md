@@ -614,4 +614,8 @@
 	not a program. Which means you probably have extra spacing in one of your variables in your config/make files.*/
 	/*问题描述:将目录当成了文件来操作.原因:是因为在Makefile中指定buildroot路径时,后面多加了一个"空格"*/
 
+## 2.从git上只拉下源码的方法
+
+	make alisee-source		//将alisee的源码拉下来
+
 

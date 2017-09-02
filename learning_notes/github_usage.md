@@ -66,6 +66,10 @@
 
 	git log --decorate
 
+**6)丢掉本地的修改**
+
+	git checkout -- .		//针对有时本地修改了,但是不需要提交.而且此时不能执行"git pull"
+
 ## git pull更新时的问题
 
 	Your local changes to the following files would be overwritten by merge

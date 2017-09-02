@@ -774,6 +774,165 @@ CPU运行过程中,检测外设发生某些不预期事件的方法:
 	#define		EINTMASK			(*(volatile unsigned long *)0x560000A4)
 	#define		EINTPEND			(*(volatile unsigned long *)0x560000A8)
 ***
+## Chapter 15 移植U-boot
+
+### 15.1 Bootloader简介
+
+**1. Bootloader概念**
+
+Bootloader:是一段小程序,在系统上电时开始执行,初始化硬件设备、准备好软件环境、最后调用操作系统内核.其主要作用:关闭watchdog、改变系统时钟、初始化存储控制器、将更多的代码复制到内存中等.
+
+Bootloader启动:MIPS CPU上电从0xBFC0_0000(虚拟地址)执行;ARM CPU则从0x0000_0000(虚拟地址)开始执行.
+
+**2.Bootloader的结构和启动过程**
+
+1.嵌入式linux系统的典型分区结构
+
+![](http://i.imgur.com/fcTssq6.png)
+
+	1.Bootloader:引导加载程序,上电后执行的第一个程序;
+	2.Boot parameters:存放一些可设置的参数,e.g.IP地址、串口波特率、要传递给内核的命令行参数等;
+	3.Kernel:linux内核以及内核的启动参数;
+	4.Root filesystem:根文件系统.
+	/*启动过程:*/
+	Bootloader首先运行,然后将内核复制到内存中(有些内核可以直接在Nor Flash上运行),并且会在内存的某个固定地址设置好要传递
+	给内核的参数,最后运行内核.内核启动后,会挂载根文件系统,启动文件系统中的应用程序.
+
+2.Bootloader启动的两个阶段:
+	
+	1.Bootloader第一阶段---汇编实现
+		硬件设备初始化;	---包括:关闭watchdog,关中断,设置CPU速度和时钟频率,RAM初始化等.
+		为加载Bootloader的第二阶段代码准备RAM空间;
+		复制Bootloader的第二阶段代码到RAM空间;
+		设置好栈;
+		跳转到第二阶段代码的C入口点.
+	2.Bootloader第二阶段---C代码实现
+		初始化本阶段要使用到的硬件设备;
+		检测系统内存映射(memory map);	---确定板上使用了多少内存、地址空间是什么.
+		将内核映像和根文件系统映像从Flash上读到RAM空间;
+		为内核设置启动参数;
+		调用内核.
+		/*调用内核之前需要满足的条件:
+		1.CPU寄存器的设置:
+			R0=0
+			R1=机器类型ID---ID参见"./linux/arch/arm/tools/mach-types"---目前没怎么使用了
+			R2=启动参数标记列表在RAM中的起始地址
+		2.CPU工作模式
+			必须禁止中断(IRQs和FIQs)
+			CPU必须为SVC模式
+		3.Cache和MMU的设置
+			MMU必须关闭
+			指令Cache可以打开也可以关闭
+			数据Cache必须关闭	
+		*/
+		调用内核方法(linux 2.6.x)---linux 3.x及以上估计不一样了
+		void (*theKernel)(int zero, int arch, u32 param_addr) = (void (*)(int, int, u32))KERNEL_RAM_BASE;
+		...
+		theKernel(0, ARCH_NUMBER, (u32) kernel_params_start);
+	
+**3.Bootloader与内核的交互**
+
+Bootloader与内核的交互是单向的,Bootloader将各类参数传递给内核.Bootloader会将参数放在某个约定的地方之后,在启动内核,内核启动后从这个地方获得参数.
+
+Bootloader与内核交互参数的2要素:
+
+1.参数存放地址---为一个约定好的固定地址
+
+2.参数结构---以多个标记(为一种称为tag的数据结构)构成的标记列表(tagged list)传递
+
+标记列表:以标记"ATAG_CORE"开始,以标记"ATAG_NONE"结束.
+
+tag结构(标记结构):
+
+	/*tag由tag_header结构和一个union构成,其源码位于"./arch/arm/include/uapi/asm/setup.h"*/
+	struct tag_header{
+		__u32 size;
+		__u32 tag;
+	};
+
+	struct tag{		/*tag结构体*/
+		struct tag_header hdr;
+		union{
+			struct tag_core			core;
+			struct tag_mem32		mem;		//内存使用
+			struct tag_videotext	videotext;
+			struct tag_ramdisk		ramdisk;
+			struct tag_initrd		initrd;
+			struct tag_serialnr		serialnr;
+			struct tag_revision		revision;
+			struct tag_videolfg		videolfb;
+			struct tag_cmdline		cmdline;	//命令行使用
+
+			/*
+			 * Acorn specific
+			 */
+			struct tag_acorn		acorn;
+
+			/*
+			 * DC21285 specific
+			 */
+			struct tag_memclk		memclk;
+		}u;
+	};
+
+实例---设置内存标记、命令行标记为参数进行参数传递
+
+	struct tag *params;
+	
+	/*1)标记列表起始---ATAG_CORE*/
+	params = (struct tag *)0x30000100;	//Bootloader与内核约定的参数存放地址为0x30000100
+	
+	params->hdr.tag = ATAG_CORE;		//表示标记列表开始---ATAGE_CORE
+	params->hdr.size = tag_size(tag_core);	//选择tag_core的大小
+	
+	params->u.core.flags = 0;		//flags为core里的成员
+	params->u.core.pagesize = 0;		//pagesize为core里的成员
+	params->u.core.rootdev = 0;		//rootdev为core里的成员
+
+	params = tag_next(params);		//params指针移动到末尾---tag_next(t)指向当前标记末尾
+
+	/*2)设置内存标记---ATAG_MEM*/
+	params->hdr.tag = ATAG_MEM;		//表示内存标记
+	params->hdr.size = tag_size(tag_mem32);		//选择tag_mem的大小
+
+	params->u.mem.start = 0x30000000;	//内存起始地址0x30000000
+	params->u.mem.size = 0x4000000;		//内存的大小
+
+	params = tag_next(params);		//params指针移动到末尾
+
+	/*3)设置命令行标记---ATAG_CMDLINE*/
+	//命令行为一个字符串,用来控制内核的一些行为
+	char *p = "root=/dev/mtdblock 2 init=/linuxrc console=ttySAC0";
+	//根文件系统在MTD2分区上; 系统启动后第一个程序为linuxrc; 第一个串口为ttySAC0
+	params->hdr.tag = ATAG_CMDLINE;
+	parans->hdr.size = (sizeof(struct tag_header) + strlen(p) + 1 + 4) >> 2;
+	
+	strcpy(params->u.cmdline.cmdline, p);	//将命令行拷贝到params->u.cmdline.cmdline中
+	
+	params = tag_next(params);	//params指针移动到末尾
+
+	/*4)标记列表结束---ATAG_NONE*/
+	params->hdr.tag = ATAGE_NONE;
+	params->hdr.size = 0;
+
+### 15.2 uboot分析与移植
+
+**1. uboot的配置、编译、连接过程**
+
+uboot编译
+
+	1.配置(需要选择与板子对应的config文件)
+		make smdk2410_defconfig	//make <board_name>_defconfig进行uboot的编译的配置.配置文件在顶层目录的configs中
+	2.编译
+		make all	
+		/*编译完成后在顶层目录生成3个文件*/
+		/*
+		1.u-boot.bin---二进制可执行文件,该文件就是直接烧入ROM、Nor Flash的文件
+		2.u-boot---ELF格式的可执行文件
+		3.u-boot.srec---Motorola S-Record格式的可执行文件
+		*/
+
+***
 ## Chapter 17 构建linux根文件系统
 
 ### 17.1 linux文件系统概述
@@ -917,7 +1076,7 @@ Busybox可以将众多的Unix命令(ls、cp...等)集合到一个很小的可执
 	15.Linux Module Utilities
 		加载/卸载模块的命令,一般都选中
 	16.Linux System Utilities
-		一些系统命令(dmesg---显示内核打印信息命令、fdisk---分区命令)
+		一些系统命令(dmesg---显示内核打印信息命令、fdisk---分区命令、mdev---构建dev目录)
 	17.Miscellaneous Utilities
 		一些不好分类的命令
 	18.Networking Utilities
@@ -1003,3 +1162,84 @@ init进程根据/etc/inittab文件创建其他子进程.
 	tmpfs           /tmp           tmpfs    mode=1777         0      0
 	tmpfs           /mnt           tmpfs    mode=0777         0  0
 	sysfs           /sys           sysfs    defaults          0      0  
+
+**2.dev/目录:**
+
+方法1:静态创建设备文件---在/dev目录下静态创建各种设备节点(即设备文件)
+
+	/*系统启动涉及的设备有:/dev/mtdblock(MTD块设备)、/dev/ttySAC(串口设备)、/dev/console、/dev/null**/
+	/*建立以下设备就可以启动系统*/
+	mkdir -p ../target/dev		/*创建一个dev目录*/
+	cd ../target/dev			/*切到dev目录*/
+	mknod console c 5 1			/*创建console节点*/---必须在root权限下才能这么操作
+	mknod null c 1 3			/*创建null节点*/---必须在root权限下才能这么操作
+	mknod ttySAC0 c 204 64		/*ttySAC0设备节点---可能有设备没有这个节点*/---必须在root权限下才能这么操作
+	mknod mtdblock0 b 31 0		/*mtdblock设备节点*/---必须在root权限下才能这么操作
+	mknod mtdblock1 b 31 1		/*mtdblock设备节点*/---必须在root权限下才能这么操作
+	mknod mtdblock2 b 31 2		/*mtdblock设备节点*/---必须在root权限下才能这么操作
+
+	/*系统启动后,查看内核中注册了哪些设备:*/
+	cat /proc/devices		/*查看系统中注册了哪些设备*/---然后可以手动创建设备节点
+
+方法2:使用mdev创建设备文件---mdev是通过sysfs文件系统获取设备信息,然后在/dev目录生成内核支持的所有设备的节点
+
+	1.编译busybox加上对mdev的支持---默认是支持的
+		make menuconfig->Linux System Utilities->mdev
+	2.在启动时加上使用mdev的命令
+		1)在启动脚本文件rcS文件中增加启动命令挂载sysfs和tmpfs文件系统
+			/bin/mount -n -t tmpfs tmsfs /dev/shm	//可能不是在rcS脚本中挂载,在其他地方挂载	
+			/bin/mount -n -t sysfs none /sys			//可能不是在rcS脚本中挂载,在其他地方挂载	
+		2)启动mdev应用程序
+			echo /sbin/mdev > /proc/sys/kernel/hotplug
+			/sbin/mdev -s		/*启动mdev应用程序*/
+			/bin/hotplug
+	3.在设备驱动程序中增加对类设备接口的支持
+		#define CA_TEST_PATHNAME	"ca_test"
+		#define CA_TEST_BASENAME	"test0"
+		struct class *g_test_class;		//设备类
+		struct ca_test_dev{
+			dev_t devt;					//设备号
+			struct device *dev;			//device结构体
+			struct cdev cdev;			//字符设备
+		};
+		struct ca_test_dev *test;
+
+		/*1.创建设备类---class_create()*/
+		g_test_class = class_create(THIS_MODULE, CA_TEST_PATHNAME);		//创建设备类函数
+		
+		/*2.依据设备类创建一个设备文件---device_create()----一般会在probe()函数*/
+		test->dev = device_create(g_test_class, NULL, test->devt, test, CA_TEST_BASENAME);		
+		/*device_create()函数原型:
+			struct device *device_create(struct class *class, struct device *parent, dev_t devt, 
+				void *drvdata, const char *fmt...);
+			para1:设备类指针; para2:父设备; para3:设备号; para4:设备的数据(一般是设备结构体); para5:设备名字
+			//经过此步后,在/dev下面就会有"/dev/CA_TEST_BASENAME"这一个设备文件
+		*/
+		/*3.删除设备文件和设备类*/
+		void device_destroy(struct class *class, dev_t devt);	//删除设备文件:参数为设备类和设备号
+		void class_destroy(struct class *cls);		//删除设备类:参数为设备类
+
+**3.其他目录**
+
+其他目录为空目录:
+
+	mkdir proc mnt tmp sys root
+
+### 17.5 制作/使用yaffs和jffs2文件系统映像文件
+
+制作文件系统映像文件:就是将一个目录下(前面的构建的根文件系统目录)的所有内容按照一定的格式存放到一个文件中,这个文件可以直接烧写到存储设备上去.启动启动挂载这个设备,就可以看到与源目录一样的内容.
+
+制作不同类型的文件系统映像文件需要使用不同的工具.
+
+**1.yaffs**
+
+	1)网上下载mkyaffs2image源码,然后执行"make"命令即可生成mkyaffs2image---该工具用于将
+	2)将mkyaffs2image拷贝到需要生成yaffs文件系统的根文件系统较近的位置,执行:
+		$ ./mkyaffs2image ./test/ test.yaffs		//命令 需要生成映像文件的根文件系统目录	生成的映像文件名
+		
+	3)此时在当前目录就可产生了"test.yaffs"文件映像,可以在uboot中下载
+		
+**2.jffs2**
+
+略.
+		
