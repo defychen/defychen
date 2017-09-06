@@ -445,6 +445,8 @@
 *为文件名序列"NAMES..."中各个文件名添加前缀"PREFIX".*
 
 	$(addprefix src/, foo bar)	//返回值为:src/foo src/bar
+	//例子
+	$(addprefix $(OBJS_TMP)/,$(OBJS))	//增加前缀后,其值为$(OBJ_TMP)/$(OBJS)
 
 **$(join LIST1, LIST2)**
 

@@ -218,4 +218,14 @@
 	which命令用于查找并显示给定命令的绝对路径.
 	which ls	//显示为"/bin/ls"
 
+## 17 ln命令
+
+	//ln为建立某个文件的链接文件
+	ln -s test.sh test	//-s为建立一个软连接.test.sh:链接的目标的文件, test:新建的链接文件
+	ls -l
+	/*得到:
+	lrwxrwxrwx 1 defy.chen defy.chen    7 Sep  4 20:27 test -> test.sh*
+	-rwxrwxr-x 1 defy.chen defy.chen  328 Sep  4 20:04 test.sh*	//目标文件
+	*/
+
 ## 13. wget命令

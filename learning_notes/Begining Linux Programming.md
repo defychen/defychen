@@ -462,11 +462,20 @@ shift命令将所有参数变量左移一个位置(e.g.$2变为$1; $3变为$2.�
 
 	#!/bin/sh
 	
-	while [ "$1" != "" ]; do
-		echo "$1"
-		shift	//打印出所有的参数,一次左移打印
+	while [ $# != 0 ]; do	//$#代表参数的个数
+		echo "The first parameter is: $1, parameter number is: $#"
+		shift		//每执行一次会将参数依次左移
 	done
-	exit 0
+
+	//测试命令:
+	./run.sh a b c d e f
+	//结果为:
+	The first parameter is: a, parameter number is: 6
+	The first parameter is: b, parameter number is: 5
+	The first parameter is: c, parameter number is: 4
+	The first parameter is: d, parameter number is: 3
+	The first parameter is: e, parameter number is: 2
+	The first parameter is: f, parameter number is: 1
 
 **trap命令**
 

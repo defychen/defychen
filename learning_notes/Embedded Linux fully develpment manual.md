@@ -917,12 +917,13 @@ tag结构(标记结构):
 
 ### 15.2 uboot分析与移植
 
-**1. uboot的配置、编译、连接过程**
+**1. uboot的配置、编译、连接过程---下面的全部都是针对uboot-1.1.5,新的uboot结构不一样了.**
 
-uboot编译
+1.uboot编译---uboot-1.1.5
 
 	1.配置(需要选择与板子对应的config文件)
-		make smdk2410_defconfig	//make <board_name>_defconfig进行uboot的编译的配置.配置文件在顶层目录的configs中
+		make smdk2410_config //make <board_name>_config进行uboot的编译的配置.在Makefile中有这个编译选项---uboot 1.1.5
+		//新的uboot配置文件在顶层目录的configs中,需要make xxx_defconfig.而且提供menuconfig
 	2.编译
 		make all	
 		/*编译完成后在顶层目录生成3个文件*/
@@ -931,6 +932,118 @@ uboot编译
 		2.u-boot---ELF格式的可执行文件
 		3.u-boot.srec---Motorola S-Record格式的可执行文件
 		*/
+
+2.uboot的配置过程---uboot-1.1.5
+
+在顶层Makefile中有如下代码:
+
+	SRCTREE		:= $(CURDIR)	//变量CURDIR没有定义,为空,空指代当前的目录.
+	...
+	MKCONFIG	:= $(SRCTREE)/mkconfig		//当前目录下的mkconfig
+	...
+	smdk2410_config :	unconfig		//smdk2410_config编译选项
+		@echo $(@:_config=)		
+		//@echo:取消回显; $(@:_config=):表示替换目标(smdk2410_config)后的"_config"为空.即为smdk2410
+		@$(MKCONFIG) $(@:_config=) arm arm920t smdk2410 NULL s3c24x0
+		//实际执行的命令为./mkconfig smdk2410 arm arm920t smdk2410 NULL s3c24x0
+
+mkconfig有如下的代码:
+
+	# Parameters: Target Architecture CPU Board [VENDOR] [SOC]
+	// ./mkconfig(命令) smdk2410 arm arm920t smdk2410 NULL s3c24x0	//参数一一对应
+	//mkconfig文件中的代码
+	
+	//1. BOARD_NAME的设置
+	APPEND=no		#default: Create new config file
+	BOARD_NAME=""	#Name to print in make output
+	
+	while [ $# -gt 0 ] ; do		//$#代表参数个数
+		case "$1" in
+		--) shift ; break ;;		//shift:每执行一次会将参数依次左移
+		-a)	shift ; APPEND=yes ;;
+		-n) shift ; BOARD_NAME="${l%%_config}"; shift ;;		//截断$1后面的"_config"字符串
+		*) break;;
+		esac
+	done
+	
+	[ "${BOARD_NAME}" ] || BOARD_NAME="$1"	//board_name选择为$1参数,即为smdk2410
+
+	//2. 创建平台/开发板相关的头文件连接
+	if [ "$SRCTREE" != "$OBJTREE" ] ; then	//源目录和目标目录不相同
+		...
+	else
+		cd ./include
+		rm -f asm	//删除asm文件(上一次配置时建立的连接文件)
+		ln -s asm-$2 asm		//建立asm文件,并链接到asm-$2(即asm-arm)目录
+	fi
+
+	ln -s ${LNPREFIX}arch-$6 asm-$2/arch		//$(LNPREFIX)为空.
+	//因此为:建立asm-$2/arch文件,并链接到arch-s3c24x0
+	...
+	if [ '$2' = 'arm' ]; then
+		rm -f asm-$2/proc	//删掉proc目录
+		ln -s ${LNPREFIX}proc-armv asm-$2/proc	//建立链接文件
+	fi
+
+	// 3. 创建顶层Makefile包含的文件include/config.mk
+	echo "ARCH		= $2" >		config.mk
+	echo "CPU		= $3" >>	config.mk
+	echo "BOARD		= $4" >>	config.mk
+
+	[ "$5" ] && [ "$5" != "NULL" ] && echo "VENDOR = $5" >> config.mk
+	[ "$6" ] && [ "$6" != "NULL" ] && echo "SOC= $6" >> config.mk
+
+	// 4. 创建开发板相关的头文件include/config.h
+	if [ "$APPEND" = "yes" ]        # Append to existing config file
+	then
+	        echo >> config.h
+	else
+	        > config.h              # Create new config file
+	fi
+	echo "/* Automatically generated - do not edit */" >>config.h
+	echo "#include <configs/$1.h>" >>config.h
+
+总结如下:
+
+1)开发板名称BOARD_NAME为$1;
+
+2)创建到平台/开发板相关的头文件的链接
+
+	ln -s asm-$2 asm
+	ln -s arch-$6 asm-$2/arch
+	ln -s proc-armv asm-$2/proc
+
+3)创建顶层Makefile包含的文件include/config.mk
+
+	ARCH = $2
+	CPU = $3
+	BOARD = $4
+	VENDOR = $5		//为空或者NULL则此行没有
+	SOC = $6		//为空或者NULL则此行没有
+
+4)创建开发板相关的头文件include/config.h
+
+	echo "/* Automatically generated - do not edit */" >>config.h
+	echo "#include <configs/$1.h>" >>config.h
+
+配置文件进行相关的配置(include/configs/smdk2410.h)---最新的uboot可以使用make menuconfig进行配置
+
+	CONFIG_:设置一些参数,设置uboot的功能;
+	CFG_:设置更细节的参数.
+
+3.uboot的编译、链接过程
+
+	1.编译cpu/$(CPU)/start.S,对于不同的CPU可能编译cpu/$(CPU)下的其他文件;
+	2.对平台/开发板相关的每个目录都使用各自的Makefile生成相应的库;
+	3.将1、2步骤生成的.o、.a文件按照board/$(BOARDDIR)/config.mk文件中指定的代码段起始地址、board/$(BOARDDIR)/u-boot.lds
+	链接脚本进行链接.
+	/*
+	board/smdk2410/config.mk中:TEXT_BASE = 0x33F80000	---指定代码段起始地址为:0x33F80000
+	board/smdk2410/u-boot.lds指定了text段、rodata段、bss段起始.
+	*/
+	4.第3步得到ELF格式的u-boot,后面的Makefile会将它转换为二进制格式、S-Record格式的u-boot.
+
+**2. uboot源码分析**
 
 ***
 ## Chapter 17 构建linux根文件系统

@@ -246,7 +246,7 @@ dict:字典,键-值(key-value)存储,具有极快的查找速度.使用"{}"标�
 	d['Adam'] = 88		/*多次对一个key放入value,后面的会冲掉前面的值*/
 	d['Adam']		#会得到88,而非67
 	d['Thomas']		#key不存在,dict报错.显示为"KeyError: 'Thomas'"
-a
+
 判断dict中key存在的两种方法
 
 	// Method 1
@@ -281,6 +281,15 @@ set只存储key,不存储value.使用"set([])"标识.
 	string1 = 'abc'
 	string2 = string1.replace('a', 'A')	/*将'a'代替为'A',不会改变原来的字符串"abc".因此string1
 		指向不变.replace之后相当于新创建了一个字符串"Abc"并赋值给string2.因此属于不可变对象.*/
+
+**list中含有多个dict取值的方法:**
+
+	open = [
+		{'method': 'DEV_OPEN', 'dev': dev, 'idx': idx, 'mode': os.O_RDWR},
+		{'method': 'DEV_SET_FORMAT', 'idx': idx, 'format': 'TS%d'%format...}
+	]
+	//取open中的第2个并进行赋值
+	open[1]['format'] = 'RAW'	//对format进行重新赋值
 
 ### 3.4 迭代
 
@@ -1742,6 +1751,41 @@ socket:表示打开了一个网络连接.
 		print s.recv(1024)	//客户端接收数据使用"s.recv(1024)"
 	s.close()
 	
+## 15. Python中常用的函数
+
+### 15.1 enumerate函数
+
+enumearte函数遍历序列中的元素以及他们的下标:
+
+	//1. 用于tuple
+	for i, j in enumerate(('a', 'b', 'c')):
+		print i, j
+		//得到结果为:
+		0 a
+		1 b
+		2 c
+	//2. 用于list
+	for i, j in enumerate([1, 2, 3]):
+		print i, j
+		//得到结果为:
+		0 1
+		1 2
+		2 3
+	//3. 用于dict
+	for i, j in enumerate({'a':1, 'b':2}):
+		print i, j
+		//得到结果为:
+		0 a		//打印出key和对应的下表.如果要得到value需要key,value
+		1 b
+	//4. 用于string
+	for i, j in enumerate('abc'):
+		print i, j
+		//得到结果为:
+		0 a
+		1 b
+		2 
+
+
 **eval()函数**
 
 	params = ['open_keys_test', 'check_set_format', 'check_kl_algo']

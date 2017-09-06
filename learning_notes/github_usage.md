@@ -7,8 +7,18 @@
 
 **2)配置个人信息**
 
+	//1. 配置全局的用户名和邮箱---此时本机所有的提交都会用这个用户名和邮箱
 	git config --global user.name "defychen"
 	git config --global user.email 894739534@qq.com
+	//全局的配置会修改进"~/.gitconfig"
+	内容为:
+	[user]
+		name = defy.chen
+		email = defy.chen@xxx.com
+	
+	//2. 配置当前的project的用户名和邮箱---此时只会作用于当前的project
+	git config user.name "defychen"
+	git config user.email 894739534@qq.com
 
 **3)初始化版本仓库(让git管理本地目录):**
 	

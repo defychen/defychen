@@ -1021,3 +1021,85 @@ pthread_join()、pthread_testcancel()、pthread_cond_wait()、pthread_cond_timew
 		{0}
 	};
 	*/
+
+## 40. define宏定义中的#, ##, @#和\符号
+
+**1.#---字符串化操作符**
+	
+将宏定义传入的参数名转换成用一对双引号括起来(" ")的参数名字符串
+
+	#define example(test)	#test
+	/*C++方式:
+	string str = example(abc);		//会展开成:string str = "abc";	---C语言没有string类型
+	*/
+	//C方式
+	char str[] = example(abc);		//会展开成:char str[] = "abc";	---C语言正确的方式
+	char str1[] = example( abc  def );	//结果为:"abc def"---开头和末尾的空格忽略,中间的多个空格只保留一个
+
+**2.##---符号连接操作符**
+
+将宏定义的多个形参名连接成一个实际的形参名
+
+	//Enumeration conversation functions
+	#define STR2ENUM_CONV(_enum, ENUM) static int str2 ## _enum(char *str) {\	//连接
+		int i=0; \
+		if(!str) \
+			{printf("%s@%d -> wrong parameter\n", __func__, __LINE__);return -1;}\
+		while (i<NUM_OF_ ## ENUM) {\	//连接
+			if (strcmp(str, _enum ## _str[i]) == 0) break; \	//注意比较字符串的定义
+			i++; \
+		} \
+		if (i == NUM_OF_ ## ENUM) {\	//连接
+			printf("wrong parameter %s\n", str); \
+			return -1; \
+		} \
+		return i; }
+	//使用1---ALGO
+	#define NUM_OF_ALGO 2
+	static char *algo_str[NUM_OF_ALGO] = {"TDES", "AES"};	//比较字符串的定义
+	STR2ENUM(algo, ALGO)		//无分哈
+	//使用2---MODE
+	#define NUM_OF_MODE 2
+	static char *mode_str[NUM_OF_MODE] = {"ENCRYPT", "DECRYPT"};
+	STR2ENUM(mode, MODE)		//无分号
+
+**3.@#---字符化操作符**
+
+将宏定义传入的单字符参数转换成字符,并用一对单引号(' ')括起来
+
+	#define makechar(x)		@#x
+	char a = makechar(b);		//展开后变成:a = 'b';
+
+**4.\---行继续操作符**
+
+当定义的宏不能用一行表达完整时,可以用"\"表示下一行继续此宏的定义
+
+	//如上述"2.##"中的应用
+
+## 41. #undef的使用
+
+	#undef是在后面取消以前定义的宏定义
+	//例子
+	#define MAX 100
+	int a = MAX;
+	//如果后面不需要MAX这个宏,但是还是需要这个变量名.可以:
+	#undef MAX	//取消MAX之前的宏定义
+	int MAX = 0;	//重新定义变量MAX
+
+## 42. sprintf函数
+
+把格式化的数据写入某个字符串(buffer).
+
+	//函数原型
+	int sprintf(char *buffer, const char *format [, argument]...);	//返回值:字符串长度(strlen)
+	//实例:
+	char test[20] = 0;
+	char *t = "I";
+	char *r = "linux";
+	int len = 0;
+	len = sprintf(test, "%s love %s", t, r);
+	printf("func: %s, line: %d, len: %d, str: %s\n", __func__, __LINE__, len, test);
+	//打印出来为:func: ..., line: ..., len: 12, str: I love linux		//长度为12
+	
+	//如果在sprintf中加上了\n,则len为13
+	len = sprintf(test, "%s love %s\n", t, r);
