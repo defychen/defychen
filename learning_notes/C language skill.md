@@ -1103,3 +1103,10 @@ pthread_join()、pthread_testcancel()、pthread_cond_wait()、pthread_cond_timew
 	
 	//如果在sprintf中加上了\n,则len为13
 	len = sprintf(test, "%s love %s\n", t, r);
+
+## 43. 字符的+
+
+	printf("%c, %c\n", '0', '0' + (char)1);	//会打印出来:0, 1---表示字符增加了1. PS:不加(char)也可以,自动会进行转换
+	printf("%d, %d\n", '0', '0' + (char)1);	//会打印出来:48, 49---字符对应的ASCII码值
+	printf("%c, %c\n", '0', '0' + '1');		//会打印出来:0, a---字符的相加.0-48,1-49,最终得到97的字符"a"
+	printf("%d, %d\n", '0', '0' + '1');		//会打印出来:48, 97

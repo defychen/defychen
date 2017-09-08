@@ -3359,9 +3359,297 @@ pthread_join()、pthread_testcancel()、pthread_cond_wait()、pthread_cond_timew
 	}
 
 ***
-### Chpater 12 线程控制
+## Chpater 12 线程控制
 
+***
+## Chapter 15 进程间通信
 
+### 15.9 共享存储(内存)---SHM
 
+共享存储(内存)允许两个或多个进程共享一个给定的存储区.因为数据不需要在客户进程和服务器进程之间复制,因此这是最快的一种IPC(进程间通信).
 
+要求:多个进程之间需要同步的访问给定的存储区.一般使用信号量进行共享存储访问的同步.
+
+**内核为每个共享存储段维护着一个结构,该结构描述共享存储段的一些属性:**
+
+	struct shmid_ds {	//描述共享存储段属性的结构体
+		struct ipc_perm	shm_perm;		/*共享存储段的权限*/
+		size_t			shm_segsz;		/*共享存储段的大小(byte为单位)*/
+		pid_t			shm_lpid;		/*一般为创建的子进程的PID*/
+		pid_t			shm_cpid;		/*创建者的PID,一般为父进程的PID*/
+		shmatt_t		shm_nattach;	/*当前attach的数量,一般为使用共享存储的进程数量*/
+		time_t			shm_atime;		/*最后attach的时间*/
+		time_t			shm_dtime;		/*最后detach的时间*/
+		time_t			shm_ctime;		/*最后改变的时间*/
+		...		//还有其他的一些属性
+	};
+
+**1.shmget函数---产生一段共享存储区,得到一个共享存储标识符**
+
+	#include <sys/shm.h>	//使用共享存储函数所需的头文件
+	int shmget(key_t key, size_t size, int flag);	//产生一段共享存储区
+	/*
+		para1:键值.其取值:
+			1.IPC_PRIVATE(即0):会建立新的共享存储区
+			2.由ftok函数创建一个键值
+			#include <sys/ipc.h>	//使用ftok函数所需的头文件
+			key_t ftok(const char *path, int id);	//将path和id构成一个键值
+			e.g. key = ftok("./tmp", 0x03);
+		para2:共享存储段的大小.获取其他已经创建好的共享存储则为0
+		para3:标志参数,其取值为:
+			1.0:取已经存在的共享存储标识符.常用在某个函数已经建立了一段共享存储区,后面的文件/函数使用它
+			2.IPC_CREAT:如果内核中不存在键值与key相等的共享存储区,在新建一段共享存储;如果存在则直接返回共享存储的标识符
+			3.IPC_CREAT | IPC_EXCL:如果内核中不存在键值与key相等的共享存储,则新建一个消息队列;如果存在则报错
+			4.IPC_CREAT | IPC_EXCL | 0600:加上对象的存储权限.
+
+		retval:成功返回共享存储的ID;出错返回-1
+	*/
+
+**2.shmctl函数---对共享存储段进行管理**
+
+	#include <sys/shm.h>
+	int shmctl(int shmid, int cmd, struct shmid_ds *buf);
+	/*
+		para1:shmget返回的shmid
+		para2:表示需要执行的操作,其取值为:
+			1.IPC_STAT:得到共享存储的状态,把共享存储的shmid_ds结构(属性)复制到buf中,以便后续处理
+			2.IPC_SET:改变共享存储的状态,将buf所指的shmid_ds结构中uid、gid、mode复制到共享存储的shmid_ds结构中
+			3.IPC_RMID:删除这段共享存储区
+
+		retval:成功返回0.出错返回-1.
+	*/
+
+**3.shmat函数---把共享存储区映射到调用进程的地址空间**
+
+	#include <sys/shm.h>
+	void *shmat(int shmid, const void *addr, int flag);
+	/*
+		para1:shmget返回的shmid
+		para2:一般为NULL,表示让内核自己决定一个合适的位置,系统选择一个合适的地址
+		para3:指定读/写权限
+			1.SHM_RDONLY---以只读连接此段.表示此段共享存储区只读
+			2.0---表示读写方式连接此段.表示此段共享存储区可读写
+
+		retval:成功返回指向共享存储段的指针,透过该指针可以操作共享存储段.出错返回-1.
+	*/
+
+**4.shmdt函数---断开共享存储的连接**
+
+	#include <sys/shm.h>
+	int shmdt(const void *addr);	//断开共享存储区与调用进程的地址空间的映射
+	/*
+		para:调用shmat返回的共享存储段的指针
+		
+		retval:成功返回0.出错返回-1.
+	*/
+
+**实例1---父子进程通信**
+
+	/*shm.c---父子进程通信*/
+	#include <stdio.h>
+	#include <string.h>
+	#include <unistd.h>
+	#include <sys/ipc.h>
+	#include <sys/shm.h>
+	#include <error.h>
+
+	#define SIZE 	1024
+
+	int main(int argc, char **argv)
+	{
+		int shmid;
+		char *shmaddr;			//存放共享存储映射到进程地址空间的指针
+		struct shmid_ds buf;	//存放共享存储的一些属性
+		int flag = 0;
+		int pid;
+
+		shmid = shmget(IPC_PRIVATE, SIZE, IPC_CREAT | 0600);
+		if (shmid == -1)
+		{
+			printf("shmget error\n");
+			return -1;
+		}
+		pid = fork();	//创建子进程
+		if (pid == 0)	//子进程代码
+		{
+			shmaddr = (char *)shmat(shmid, NULL, 0);	//将共享存储映射到进程地址空间
+			if ((int)shmaddr == -1)		//虽然返回void *,但是出错返回-1.因此需要强制转换
+			{
+				printf("shmat error\n");
+				return -1;
+			}
+			strcpy(shmaddr, "Hi, I am child process!\n");	//往共享存储区中复制字符串
+			shmdt(shmaddr);		//断开共享存储区与调用进程地址空间的映射
+			return 0;
+		}else if(pid > 0)	//父进程代码.pid为子进程的pid
+		{
+			sleep(3);	//让子进程先执行
+			flag = shmctl(shmid, IPC_STAT, &buf);	//对共享存储区进行管理
+			if (flag == -1)
+			{
+				printf("shmctl error\n");
+				return -1;
+			}
+			
+			//打印出共享存储区的一些信息
+			printf("shm_segsz = %d bytes\n", buf.shm_segsz);	//共享存储区的大小,此处为1024
+			printf("parent pid: %d, shm_cpid = %d\n", getpid(), buf.shm_cpid);
+				//获得父进程的pid和创建者的pid,此处均为父进程的pid
+			printf("child pid: %d, shm_lpid = %d\n", pid, buf.shm_lpid);
+				//子进程的pid和shm_lpid.均为子进程的pid
+			
+			shmaddr = (char *)shmat(shmid, NULL, 0);	//将共享存储映射到进程地址空间
+			if ((int)shmaddr == -1)
+			{
+				printf("shmat error\n");
+				return -1;
+			}
+			printf("%s\n", shmaddr);	//打印出共享存储区的内容.此处为"Hi, I am child process!"
+			shmdt(shmaddr);		//断开共享存储区与调用进程地址空间的映射
+			shmctl(shmid, IPC_RMID, NULL);	//删除共享存储区
+		}
+
+		return 0;
+	}
+
+**实例2---多进程读写**
+
+1.写共享存储进程代码
+
+	//shmwrite.c---写共享存储代码
+	#include <stdio.h>
+	#include <sys/ipc.h>
+	#include <unistd.h>
+	#include <string.h>
+	#include <sys/shm.h>
+	#include <sys/types.h>
+
+	typedef struct{
+		char name[8];
+		int age;
+	}people;
+
+	int main(int argc, char **argv)
+	{
+		int shm_id, i;
+		key_t key;
+		char temp[8];
+		people *p_map;
+		char pathname[30];
+		
+		strcpy(pathname, "./temp");
+		key = ftok(pathname, 0x03);		//创建一个键值.成功返回键值,出错返回-1
+		if (key == -1)
+		{
+			printf("ftok error\n");
+			return -1;
+		}
+		printf("key value: %d\n", key);
+		shm_id = shmget(key, 4096, IPC_CREAT | IPC_EXCL | 0600);
+		if (shm_id == -1)
+		{
+			printf("shmget error\n");
+			return -1;
+		}
+		printf("shm_id value: %d\n", shm_id);
+		p_map = (people *)shmat(shmid, NULL, 0);
+		if ((int)p_map == -1)
+		{
+			printf("shmat error\n");
+			return -1;
+		}
+		memset(temp, 0x00, sizeof(temp));	//sizeof(temp):求数组的大小
+		strcpy(temp, "test");
+		temp[4] = '0';	//第5个字符为0
+		for(i=0; i<3; i++)
+		{
+			temp[4] += 1;	//或者temp[4] += (char)1;千万不能是:temp[4] += '1';---错误
+			strncpy((p_map+i)->name, temp, 5);	//拷贝temp中的内容到共享内存区域
+			(p_map+i)->age = i;
+		}
+		
+		//断开共享存储区与调用进程地址空间的映射
+		shmdt(p_map);
+		return 0;
+	}
+
+2.读共享存储进程代码
+
+	//shmread.c---读共享存储代码
+	#include <stdio.h>
+	#include <unistd.h>
+	#include <string.h>
+	#include <sys/ipc.h>
+	#include <sys/types.h>
+	#include <sys/shm.h>
 	
+	typedef struct {
+		char name[8];
+		int age;
+	}people;
+
+	int main(int argc, char **argv)
+	{
+		int shm_id, i;
+		key_t key;
+		people *p_map;
+		char pathname[30];
+
+		strcpy(pathname, "./temp");
+		key = ftok(pathname, 0x03);
+		if (key == -1)
+		{
+			printf("ftok error\n");
+			return -1;
+		}
+		printf("key value: %d\n", key);
+		shm_id = shmget(key, 0, 0);		//para2=0---获取已经创建好的共享存储
+		if (shm_id == -1)
+		{
+			printf("shmget error\n");
+			return -1;
+		}
+		printf("shm_id value: %d\n", shm_id);
+		p_map = (people *)shmat(shm_id, NULL, 0);
+		if ((int)p_map == -1)
+		{
+			printf("shmat error\n");
+			return -1;
+		}
+		for (i=0; i<3; i++)
+		{
+			printf("name: %s\n", (p_map+i)->name);	//如果为:(*(p_map+i)).name也正确,相当于将指针转成了一个变量
+			printf("age: %d\n", (p_map+i)->age);		//如果为:(*(p_map+i)).age也正确,相当于将指针转成了一个变量
+		}
+		
+		if (shmdt(p_map) == -1)
+		{
+			printf("shmdt error\n");
+			return -1;
+		}
+		return 0;	//因为最终没有删除掉共享存储,所以会一直存在.
+	}
+
+3.编译并执行
+
+	gcc shmwrite.c -o shmwrite
+	gcc shmread.c -o shmread
+
+	1---执行./shmwrite得到结果:
+	key = 51460524
+	shm_id = 294912
+	2---执行./shmread得到结果:
+	key = 51460524
+	shm_id = 294912
+	name: test1
+	age = 0
+	name: test2
+	age = 1
+	name: test3
+	age = 2
+	3---再次执行./shmwrite就会报错:
+	key=50453281
+	shmget error: File exists
+	//因为共享存储已经存在,代码中也没有删除掉
+	4---需要手动用命令行删掉共享存储
+	ipcrm -m 294912		//后面为共享存储ID
