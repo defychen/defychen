@@ -1631,6 +1631,14 @@ getcwd:获得当前工作目录的完整绝对路径名
 
 	int main(int argc, char *argv[]);
 	//argc:命令行参数个数; argv:指向命令行参数的各个指针所构成的数组.
+	./test a b c	//参数为4个,第0个为执行的程序名
+	/* 即:
+		argc = 4
+		argv[0] = "./test"
+		argv[1] = "a"
+		argv[2] = "b"
+		argv[3] = "c"
+	*/
 
 ### 7.2 进程终止
 
@@ -2153,8 +2161,7 @@ init进程会自动调用wait函数取得子进程的终止状态,因此父进�
 			}
 		}
 
-		/*创建子进程并调用execlp
-		* execlp中
+		/*创建子进程并调用execlp中
 		* l希望接收以逗号","分隔的参数列表,并以NULL指针为结束标志
 		* p是一个以NULL结尾的字符串数组指针.重要是"p"会以path为环境变量查找子程序文件
 		*/
@@ -3363,6 +3370,606 @@ pthread_join()、pthread_testcancel()、pthread_cond_wait()、pthread_cond_timew
 
 ***
 ## Chapter 15 进程间通信
+
+### 15.1 引言
+
+进程间通信:IPC(Interprocess Communication),包括:管道、FIFO、消息队列、信号量以及共享存储和网络IPC(套接字).
+
+### 15.2 管道
+
+管道作用于有血缘关系的进程之间,完成数据传递.
+
+管道的特点:
+
+1.本质是一个伪文件(实为内核缓冲区);
+
+2.有两个文件描述符引用,一个表示读端,一个表示写端;
+
+3.规定数据从管道的写端流入管道,从读端流出;
+
+4.管道原理:管道实为内核使用环形进制,借助内核缓冲区(4K)实现.
+
+管道的局限性:
+
+1.数据不能同时自己读自己写;
+
+2.数据一旦被读走,便不在管道中存在,因此不可反复读取;
+
+3.管道采用半双工通信方式.数据只能在一个方向上流动;
+
+4.只能在有公共祖先的进程间使用管道.
+
+**pipe函数---创建管道**
+
+	#include <unistd.h>
+	int pipe(in fd[2]);
+	/*调用pipe自动创建两个文件描述符fd[2].
+		fd[0]--->r(读文件描述符);	fd[1]--->w(写文件描述符).	结束后需要调用close(fd[0/1]),关闭文件描述符.
+		retval:成功返回0; 失败返回-1.
+	*/
+
+**实例1---父子进程管道通信**
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <string.h>
+	#include <unistd.h>
+	#include <sys/wait.h>
+
+	int main(int argc, char **argv)
+	{
+		pid_t pid;
+		char buf[1024];
+		int fd[2];		//存储管道创建的fd
+		char *p = "Test for pipe!\n";
+
+		if (pipe(fd) == -1)	//创建一条管道.后续创建的子进程会复制相同的描述符fd[2]指向同一管道
+		{
+			printf("pipe error!\n");
+			return -1;
+		}
+
+		pid = fork();	//创建进程
+		if (pid == 0)	//子进程
+		{
+			close(fd[1]);	//子进程中有父进程fd的拷贝.子进程关闭写端,只留下读端
+			int len = read(fd[0], buf, sizeof(buf));	//从管道读端fd[0]	读出数据
+			write(STDOUT_FILENO, buf, len);		//将读到的数据写到标准输出---屏幕输出
+			close(fd[0]);
+		} else if (pid > 0)		//父进程
+		{
+			close(fd[0]);	//父进程关闭读管道
+			write(fd[1], p, strlen(p));		//求字符指针所代表的字符串的长度使用strlen,不能用sizeof
+			wait(NULL);		//等待子进程结束.因为不需要保存状态,因此参数为NULL
+			close(fd[1]);
+		}
+
+		return 0;
+	}
+
+管道的读写行为:
+
+1.读管道:
+
+	1.管道中有数据,read返回实际读到的字节数;
+	2.管道中无数据:
+		1.管道写端被全部关闭,read返回0
+		2.管道写端没有被全部关闭,read阻塞等待(此时让出CPU,等待数据到达)
+
+2.写管道
+
+	1.管道读端被全部关闭,进程会异常终止(发出SIGPIPE信号)
+	2.管道读端没有被全部关闭:
+		1.管道未满,write将数据写入,并返回实际写入的字节数
+		2.管道已满,write阻塞
+
+**实例2---兄弟进程间通信**
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <unistd.h>
+	#include <sys/wait.h>
+	
+	int main(int argc, char **argv)
+	{
+		pid_t pid;
+		int fd[2], i;
+		
+		if (pipe(fd) == -1)	//创建一条管道
+		{
+			printf("pipe error!\n");
+			return -1;
+		}
+
+		for (i=0; i<2; i++)
+		{
+			if ((pid = fork()) == 0)
+				breal;
+			//父进程中返回的pid>0,会由父进程继续创建一个子进程.
+			//子进程中返回的pid=0,直接break,防止子进程再创建一个子进程.
+			//这样可以保证只有3个进程---父、兄、弟
+		}
+
+		if (i == 0)	//兄进程
+		{
+			close(fd[0]);	//兄进程关闭读端
+			dup2(fd[1], STDOUT_FILENO);	//将fd[1]更改为标注输出
+			execlp("ls", "ls", NULL);	//执行ls命令,得到的标准输出会写到管道
+			//而且标准输出不需要关闭,即不需要调用close
+		} else if (i == 1)	//弟进程
+		{
+			close(fd[1]);	//弟进程关闭写端
+			dup2(fd[0], STDIN_FILENO);	//将fd[0]更改为标准输入
+			execlp("wc", "wc", "-l", NULL);	//执行wc命令,参数为-l
+		} else 		//父进程
+		{
+			close(fd[0]);	//关闭读端
+			close(fd[1]);	//关闭写端
+			for (i=0; i<2; i++)
+			{
+				wait(NULL);		//两个儿子wait两次
+			}
+		}
+		return 0;
+	}
+
+**实例3---测试一个pipe有两个写端和一个读端的情况**
+
+	#include <stdio.h>
+	#include <unistd.h>
+	#include <sys/wait.h>
+	#include <stdlib.h>
+	#include <string.h>
+
+	int main(int argc, char **argv)
+	{
+		pid_t pid;
+		int fd[2], i, n;
+		char buf[1024];
+		
+		if (pipe(fd) == -1)
+		{
+			printf("pipe error!\n");
+			return -1;
+		}
+
+		for (i=0; i<2; i++)
+		{
+			if ((pid = fork()) == 0)
+				break;
+		}
+
+		if (i == 0)
+		{
+			close(fd[0]);	//兄进程关闭读端
+			write(fd[1], "1.hello\n", strlen("1.hello\n"));
+			close(fd[1]);	//应该需要关闭fd[1]
+		} else if (i == 1)
+		{
+			close(fd[0]);	//弟进程关闭读端
+			write(fd[1], "2.hello\n", strlen("2.hello\n"));
+			close(fd[1]);
+		} else
+		{
+			close(fd[1]);	//父进程关闭写端,只读取数据
+			n = read(fd[0], buf, sizeof(buf));
+			write(STDOUT_FILENO, buf, n);	//输出数据到屏幕
+
+			for (i=0; i<2; i++)
+				wait(NULL);		//两个儿子wait两次
+		}
+		return 0;
+	}
+
+### 15.3 函数popen和pclose
+
+popen函数:内部实现为创建一个管道,fork一个子进程,关闭未使用的管道端,执行一个shell命令直到pclose---终止shell命令.
+
+	#include <stdio.h>
+	FILE *popen(const char *cmd, const char *type);
+	//函数意义:该函数调用会创建一个管道,透过该函数返回的FILE文件指针,可以往该管道写/读.并且该写/读的内容会执行cmd命令.
+	/*
+		para1:shell命令
+		para2:"r"---读、"w"---写
+		retval:成功返回文件指针;出错返回NULL
+	*/
+	int pclose(FILE *fp);	//关闭有popen创建的文件指针
+	//retval:成功返回cmd的终止状态;出错返回-1
+
+**实例---使用popen和pclose读取文件内容**
+
+	//popen_test.c
+	#include <stdio.h>
+	#include <string.h>
+	#include <unistd.h>
+	#include <sys/wait.h>
+
+	#define CMD "more"
+	//#define CMD "${PAGER: -more}"	//据说需要换成(),但是也是编译不过.---可能有点问题
+	//其作用据说是:PAGER变量存在就取$PAGER;如果未设定或者为空,就取"-"后面的值"more"
+	
+	int main(int argc, char **argv)
+	{
+		char line[1024];
+		FILE *fpin, *fpout;
+		if (argc != 2)
+			printf("Argument error!\n");
+		if ((fpin = fopen(argv[1], "r")) == NULL)
+			printf("fopen fail!\n");
+		if ((fpout = popen(CMD, "w")) == NULL)	//创建一个管道,可以透过fpout往管道里写入文件内容,最后执行CMD命令
+			printf("popen fail！\n");
+
+		while (fgets(line, 1024, fpin))	//读取fpin文件指针,读入line(line大小为1024)
+		{
+			if (fputs(line, fpout) != EOF)	//往fpout写入文件内容.成功返回写入的长度,失败返回EOF(文件尾或失败,为-1)
+				printf("fputs error!\n");
+		}
+		
+		pclose(fpout);	//关闭popen打开的文件指针
+		fclose(fpin);
+
+		return 0;
+	}
+
+	//编译并执行
+	gcc popen_test.c -o popent_test
+	./popen_test test.txt	//会通过more命令,显示test.txt中的内容
+
+### 15.4 协同进程
+
+**略.**
+
+### 15.5 FIFO
+
+FIFO:命名管道.因为pipe(无名管道)只能在两个相关的进程之间使用.但是FIFO在不相关的进程也能交换数据.
+
+创建FIFO类似于创建文件,FIFO的路径名存在于文件系统中.
+
+	#include <sys/stat.h>
+	int mkfifo(const char *path, mode_t mode);
+	/*
+		para1:在什么路径下创建FIFO管道;
+		para2:创建的FIFO管道的权限.常为"0777"
+		retval:成功返回0;出错返回-1.
+	*/
+	int mkfifoat(int fd, const char *path, mode_t mode);	//用的较少
+
+经过mkfifo创建FIFO管道后,就可以像操作文件那样open创建路径下的FIFO管道.
+
+**实例---两个独立的进程通信**
+
+	//fifo1.c---写命名管道
+	#include <unistd.h>
+	#include <stdlib.h>
+	#include <stdio.h>
+	#include <string.h>
+	#include <fcntl.h>
+	#incude <limits.h>
+	#include <sys/types.h>
+	#include <sys/stat.h>
+
+	#define FIFO_NAME "./tmp/my_fifo"
+	#define BUFFER_SIZE	PIPE_BUF	//linux本身定义的宏,为4096
+	#define TEN_MSG	(1024*1024*10)	//10M
+
+	int main(int argc, char **argv)
+	{
+		int pipe_fd;
+		int res;
+		int open_mode = O_WRONLY;	//只写
+		int bytes_sent = 0;
+		char buffer[BUFFER_SIZE + 1];
+		printf("FIFO write program begining...\n");
+
+		//检查FIFO是否存在
+		if (access(FIFO_NAME, F_OK) == -1)	//F_OK检查文件是否存在.存在返回0,不存在返回-1.此处不存在就创建
+		{
+			res = mkfifo(FIFO_NAME, 0777);	//创建FIFO管道,路径为:FIFO_NAME.之后可以open该路径,即是操作该FIFO管道
+			if (res == -1)
+			{
+				printf("mkfifo error!\n");
+				return -1;
+			}
+		}
+
+		printf("Process %d opening FIFO O_WRONLY", getpid());
+		//打开FIFO文件
+		pipe_fd = open(FIFO_NAME, open_mode);
+		printf("Process %d open FIFO result %d\n", getpid(), pipe_fd);
+
+		if (pipe_fd != -1)
+		{
+			while (bytes_sent < TEN_MSG)	//小于10M
+			{
+				res = write(pipe_fd, buffer, BUFFER_SIZE);	//向FIFO写入数据
+				if (res == -1)
+				{
+					printf("write error!\n");
+					return -1;
+				}
+				bytes_sent += res;
+			}
+			close(pipe_fd);
+		}else
+			return -1;
+
+		printf("Process %d finished\n", getpid()); 
+
+		return 0;
+	}
+
+	//fifo2.c---读命名管道
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <string.h>
+	#include <fcntl.h>
+	#include <unistd.h>
+	#include <limits.h>
+	#include <sys/types.h>
+	#include <sys/stat.h>
+
+	#define FIFO_NAME "./tmp/my_fifo"
+	#define BUFFER_SIZE PIPE_BUF
+
+	int main()
+	{
+		int pipe_fd;
+		int res;
+		int open_mode = O_RDONLY;
+		char buffer[BUFFER_SIZE + 1];
+		int bytes = 0;
+		
+		printf("FIFO read program begining...\n");
+		memset(buffer, 0, sizeof(buffer));
+
+		printf("Process %d opening FIFO O_RDONLY\n", getpid());
+		pipe_fd = open(FIFO_NAME, open_mode);
+		printf("Process %d open FIFO result %d\n"， getpid(), pipe_fd);
+
+		if (pipe_fd != -1)
+		{
+			do{
+				res = read(pipe_fd, buffer, BUFFER_SIZE);
+				bytes += res;
+			}while(res > 0);
+			close(pipe_fd);
+		}else
+			return -1;
+
+		printf("Process %d finished, %d bytes read\n", getpid(), bytes);  
+
+		return 0;		
+	}
+
+### 15.6 XSI IPC
+
+产生键的函数---路径名+项目ID产生一个键:
+
+	#include <sys/ipc.h>
+	key_t ftok(const char *path, int id);
+	/*
+		para1:现有文件路径名
+		para2:自己给的一个id.
+		retval:成功返回一个键值(给消息队列、信号量、共享存储等使用).出错返回(key_t)-1---其实就是-1.
+	*/
+
+### 15.7 消息队列
+
+消息队列是消息的链接表,存储在内核中,在内核中有消息队列标识符标识.
+
+**消息队列有一个msqid_ds结构,该结构描述消息队列的一些属性:**
+
+	struct msqid_ds{	//描述消息队列属性的结构体
+		struct ipc_perm	msg_perm;	/*消息队列的权限*/
+		msgqnum_t		msg_qnum;	/*队列中消息的数目*/
+		msglen_t		msg_qbytes;	/*队列中最大的字节数*/
+		pid_t			msg_lspid;	/*snd(发送消息)进程的pid*/
+		pid_t			msg_lrpid;	/*rcv(接收消息)进程的pid*/
+		time_t			msg_stime;	/*发送消息的时间*/
+		time_t			msg_rtime;	/*接收消息的时间*/
+		time_t			msg_ctime;	/*最后改变的时间*/
+		...		//还有其他的一些属性
+	};
+
+**1.msgget函数---打开一个现有队列或创建一个新队列**
+
+	#include <sys/msg.h>
+	int msgget(key_t key, int flag);
+	/*
+		para1:键值---详可见shmget函数中的描述
+		para2:参数标志
+			1.IPC_CREAT:创建一个消息队列
+			2.IPC_EXCL:使用已经存在的队列.如果没有返回-1;若存在返回0.
+		retval:成功返回消息队列ID;出错返回-1
+	*/
+
+**2.msgctl函数---对消息队列进行管理**
+
+	#include <sys/msg.h>
+	int msgctl(int msgid, int cmd, struct msqid_ds *buf);
+	/*
+		para1:msgget返回的msgid
+		para2:表示需要执行的操作,其取值为:
+			1.IPC_STAT:得到消息队列的状态,把消息队列的msqid_ds结构(属性)复制到buf中,以便后续处理
+			2.IPC_SET:改变消息队列的状态,将buf所指的msqid_ds结构中uid、gid、mode复制到消息队列的msqid_ds结构中
+			3.IPC_RMID:删除创建的消息队列
+		retval:成功返回0.出错返回-1.
+	*/
+
+**3.msgsnd函数---将数据放到消息队列中**
+	
+	#include <sys/msg.h>
+	int msgsnd(int msgid, const void *ptr, size_t nbytes, int flag);
+	/*
+		para1:msgget返回的msgid
+		para2:指向消息缓冲区的指针,存储发送的消息,为用户定义的通用结构
+		para3:消息的大小---不包含消息类型占用的大小
+		para4:指明程序在消息队列中数据已满所采取的动作:
+			IPC_NOWAIT:如果消息队列已满,程序不会阻塞立即返回"-1"
+			0:在消息队列为满时程序会阻塞等待.
+		retval:成功返回0;出错返回-1
+	*/
+
+**4.msgrcv函数---从消息队列中取用消息**
+
+	#include <sys/msg.h>
+	int msgrcv(int msgid, void *ptr, size_t nbytes, long type, int flag);
+	/*
+		para1:msgget返回的msgid
+		para2:指向消息缓冲区的指针,存储接收的消息,为用户定义的通用结构
+		para3:消息的大小---不包含消息类型占用的大小
+		para4:消息类型.消息结构体中的一个成员,和msgsnd中指定的一致
+		para5:致命程序在消息队列为空所采取的动作:
+			IPC_NOWAIT:如果消息队列为空,程序不会阻塞立即返回-1
+			0:在消息队列为空时程序会阻塞等待.
+		retval:成功返回0;出错返回-1
+	*/
+
+**实例---通过消息队列实现收发数据**
+
+	//msg_send.c---发送数据
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <unistd.h>
+	#include <string.h>
+	#include <sys/types.h>
+	#include <sys/ipc.h>
+	#include <sys/msg.h>
+
+	#define BUFFER 10
+	
+	struct msgtype {
+		long mtype;		//存放msg的类型
+		char buf1[BUFFER + 1];
+		char buf2[BUFFER + 2];
+		long size;
+	};
+
+	int main()
+	{
+		key_t msgkey;
+		int msgid;
+		struct msgtype msg;
+		
+		msgkey = ftok("./tmp", 10001);
+		if (msgkey == -1)
+		{
+			printf("ftok error!\n");
+			return -1;
+		}
+
+		//创建消息队列
+		msgid = msgget(msgkey, IPC_CREAT | 0666);
+		if (msgid == -1)
+		{
+			printf("msgget error!\n");
+			return -1;
+		}
+
+		int i = 0;
+		while (i < 10)
+		{
+			memset(msg.buf1, 0, BUFFER + 1);
+			memset(msg.buf2, 0, BUFFER + 1);
+
+			sprintf(msgbuf1, "buf1_0x%x", i);	//写入buf1_0~9
+			sprintf(msgbuf2, "buf2_0x%x", i + 'a');	//'a'=97,因此写入buf2_61~6a
+
+			msg.mtype = 1001;
+			msg.size = i;
+
+			printf("msg.mtype = %ld, msg.size = %ld\t", msg.mtype, msg.size);
+			printf("msg.buf1 = %s, msg.buf2 = %s\n", msg.buf1, msg.buf2);
+
+			//将数据写入消息队列
+			if (msgsnd(msgid, &msg, sizeof(struct msgtype) - sizeof(long), 0) == -1)
+				//发送消息需要减掉消息类型所占的空间
+			{
+				printf("msgsnd error!\n");
+				return -1;
+			}
+			i++;
+			sleep(1);	//隔1s发送一次
+		}
+
+		sleep(30);	//等待接收消息退出再关闭消息队列
+		
+		if (msgctl(msgid, IPC_RMID, 0) == -1)
+		{
+			printf("msgctl error!\n");
+			return -1;
+		}
+
+		return 0;
+	}
+
+	//msg_recv.c---接收数据
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <unistd.h>
+	#include <string.h>
+	#include <sys/ipc.h>
+	#include <sys/msg.h>
+
+	#define BUFFER 10
+	
+	struct msgtype {
+		long mtype;
+		char buf1[BUFFER + 1];
+		char buf2[BUFFER + 1];
+		long size;
+	};
+
+	int main()
+	{
+		key_t msgkey;
+		int msgid;
+		struct msgtype msg;
+
+		msgkey = ftok("./tmp", 10001);
+		if (msgkey == -1)
+		{
+			printf("ftok error!\n");
+			return -1;
+		}
+
+		msgid = msgget(msgkey, IPC_EXCL | 0666);	//使用已经存在的队列.如果没有返回-1;若存在返回0.
+		if (msgid == -1)
+		{
+			printf("msgget error!\n");
+			return -1;
+		}
+
+		int i = 0;
+		while (i < 10)
+		{
+			memset(msg.buf1, 0, BUFFER + 1);
+			memset(msg.buf2, 0, BUFFER + 1);
+			msg.mtype = 1001;	//需要与send中一样
+			msg.size = -1;		//给个无效值,后面会被发送过来的数据赋值
+
+			if (msgrcv(msgid, &msg, sizeof(struct msgtype) - sizeof(long), msg.mtype, 0) == -1)
+			{
+				printf("msgrcv error!\n");
+				return -1;
+			}
+
+			printf("msg.mtype = %ld, msg.size = %ld\t", msg.mtype, msg.size);
+			printf("msg.buf1 = %s, msg.buf2 = %s\n", msg.buf1, msg.buf2);
+			i++;
+			sleep(2);
+		}
+
+		return 0;
+	}
+	//编译运行:
+	gcc msg_send.c -o msg_send
+	gcc msg_recv.c -o msg_recv
+	./msg_send	./msg_recv
+
+### 15.8 信号量
+
+**暂时没看!!**
 
 ### 15.9 共享存储(内存)---SHM
 

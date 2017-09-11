@@ -188,7 +188,7 @@
 	/dev/sda3       651G  358G  261G  58% /zhsa021	---硬盘使用
 	cgroups          63G     0   63G   0% /sys/fs/cgroup
 
-## 13、head命令
+## 13. head命令
 
 	/*
 	ts流文件都是二进制文件,像:	47 51 20 30 07 90 00 00 00 1C...	//每个代表一个byte
@@ -197,11 +197,11 @@
 	*/
 	head -c 450448 xxx.ts > test.ts		//截取xxx.ts中的450448 byte到test.ts中
 
-## 14、nm命令
+## 14. nm命令
 
 	nm vodrm_test	//查看函数库、可执行文件或目标文件里包含哪些函数.
 
-## 15、重定向和管道
+## 15. 重定向和管道
 
 	//重定向
 	1)将标准输出和标准错误输出分别重定向到不同的文件中:
@@ -213,12 +213,12 @@
 	ls -l | head -n 5		//显示ls -l的前5行
 	grep linux . -nr | more		//按页显示查找到的字符串,没有grep linux . -nr好看
 
-## 16、which命令
+## 16. which命令
 
 	which命令用于查找并显示给定命令的绝对路径.
 	which ls	//显示为"/bin/ls"
 
-## 17 ln命令
+## 17. ln命令
 
 	//ln为建立某个文件的链接文件
 	ln -s test.sh test	//-s为建立一个软连接.test.sh:链接的目标的文件, test:新建的链接文件
@@ -227,5 +227,27 @@
 	lrwxrwxrwx 1 defy.chen defy.chen    7 Sep  4 20:27 test -> test.sh*
 	-rwxrwxr-x 1 defy.chen defy.chen  328 Sep  4 20:04 test.sh*	//目标文件
 	*/
+
+## 18. 查看linux IPC相关的限制
+
+	ipcs -l
+	//显示为:
+	------ Shared Memory Limits --------
+	max number of segments = 4096
+	max seg size (kbytes) = 32768
+	max total shared memory (kbytes) = 8388608
+	min seg size (bytes) = 1
+	
+	------ Semaphore Limits --------
+	max number of arrays = 128
+	max semaphores per array = 250
+	max semaphores system wide = 32000
+	max ops per semop call = 32
+	semaphore max value = 32767
+	
+	------ Messages Limits --------
+	max queues system wide = 32768
+	max size of message (bytes) = 8192
+	default max size of queue (bytes) = 16384 
 
 ## 13. wget命令

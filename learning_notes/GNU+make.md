@@ -620,4 +620,14 @@
 
 	make alisee-source		//将alisee的源码拉下来
 
+## 3. cc、gcc、g++、CC的区别
+
+	cc:是Unix系统的C Compiler,为商业软件.在linux下一般是一个符号链接,指向gcc.目前cc使用的很少了.
+	gcc:GNU Compiler Collection,GNU编译器套装,包含很多编译器(c、c++、Objective-c、Fortran、Java).一般使用gcc
+	g++:g++可以编译C/C++代码.与gcc区别:
+		1)".c"文件,gcc当作C程序,gcc当作C++程序.".cpp"两者都认为是C++程序.
+		2)对于宏"__cplusplus"---指示编译器将代码按C还是C++语言来解释.如果后缀为.c,并且采用gcc编译器,则该宏是未定义的.
+			否则就是已定义的.
+	CC:一般是Makefile中的一个名字.
+
 

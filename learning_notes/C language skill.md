@@ -949,7 +949,10 @@ pthread_join()、pthread_testcancel()、pthread_cond_wait()、pthread_cond_timew
 	/*解析:
 		1)sizeof(数组名):此时为统计数组的大小
 		2)sizeof(指针):此时为计算指针本身所占用的空间,4 byte.---此处的指针包括结构体指针	
-	*/	
+	*/
+	//如果要求字符指针指向的字符串长度,使用strlen函数:
+	char *p = "Test for pipe\n";
+	int len = strlen(p);	//求得长度为:14
 
 ## 35、求字符串长度的函数strlen
 
