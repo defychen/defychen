@@ -4260,3 +4260,439 @@ FIFO:命名管道.因为pipe(无名管道)只能在两个相关的进程之间�
 	//因为共享存储已经存在,代码中也没有删除掉
 	4---需要手动用命令行删掉共享存储
 	ipcrm -m 294912		//后面为共享存储ID
+
+## Chapter 16 网络IPC:套接字
+
+网络进程间通信:network IPC,不同计算机(通过网络相连)上的进程互相通信.
+
+### 16.1 套接字描述符---socket
+
+套接字是两个网络应用程序之间通信管道的终点,应用程序可以通过套接字来操作这个通信管道.
+
+	#include <sys/socket.h>
+	int socket(int domain, int type, int protocol);
+	/*
+		para1:domain(域)确定通信特性,以AF_打头(address family),其值可取:
+			AF_INET:IPv4因特网域---一般使用这个
+			AF_INET6:IPv6因特网域
+			AF_UNIX:UNIX域
+			AF_UPSPEC:未指定
+		para2:确定套接字类型,进一步确定通信特征,其值可取:
+			SOCK_DGRAM:固定长度的、无连接的、不可靠的报文连接---UDP使用
+			SOCK_RAM:很少使用
+			SOCK_SEQPACKET:很少使用
+			SOCK_STREAM:有序的、可靠的、双向的、面向连接的字节刘---TCP使用
+		para3:选择默认协议.一般为0即可.
+		retval:成功返回套接字描述符;出错返回-1.
+	*/
+
+### 16.2 寻址
+
+**1. 字节序**
+
+不同计算机的CPU具有不同的字节序,网络中采用统一的字节序.因此有下面4个函数用于CPU字节序和网络字节序转换:
+
+	#include <arpa/inet.h>
+	uint32_t htonl(uint32_t hostint32);
+	/*h:host; n:net; l:long.
+		para:主机32位无符号整数
+		retval:以网络字节序表示的32位无符号整数
+	*/
+	uint16_t htons(uint16_t hostint16);
+	/*
+		para:主机16位无符号整数
+		retval:以网络字节序表示的16位无符号整数
+	*/
+	uint32_t ntohl(uint32_t netint32);
+	/*
+		para:网络字节序表示的32位无符号整数
+		retval:主机32位无符号整数
+	*/
+	uint16_t ntohs(uint16_t netint16);
+	/*
+		para:网络字节序表示的16位无符号整数
+		retval:主机16位无符号整数
+	*/
+
+**2. 地址格式**
+
+一个地址标识一个特定通信域的套接字端点,地址格式与特定的通信域相关.套接字函数接收固定的地址格式,因此不同的地址格式均需要转成通用的地址格式.
+
+通用的地址格式:
+
+	struct sockaddr {
+		sa_family_t 	sa_family;	/*address family*/
+		char			sa_data[];	/*variable-length address*/
+	};
+
+linux地址格式定义为:
+
+	struct in_addr {
+		uint32_t	s_addr;		//IPv4地址,即IP地址
+		/*其值可设置为:
+		htonl(INADDR_ANY);		//表示套接字端点可以被绑定到所有的系统网络接口上,允许任何客户端连接.
+		inet_addr("127.0.0.1");	//IP地址转换为网路字节序的32 bit的无符号整数.
+		*/
+	};
+	struct sockaddr_in {
+		int16_t			sin_family;
+		uint16_t		sin_port;	//端口号,不能小于1024(因为这些留给其他用的)
+		struct in_addr	sin_addr;	//IPv4地址
+		char 			sin_zero[8];	//填充字段,全部置0.因此需要memset.
+	};
+
+**3. 将套接字与地址关联**
+
+bind---关联地址和套接字,一般用户服务器程序中.
+
+	#include <sys/socket.h>
+	int bind(int sockfd, const struct sockaddr *addr, socklen_t len);
+	/*
+		para1:调用socket()函数返回的socket描述符.一般为服务器socket描述符
+		para2:地址(需要变成了网络地址),服务器的地址
+		para3:一般为(socklen_t)sizeof(struct sockaddr_in)
+	*/
+
+### 16.3 建立连接
+
+**1. connet函数---客户端使用的函数**
+
+对于面向连接的网络服务(SOCK_STREAM),在交换数据之前需要在客户端和服务器端建立连接.
+
+	//主要针对SOCK_STREAM,在客户端中使用,服务器端不用这个函数
+	#include <sys/socket.h>
+	int connect(int sockfd, const struct sockaddr *addr, socklen_t len):
+	/*
+		para1:客户端的socket描述符
+		para2:指定想通信的服务器地址
+		para3:地址长度,一般为(socklen_t)sizeof(struct sockaddr_in)
+		retval:成功返回0;出错返回-1.
+	*/
+
+**2.listen函数---服务器端使用的函数**
+
+listen:服务器端使用表明它愿意接收连接请求的数量,即客户端的数量.
+
+	#include <sys/socket.h>
+	int listen(int sockfd, int backlog);
+	/*
+		para1:服务器端返回的socket描述符
+		para2:可以接收的客户端数量
+		retval:成功返回0;出错返回-1
+	*/
+
+**3.accept函数---服务器使用的函数**
+
+accept:服务器使用获得客户端的连接请求并建立连接.
+
+	#include <sys/socket.h>
+	int accept(int sockfd, struct sockaddr *addr, socklen_t *len);
+	/*
+		para1:服务器端返回的socket描述符
+		para2:得到客户端的地址---客户端连接后会填充在里面
+		para3:得到客户端地址的长度,一般为(socklen_t *)(&sizeof(struct sockaddr_in))
+				注意需要接收地址长度的指针(即取地址"&")
+		retval:成功返回客户端的socket描述符;出错返回-1
+	*/
+
+### 16.4 数据传输
+
+**面向连接的"SOCK_STREAM"的发送/接收函数**
+
+	#include <sys/socket.h>
+	ssize_t send(int sockfd, const void *buf, size_t nbytes, int flags);
+	/*
+		para1:socket描述符---目前看到的都是client socket描述符
+		para2:需要发送数据buffer
+		para3:发送的数据长度
+		para4:一般为0即可
+		retval:成功时返回发送的数据长度;出错返回-1
+	*/
+	ssize_t recv(int sockfd, void *buf, size_t nbytes, int flags);
+	/*
+		para1:socket描述符---目前看到的都是client socket描述符
+		para2:接收数据的buffer
+		para3:buffer的长度
+		para4:一般为0即可
+		retval:成功时返回接收到的数据长度;出错返回-1.
+	*/
+
+**面向非连接的"SOCK_DGRAM"的发送/接收函数**
+
+	#include <sys/socket.h>
+	ssize_t sendto(int sockfd, const void *buf, size_t nbytes, int flags,
+			const struct sockaddr *destaddr, socklen_t destlen);
+	/*
+		para1:发送者的socket描述符
+		para2~para4与send相同
+		para5:发送的目标地址
+		para6:目标地址的长度
+		retval:成功时返回发送的数据长度;出错返回-1
+	*/
+	ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags,
+			struct sockaddr *addr, socklen_t *addrlen);
+	/*
+		para1:发送者的socket描述符
+		para2~para4与recv相同
+		para5:从哪个(ip)地址接收数据
+		para6:地址的长度(为指针,一般取地址即可"&")
+		retval:成功返回接收到的数据长度;若无数据或对方已经按序结束返回0;出错返回-1.	
+	*/
+
+**实例---服务器/客户端网络通信**
+
+	/*server.c---服务器程序*/
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <unistd.h>
+	#include <string.h>
+	#include <time.h>	//时间函数time(NULL)的头文件
+	#include <sys/socket.h>
+	#include <sys/types.h>
+	#include <wait.h>
+	#include <sys/stat.h>
+	#include <arpa/inet.h>
+
+	#define MAX_STR 40
+	
+	//server port
+	int SERVER_PORT;
+
+	/*Randomly generated port number*/
+	int readport(void)
+	{
+		srand((unsigned int) time(NULL));	//随机数发生器即rand()函数的初始化函数.种子为随时间变化的值,相当于产生真随机
+		SERVER_PORT = 30000 + rand()%10000;	//产生一个随机的服务器端口
+		FILE *fout = fopen("./port.in", "w");	//以只写"w"的方式打开port.in文件
+		fprintf(fout, "%d\n", SERVER_PORT);	//将服务器端口以整型格式写入到文件
+		fclose(fout);
+		return 0;
+	}
+
+	int main()
+	{
+		int serverfd, connectionfd;
+		int lenserver, lenclient;
+		int cnt = 0;
+		
+		//define server & client socket address
+		struct sockaddr_in serveraddr;
+		struct sockaddr_in clientaddr;
+		char buff[MAX_STR + 1];
+
+		/*server每次生成随机的端口号,并且写入port.in文件供client读取*/
+		readport();
+
+		/*creat a socket*/
+		serverfd = socket(AF_INET, SOCK_STREAM, 0);
+		/*initial the socket address*/
+		memset(&serveraddr, 0, sizeof(serveraddr));
+		serveraddr.sin_family = AF_INET;
+		serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
+		serveraddr.sin_port = htons(SERVER_PORT);
+		lenserver = sizeof(serveraddr);
+		lenclient = sizeof(clientaddr);
+
+		/*关联地址和套接字,用于服务器程序中*/
+		bind(serverfd, (struct sockaddr *)&serveraddr, (socklen_t)sizeof(serveraddr));
+		printf("Socket has been created!\n");
+		printf("Server port: %d\n", SERVER_PORT);
+
+		/*对套接字进行监听,等待连接*/
+		listen(serverfd, 5);	//最大连接5个客户端
+		
+		while(1)
+		{
+			printf("Now listening...\n");
+			//获得客户端的连接请求并建立连接.
+			connetionfd = accept(serverfd, (struct sockaddr *)&clientaddr, (socklen_t *)&lenclient);
+			if(connetionfd >= 0)
+			{
+				//成功建立连接
+				printf("Now the link has been connected.\n");
+				/*从客户端的socket addr中提取出IP地址和端口信息*/
+				int clientip = (ntohl)(clientaddr.sin_addr.s_addr);	
+				//clientaddr中为网络字节序地址,因此需要转为主机字节序地址
+				printf("Client ip: %d.%d.%d.%d\n", (clientip>>24)&255, (clientip>>16)&255,
+						(clientip>>8)&255, clientip&255);	//打印出点分十进制ip
+				printf("Client port: %d\n", (ntohs)(clientaddr.sin_port));
+				//网络字节序端口,需要转成主机字节序的端口
+
+				//1. 使用send向client发送消息
+				sprintf(buff, "The send message");
+				printf("[SEND] Starting sending [send] msg...\n");
+				send(connectionfd, (void *)buff, strlen(buff), 0);	//发送到client
+				recv(connectionfd, (void *)buff, MAX_STR, 0);	//从client接收
+				if(strlen(buff) > 0)
+					printf("[SUCC] Sending succeed.\n");
+				else
+					printf("[FAIL] Sending failed.\n");
+				
+				//2. 使用write向client发送消息
+				sprintf(buff, "The write message");
+				printf("[SEND] Starting sending [write] msg...\n");
+				write(connectionfd, buff, strlen(buff));
+				recv(connectionfd, (void *)buff, MAX_STR, 0);
+				if(strlen(buff) > 0)
+					printf("[SUCC] Sending succeed.\n");
+				else
+					printf("[FAIL] Sending failed.\n");
+
+				/*UDP实现方式,不一定能成功
+				//3. 使用sendto发送消息(非连接)
+				close(connectionfd);	//关闭连接
+				printf("Disconnect the link.\n");
+				sprintf(buff, "The Sendto message");
+				printf("[SEND] Starting sending [sendto] msg...\n");
+				sendto(serverfd, (void *)buff, strlen(buff), 0, 
+						(struct sockaddr *)&clientaddr, (socklen_t)sizeof(clientaddr));
+				*/			
+			}else
+				printf("ERROR: Failed while establish the link!\n");
+		}
+
+		close(serverfd);	//关闭socket描述符(套接字)
+		return 0;
+	}
+
+	/*client.c---客户端程序*/
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <unistd.h>
+	#include <string.h>
+	#include <time.h>
+	#include <wait.h>
+	#include <sys/socket.h>
+	#include <sys/types.h>
+	#include <sys/stat.h>
+	#include <arpa/inet.h>
+
+	#define MAX_STR 360
+
+	int SERVER_PORT;
+	int CLIENT_PORT;
+
+	/*Randomly generated port number*/
+	int readport(void)
+	{
+		srand((unsigned int)time(NULL));
+		FILE *fout = fopen("./port.in", "r");
+		fscanf(fout, "%d", &SERVER_PORT);	//得到server的端口号
+		fclose(fout);
+		CLIENT_PORT = 40000 + rand()%10000;
+		return 0;
+	}
+
+	int main()
+	{
+		char buff[MAX_STR];
+		char succ[] = "succeed";
+		char fail[] = "failed";
+
+		/*client socket*/
+		int clientfd;
+
+		/*server & client socket address*/
+		struct sockaddr_in serveraddr;
+		struct sockaddr_in clientaddr;
+
+		readport();
+
+		/*creat a socket*/
+		clientfd = socket(AF_INET, SOCK_STREAM, 0);
+
+		/*initial the socket address*/
+		memset(&serveraddr, 0, sizeof(serveraddr));	//服务器address的信息
+		serveraddr.sin_family = AF_INET;
+		serveraddr.sin_addr.s_addr = inet_addr("127.0.0.1");	
+		//指定server的ip地址.inet_addr将ip转换为网络字节序的32 bit的无符号整数
+		serveraddr.sin_port = htons(SERVER_PORT);
+		
+		/*下面的client端的socket address可以不用,写了可以将该address信息bind到socket上*/
+		clientaddr.sin_family = AF_INET;
+		clientaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+		clientaddr.sin_port = htons(CLIENT_PORT);
+
+		/*关联地址和套接字,客户端程序中仅仅为了更好的操作.不bind系统会自动分配*/
+		bind(clientfd, (struct sockaddr *)&clientaddr, (socklen_t)sizeof(clientaddr));
+		printf("Socket has been created!\n");
+		printf("Client port: %d\n", CLIENT_PORT);
+
+		//客户端请求服务连接
+		printf("Now require service from server...\n");
+		int chk = connect(clientfd, (struct sockaddr *)&serveraddr, (socklen_t)sizeof(serveraddr));
+	
+		if(chk < 0)
+		{
+			printf("ERROR: Could not connect to the host!\n");
+			return -1;
+		}else
+		{
+			/*成功连接,输出server信息*/
+			/*之前已经填充好了,现在只是一种输出*/
+			printf("Connection established.\n");
+			int serverip = (ntohl)(serveraddr.sin_addr.s_addr);
+			printf("Server ip:%d.%d.%d.%d\n", (serverip>>24)&255, (serverip>>16)&255,
+					(serverip>>8)&255, serverip&255);
+			printf("Server port: %d\n", (ntohs)(serveraddr.sin_port));
+		}
+
+		/*1. 使用recv从server接收数据*/
+		printf("Starting recv message...\n");
+		int len = recv(clientfd, (void *)buff, MAX_STR, 0);	//send & recv第一个参数都是client socket描述符
+		buff[len] = 0;
+		if(len > 0)
+		{
+			/*client数据接收成功,向server发送成功信号*/
+			printf("[RECV] %s\n", buff);
+			printf("[SUCCEED] Receviving succeed.\n");
+			send(clientfd, (void *)succ, strlen(succ), 0);
+		}else
+		{
+			/*数据接收失败,向server发送失败信号*/
+			printf("[FAILED] Receviving failed.\n");
+			send(clientfd, (void *)fail, strlen(fail), 0);
+		}
+
+		/*2. 使用read从server接收数据*/
+		printf("Starting read message...\n");
+		len = read(clientfd, buff, MAX_STR);
+		buff[len] = 0;
+		if(len > 0)
+		{
+			/*client数据接收成功,向server发送成功信号*/
+			printf("[RECV] %s\n", buff);
+			printf("[SUCCEED] Receviving succeed.\n");
+			send(clientfd, (void *)succ, strlen(succ), 0);
+		}else
+		{
+			/*数据接收失败,向server发送失败信号*/
+			printf("[FAILED] Receviving failed.\n");
+			send(clientfd, (void *)fail, strlen(fail), 0);
+		}
+
+		/*UDP实现方式,不一定成功
+		/*3. 使用recvfrom从server接收数据*/
+		//close(clientfd);---应该不能close
+		printf("Now the connection has been broken!\n");
+		int serverlen = sizeof(serveraddr);
+		printf("Starting recvfrom message...\n");
+		len = recvfrom(clientfd, (void *)buff, MAX_STR, 0,
+						(struct sockaddr *)&serveraddr, (socklen_t *)&serverlen);
+		buff[len] = 0;
+		if(len > 0)
+		{
+			/*client数据接收成功,向server发送成功信号*/
+			printf("[RECV] %s\n", buff);
+			printf("[SUCCEED] Receviving succeed.\n");
+			//send(clientfd, (void *)succ, strlen(succ), 0);
+		}else
+		{
+			/*数据接收失败,向server发送失败信号*/
+			printf("[FAILED] Receviving failed.\n");
+			//send(clientfd, (void *)fail, strlen(fail), 0);
+		}
+		*/
+		close(clientfd);
+		return 0;
+	}

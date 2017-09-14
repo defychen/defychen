@@ -614,6 +614,27 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 	但是在S3922上是可行的.这是什么原因？
 	*/
 
+**一种device的链表:**
+
+	//device链表的结构体
+	struct hld_device
+	{
+		struct hld_device *next;	//下一个设备结构体
+		unsigned int type;			//设备类型
+		char name[16];				//设备名字,最带16个字符
+	};
+	
+	//其他的设备可以使用像该device链表结构体构成自己的设备结构体,并进行链表管理
+	struct xxx_device
+	{
+		struct xxx_device *next;
+		unsigned int type;
+		char name[16];		//前三个参数与device链表结构体一样
+		...	//其他参数
+	};
+
+	//接下来就可以使用类似增加链表节点和取节点的方式将设备结构体加入device链表中
+
 ## 19、#pragma pack(4)和#pragma pack(8)对齐原则
 
 **pragma pack(n):指定编译器按照n个字节对齐**
@@ -1113,3 +1134,15 @@ pthread_join()、pthread_testcancel()、pthread_cond_wait()、pthread_cond_timew
 	printf("%d, %d\n", '0', '0' + (char)1);	//会打印出来:48, 49---字符对应的ASCII码值
 	printf("%c, %c\n", '0', '0' + '1');		//会打印出来:0, a---字符的相加.0-48,1-49,最终得到97的字符"a"
 	printf("%d, %d\n", '0', '0' + '1');		//会打印出来:48, 97
+
+## 44. 随机数的产生
+
+	#include <stdlib.h>		//要用到srand/rand函数,需要include这个头文件
+	1.srand---随机数发生器的初始化函数
+	void srand(unsigned int seed);	//para:种子.如果使用相同的种子得到的随机数是一样的,因此属于一样伪随机.
+	//真随机可以是使用:
+	srand(unsigned int time(NULL));	//让种子随时间变化而变化
+	2.rand()---产生一个随机数
+	int rand(void);			//retval:返回一个随机数
+
+	
