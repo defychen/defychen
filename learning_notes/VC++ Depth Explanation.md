@@ -182,3 +182,72 @@ WinMain函数原型:
 		WS_MINIMIZEBOX	| \ //创建一个具有最小化按钮的窗口,必须同时设定WS_SYSMENU
 		WS_MAXIMIZEBOX	| \ //创建一个具有最大化按钮的窗口,必须同时设定WS_SYSMENU
 		)
+
+**4.显示及更新窗口**
+
+1.显示窗口---ShowWindow
+
+	BOOL ShowWindow(
+		HWND hWnd;	//CreateWindow返回的窗口句柄
+		int nCmdShow;	//指定窗口显示状态
+		/*常用的状态:
+			SW_HIDE:隐藏窗口并激活其他窗口;
+			SW_SHOW:在窗口原来的位置以原来的尺寸激活并并显示窗口;
+			SW_SHOWMAXIMIZED:激活窗口并最大化显示;
+			SW_SHOWMINIMIZED:激活窗口并最小化显示;
+			SW_SHOWNORMAL:正常显示---第一次显示窗口时应设为该值.
+		*/
+	);
+
+2.更新窗口---UpdateWindow
+
+在调用ShowWindow之后,需要紧接着调用UpdateWindow来刷新窗口.
+
+	BOOL UpdateWindow(
+		HWND hWnd;	//CreateWindow返回的窗口句柄
+		//UpdateWindow函数通过发送一个WM_PAINT消息来刷新窗口.UpdateWindow会将WM_PAINT消息直接
+		//发送给窗口过程函数进行处理,不会放入到消息队列---这样是为了更快做出相应
+	);
+
+#### 1.4.3 消息循环
+
+消息循环:不断的从消息队列中取出消息---while循环+GetMessage()函数.取出的消息自动会由窗口过程函数相应.
+
+GetMessage()---从消息队列中取出消息
+
+	BOOL GetMessage(
+		LPMSG lpMsg,	//消息(MSG)结构体,从消息队列中取出的消息信息会保存在该结构体中
+		HWND hWnd,		//指定接受属于哪个窗口的消息.一般设为NULL,接受所有窗口的窗口消息
+		UINT　wMsgFilterMin,	//指定获取消息的最小值,一般设为0即可
+		UINT wMsgFilterMax	//指定获取消息的最大值,和前一个同时设为0表示接受所有消息
+	);
+	/*retval:
+		0--->接收到WM_QUIT消息;
+		非0值--->接收到除WM_QUIT消息;
+		-1--->出错
+	*/
+
+**一般编写的消息循环代码如下:**
+
+	MSG msg;
+	while(GetMessage(&msg, NULL, 0, 0))	//此处只有WM_QUIT消息才会退出,否则为一种死循环
+	{
+		TranslateMessage(&msg);	//将虚拟键消息转换为字符消息,并会重新投递到消息队列中
+		DispatchMessage(&msg);	//分派一个消息到窗口过程,由窗口过程对消息进行处理.
+			//DispatchMessage实际是将消息回传给OS,由OS调用窗口过程对消息进行处理
+	}
+
+Windows应用程序的消息处理机制:
+
+
+
+1.OS接收到应用程序的窗口消息,将消息投递到该应用程序的消息队列中;
+
+2.应用程序在消息循环中调用GetMessage从消息队列中取出一条一条消息,并对消息进行一些预处理.e.g.调用TranslateMessage(&msg)产生新的消息或者直接放弃对某些消息的相应;
+
+3.应用程序调用DispatchMessage(&msg),将消息回传给OS;
+
+4.OS利用WNDCLASS结构体的lpfnWndProc成员保存的窗口过程函数的指针调用窗口过程函数对消息进行处理.
+
+	PS:
+	从消息队列中取消息的另外的函数:PeekMessage;发送消息:SendMessage、PostMessage.
