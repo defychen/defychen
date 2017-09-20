@@ -239,7 +239,7 @@ GetMessage()---从消息队列中取出消息
 
 Windows应用程序的消息处理机制:
 
-
+![](https://i.imgur.com/GvV1Qd4.png)
 
 1.OS接收到应用程序的窗口消息,将消息投递到该应用程序的消息队列中;
 
@@ -251,3 +251,98 @@ Windows应用程序的消息处理机制:
 
 	PS:
 	从消息队列中取消息的另外的函数:PeekMessage;发送消息:SendMessage、PostMessage.
+
+#### 1.4.4 编写窗口过程函数
+
+窗口过程函数:处理发送给窗口的消息.
+
+窗口过程函数的声明形式:
+
+	LRESULT CALLBACK WindowProc(	//只能是函数的名字任意,其他必须一样
+		HWND hwnd,	//消息的窗口句柄,标识接收消息的特定窗口
+		UINT uMsg,	//消息
+		WPARAM wParam,	//消息的附加参数
+		LPARAM lParam	//消息的附加参数
+	);
+	//窗口过程函数的名字可以任意,但是其他的必须一致.是因为在设计窗口类时会将窗口过程函数的地址(即指针)赋值给WNDCLASS
+	//结构体的lpfnWndProc,系统调用窗口过程函数是通过该地址(指针)来调用,而不是名字.
+
+**窗口过程函数实例**
+
+	LRESULT CALLBACK WinSunProc(
+		HWND hwnd,		//handle to window
+		UINT uMsg,		//message identifier
+		WPARAM wParam,	//first message parameter
+		LPARAM lParam,	//second message parameter
+	)
+	{
+		switch(uMsg)	//一般使用switch/case语句确定接收的是什么消息以及如何处理
+		{
+		case WM_CHAR：	//字符消息.消息是以WM开头
+			char szChar[20];
+			sprintf(szChar, "char code is %d", wParam);	//wParam存放字符的ASCII码值
+			MessageBox(hwnd, szChar, "char", 0);	//弹出一个消息框
+			/*
+				para1:窗口句柄;	para2:消息框中显示的字符;	para3:标题栏的名字;
+				para4:供用户的选择项.
+					0--->没有选择项
+					MB_YESNO--->需要用于选择yes or no?
+				retval:由para4决定
+					para4为0--->不需要返回
+					para4为MB_YESNO--->有返回值IDYES或者IDNO
+			*/
+			break;
+		case WM_LBUTTONDOWN:	//左键按下
+			MessageBox(hwnd, "mouse clicked", "Message", 0);
+			HDC hdc;	//DC(Device Context):设备描述表.DC是一个包含设备信息的结构体,Windows平台下所有的图形操作都是
+						//利用DC来完成,然后由DC映射到这些物理设备上.HDC为DC的句柄,可以更方便的操作图形资源
+			hdc = GetDC(hwnd);	//得到与该窗口对应的DC句柄
+			TextOut(hdc, 0, 50, "Programmer Family", strlen("Programmer Family"));
+			/*	TextOut:利用DC句柄在指定位置输出一行文字
+				para1:DC句柄;	para2,3:x,y坐标.
+				para4:需要输出的文字;		para5:输出文字的长度.
+			*/
+			ReleaseDC(hwnd, hdc);	//释放DC句柄
+			/*
+				para1:窗口句柄;	para2:DC句柄
+			*/
+			break;
+		case WM_PAINT:	//重新绘制窗口消息.当窗口刚创建、窗口尺寸被改变、最小化后再恢复、被其他窗口遮盖后再显示等,
+						//系统均会发出WM_PAINT消息(包括调用UpdateWindow函数)
+			HDC hDC;	//DC句柄
+			PAINTSTRUCT ps;	//该结构体用于接收绘制的信息,主要用在WM_PAINT中
+			hDC = BeginPaint(hwnd, &ps);	//在WM_PAINT中需要使用BeginPaint函数得到DC的句柄.
+											//该函数只在WM_PAINT中使用
+			/*
+				para1:窗口句柄;		para2:PAINTSTRUCT结构体的指针,用于接收绘制的信息
+				//在调用BeginPaint时,如果客户区的背景没有被擦除,BeginPaint会发送WM_ERASEBKGGND消息给窗口,
+				//系统就会使用WNDCLASS结构体中的hbrBackground成员指定的画刷来擦除背景
+			*/
+			TextOut(hDC, 0, 0, "Programmer Family", strlen("Programmer Family"));
+			EndPaint(hwnd, &ps);	//释放DC句柄
+			/*
+				para1:窗口句柄;		para2:PAINTSTRUCT结构体的指针
+			*/
+			break;
+		case WM_CLOSE:	//当单击窗口上的关闭按钮时,系统将会给应用程序发送一条WM_CLOSE消息
+			if(IDYES == MessageBox(hwnd, "Is it really over?", "Message", MB_YESNO))
+			{
+				DestroyWindow(hwnd);	//销毁窗口
+				//DestroyWindow销毁窗口后会向窗口过程发送WM_DESTROY消息.窗口被销毁了但是应用程序不会退出
+				//如果应用程序没有对WM_CLOSE消息进行相应,系统会将该消息传给DefWindowProc(默认的窗口过程),
+				//DefWindowProc也会调用DestroyWindow函数来相应该消息
+			}
+			break;
+		case WM_DESTROY:	//捕获窗口被销毁的消息
+			PostQuitMessage(0);		//往消息队列中投递WM_QUIT消息.
+						//GetMessage只有在收到WM_QUIT消息才会返回0,此时消息循环才结束,程序退出
+			/*
+				PostQuitMessage的参数将作为WM_QUIT消息的wParam参数,这个值通常用作WinMain函数的返回值.
+				因此一般是0.
+			*/
+			break;
+		default:	//对于没有覆盖的消息,调用默认的窗口过程函数进行处理
+			return DefWindowProc(hwnd, uMsg, wParam, lParam);
+		}
+		return 0;
+	}
