@@ -1872,5 +1872,325 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 			.pm = &dsc_drv_pm_ops,	/*???*/
 		},
 	};
+***
 
 
+## 第二十二章 driver开发实践
+
+### 1. 头文件介绍
+
+	#include <linux/module.h>	//用于MODULE_LICENSE/AUTHOR/DESCRIPTION/VERSION等
+	#include <linux/init.h>		//用于module_init/exit
+	#include <linux/errno.h>	//用于错误处理
+	#include <linux/kernel.h>	//用于printk
+	#include <linux/cdev.h>		//用于cdev函数
+	#include <linux/fs.h>		//用于struct file_operations
+	#include <linux/uaccess.h>	//用于copy_from/to_user
+	#include <linux/slab.h>		//用于kmalloc,devm_kzalloc
+	#include <linux/gfp.h>		//用于alloc_page函数
+	#include <linux/mm.h>		//用于内存管理
+	#include <linux/device.h>	//包括device、class等结构体定义
+	#include <linux/sched.h>	//用于kernel的线程、进程处理
+	#include <linux/kthread.h>	//用于kernel的线程处理
+	#include <linux/delay.h>	//用于sleep处理
+	#include <linux/types.h>	//包括size_t等各种typedef数据类型
+	#include <linux/interrupt.h>	//包括enable_irq、free_irq等函数
+	#include <linux/poll.h>		//包括poll_wait(将当前进程加入到等待队列、阻塞)函数
+	#include <linux/io.h>		//包括ioremap、iowrite32、ioread32等函数
+	#include <linux/semaphore.h>	//信号量
+	#include <linux/spinlock.h>	//自旋锁
+	#include <linux/idr.h>		//进程间通信
+	#include <linux/of.h>		//和linux/of_platform一起使用
+	#include <linux/of_platform.h>	//包括platform总线相关的函数
+	#include <linux/time.h>		//包括C标准时间
+	#include <linux/highmem.h>	//file_operations中需要用内存,必须有
+	#include <linux/dma-mappint.h>	//与dma相关
+	#include <linux/err.h>		//错误处理
+
+	/**********************一般包括的头文件*********************/
+	#include <linux/slab.h>
+	#include <linux/of_platform.h>
+	#include <linux/module.h>
+	#include <linux/highmem.h>
+	#include <linux/types.h>
+	#include <linux/cdev.h>
+	#include <linux/device.h>
+	#include <linux/err.h>
+	#include <linux/idr.h>
+	#include <linux/kernel.h>
+
+### 2. platform driver框架
+
+#### 2.1 test_priv.h---用于定义驱动中使用的结构体或变量等
+
+	#ifndef __TEST_PRIV_H__
+	#define __TEST_PRIV_H__
+
+	/*xxx_priv.h用于定义驱动中使用的结构体或变量等*/
+	#include <linux/ioctl.h>
+	#include <linux/types.h>
+	#include <linux/kernel.h>
+	#include <linux/idr.h>
+	#include <linux/cdev.h>
+	#include <linux/sysfs.h>
+
+	/*
+	* Device structure		//自定义设备结构体
+	*/
+	struct test_dev {
+		dev_t devt;				//设备号
+		struct device *dev;		//描述linux下的device的结构体
+		struct cdev;			//字符设备的结构体
+	};
+
+	/*
+	* Session structure 	//Session的结构体
+	*/
+	struct test_session {
+		struct test_dev *test;
+		unsigned int ree_memory_basic;	//addr_select = 1
+		unsigned int tee_memory_basic;	//addr_select = 2
+		unsigned int see_memory_basic;	//addr_select = 3
+	};
+
+	#endif
+
+#### 2.2 test.h---用于定义使用driver时用到的数据结构(e.g.设备节点位置,ioctl,调用时需要的填充的结构体)
+
+	#ifndef __TEST_H__
+	#define __TEST_H__
+	
+	#include <linux/ioctl.h>
+	
+	/*!< TEST driver name.*/
+	#define TEST_DRVNAME "xxx_test"	//driver name只会在class_create(THIS_MODULE, TEST_DRVNAME);会使用,
+									//其他地方都不使用,用于创建一个device class
+	/*!< TEST device name*/
+	#define TEST_DEVNAME "defy_test"	//device name在probe及其他地方都是用这个，
+										//而且这个也会显示在/dev/defy_test.
+	/*!< TEST ioctl CMD base*/
+	#define TEST_BASE 0xd1			//ioctl cmd base.幻数(type), 8 bit(0~0xff).
+	//根据./Documentation/ioctl/ioctl_num.txt选择,避免与已经使用的冲突*/
+	
+	/*
+	* ioctl list
+	*/
+	#define TEST_GET_BASE_ADDR		_IOW(TEST_BASE, 1, int /*base_addr*/)
+	/*_IOW宏:构成ioctl命令
+		para1:ioctl cmd base---定义的时候不能和其他的有重叠
+		para2:序列号,一般从1开始增加
+		para3:数据类型字段.表示调用该ioctl穿进来的arg的参数类型
+	*/
+	#endif
+
+#### 2.3 test_ioctl.h---主要用于定义ioctl函数(将ioctl的操作与其他分开)
+
+	#ifndef __TEST_IOCTL_H__
+	#define __TEST_IOCTL_H__
+		
+	long test_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
+
+	#endif
+
+#### 2.4 test_core.c---用于实现驱动的主体结构(probe/remove/read/write等,不包括ioctl)
+
+	#include <linux/slab.h>
+	#include <linux/of_platform.h>
+	#include <linux/module.h>
+	#include <linux/highmem.h>
+	#include <linux/types.h>
+	#include <linux/cdev.h>
+	#include <linux/device.h>
+	#include <linux/err.h>
+	#include <linux/idr.h>
+	#include <linux/kernel.h>
+
+	#include "test_priv.h"
+	#include "test.h"
+	#include "test_ioctl.h"
+	
+	#define TEST_VERSION "0.0.1"
+	#define NO_CHRDEVS	(1)		//表示没有child device
+	#define FIRST_MIN	(0)		//次设备号从0开始
+
+	static struct class *g_test_class = NULL;	//存放设备类,全局指针
+
+	static int test_probe(struct platform_device *pdev)	//para为struct platform_device *pdev
+	{
+		struct device *dev = &pdev->dev;		//得到pdev下面的device信息
+		struct test_dev *test;	//自定义设备结构体对象
+		int ret = -1;
+
+		/*1. 分配设备使用的内存*/
+		test = devm_kzalloc(dev, sizeof(struct test_dev), GFP_KERNEL);	//给设备结构体分配内存
+		/*
+			para1:申请内存的目标设备.即为platform_device下面的device设备
+			para2:申请内存大小.一般为sizeof(自定义设备结构体)
+			para3:申请内存的类型标志.kernel中使用GFP_KERNEL
+		*/
+		if (!test)
+			return -ENOMEM;		//没有内存
+		
+		/*2. 申请设备号*/
+		ret = of_get_major_minor(pdev->dev.of_node, &test->devt, FIRST_MIN, NO_CHRDEVS, TEST_DEVNAME);
+		//得到分配的设备号
+		/*
+			para1:设备节点.一般为pdev->dev.of_node---得到设备节点
+			para2:存放设备号."&test->devt"存放分配的设备号
+			para3:次设备号从0开始.一般使用一个宏定义为0即可
+			para4:设备数量.一般使用一个宏定义为1即可
+			para5:设备名
+			retval:成功返回0;出错返回<0
+		*/
+		if (ret < 0)
+			goto chrdev_alloc_fail;		//分配设备号失败
+
+		/*3. 字符设备初始化*/
+		cdev_init(&test->cdev, &test_fops);	//字符设备与struct file_opeations绑定
+		/*
+			para1:struct cdev.一般为自定义设备结构体下面的cdev结构体地址
+			para2:struct file_operations结构体对象
+		*/
+
+		/**4. 添加一个字符设备/
+		ret = cdev_add(&test->cdev, test->devt, 1);	//添加一个字符设备
+		/*
+			para1:struct cdev.一般为自定义设备结构体下面的cdev结构体地址
+			para2:设备号.
+			para3:设备数量.一般为1即可
+			retval:成功返回0;出错返回<0
+		*/
+		if (ret < 0)
+			goto cdev_add_fail;
+
+		test->dev = device_create(g_test_class, dev, test->devt, test, 
+					"%s%d", TEST_DEVNAME, MINOR(test->devt));
+		/*
+			//为自定义设备结构体下的成员创建设备
+			para1:设备类指针
+			para2:父设备.一般为platform_device下的device
+			para3:设备号
+			para4:设备数据.为自定义设备结构体对象即可
+			para5:/dev/xxx下面的设备节点名.(const char *fmt),因此可以---"%s%d", TEST_DEVNAME, MINOR(test->devt)
+			retval:device指针(设备指针)
+		*/
+		
+		if (IS_ERR(test->dev)) {		//IS_ERR:判断返回的指针是错误信息(返回非0)还是实际地址(返回0).即指针是否落在最后一页
+			ret = PTR_ERR(test->dev);	//PTR_ERR将指针转为错误号返回
+			goto device_create_fail;
+		}
+
+		platform_set_drvdata(pdev, test);	//将自定义设备结构体对象设为platform的driver数据.
+			//后面在remove中可以拿到该设备结构体对象
+
+		dev_info(dev, "[%s: %d] probe version %s succeed!\n", __func__, __LINE__, TEST_VERSION);
+		return 0;
+
+		/*返回值错误处理*/
+		device_create_fail:
+			cdev_del(&test->cdev);	//删除掉一个字符设备
+		cdev_add_fail:
+			unregister_chrdev_region(test->devt, NO_CHRDEVS);	//取消分配的设备号
+			/*
+				para1:设备号; para2:设备数量
+			*/
+		chrdev_allo_fail:
+			devm_free(dev, test);	//释放devm_kzallo分配的内存
+			return ret;
+	}
+
+	static int test_remove(struct platform_device *pdev)
+	{
+		struct device *dev = &pdev->dev;
+		struct test_dev *test = platform_get_drvdata(pdev);	
+			//得到probe时挂载platform下的driver数据
+
+		if (!test)
+			return -ENODEV;		//表示没有设备结构体对象
+
+		platform_set_drvdata(pdev, NULL);	//将platform的driver data设为0
+		
+		/*注销设备*/
+		device_destroy(g_test_class, test->devt);
+		/*
+			para1:设备类;	para2:设备号
+		*/
+		
+		/*删除一个字符设备*/
+		cdev_del(&test->cdev);
+		
+		/*注销设备号*/
+		unregister_chrdev_region(test->devt, NO_CHRDEVS);
+
+		/*释放分配的内存*/
+		devm_free(dev, test);
+
+		dev_info(dev, "[%s: %d] remove version %s succeed!\n", __func__, __LINE__, TEST_VERSION);
+	}
+
+	static void platform_test_release(struct device *dev)	//该函数必须要有.para为"struct device *dev"
+	{
+		return;		//可以没有任何的实现,但必须有
+	}
+
+	static struct platform_driver test_drv = {	//platform_driver的对象
+		.probe = test_probe,	//在init时调用probe进行driver的一系列注册
+		.remove = test_remove,	//在exit时调用remote进行driver的释放
+		.driver = {
+			.name = TEST_DRVNAME,	//driver name
+			.owner = THIS_MODULE
+		}
+	};
+
+	static struct platform_device test_device = {	//platform_device的对象
+		.name = TEST_DEVNAME,	//与driver name相同
+		.id = 0,				//生成的driver name会带上一个id.即:"TEST_DRVNAME.0"->"xxx_test.0"
+		.dev = {
+			.release = platform_test_release,	//一定需要有这个release函数指针,不然会报错
+		}
+	};
+
+	static int __init test_init(void)
+	{
+		int ret;
+		
+		ret = platform_device_register(&test_device);	//先注册device
+		if (ret) {
+			TEST_PRINTK("Register Test device failed!\n");
+			return -ENODEV;		//No such device,其值为19.
+		}
+
+		g_test_class = class_create(THIS_MODULE, TEST_DRVNAME);		//创建一个设备类,para2为driver name
+		if (IS_ERR(g_test_class))	//IS_ERR:判断返回的指针是错误信息(返回非0)还是实际地址(返回0).
+		{							//即指针是否落在最后一页
+			return PTR_ERR(g_test_class);	//PTR_ERR将指针转为错误号返回
+		}
+
+		ret = platform_driver_register(&test_drv);	//再注册driver
+		if (ret) {
+			platform_device_unregister(&test_device);	//取消注册device
+			return -ENODEV;
+		}
+
+		TEST_PRINTK("Test driver init succeed!\n");
+		return 0;
+	}
+
+	static void __exit test_exit(void)
+	{
+		platform_driver_unregister(&test_drv);		//取消注册driver
+		platform_device_unregister(&test_device);	//取消注册device
+		class_destory(g_test_class);	//销毁创建的类
+		TEST_PRINTK("Test driver exit succeed!\n");
+	}
+
+	module_init(test_init);
+	moudule_exit(test_exit);
+	
+	MODULE_AUTHOR("xxx Corporation");
+	MODULE_DESCRIPTION("xxx Test Core");
+	MODULE_LICENSE("GPL v2");
+	MODULE_VERSION();
+
+
+	

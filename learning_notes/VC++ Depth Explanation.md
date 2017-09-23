@@ -129,14 +129,14 @@ WinMain函数原型:
 	/*
 		para1:加载标准图标时,为NULL.加载自己制作的图标资源时--->需要百度
 		para2:实际为CONST CHAR*(字符常量的指针).图标ID是一个整数,需要MAKEINTRESOURCE宏将资源ID
-			标识符转换为需要的LPCTSTR类型
+			标识符转换为需要的LPCTSTR类型.标准图标有:IDI_ERROR...
 		retval:返回系统分配给某图标的句柄.可以赋值给窗口类的图标句柄.
 	*/
 
 3.LoadCursor函数加载光标资源---用于赋值给窗口类的光标句柄
 
 	HCURSOR LoadCursor(HINSTANCE hInstance, LPCTSTR lpCursorName);
-	//与LoadIcon相似
+	//与LoadIcon相似.标准光标有:IDC_CROSS
 
 4.GetStockObject函数得到系统的标准画刷---用于赋值给窗口类的hbrBackground
 
@@ -173,9 +173,9 @@ WinMain函数原型:
 	);
 	//retval:成功返回系统为该窗口分配的句柄;失败返回NULL
 
-窗口样式类型---WS_OVERLAPPENDWINDOW
+窗口样式类型---WS_OVERLAPPEDWINDOW
 
-	#define WS_OVERLAPPENDWINDOW	(WS_OVERLAPPEND	| \		//产生一个层叠的窗口
+	#define WS_OVERLAPPEDWINDOW	(WS_OVERLAPPED	| \		//产生一个层叠的窗口
 		WS_CAPTION	| \		//创建一个有标题栏的窗口
 		WS_SYSMENU	| \		//创建一个在标题栏有系统菜单的窗口,要与WS_CAPTION一起使用
 		WS_THICKFRAME	| \	//创建一个具有可调边框的窗口
@@ -211,7 +211,7 @@ WinMain函数原型:
 
 #### 1.4.3 消息循环
 
-消息循环:不断的从消息队列中取出消息---while循环+GetMessage()函数.取出的消息自动会由窗口过程函数相应.
+消息循环:不断的从消息队列中取出消息---while循环+GetMessage()函数.取出的消息自动会由窗口过程函数响应.
 
 GetMessage()---从消息队列中取出消息
 
@@ -346,3 +346,130 @@ Windows应用程序的消息处理机制:
 		}
 		return 0;
 	}
+
+### 1.5 Windows程序实例
+
+在创建好Project和File(C++源代码文件)之后,在File中写入代码:
+
+	/*****************WinMain.cpp******************/
+	#include <windows.h>	//windows程序的头文件
+	#include <stdio.h>
+
+	LRESULT CALLBACK WinDefyProc(	//窗口过程函数声明.这个函数可以直接从MSDN中copy出来,改一下名字即可
+		HWND hwnd,
+		UINT uMsg,
+		WPARAM wParam,
+		LPARAM lParam
+	);
+
+	int WINAPI WinMain(		//WinMain函数,该函数也可以从MSDN中copy出来
+		HINSTANCE hInstance,
+		HINSTANCE hPrevInstance,
+		LPSTR lpCmdLine,
+		int nCmdShow
+	)
+	{
+		//1. 设计一个窗口类
+		WNDCLASS wndcls;
+		wndcls.cbClsExtra = 0;
+		wndcls.cbWndExtra = 0;
+		wndcls.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+		wndcls.hCursor = LoadCursor(NULL, IDC_CORSS);
+		wndcls.hIcon = LoadIcon(NULL, IDI_ERROR);
+		wndcls.hInstance = hInstance;	//当前运行的应用程序实例句柄
+		wndcls.lpfnWndProc = WinDefyProc;	//窗口过程函数指针
+		wndcls.lpszClassName = "defy2017";	//窗口类名字
+		wndcls.lpszMenuName = NULL;		//菜单资源的名字,一般为NULL即可
+		wndcls.style = CS_HREDRAW | CS_VREDRAW;	//窗口类样式
+		
+		//2. 注册一个窗口类
+		RegisterClass(&wndcls);
+		
+		//3. 创建窗口
+		HWND hwnd;
+		hwnd = CreateWindow("defy2017", "Hi, defy", WS_OVERLAPPEDWINDOW, 0, 0, 600, 400, 
+					NULL, NULL, hInstance, NULL);
+
+		//4. 显示及刷新窗口
+		ShowWindow(hwnd, SW_SHOWNORMAL);
+		UpdateWindow(hwnd);
+
+		//5. 消息循环
+		MSG msg;
+		while (GetMessage(&msg, NULL, 0, 0))
+			//para2必须为NULL.否则当当前销毁窗口后窗口句柄变为无效值,GetMessage会返回-1
+			//GetMessage()接收到WM_QUIT消息会返回0,此时退出.由PostQuitMessage(0)发出
+		{
+			TranslateMessage(&msg);		//也就是将不能处理的消息转换一下
+			DispatchMessage(&msg);
+		}
+
+		return msg.wParam;
+	}
+	
+	//窗口过程函数---相当于新的线程
+	LRESULT CALLBACK WinDefyProc(
+		HWND hwnd,
+		UINT uMsg,
+		WPARAM wParam,
+		LPARAM lPARAM
+	)
+	{
+		switch(uMsg)	//switch...case处理消息
+		{
+		case WM_CHAR:	//接收到字符消息,也就是键盘按下某个字符
+			char szChar[20];
+			sprintf(szChar, "char code is %d", wParam);
+			MessageBox(hwnd, szChar, "char", 0);
+			break;
+		case WM_LBUTTONDOWN:	//鼠标左键按下
+			MessageBox(hwnd, "Mouse clicked", "Message", 0);
+			HDC hdc;	//DC句柄
+			hdc = GetDC(hwnd);
+			TextOut(hdc, 0, 50, "Programmer family", strlen("Programmer family"));
+			ReleaseDC(hwnd, hdc);	//释放DC句柄
+			break;
+		case WM_PAINT:
+			HDC hDC;	//不能与上述的hdc同名
+			PAINTSTRUCT ps;
+			hDC = BeginPaint(hwnd, &ps);	//只能使用BeginPaint获得DC句柄
+			TextOut(hDC, 0, 0, "Hi, defy", strlen("Hi, defy")):
+			EndPaint(hwnd, &ps);	//释放DC句柄,填写这两个参数会自动释放DC句柄
+			break;
+		case WM_CLOSE:
+			if (IDYES == MessageBox(hwnd, "Is it really close?", "Message", MB_YESNO))
+			{
+				DestroyWindow(hwnd);
+			}
+			break;
+		case WM_DESTROY:	//销毁窗口消息
+			PostQuitMessage(0);	//发送WM_QUIT消息退出消息循环
+			break;
+		default:
+			return DefWindowProc(hwnd, uMsg, wParam, lParam);	//默认窗口过程
+		}
+		return 0;
+	}
+***
+## Chapter 2 掌握C++
+
+C++相比C的优点:
+
+1.封装性(Encapsulation):把数据和操作数据的函数组织在一起,使得程序结构紧凑,提高类内部数据的安全性;
+
+2.继承性(Inheritance):增加了软件的可扩充性和代码的重用性;
+
+3.多态性(Polymorphism):设计程序时可以对问题更好的抽象,有利于代码的维护和可重用.
+
+### 2.1 结构体与类
+
+C和C++的结构体特性:
+
+	1.C语言的结构体能包含一些变量(包括普通变量、数组、指针等)和一些函数指针.不能明确声明一个函数
+		struct test {
+			struct test *next;	//指针
+			int type;			//普通变量
+			int name[16];		//数组
+			int (*attach)(void);	//函数指针
+		};
+	2.C++
