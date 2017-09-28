@@ -197,3 +197,15 @@
 	2)去掉Device Drivers/ALi drivers selection/Dvfs Drivers和去掉Device Driver/ALi drivers selection/
 	Mali-300/400/450 support  --->/Enable Mali dynamically frequency change 
 	3)执行"make linux-rebuild all"后重烧kernel
+
+## Q8: ISO C90 forbids mixed declarations and code 警告
+
+	编译的时候经常碰到"ISO C90 forbids mixed declarations and code"警告,其原因是:
+		变量定义之前存在一条非变量定义的语句---e.g.
+			check_select = 7;	//非变量定义的语句.
+			struct test test;	//变量定义.由于之前存在一句非变量定义的语句,因此会报警告.
+	解决:
+		将非变量定义挪到变量定义之后.
+			struct test test;
+			check_select = 7;	//该句放到变量定义之后
+		在内核中printk()的打印也需要放到变量定义之后.
