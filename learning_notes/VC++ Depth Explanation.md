@@ -631,5 +631,55 @@ C++相比C的优点:
 
 	void output()和int output()不构成重载.此处是返回值不同,不满足条件;
 	void output(int a, int b =5)和void output(int a)不构成重载.因为有歧义.
+
+#### 2.2.5 this指针
+
+	#include <iostream.h>
+	class point
+	{
+		public:
+			int x;
+			int y;
+			point()
+			{
+				x = 0;
+				y = 0;
+			}
+			point(int a, int b)
+			{
+				x = a;
+				y = b;
+			}
+			void output()
+			{
+				cout << x << endl << y << endl;
+			}
+			void input(int x, int y)
+			{
+				x = x;	//由于形参与成员变量名相同,此时成员变量在该函数中不可见.
+				y = y;	//解决办法,形参与成员变量名不相同(形参x,y改为a, b即可).还可以使用this指针
+			}
+	};
+
+	void main()
+	{
+		point pt(5, 5);	//构造一个对象.此时x=5,y=5
+		pt.input(10, 10);	//由于成员变量与形参同名.成员变量不可见.因此该函数是x对自己赋值.
+							//没有真正操作到pt对象的成员变量
+		pt.output();	//输出为:5 5
+	}
+
+**this指针是一个隐含的指针,指向对象本身,代表对象的地址.一个类声明的所有对象调用的成员函数都是在同一处代码段,但是成员变量每个对象都维护自己单独的.**
+
+	//在上例中,对象调用pt.input(10, 10)时,其成员函数除了接受2个实参外,还接收到了pt对象的地址
+	//(即this指针,this=&pt).因此对成员变量的访问都被隐含的加上了前缀this->.
+	//e.g.point pt(5, 5)->声明对象,此时调用point(int a, int b).
+	//对成员的访问:x = a,实际为:this->x = a.表示该对象的x成员变量的访问.
 	
+	//上例可以改写为:
+	void input(int x, int y)
+	{
+		this->x = x;		//this->x:明确指明对象的x成员变量.此时就不会被覆盖
+		this->y = y;		//this->y:明确指明对象的y成员变量.此时就不会被覆盖
+	}
 	
