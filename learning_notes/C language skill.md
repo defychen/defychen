@@ -1145,4 +1145,12 @@ pthread_join()、pthread_testcancel()、pthread_cond_wait()、pthread_cond_timew
 	2.rand()---产生一个随机数
 	int rand(void);			//retval:返回一个随机数
 
-	
+## 45. ARM内嵌汇编格式
+
+	asm volatile(".word 0xebfffffe");
+	/*
+	asm:用来声明一个内嵌汇编表达式;有的地方也用"__asm__",意思是一样的
+	volatile:向GCC声明不要对内嵌汇编进行优化,否则当编译选项有(-O)时,GCC会将该内嵌汇编给优化掉.
+			有的地方也用"__volatile__",意思是一样的.
+	.word 0xebfffffe:是一条死循环指令.常用于下软断点.
+	*/

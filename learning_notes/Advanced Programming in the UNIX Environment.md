@@ -4696,3 +4696,173 @@ accept:服务器使用获得客户端的连接请求并建立连接.
 		close(clientfd);
 		return 0;
 	}
+
+# Appendix---------代码实例---------
+
+## 1. linux下的/dev/mem和/dev/kmem的区别及busybox中的devmem的实现
+
+**/dev/mem**
+
+	物理内存的全镜像,可以用来访问物理内存.
+	e.g.
+		访问DRAM---知道DRAM的的起始物理地址(分析dts得到(dts中的内存划分全部为物理地址)).
+		其用法为:
+			1.open /dev/mem这个设备;
+			2.将物理地址通过mmap映射成user space可以操作的用户空间指针.利用该指针可以往对应的物理地址读写内存信息.
+
+**/dev/kmem**
+
+	kernel看到的虚拟内存的全镜像,可以用来访问kernel的内容.---暂时不明白具体是做什么用的.
+
+**devmem的使用**
+
+busybox中实现了devmem这一个应用,用来直接读、写物理内存,也可以调试硬件寄存器.(包括IO内存和物理内存都可以读写)
+
+	1.配置
+		make busybox-menuconfig--->Miscellaneous Utilities--->devmem
+	2.使用
+		devmem addr(需要读写的物理地址) width(8/16/32...数据位数) value(需要写入的值)
+		e.g.
+			devmem 0x84000000	//读取物理地址0x84000000的值.读取时不需要后面的参数
+			devmem 0x84000000 32 0x12345678		//往物理地址0x84000000的位置写入32位的数据0x12345678
+
+**devmem代码的实现**
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <unistd.h>
+	#include <string.h>
+	#include <errno.h>
+	#include <signal.h>
+	#include <fcntl.h>
+	#include <ctype.h>
+	#include <termios.h>
+	#include <sys/types.h>
+	#include <sys/mman.h>
+
+	#define FATAL do { \
+			fprintf(stderr, "Error at line %d, file %s (%d) [%s\n]", \
+				__LINE__, __FILE__, errno, strerror(errno)); \	
+					//fprintf(stderr, format, ...):格式化输出数据到文件,此处为输出到标准错误输出---即屏幕
+					//strerror:将errno映射为一个出错消息字符串,且返回该字符串指针,因此用"%s"输出.该函数在<string.h>中.
+			exit(1); \
+		} while(0)
+
+	#define MAP_SIZE	4096UL	//mmap的大小为4096,即4k.UL表示unsigned long
+	#define MAP_MASK	(MAP_SIZE - 1)
+
+	int main(int argc, char **argv) {
+		int fd;
+		void *map_base, *virt_base;
+		unsigned long read_result, writeval;
+		off_t target;
+		int access_type = 'w';	//表征读写的数据是byte/halfword/word
+		
+		if (argc < 2) {	//参数个数小于2个,打印此工具的使用方法
+			fprintf(stderr, "\nUsage: \t%s { address } [ type [ data ] ]\n"
+				"\taddress	: memory address to act upon\n"
+				"\ttype		: access operation type: [b]yte, [h]alfword, [w]ord\n"
+				"\tdata		: data to be written\n\n",
+				argv[0]);
+			exit(1);
+		}
+		target = strtoul(argv[1], 0, 0);
+		/*strtol:将字符串转化成长整型数
+			para1:要转换的字符串
+			para2:表示遇到什么字符结束,一般为NULL或者0
+			para3:字符串表示的数据采用的进制方式,为0表示10进制,但是遇到"0x"前置字符则会使用16进制做转换
+		*/
+
+		if (argc > 2)
+			access_type = tolower(argv[2][0]);	//tolower:将大写字母转换成小写字母
+
+		if ((fd = opne("/dev/mem", O_RDWR | O_SYNC)) == -1)	FATAL;
+			//会自动将错误保存到errno中,FATAL中可以自动得到错误errno
+		printf("/dev/mem opened.\n");
+		fflush(stdout);	//更新缓冲区,将数据刷到标准输出---即屏幕
+		
+		/*map one page*/ //将内核空间映射到用户空间,映射大小为1 page=4k
+		map_base = mmap(0, MAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, target & ~MAP_MASK);
+		/*
+			para1:预对应的内存起始地址,通常设为NULL或0.让系统自动选择地址,对应成功后该地址会返回
+			para2:映射的大小
+			para3:映射区域的保护方式:
+				PROT_EXEC:映射区域可被执行;
+				PROT_READ:映射区域可被读取;
+				PROT_WRITE:映射区域可被写入;
+				PROT_NONE:映射区域不能存取.
+			para4:影响映射区域的特定:
+				MAP_SHARED:对映射区域写入数据会复制回文件内,而且允许其他映射该文件的进程共享
+				MAP_PRIVATE:对该区域的任何修改都不会写回到原来的文件中---一般用于只读打开文件
+			para5:fd,open返回的文件描述符
+			para6:映射的偏移量.在内核映射时,可以指定任何一段物理地址映射.此时的起始地址可能不是page对齐,
+					可以先取page对齐,后续再加上一个偏移.e.g. addr(物理地址) & (~ 4095)	//强制page对齐,得到对齐部分
+					后续映射好之后再:map_addr(映射地址) + (物理地址 & 4095)---4k对齐时留下的偏移
+			retval:映射成功返回映射区的起始内存地址,否则返回MAP_FAILED(-1),错误原因存在于errno中.
+		*/
+		if (map_base == MAP_FAILED)
+			FATAL;
+		printf("Memory mapped at address %p.\n", map_base);
+		fflush(stdout);
+
+		virt_addr = map_base + (target & MAP_MASK);	//加上非对齐部分
+		//针对不同的参数获取byte, halfword, word等数据
+		switch(access_type) {
+		case 'b':	//byte数据
+		{
+			read_result = *((unsigned char *)virt_addr);	//得到byte数据
+			break;
+		}
+		case 'h':	//half word数据
+		{
+			read_result = *((unsigned short *)virt_addr);	//得到short(half word)数据
+			break;
+		}
+		case 'w':	//word数据
+		{
+			read_result = *((unsigned long *)virt_addr);	//得到word数据
+			break;
+		}
+		default:
+		{
+			fprintf(stderr, "Illegal data type '%c'.\n", access_type);
+			exit(2);
+		}
+		printf("Value at address 0x%x (%p): 0x%x\n", target, virt_addr, read_result);
+		fflush(stdou);
+
+		//如果参数大于3个,则说明为写入操作,针对不同参数写入不同类型(byte, half word, word)数据
+		if (argc > 3) {
+			writeval = strtoul(argv[3], 0, 0);	//将第4个参数argv[3]转换成无符号长整型数
+			switch(access_type) {
+			case 'b':
+			{
+				*((unsigned char *)virt_addr) = writeval;
+				read_result = *((unsigned char *)virt_addr);	//此时读到值和写进去的是一样的
+				break;
+			}
+			case 'h':
+			{
+				*((unsigned short *)virt_addr) = writeval;
+				read_result = *((unsigned short *)virt_addr);	//此时读到值和写进去的是一样的
+				break;
+			}
+			case 'w':
+			{
+				*((unsigned long *)virt_addr) = writeval;
+				read_result = *((unsigned long *)virt_addr);	//此时读到值和写进去的是一样的
+				break;
+			}
+			}
+			printf("Written 0x%x, readback: 0x%x\n", writeval, read_result);
+			fflush(stdout);
+		}
+		
+		//解除映射
+		if (munmap(map_base, MAP_SIZE) == -1)
+			FATAL;
+		close(fd);
+		return 0;
+		}
+	}
+

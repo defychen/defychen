@@ -20,6 +20,13 @@
 	解决:
 		将word进程结束,将excel进程也结束.再打开,可能出现问题1的状况.
 
+## 3.在secure CRT中,linux文件名中出现空格" "如何选择上
+
+	文件名"C language skill.md"
+	在linux下,由于含有空格的文件名查看起来不是很方便,因此linux中带有空格的文件名较少.
+	在secure CRT/linux下,选定带有空格的文件名方法:
+	ls C\ language\ skill.md	//空格使用"\ ",反斜线 + 一个空格代替
+
 
 
 	

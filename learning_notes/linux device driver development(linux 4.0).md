@@ -1953,6 +1953,8 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 		unsigned int see_memory_basic;	//addr_select = 3
 	};
 
+	#define TEST_BASE_ADDR	0x18034000		//IO空间的基址(属于寄存器的物理地址,在读取前需要ioremap成虚拟地址再进行读取)
+
 	#endif
 
 #### 2.2 test.h---用于定义使用driver时用到的数据结构(e.g.设备节点位置,ioctl,调用时需要的填充的结构体)
@@ -1975,12 +1977,13 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 	/*
 	* ioctl list
 	*/
-	#define TEST_GET_BASE_ADDR		_IOW(TEST_BASE, 1, int /*base_addr*/)
+	#define TEST_TEE_RANGE_CHECK		_IOW(TEST_BASE, 1, int /*base_addr*/)
 	/*_IOW宏:构成ioctl命令
 		para1:ioctl cmd base---定义的时候不能和其他的有重叠
 		para2:序列号,一般从1开始增加
 		para3:数据类型字段.表示调用该ioctl穿进来的arg的参数类型
 	*/
+	#define TEST_READ_DEVICE(e.g.DSC)_CHECK			_IOW(TEST_BASE, 2, int /*存放读取得到的某个设备的寄存器值*/)
 	#endif
 
 #### 2.3 test_ioctl.h---主要用于定义ioctl函数(将ioctl的操作与其他分开)
@@ -2015,6 +2018,130 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 
 	static struct class *g_test_class = NULL;	//存放设备类,全局指针
 
+**file_opeations相关函数**
+
+	static int test_open(struct inode *inode, struct file *file)
+	{
+		int ret = -1;
+		struct test_dev *test = 
+			container_of(inode->i_cdev, struct test_dev, cdev);
+		/*
+		para1:inode->i_cdev(表明是字符设备),结构体成员的指针;---不变
+		para2:设备结构体(表明具体是哪个字符设备);---自己定义的设备结构体
+		para3:cdev(为inode->i_cdev结构体成员的类型).通过结构体成员的指针获得设备结构体的指针---不变
+		*/
+
+		struct test_session *s = NULL;
+		
+		s = devm_kzalloc(test->dev, sizeof(struct test_sesion), GFP_KERNEL);
+		/*
+			devm_kzalloc是与设备(device)相关的内核内存分配函数,一般自定义的设备结构体会带有一个struct device *dev指针.
+			其优点是:当device被detached或driver被卸载(uploaded)时,内存会被自动释放.可以使用devm_kfree释放.
+			
+			para1:申请内存的目标设备.常为设备结构体或者struct platform_device结构体下的struct device *dev成员.
+			para2:申请内存大小.一般为sizeof(自定义设备结构体或者自定义的其他结构体(该结构体常有一个自定义设备结构体的指针))
+			para3:申请内存的类型标志.kernel中使用GFP_KERNEL
+		*/
+		if (!s) {
+			ret = -ENOMEM;	//没有足够的内存
+			return ret;
+		}
+
+		memset(s, 0, sizeof(struct test_session));
+		s->test = test;	//指定父设备
+		file->private_data = (void *)s;	//将s赋给file->private_data并回传出去,便于s这一个数据在write/read/ioctl中传输
+		return 0;
+	}
+
+	static int test_release(struct inode *inode, struct file *file)
+	{
+		struct test_dev *test = NULL;
+		struct test_session *s= NULL;
+		int ret = 0;
+
+		s = file->private_data;		//得到file下的private_data数据(此前在open时填充进去的)
+		if (!s) {
+			ret = -EBADF;	//bad file number,其值为9
+			return ret;
+		}
+		test = s->test;	//因为自定义的其他结构体含有自定义设备结构体指针(相当于取得父指针),
+						//直接取了赋值给自定义设备结构体后可以透过自定义设备结构体的struct device成员去释放分配的内存
+		
+		file->private_data = NULL;	//将file->private_data指针置空
+		devm_kfree(test->dev, s);	//释放devm_kzalloc分配的内存
+		/*
+		para1:一般为自定义结构体下的struct device *dev成员
+		para2:由devm_kzalloc返回的指针.一般为自定义结构体分配得到的指针和自定义设备结构体分配得到的指针.
+		*/
+		return 0;
+	}
+
+	static ssize_t test_read(struct file *file, char __user *buf, size_t count, loff_t *f_pos)
+	{
+		struct test_session *s = file->private_data;		//得到file下的private_data数据(此前在open时填充进去的)
+		int ret = 0;
+
+		if (s->write_mem_flag == 1)
+		{
+			ret = copy_to_user(buf, &s->tee_mem_base_addr, count);
+			/*
+			copy_to_user:将数据从内核空间拷贝到用户空间
+				para1:用户空间buf
+				para2:内核空间需要拷贝的数据
+				para3:由用户空间传进来的需要拷贝的字节数
+			*/
+		}
+		/*...其他操作...*/
+		return ret;
+	}
+
+	static ssize_t test_write(struct file *file, const char __user *buf, size_t count, loff_t *pos)
+	{
+		struct test_session *s = file->private_data;
+		int ret = 0;
+		
+		/*
+			copy_from_user(void *dest, buf, count);	//从用户空间将数据拷贝到内核空间
+			para1:内核空间的buf
+			para2:用于空间传过来的const char __user *buf
+			para3:由用户空间传进来需要拷贝的字节数	
+		*/
+	}
+
+	/*mmap:建立内核空间到用户空间(即进程)的虚拟地址空间的映射(即内核内存到用户内存的映射).映射成功后,
+	用户对这段内存的操作直接反应到内核空间(内核内存),同样内核空间对这段内存的操作也直接反应到用户空间*/
+	static int test_mmap(struct file *file, struct vma_area_struct *vma)
+	{
+		/*struct vma_area_struct:内核空间中描述用户空间buf的结构体,
+			用户空间buf信息会通过系统自动保存到struct vma_area_struct结构体*/
+		int ret = -1;
+		struct test_session *s = file->private_data;
+		size_t size = vma->vm_end - vma_start;	//用户空间映射buf的大小
+		
+		size = (size >= PAGE_SIZE) ? size : PAGE_SIZE;	//最小一个page(4k),最大到size
+
+		if (s->write_mem_flag == 1)	//tee memory
+		{
+			ret = remap_pfn_range(vma, vma->start, s->tee_mem_base_addr >> PAGE_SHIFT,
+				 size, pgprot_nocached(PAGE_SHARED));	//如果写driver,还需要调整mmap的code,这段code有点问题
+			if (ret)
+				return -EAGAIN;
+		}
+		return 0;
+	}	//mmap这段code有点问题,映射有点不成功
+
+	static const struct file_opeations test_fops = {
+		.owner		= THIS_MODULE,
+		.open		= test_open,
+		.read		= test_read,
+		.write		= test_write,
+		.mmap		= test_mmap,
+		release		= test_release,
+		unlocked_ioctl	= test_ioctl,
+	};
+
+**probe & remove函数**
+
 	static int test_probe(struct platform_device *pdev)	//para为struct platform_device *pdev
 	{
 		struct device *dev = &pdev->dev;		//得到pdev下面的device信息
@@ -2024,8 +2151,11 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 		/*1. 分配设备使用的内存*/
 		test = devm_kzalloc(dev, sizeof(struct test_dev), GFP_KERNEL);	//给设备结构体分配内存
 		/*
-			para1:申请内存的目标设备.即为platform_device下面的device设备
-			para2:申请内存大小.一般为sizeof(自定义设备结构体)
+			devm_kzalloc是与设备(device)相关的内核内存分配函数,一般自定义的设备结构体会带有一个struct device *dev指针.
+			其优点是:当device被detached或driver被卸载(uploaded)时,内存会被自动释放.可以使用devm_kfree释放.
+			
+			para1:申请内存的目标设备.常为设备结构体或者struct platform_device结构体下的struct device *dev成员.
+			para2:申请内存大小.一般为sizeof(自定义设备结构体或者自定义的其他结构体(该结构体常有一个自定义设备结构体的指针))
 			para3:申请内存的类型标志.kernel中使用GFP_KERNEL
 		*/
 		if (!test)
@@ -2192,5 +2322,173 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 	MODULE_LICENSE("GPL v2");
 	MODULE_VERSION();
 
+#### 2.5 test_ioctl.c---用于实现驱动的ioctl函数
 
+	#include <linux/slab.h>
+	#include <linux/of_platform.h>
+	#include <linux/module.h>
+	#include <linux/highmem.h>
+	#include <linux/types.h>
+	#include <linux/cdev.h>
+	#include <linux/device.h>
+	#include <linux/err.h>
+	#include <linux/idr.h>
+	#include <linux/kernel.h>
+	#include "test_priv.h"
+	#include "test.h"
+	#include <test_ioctl.h>
+
+	static unsigned int test_read_register(unsigned int base_addr, unsigned int offset)
+	{
+		unsigned int value = ioread32((void *)base_addr + offset);
+		/*
+			ioread32:读取IO虚拟空间中某个寄存器的值
+			para:一般为IO物理空间基址映射得到虚拟空间的基址 + 寄存器的偏移值
+			retval:读到的寄存器的值
+		*/
+		return value;
+	}
+
+	long test_ioctl(struct file *file, unsigned int cmd, unsigned long args)
+	{
+		int ret = -1;
+		struct test_session *s = file->private_data;
+		int check_select = 0;
+		__maybe_unused struct device_node *node = NULL;
+		/*
+			__maybe_unused:声明可能是不会使用的变量
+			struct device_node *node:用于保存分析dts(.dtsi文件)得到的节点信息
+		*/
+		__maybe_unused u32 tee_mem_base_addr = 0;
+		__maybe_unused u32 tee_mem_range = 0;
+		/*...其他的变量定义...*/
+		unsigned int virt_base_addr = 0;	//存放IO空间地址(IO寄存器,相当于物理地址)重新映射得到的虚拟地址
+		
+		if (!s)
+			return -EBADF;	/*bad file number*/
+		
+		ret = copy_from_user(&check_select, (void __user *)args, sizeof(int));
+		/*args:用户空间调用ioctl传的是一个指针*/
+		if (ret)
+			return ret;
+		
+		switch(cmd)	{	/*使用switch...case来区分不同的cmd*/
+		case TEST_TEE_RANGE_CHECK:
+		{
+			s->tee_mem_range = (u32)test_get_range_rpc(check_select);	/*rpc到see得到tee range*/
+
+			/*parser dts*/
+			node = of_find_compatible_node(NULL, NULL, "xxxtech,memory-partition");
+			/*
+			of_find_compatible_node:在dts中寻找和para3匹配的节点信息
+			para1:一般为NULL即可;		para2:一般为NULL即可.
+			para3:dtsi文件中的匹配字符
+			retval:成功返回设备节点指针(struct device_node *node);失败返回NULL.
+			e.g.----dtsi文件(即dts文件)
+				/{
+					#address-cells = <1>;
+					#size-cells = <1>;
+					memory-partition{
+						compatible = "xxxtech,memory-partition";		//匹配字符
+						tee_area = <0x80000000 0x2900000>;	//表示tee的area大小
+						...
+					};
+				};
+			*/
+			if (IS_ERR(node)) {	//节点为NULL时
+				pr_info("xxxtech,memory-partition node is NULL!\n");
+				return PTR_ERR(node);
+			}
+
+			of_property_read_u32_index(node, "tee_area", 0, (u32 *)&tee_mem_base_addr);
+			/*
+				of_property_read_u32_index:寻找节点(para1)下的与属性(para2)匹配的信息.
+				para1:需要寻找的节点,由of_find_compatible_node返回得到
+				para2:需要查找节点下的属性;	para3:取查找的属性的第0/1个值
+				para4:查找到的属性值应该保存到的变量
+				此处即为:
+				将dtsi文件中的(tee_area = <0x80000000 0x2900000>)第0个属性0x80000000保存到tee_mem_base_addr中
+			*/
+			of_property_read_u32_index(node, "tee_area", 1, (u32 *)&tee_mem_range);
+			/*
+				此处为:
+				将dtsi中的(tee_area = <0x80000000 0x2900000>)第1个属性0x2900000保存到tee_mem_range中
+			*/
+
+			if (s->tee_mem_range == tee_mem_range)
+			{
+				s->tee_mem_base_addr = tee_mem_base_addr;
+				s->write_mem_flag = 1;
+			}
+			break;
+		}
+		case TEST_READ_DEVICE(e.g.DSC)_CHECK:
+		{
+			unsigned int value = 0;
+			virt_base_addr = (unsigned int)ioremap(TEST_BASE_ADDR, 0x10);
+			/*
+				ioremap:将IO空间物理地址信息映射成虚拟地址,以便能够操作寄存器(读取/写入)
+				para1:寄存器基址(相当于物理地址),IO空间中
+				para2:需要重新映射的空间大小,一般为IP的SRAM的大小.
+				retval:映射到虚拟空间的起始地址
+				PS:对于某个IP而言,只能通过寄存器去操作IP(读取IP的SRAM的值或者其他行为),IP内部的SRAM的值不能直接操作.
+			*/
+			value = test_read_register(virt_base_addr, 0);
+			ret = copy_to_user((void *)args, &value, sizeof(unsigned int));	//拷贝给应用程序
+			if (ret)
+				return ret;
+			break;
+		}
+		/*其他的case语句*/
+		default:
+			break;
+		}
+	}
+
+### 3. RPC框架添加
+
+	在see端:
+		1.在hld下建立一个存放源文件目录---e.g.secfeature,其中有secfeature.c secfeature.h secfeature_remote.c
+			其中secfeature_remote.c中的关键代码:
+				static UINT32 hld_sec_feature_entry[] = 
+				{
+					(UINT32)sec_feature_get_range,
+					(UINT32)sec_feature_dram_check,
+					(UINT32)sec_feature_integrity_check_test,
+					(UINT32)sec_feature_see_executable_range_check,	//发起rpc调用时see对应的函数
+				};
+
+				void hld_sec_feature_callee(UINT8 *msg)		//该名字有讲究,在rpc注册中的需要对应
+				{
+					if (NULL == msg)
+						return;
+					os_hld_callee((UINT32)hld_sec_feature_entry, msg);	
+					//hld_sec_feature_entry,rpc的入口点,与上面的代码对应
+				}
+		2.在hld目录中建立一个Makefile,可以参考casi.修改其中的:
+			# Module Name	
+			MOD = HLD_SEC_FEATURE	该模块名是rpc中名字的大写
+		3.在alisee.../see/src/下的makefile中,添加对secfeature目录的编译:
+			HLD_SEC_FEATURE :
+				cd hld/secfeature; \
+				$(MAKE)
+		
+			HLD_SEC_FEATURE_ :
+				cd hld/secfeature; \
+				$(MAKE) clean
+		
+			HLD_SEC_FEATURE__ :
+				cd hld/secfeature; \
+				$(MAKE) ddk_rel
+		//添加成功后,编译会出现对应源文件的*.o文件以及一个HLD_SEC_FEATURE.mk
+		4.添加会rpc的注册:
+			在alisee.../see/src/see/m36f/Makefile.cmd中:
+			查找casi的注册,像casi一样将HLD_SEC_FEATURE注册进去即完成see这边rpc的注册.
+
+	在ree端:
+		在./driver/alidriver/include/linux/ali_rpc.h添加ree端的rpc.
+			在enum REMOTE_MODULES{};中,在和see那边相同位置:
+			(其位置可以查看./alisee.../see/src/see/m36f/modules_see.c中查找hld_sec_feature_callee在g_remote_callee
+			的位置.该位置)
+			添加HLD_SEC_FEATURE_MODULE(注意大写,和其他模块保持和一致),此刻完成了ree这边rpc的注册.		
 	
