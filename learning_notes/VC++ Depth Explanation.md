@@ -683,3 +683,171 @@ C++相比C的优点:
 		this->y = y;		//this->y:明确指明对象的y成员变量.此时就不会被覆盖
 	}
 	
+#### 2.2.6 类的继承
+
+**1.继承**
+
+派生类(Derived class---子类)从基类(Base class---也叫父类)继承,可以继承基类的成员变量和成员方法.
+
+	#include <iostream.h>
+	class animal
+	{
+		public:		//声明为public成员变量或函数
+			animal()	//构造函数
+			{
+				cout << "animal construct" << endl;
+			}
+			~animal()	//析构函数
+			{
+				cout << "animal destruct" << endl;
+			}
+			void eat()
+			{
+				cout　<< "animal eat" << endl;
+			}
+			void sleep()
+			{
+				cout << "animal sleep" << endl;
+			}
+			void breathe()
+			{
+				cout << "animal breathe" << endl;
+			}
+	};
+
+	class fish:public animal	//fish类继承自animal类.":"继承,"public":公有继承,紧接着是类名
+	{	//继承了animal类的成员变量和成员方法
+		public:
+			fish()	//派生类的构造函数.先调用父类的构造函数,再调用子类的构造函数
+			{
+				cout << "fish construct" << endl;
+			}
+			~fish()	//派生类的析构函数.先将子类析构,再将父类析构
+			{
+				cout << "fish desctruct" << endl;
+			}
+	};
+
+	void main()
+	{
+		animal an;	//构造基类对象
+		fish fh;	
+		/*
+		打印得到:
+		animal construct	//父类先构造
+		fish construct		//子类再构造
+		fish desctruct		//子类先析构
+		animal destruct		//父类再析构
+		*/
+		//an.eat();
+		//fh.eat();
+	}
+
+**2.子类中调用父类带参数的构造函数** 
+
+	#include <iostream.h>
+	class animal
+	{
+		public:		//声明为public成员变量或函数
+		+	animal(int height, int weight)	//带参数的构造函数构造函数
+		+	{
+		+		cout << "animal construct" << endl;
+		+	}
+			...
+	};
+
+	class fish:public animal	//fish类继承自animal类.":"继承,"public":公有继承,紧接着是类名
+	{	//继承了animal类的成员变量和成员方法
+		public:
+			fish()	//子类没有声明使用父类带参数的构造函数,因此还是会使用父类的默认构造函数.
+			{		//但此时父类只有一个带参数的构造函数,因此编译时会因找不到父类的默认构造函数而出错
+				cout << "fish construct" << endl;
+			}
+			...
+	};
+
+	void main()
+	{
+		fish fh;
+	}
+
+针对父类有参数的构造函数,在子类中需要显示的去调用父类的构造函数:
+
+	class fish:public animal
+	{
+		public:
+			fish():animal(400, 300)	//构造fish对象时,传入参数调用带参数的构造函数
+			{						//":"初始化,"animal(400, 300)":父类带参数的构造函数
+				cout << "fish construct" << endl;
+			}
+			...
+	};
+
+	//上述方法也可用于对类中常量(const)成员进行初始化---一般普通成员变量没有这个必要
+	class point
+	{
+		public:
+			point():x(0), y(0)	//在调用构造函数时,初始化常量成员变量x=0,y=0
+		private:
+			const int x;		//定义常量成员变量x
+			const int y;		//定义常量成员变量y
+	};
+
+**3.类中成员的访问特性**
+
+	1.public:定义的成员在任何地方都可以被访问;
+	2.protected:定义的成员只能在该类及其子类中被访问;
+	3.private:定义的成员只能在该类自身中被访问;
+
+	//继承特性
+	1.public继承:派生类保持父类中的原来的访问权限(public和protected,private成员不能被派生类继承);
+	2.protected继承:基类中的public和protected成员在派生类中都变成protected类型的访问权限;
+	3.private继承:没有指定继承权限则为private,此时基类中的public和protected成员全都变成private权限.
+	PS:基类中的private成员不能被派生类访问.因此,private成员不能被派生类所继承.
+
+**4.多重继承**
+
+	class 派生类名:访问权限 基类名称, 访问权限 基类名称, 访问权限 基类名称
+	e.g.
+	class B:public C, public D	//类B是由类C和类D派生的
+
+要注意基类的位置顺序.初始化时是按位置顺序进行初始化的,析构是按位置的反方向进行调用的.
+
+多重继承中基类不能出现同名的成员函数,否则会编译出错:
+
+	#include <iostream.h>
+	class B1
+	{
+		public:
+			void output();
+	};
+	class B2
+	{
+		public:
+			void output();
+	};
+	void B1::output()	//类函数的实现.返回类型 类名::函数
+	{
+		cout << "call the class B1" << endl;
+	}
+	void B2::output()
+	{
+		cout << "call the class B2" << endl;
+	}
+	class A:public B1, public B2
+	{
+		public:
+			void show();
+	}
+	void A::show()
+	{
+		cout << "call the class A" << endl;
+	}
+	
+	void main()
+	{
+		A a;
+		a.output();	//该语句编译时会出错('A::output' is ambiguous歧义),因为基类B1和B2都有output函数,
+					//编译器无法确定使用哪一个基类的output函数.
+		a.show();
+	}
