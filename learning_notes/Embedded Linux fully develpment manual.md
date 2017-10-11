@@ -774,6 +774,160 @@ CPU运行过程中,检测外设发生某些不预期事件的方法:
 	#define		EINTMASK			(*(volatile unsigned long *)0x560000A4)
 	#define		EINTPEND			(*(volatile unsigned long *)0x560000A8)
 ***
+## Chapter 11 通用异步收发器UART
+
+### 11.1 UART原理及UART部件使用方法
+
+**1.UART原理**
+
+UART(Universal Asynchronous Receiver Transmitter):通用异步收发器,用来传输串行数据.
+
+UART特点:
+
+	发送数据:CPU将并行数据写入UART,UART按照一定格式在一根电线上串行发出;
+	接收数据:UART检测另一根线上的信号,将串行数据收集放在缓冲区中,CPU读取UART缓冲区获得这些数据.
+	UART之间是以全双工方式传输数据.
+
+最精简的UART连线:
+
+![](https://i.imgur.com/HBQ0hH5.png)
+
+	只有3根电线:
+	TxD--->用于发送数据;
+	RxD--->用于接收数据;
+	Gnd--->给双方提供参考电平(接地)
+
+UART使用标准的TTL/CMOS逻辑电平(0-5V、0-3.3V、0-2.5V或0-1.8V)来表示数据.高电平表示1,低电平表示0.
+
+	TTL/CMOS逻辑电平稳定性(抗干扰能力、传输距离等)不如RS-232逻辑电平(串口线使用的电平),因此通常将TTL/CMOS
+	逻辑电平转换为RS-232逻辑电平(3-12V表示0,-3~-12表示1).
+
+**2.UART传输流程**
+
+UART传输特点:
+
+	1.UART是以帧(frame)作为衡量单位在设备两端进行数据传输.但TxD、RxD数据线以"bit"为单位来发送/接收数据.
+	2.帧(frame)包括开始位、数据位、校验位和停止位;
+	3.UART之间传输需要约定好的传输速率(每位传输所占据的时间,其倒数是波特率)、数据传输格式(多少个数据位、
+		是否使用校验位、奇/偶较验、多少个停止位)等.
+
+UART传输流程:
+
+	1)数据线平时处于"空闲"状态(1状态);
+	2)发送数据时,UART改变TxD线的状态(由1变为0),并维持1位的时间;
+	3)UART一帧可有5,6,7或8位的数据,发送方一位一位地改变数据线状态将他们发送出去,首先发送最低位;
+	4)如果有较验位,发送完数据位还需要发送1位的校验位.
+		奇较验:数据位连同较验位中,"1"的数目为奇数;
+		偶较验:数据位连同较验位中,"1"的数目为偶数.
+	5)最后发送停止位,停止位长度有3种(1位,1.5位,2位).然后数据线恢复到"空闲"状态(1状态).
+
+e.g.UART数据发送波形实例:
+
+	UART使用7个数据位、偶较验、2个停止位的格式传输字符'A'(其值为65,二进制为0b1000001),TTL/CMOS逻辑电平和RS-232逻辑电平.
+
+![](https://i.imgur.com/yTFU6Ww.png)
+
+**3.S3C2410/S3C2440 UART的特性**
+
+1.有3个独立的通道(即3个UART),每个通道都可以工作与中断模式或DMA模式;
+
+2.UART有波特率发生器、发送器、接收器和控制逻辑组成.使用系统时钟时,S3C2410的UART波特率可以达到230.4Kbit/s,S3C2440可以达到115.2Kbit/s;如果使用外部时钟(由UEXTCLK引脚提供)可以达到更高波特率.波特率可以通过编程进行控制.
+
+3.S3C2410的UART通道各有16 byte的发送和接收FIFO,S3C2440 FIFO深度为64 byte.FIFO作用:发送数据时,CPU先将数据写入发送FIFO,然后UART自动将FIFO中的数据转换成一位一位地发送到TxDn数据线上;接收数据时,UART会将RxDn接收到的数据放到接收FIFO中,等待CPU取数据.
+
+**4.S3C2410/S3C2440 UART相关的寄存器**
+
+1.将UART通道管脚设为UART功能
+
+	UART通道0,需要设置GPHCON寄存器的GPH2、GPH3引脚功能为TXD0、RXD0,即这两个位置分别写入10.
+
+2.UBRDIVn寄存器(UART BAUD RATE DIVISOR):设置波特率
+
+3.ULCONn寄存器(UART LINE CONTROL):设置传输格式
+
+4.UCONn寄存器(UART CONTROL):UART控制寄存器
+
+5.UFCONn寄存器(UART FIFO CONTROL)、UFSTATn寄存器(UART FIFO STATUS):FIFO控制和状态寄存器
+
+6.UMCONn寄存器(UART MODEM CONTROL)、UMSTATn寄存器(UART MODEM STATUS):流量控制寄存器---一般不需要设置
+
+7.UTRSTATn寄存器(UART TX/RX STATUS):发送/接收状态寄存器
+
+8.UESTATn寄存器(UART ERROR STATUS):错误状态寄存器
+
+9.UTXHn寄存器(UART TRANSMIT BUFFER REGISTER):CPU将数据写入这个寄存器,UART会将数据保存到缓冲区并自动发送出去.
+
+10.URXHn寄存器(UART RECEIVE BUFFER REGISTER):当UART接收到数据时,CPU读取这个寄存器即可获得数据.
+
+### 11.2 UART实例
+
+**1.UART初始化**
+
+	#define PCLK		50000000	//在init.c中的clock_init函数设置了PCLK为50MHz
+	#define UART_CLK	PCLK		//UART0的时钟源设为PCLK
+	#define UART_BAUD_RATE	115200	//波特率
+	#define UART_BRD	((UART_CLK / (UART_BAUD_RATE * 16)) - 1)		//需要这样计算,最终将该值写入UBRDIV0寄存器
+	
+	/*初始化UART
+		115200, 8N1(8个数据位,一个停止位), 无流控
+	*/
+	void uart0_init(void)
+	{
+		//必须要在之前定义下面的宏代表的寄存器地址值
+		GPHCON |= 0xa0;		//GPH2、GPH3用作TXD0、RXD0
+		GPHUP = 0x0c;		//GPH2、GPH3内部上拉
+
+		ULCON0 = 0x03;		//8位数据位,无流控,一个停止位
+
+		UCON0 = 0x05;		//查询方式,设置为中断或者轮询
+		UFCON0 = 0x00;		//不使用FIFO
+		UMCON0 = 0x00;		//不实用流控
+		UBRDIV0 = UART_BRD;	//设置波特率为115200.---需要注意,写入的值是一个按固定公式计算得到的值
+	}
+
+**2.发送字符函数**
+
+	#define TXD0READY	(1<<2)	//因为不使用FIFO,因此在发送字符前需要检测上一个字符是否已经被发送出去
+
+	void putc(unsigned char c)
+	{
+		while (!(UTRSTAT0 & TXDREADY));		//UTRSTAT0[2]=1表示字符发送完毕;=0表示还没有发送完毕,此时处于循环状态
+
+		UTXH0 = c;	//向UTXH0寄存器写入数据,UART会自动发送出去
+	}
+
+**3.接收字符函数**
+
+	#define RXD0READY	(1)		//检测缓冲区是否有数据
+	
+	unsigned char getc(void)
+	{
+		while (!(UTRSTAT0 & RXD0READY));	//UTRSTAT0[0]=1表示接收缓冲区有数据;=0表示无数据,此时处于循环状态
+
+		return URXH0;	//直接读取URXH寄存器,即可获得接收到的数据
+	}
+
+**4.主函数**
+
+	#include "serial.h"
+
+	int main()
+	{
+		unsigned char c;
+		uart0_init();	//uart初始化
+		
+		while (1)
+		{
+			c = getc();	//从串口接收一个字符,并判断是否为数字或字母.若是则+1后输出
+	
+			if (isdigit(c) || isalpha(c))	//该句可以简化为:if (isalnum(c))
+				putc(c+1);
+		}
+
+		return 0;
+	}
+
+***
 ## Chapter 15 移植U-boot
 
 ### 15.1 Bootloader简介

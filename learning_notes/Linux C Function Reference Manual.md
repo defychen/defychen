@@ -1,5 +1,81 @@
 # Linux C Function Reference Manual
 
+## isdigit(测试字符是否为阿拉伯数字)---标准c中有
+
+	头文件:	#include <ctype.h>
+	int isdigit(int c)
+	/*
+		检查参数c是否为阿拉伯数字0-9.--->c可以为单个字符
+		retval:是阿拉伯数字返回非0;否则返回0
+		PS:此为宏定义,非真正函数
+	*/
+	
+	e.g. /*找出str字符串中为阿拉伯数字的字符*/
+	#include <ctype.h>
+	int main()
+	{
+		char str[] = "123@#FDsP[e?";	//str结束为NULL(0)
+		int i;
+		for (i=0; i != 0; i++)
+		{
+			if (isdigit(str[i]))
+				printf("%c is an digit character\n", str[i]);	//会将1,2,3这三个数字打印,其他不会打印
+		}
+
+		return 0;
+	}
+
+## isalpha(测试字符是否为英文字母)---标准c中有
+
+	头文件:	#include <ctype.h>
+	int isdigit(int c)
+	/*
+		检查参数c是否为英文字母.--->c为单个字符
+		retval:是英文字母返回非0;否则返回0
+		PS:此为宏定义,非真正函数
+		该函数相当于使用(isupper(c) || islower(c)).
+	*/
+	
+	e.g. /*找出str字符串中为阿拉伯数字的字符*/
+	#include <ctype.h>
+	int main()
+	{
+		char str[] = "123@#FDsP[e?";	//str结束为NULL(0)
+		int i;
+		for (i=0; i != 0; i++)
+		{
+			if (isalpha(str[i]))
+				printf("%c is an alphanumeric character\n", str[i]);	//会将F,D,s,P,e打印
+		}
+
+		return 0;
+	}
+
+## isalnum (测试字符是否为英文或数字)
+
+	头文件:	#include <ctype.h>
+	int isalnum(int c);
+	/*
+		检查参数c是否为英文字母或阿拉伯数字.--->c为单个字符
+		retval:是英文字母或阿拉伯数字返回非0;否则返回0
+		PS:此为宏定义,非真正函数
+		该函数相当于标准c中使用(isalpha(c) || isdigit(c)).
+	*/
+	e.g. /*找出str字符串中为英文字母或阿拉伯数字的字符*/
+	#include <ctype.h>
+	int main()
+	{
+		char str[] = "123@#FDsP[e?";	//str结束为NULL(0)
+		int i;
+		for (i=0; i != 0; i++)
+		{
+			if (isalnum(str[i]))
+				printf("%c is an alphanumeric character\n", str[i]);	//会将1,2,3,F,D,s,P,e打印
+		}
+
+		return 0;
+	}
+
 ## mmap (建立内存映射)---将内核空间映射到用户空间
 
 	头文件:	#include <unistd.h>
