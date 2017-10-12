@@ -851,3 +851,165 @@ C++相比C的优点:
 					//编译器无法确定使用哪一个基类的output函数.
 		a.show();
 	}
+
+#### 2.2.7 虚函数与多态性、纯虚函数
+
+**1.虚函数与多态性**
+
+未定义成虚函数时:
+
+	#include <iostream.h>
+	class animal
+	{
+		public:
+			void eat()
+			{
+				cout << "animal eat" << endl;
+			}
+			void sleep()
+			{
+				cout << "animal sleep" << endl;
+			}
+			void breathe()	//breathe未定义成虚函数
+			{
+				cout << "animal breathe" << endl;
+			}
+	};
+	class fish:public animal
+	{
+		public:
+			void breathe()	//重新定义breathe方法
+			{
+				cout << "fish bubble" << endl;
+			}
+	};
+
+	void fn(animal *pAn)	//传进来一个animal类的指针
+	{
+		pAn->breathe();		//调用animal类中的breathe方法
+	}
+	void main()
+	{
+		animal *pAn;
+		fish fn;
+		pAn = &fn;	//因为派生类由基类派生出来,所以派生类对象也是基类的对象,C++编译器会自动转换,
+		//不需要强制转换.但是基类对象却不是派生类对象,如果需要使用必须进行强制转换.
+		fn(pAn);	//将fn的地址赋给了pAn,C++编译器进行了类型转换.此时C++编译器认为pAn保存的就是
+		//animal对象的地址.因此会调用animal对象的breathe函数.
+		//打印的结果为:animal breathe
+	}
+
+派生类对象的内存模型:
+
+	this指针----------->-----------------------------
+
+							基类对象所占内存
+
+						----------------------------
+				
+							派生类对象自身增加的部分
+
+						----------------------------
+
+			派生类对象所占内存包括基类对象所占内存和自身增加部分所占内存.
+	上述将fish对象转换为animal类型后,就变成了基类对象所占内存(此处为animal对象所占内存),后续调用即调用
+	基类的方法.但如果基类函数前有virtual关键字(即虚函数),C++会采用迟绑定(late binding)技术(即编译时并
+	不确定具体调用的函数),而是在运行的时候依据对象的真实类型(非转换类型)来确定调用的函数,这叫C++的多态性.
+	没有加virtual关键字,C++编译器在编译时就确定的函数调用称为早起绑定(early binding).
+
+虚函数声明:
+
+	virtual void breathe()	//虚函数声明.由虚函数派生出来的函数都是虚函数
+	{
+		cout << "animal breathe" << endl;
+	}
+
+**C++多态性:在基类的函数前加上virtual关键字,在派生类中重写该函数,运行时会根据对象的实际类型来调用相应的函数.**
+
+**2.纯虚函数**
+
+	virtual void breathe() = 0;	//在虚函数后面加上=0即可.一般没有函数体
+
+纯虚函数目的:让类先有一个操作名称,没有操作内容.由派生类在继承时再给出具体的定义.
+
+虚函数特点:
+	
+	1.凡是含有纯虚函数的类叫做抽象类.抽象类不能声明对象,只是作为基类为派生类服务.
+	2.在派生类中必须完全实现基类的纯虚函数,否则派生类也变成了抽象类,不能实例化对象.
+	3.C++多态性是由虚函数来实现的,而不是纯虚函数.
+	4.派生类中如果有对基类虚函数的覆盖定义,无论该覆盖定义是否有virtual关键字,派生类中的该函数都是虚函数.
+	
+#### 2.2.8 函数的覆盖和隐藏
+
+**1.函数的覆盖(override)条件**
+
+	1.基类函数必须是虚函数;
+	2.发生覆盖的两个函数要分别位于派生类和基类中;
+	3.函数名称与参数列表必须完全相同.
+	PS:C++多态性是通过虚函数来实现的,因此函数的覆盖总是和多态关联在一起.在函数覆盖的情况下,
+		编译器会在运行时根据对象的实际类型类确定要调用的函数.
+
+**2.函数的隐藏的情况**
+
+	1.派生类的函数与基类的函数完全相同(函数名和参数列表都相同),但是基类的函数没有使用virtual关键字,
+		此时基类函数将被隐藏.
+	2.派生类的函数与基类的函数同名,但参数列表不同.此时不论基类的函数声明是否有virtual关键字,
+		基类函数都将被隐藏.
+
+**实例**
+
+	#include <iostream.h>
+	class Base
+	{
+		public:
+			virtual void xfn(int i)	//由虚函数派生出来的都是虚函数
+			{
+				cout <<　"Base::xfn(int i)" << endl;
+			}
+			void yfn(float f)
+			{
+				cout << "Base::yfn(float f)" << endl;
+			}
+			void zfn()
+			{
+				cout << "Base::zfn()" << endl;
+			}
+	};
+
+	class Derived : public Base
+	{
+		public:
+			void xfn(int i)		//覆盖基类的xfn函数
+			{
+				cout << "Derived::xfn(int i)" << endl;
+			}
+			void yfn(int c)		//隐藏了基类的yfn函数--->参数类型不一样,无论是否有virtual关键字
+			{
+				cout << "Derived::yfn(int c)" << endl;
+			}
+			void zfn()			//隐藏了基类的zfn函数--->因为无virtual关键字
+			{
+				cout << "Derived::zfn()" << endl;
+			}
+	};
+
+	void main()
+	{
+		Derived d;
+		
+		Base *pB = &d;
+		Derived *pD = &d;
+
+		pB->xfn(5);	//因为基类中xfn是虚函数,属于覆盖,因此在运行时确定是调用派生类的xfn.
+					//打印出:Derived::xfn(int i)
+		pD->xfn(5);	//打印出:Derived::xfn(int i)
+
+		pB->yfn(3.14f);	//属于隐藏.在编译时确定是调用基类的yfn函数,因为已经转换成了基类的对象指针
+					//打印出:Base::yfn(float f)
+		pD->yfn(3.14f);	//应该是调用派生类的yfn,但是参数不对--->会强制转换吧??
+					//打印出:Derived::yfn(int c)
+		
+		pB->zfn();	//属于隐藏.在编译时确定是调用基类的zfn函数,因为已经转换成了基类的对象指针
+					//打印出:Base::zfn()
+		pD->zfn();	//打印出:Derived::zfn()
+	}
