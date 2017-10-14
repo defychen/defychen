@@ -2194,14 +2194,15 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 			goto cdev_add_fail;
 
 		test->dev = device_create(g_test_class, dev, test->devt, test, 
-					"%s%d", TEST_DEVNAME, MINOR(test->devt));
+					"%s%d", TEST_DEVNAME, MINOR(test->devt));		
 		/*
 			//为自定义设备结构体下的成员创建设备
 			para1:设备类指针
 			para2:父设备.一般为platform_device下的device
 			para3:设备号
 			para4:设备数据.为自定义设备结构体对象即可
-			para5:/dev/xxx下面的设备节点名.(const char *fmt),因此可以---"%s%d", TEST_DEVNAME, MINOR(test->devt)
+			para5:/dev/xxx下面的设备节点名.(const char *fmt),因此可以---"%s%d", TEST_DEVNAME, MINOR(test->devt).
+					此时会在/dev/xxx0---即后面会多一个数字0.去掉方法:("%s", TEST_DEVNAME),即后面不需要带%d这个次设备号.
 			retval:device指针(设备指针)
 		*/
 		

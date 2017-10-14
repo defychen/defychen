@@ -1,4 +1,4 @@
-v# VC++ Depth Explanation
+# VC++ Depth Explanation
 
 ## Chapter 1 Windows程序内部运行机制
 
@@ -1063,3 +1063,47 @@ C++相比C的优点:
 		b =  a - b;
 		a = a - b;
 	}
+
+#### 2.2.10 C++类的设计习惯及头文件重复包含问题的解决
+
+1.设计类时分为:头文件(.h文件)和源文件(.cpp文件)
+
+	头文件存放类的定义及类成员函数的声明;源文件存放类中成员函数的实现.
+
+2.解决头文件重复包含的问题,使用条件预处理指令(在头文件定义时操作)
+
+	#ifndef	...	
+	#define	...
+	#endif
+
+实例---类的设计
+
+	/*1--->animal类的头文件animal.h*/
+	#ifndef __ANIMAL_H__	//条件预处理指令.判断__ANIMAL_H__没有定义则定义该宏,并继续往下执行.
+	#define __ANIMAL_H__	//如果判断定义了,则直接跳到#endif.避免重复定义
+	class animal()
+	{
+		public:
+			animal();
+			~animal();
+			void eat();
+			void sleep();
+			virtual void breathe();		//虚函数声明.virtual放在函数的最前面
+	};
+	#endif
+
+	/*2--->animal类的源文件animal.cpp*/
+	#include <iostream.h>
+	#include "animal.h"
+
+	animal::animal()	//"::"作用于标识符,用于指明一个函数属于哪个类或一个数据成员属于哪个类.
+	{					//"::"如果前面不跟类名(只有::),表示是全局函数(即非成员函数)或者全局数据成员
+	}
+	...
+	void animal::breathe()	//返回类型放在最前面.在头文件中有virtual,但是在源文件中就不必再加virtual.
+	{
+		cout << "animal breathe" << endl;
+	}
+
+## Chapter 3 MFC框架程序剖析
+
