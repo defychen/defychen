@@ -1107,3 +1107,38 @@ C++相比C的优点:
 
 ## Chapter 3 MFC框架程序剖析
 
+MFC(Microsoft Foundation Class,微软基础类库):微软为了简化程序员的开发工作所开发的一套C++类的集合,是一套面向对象的函数库.
+
+### 3.1 基于MFC的程序框架剖析
+
+在MFC中,类的命名都以字母"C"开头.
+
+单文档应用程序中:都有一个CMainFrame类,一个"C+工程名+App"类,一个"C+工程名+Doc"类,一个"C+工程名+View"类.
+
+#### 3.1.1 MFC程序中的WinMain函数
+
+其源码位于:.\Microsoft Visual Studio 10.0\VC\atlmfc\src\mfc\appmodul.cpp中.
+
+	// export WinMain to force linkage to this module
+	extern int AFXAPI AfxWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+		_In_ LPTSTR lpCmdLine, int nCmdShow);
+	
+	extern "C" int WINAPI
+	_tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+		_In_ LPTSTR lpCmdLine, int nCmdShow)	//-tWinMain实际上是一个宏,展开就是WinMain.
+	#pragma warning(suppress: 4985)
+	{
+		// call shared/exported WinMain
+		return AfxWinMain(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
+	}
+
+**1. theApp全局对象**
+
+在test.cpp(工程名.cpp)中,定义了一个应用程序的全局对象:
+
+	// 唯一的一个 CtestApp 对象
+	CtestApp theApp;
+
+	//定义该对象的原因:
+	theApp表示MFC应用程序本身.每个MFC程序有且仅有一个从应用程序类(CWinApp)派生的类(即CtestApp类)
+	CtestApp类有且仅有一个实例化对象(即theApp全局对象)即为MFC程序的实例.
