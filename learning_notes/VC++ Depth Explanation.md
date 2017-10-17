@@ -1115,6 +1115,8 @@ MFC(Microsoft Foundation Class,微软基础类库):微软为了简化程序员�
 
 单文档应用程序中:都有一个CMainFrame类,一个"C+工程名+App"类,一个"C+工程名+Doc"类,一个"C+工程名+View"类.
 
+CMainFrame类:代表应用程序框架窗口.
+
 #### 3.1.1 MFC程序中的WinMain函数
 
 其源码位于:.\Microsoft Visual Studio 10.0\VC\atlmfc\src\mfc\appmodul.cpp中.
@@ -1132,7 +1134,7 @@ MFC(Microsoft Foundation Class,微软基础类库):微软为了简化程序员�
 		return AfxWinMain(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
 	}
 
-**1. theApp全局对象**
+**1.theApp全局对象**
 
 在test.cpp(工程名.cpp)中,定义了一个应用程序的全局对象:
 
@@ -1142,3 +1144,89 @@ MFC(Microsoft Foundation Class,微软基础类库):微软为了简化程序员�
 	//定义该对象的原因:
 	theApp表示MFC应用程序本身.每个MFC程序有且仅有一个从应用程序类(CWinApp)派生的类(即CtestApp类)
 	CtestApp类有且仅有一个实例化对象(即theApp全局对象)即为MFC程序的实例.
+
+**2.AfxWinMain函数---即为WinMain函数的调用**
+
+该函数位于:.\Microsoft Visual Studio 10.0\VC\atlmfc\src\mfc\winmain.cpp
+
+	Afx前缀的函数代表应用程序框架函数(Application Framework).在MFC中,以Afx为前缀的函数都是全局函数,
+	可以在程序的任何地方调用他们.
+
+#### 3.1.2 MFC框架窗口
+
+**step 1.设计和注册窗口---AfxEndDeferRegisterClass函数**
+
+MFC全局函数AfxEndDeferRegisterClass实现窗口类的注册,该函数位于:.\Microsoft Visual Studio 10.0\VC\atlmfc\src\mfc\wincore.cpp
+
+**step 2.创建窗口---调用Cwnd类的CreateEx函数**
+
+CWnd类的CreateEx实现代码位于:.\Microsoft Visual Studio 10.0\VC\atlmfc\src\mfc\wincore.cpp
+
+	MFC中后缀名为Ex的函数都是扩展函数.
+
+**step 3.显示和更新窗口**
+
+在CTestApp(C+工程名+App)中的InitInstance()函数中
+
+	BOOL CtestApp::InitInstance()
+	{
+		...
+		// 唯一的一个窗口已初始化，因此显示它并对其进行更新
+		m_pMainWnd->ShowWindow(SW_SHOW);		//显示应用程序框架窗口
+		m_pMainWnd->UpdateWindow();		//更新应用程序框架窗口
+		...
+	}
+
+#### 3.1.3 消息循环
+
+在AfxWinMain函数中:
+
+	int AFXAPI AfxWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+	_In_ LPTSTR lpCmdLine, int nCmdShow)
+	{
+		...
+		nReturnCode = pThread->Run();	//完成消息循环任务
+	}
+
+#### 3.1.4 窗口过程函数
+
+注册窗口中:
+
+	BOOL AFXAPI AfxEndDeferRegisterClass(LONG fToRegister)
+	{
+		...
+		wndcls.lpfnWndProc = DefWindowProc;	//指定窗口过程函数.
+											//MFC采用一种称为消息映射的机制来处理消息
+		...
+	}
+
+**MFC程序运行过程:**
+
+	1.利用全局应用程序对象theApp启动应用程序;
+	2.进入WinMain函数.在AfxWinMain函数中可以获取子类(即CTestApp类的全局对象theApp)的指针,利用该指针
+		调用虚函数:InitInstance(实际上是调用theApp的InitInstance函数),完成应用程序的一些初始化工作
+		(包括窗口类的注册、创建,窗口的显示和更新).
+	3.进入消息循环.MFC采用消息映射机制来处理各种消息,当收到WM_QUIT消息时,退出消息循环,程序结束.
+
+#### 3.1.5 MFC的文档/视类结构
+
+**CTestView类---视类**
+
+	MFC的主框架窗口是整个应用程序外框所包括的部分;而视类窗口(CTestView类)只是主框架窗口中空白的部分.
+
+**CTestDoc类---文档类**
+
+**文档/视类结构的应用**
+
+	视类(CTestView类):MFC中数据的显示和修改由视类完成
+	文档类(CTestDoc类):MFC中数据的存储和加载由文档类来完成
+
+#### 3.1.6 帮助对话框类
+
+**CAboutDlg类---帮助对话框类**
+
+	CAboutDlg类:显示一个帮助窗口(e.g.菜单栏中的帮助/Help)
+	
+
+
+	
