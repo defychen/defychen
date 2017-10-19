@@ -1104,7 +1104,7 @@ C++相比C的优点:
 	{
 		cout << "animal breathe" << endl;
 	}
-
+***
 ## Chapter 3 MFC框架程序剖析
 
 MFC(Microsoft Foundation Class,微软基础类库):微软为了简化程序员的开发工作所开发的一套C++类的集合,是一套面向对象的函数库.
@@ -1247,7 +1247,7 @@ CWnd类的CreateEx实现代码位于:.\Microsoft Visual Studio 10.0\VC\atlmfc\sr
 	CMainFrame类是框架窗口类,内部有一个框架窗口句柄与框架窗口联系;
 	CTestView类是视类,内部有一个视窗口句柄与视窗联系.
 
-#### 3.2.1 在窗口中显示按钮
+#### 3.2.1 在CMainFrame窗口中显示按钮
 
 即在某个窗口中显示另一个窗口(按钮也是一种窗口,CButton类派生于CWnd类).
 
@@ -1278,9 +1278,39 @@ CWnd类的CreateEx实现代码位于:.\Microsoft Visual Studio 10.0\VC\atlmfc\sr
 		
 		return 0;
 	}
-	3.需要添加显示按钮窗口,入2中代码.
+	3.需要添加显示按钮窗口,如2中代码.
 
 **框架窗口的客户区和非客户区:**
 
 	1--->标题栏和菜单栏位于非客户区;
 	2--->包括工具栏的其他区域都属于客户区.客户区是可以显示东西的.
+
+#### 3.2.2 在CTestView窗口中显示按钮
+
+1.任何一个窗口在创建时都会产生一个WM_CREATE消息.
+
+2.CTestView类没有OnCreate函数去相应WM_CREATE消息,因此需要添加响应WM_CREATE消息的函数.
+
+**在CTestView视类窗口中显示步骤:**
+
+	1.为CTestView类添加一个CButton类的成员变量m_btn;
+	2.为CTestView类添加响应WM_CREATE消息的响应函数OnCreate;
+	3.在CTestView类的OnCreate响应函数中添加:
+	int CTestView::OnCreate(LPCREATESTRUCT lpCreateStruct)
+	{
+		...
+		/*在return之前添加*/
+		m_btn.Create("按钮", WS_CHILD | BS_DEFPUSHBUTTON, CRect(0, 0, 100, 100), this, 123);
+		/*步骤3添加.显示按钮窗口*/
+		m_btn.ShowWindow(SW_SHOWNORMAL);
+		
+		return 0;
+	}
+	//在上述程序中,this指针指代CTestView类的对象.视类窗口的父窗口为CMainFrame,得到父窗口指针可用:GetParent()函数.
+	
+如果希望窗口创建之后立即显示,可以将窗口风格指定为WS_VISIBLE.此时不需要在调用ShowWindow函数.
+
+	m_bt.Create("按钮", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, CRect(0, 0, 100, 100), this, 123);
+	//m_btn.ShowWindow(SW_SHOWNORMAL);	//这句代码不再需要.
+***
+## Chapter 4 简单绘图

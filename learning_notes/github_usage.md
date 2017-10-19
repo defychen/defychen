@@ -1,4 +1,6 @@
-## github usage
+# github usage
+
+## 1. How to use git to commit code
 ****
 
 **1)新建一个目录:**
@@ -42,7 +44,7 @@
 
 	git push origin master	//之后会输入帐号(username),密码(password)
 ***
-## git usage
+## 2. git usage
 
 **1)查看历史提交版本**
 
@@ -80,7 +82,7 @@
 
 	git checkout -- .		//针对有时本地修改了,但是不需要提交.而且此时不能执行"git pull"
 
-## git pull更新时的问题
+## 3. git pull更新时的问题
 
 	Your local changes to the following files would be overwritten by merge
 	error: Your local changes to the following files would be overwritten by merge:
@@ -92,7 +94,7 @@
 	git reset --hard
 	git pull
 
-## github提交错误
+## 4. github提交错误
 
 	当执行"git pull"时出现下面的提示:
 	There is no tracking information for the current branch.
@@ -108,7 +110,7 @@
 	//原因:本地分支和远程分支没有建立联系.解决:
 	git branch --set-upstream-to=origin/master master	/*远程的和本地的分支都为master分支,并建立联系*/
 
-## git打tag
+## 5. git打tag
 
 	//方法 1
 	git tag PDK1.12.0-20170616
@@ -119,3 +121,11 @@
 
 	查看所打的tag
 	git tag
+
+## 6. git push origin master提交时出现提交不成功
+
+	使用git push origin master推code时出现:Everything up-to-date.一直没有将code的更新push上去
+	
+	##原因:
+		--->可能是因为在使用git commit "xxx"	//添加注释时没成功.
+		--->正确的应该是:git commit -m "xxx"	//应该有个"-m"

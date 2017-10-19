@@ -4778,6 +4778,11 @@ busybox中实现了devmem这一个应用,用来直接读、写物理内存,也�
 
 		if ((fd = opne("/dev/mem", O_RDWR | O_SYNC)) == -1)	FATAL;
 			//会自动将错误保存到errno中,FATAL中可以自动得到错误errno
+			/*
+				O_SYNC:以同步方式写入文件/设备.强制刷新内核缓冲区到输出文件/设备,确保了将数据真正写入磁盘或其他硬件设备.
+				O_DIRECT:绕过缓冲区高速缓存,直接IO.在用户空间直接将数据传递到文件或磁盘设备.由于绕过了缓存,
+						因此直接IO(O_DIRECT)会大大降低性能.
+			*/
 		printf("/dev/mem opened.\n");
 		fflush(stdout);	//更新缓冲区,将数据刷到标准输出---即屏幕
 		

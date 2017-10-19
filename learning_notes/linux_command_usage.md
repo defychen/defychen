@@ -250,4 +250,14 @@
 	max size of message (bytes) = 8192
 	default max size of queue (bytes) = 16384 
 
+## 19. md5sum命令
+
+	md5sum命令用于生成和较验文件的md5值.只要文件内容相同(与文件名无关),其md5值就会相同.
+	md5值是一个128位(16 byte)的二进制数据.一般显示为32个16进制的的数.
+	
+	md5sum filename		//计算filename文件的md5值
+	
+	md5sum命令的配置,在busybox中配置:
+		--->make busybox-menuconfig->Coreutils->md5sum
+
 ## 13. wget命令
