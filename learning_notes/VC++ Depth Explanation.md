@@ -1227,6 +1227,60 @@ CWnd类的CreateEx实现代码位于:.\Microsoft Visual Studio 10.0\VC\atlmfc\sr
 
 	CAboutDlg类:显示一个帮助窗口(e.g.菜单栏中的帮助/Help)
 	
+### 3.2 窗口类、窗口类对象与窗口
 
+::(作用域标识符):以"::"开始的函数表示该函数是一个全局函数.
 
-	
+	BOOL CWnd::ShowWindow(int nCmdShow)
+	{
+		return ::ShowWindow(m_hWnd, nCmdShow);	//调用全局的Platform SDK的ShowWindow函数.
+	}
+
+窗口类对象与窗口关系:
+
+	C++窗口类内部有一个窗口句柄变量.窗口类对象与窗口之间通过该句柄(窗口类中的一个成员变量)维持联系.
+	1--->窗口销毁,仅仅表示两者的联系断了.窗口类对象(还有其他成员)的销毁与否看其生命周期是否结束;
+	2--->窗口类对象销毁了,与之相关的窗口也将被销毁.因为已经没哟资源可以维持窗口.
+
+**所有的窗口类(包括子类)内部都有一个成员来保存与之相关的窗口句柄.**
+
+	CMainFrame类是框架窗口类,内部有一个框架窗口句柄与框架窗口联系;
+	CTestView类是视类,内部有一个视窗口句柄与视窗联系.
+
+#### 3.2.1 在窗口中显示按钮
+
+即在某个窗口中显示另一个窗口(按钮也是一种窗口,CButton类派生于CWnd类).
+
+**在CMainFrame框架类窗口中显示步骤:**
+
+	1.为CMainFrame类添加一个CButton类的成员变量m_btn.用于和按钮窗口建立联系,此时相当于一个全局变量,
+		不会出现局部变量因为函数退出而导致窗口销毁;
+	2.MFC中窗口创建时都会产生WM_CREATE消息,CMainFrame类提供的OnCreate函数就是用来相应该消息的.
+		CButton类的创建按钮窗口函数"Create"就需要在该函数中添加;
+		CButton类的Create函数原型:
+		BOOL Create(LPCTSTR lpszCaption, DWORD dwStyle, const RECT& rect, CWnd *pParantWnd,
+			UINT nID);
+		/*
+			para1:按钮显示的文本;
+			para2:按钮风格类型,也包括窗口风格类型;
+			para3:按钮控件的大小和位置.一般使用CRect来构造.
+				e.g.CRect(0, 0, 100, 100);	//在0,0的位置大小为100, 100
+			para4:按钮空间的父窗口.一般使用this即可,表示按钮窗口属于的那个窗口的句柄.
+			para5:按钮空间的标识.e.g. 123
+		*/
+	int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
+	{
+		...
+		/*在return之前添加*/
+		m_btn.Create("按钮", WS_CHILD | BS_DEFPUSHBUTTON, CRect(0, 0, 100, 100), this, 123);
+		/*步骤3添加.显示按钮窗口*/
+		m_btn.ShowWindow(SW_SHOWNORMAL);
+		
+		return 0;
+	}
+	3.需要添加显示按钮窗口,入2中代码.
+
+**框架窗口的客户区和非客户区:**
+
+	1--->标题栏和菜单栏位于非客户区;
+	2--->包括工具栏的其他区域都属于客户区.客户区是可以显示东西的.
