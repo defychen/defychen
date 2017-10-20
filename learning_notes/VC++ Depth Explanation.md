@@ -1213,6 +1213,7 @@ CWnd类的CreateEx实现代码位于:.\Microsoft Visual Studio 10.0\VC\atlmfc\sr
 **CTestView类---视类**
 
 	MFC的主框架窗口是整个应用程序外框所包括的部分;而视类窗口(CTestView类)只是主框架窗口中空白的部分.
+	且视类窗口始终覆盖在框架窗口之上.
 
 **CTestDoc类---文档类**
 
@@ -1314,3 +1315,74 @@ CWnd类的CreateEx实现代码位于:.\Microsoft Visual Studio 10.0\VC\atlmfc\sr
 	//m_btn.ShowWindow(SW_SHOWNORMAL);	//这句代码不再需要.
 ***
 ## Chapter 4 简单绘图
+
+### 4.1 MFC消息映射机制
+
+**1. 使用类向导添加消息相应函数:**
+
+	1.在需要添加消息相应函数的类上单击右键,选择类向导,弹出"MFC 类向导"窗口.快捷键:Ctrl+Shift+X
+		也可以使用菜单栏:项目->类向导.
+	2.在"MFC 类向导"窗口中,需要对"项目"(有多个project才需要选择)、"类名"(需要添加的消息相应函数作用的类)、
+		"消息"页(选择需要处理的消息)---双击需要处理的消息会自动生成消息处理函数,并在右侧的"现有处理函数"
+		中会显示出来.--->最后单击编辑代码即可定位到添加的消息处理函数处进行编辑.
+	3.添加实现代码:
+		void CtestView::OnLButtonDown(UINT nFlags, CPoint point)
+		{
+			// TODO: 在此添加消息处理程序代码和/或调用默认值
+			//MessageBox(LPCTSTR("View Clicked1"));		//这种方法会显示乱码
+			MessageBox(_T("View Clicked!"));			//正确显示
+			CView::OnLButtonDown(nFlags, point);
+		}
+
+	在MFC中的MessagBox函数的使用:
+		1.原型:int MessageBox(LPCTSTR lpszText, LPCTSTR lpszCaption = (LPCTSTR)0, 
+			UINT nType = 0U);
+			只需要填充第一个参数即可->需要显示的文字.其他有默认参数
+		2.填充第一个参数(需要显示的文字时).需要进行强制转化,否则会编译不通过.
+			MessageBox(LPCTSTR("View Clicked!"));	//转化为该种形式会显示乱码.
+			解决--->转成_TCHAR类型:
+			MessageBox(_T("View Clicked!"));	//需要转换为_T("字符串")才不会有乱码.
+
+如果鼠标左键单击消息在CMainFrame类中添加会没有反应.因为CTestView类(视类)始终覆盖在框架窗口之上.因此:鼠标单击、鼠标移动等操作都只能由视类窗口捕获.不能由框架窗口(CMainFrame类)捕获.
+
+**2. 使用类向导删除已经添加的消息相应函数:---有时多添加了**
+
+	1.打开类向导窗口;
+	2.选择"消息"页,在显示的"现有处理程序"中选中需要删除的函数.在右侧点击删除处理程序即可.
+
+**3. MFC消息映射机制剖析---使用类向导添加的消息相应函数内部机制**
+
+1.添加了消息相应函数原型---在头文件中:
+
+	在类的头文件中.e.g.CTestView类的头文件中
+
+	// 生成的消息映射函数
+	protected:
+		DECLARE_MESSAGE_MAP()
+	public:
+		afx_msg void OnLButtonDown(UINT nFlags, CPoint point);	
+		//afx_msg是一个宏,表明该函数是一个消息相应函数的声明.
+	};
+
+2.添加消息映射宏---在源文件中:
+
+	在类的源文件中.e.g.CTestView类的源文件中:
+	
+	BEGIN_MESSAGE_MAP(CtestView, CView)	//该宏到END宏定义了该类的消息映射表.
+	// 标准打印命令
+	ON_COMMAND(ID_FILE_PRINT, &CView::OnFilePrint)
+	ON_COMMAND(ID_FILE_PRINT_DIRECT, &CView::OnFilePrint)
+	ON_COMMAND(ID_FILE_PRINT_PREVIEW, &CView::OnFilePrintPreview)
+	ON_WM_LBUTTONDOWN()	//该宏将鼠标左键按下消息(WM_LBUTTONDOWN)与对应的消息相应函数关联起来.
+	END_MESSAGE_MAP()
+
+3.消息相应函数的实现---在源文件中:
+
+	void CtestView::OnLButtonDown(UINT nFlags, CPoint point)
+	{
+		// TODO: 在此添加消息处理程序代码和/或调用默认值
+		//MessageBox(LPCTSTR("View Clicked1"));		//这种方法会显示乱码
+		MessageBox(_T("View Clicked!"));			//正确显示
+		CView::OnLButtonDown(nFlags, point);
+	}
+
