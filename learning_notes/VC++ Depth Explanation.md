@@ -1345,14 +1345,14 @@ CWnd类的CreateEx实现代码位于:.\Microsoft Visual Studio 10.0\VC\atlmfc\sr
 
 如果鼠标左键单击消息在CMainFrame类中添加会没有反应.因为CTestView类(视类)始终覆盖在框架窗口之上.因此:鼠标单击、鼠标移动等操作都只能由视类窗口捕获.不能由框架窗口(CMainFrame类)捕获.
 
-**2. 使用类向导删除已经添加的消息相应函数:---有时多添加了**
+**2. 使用类向导删除已经添加的消息响应函数:---有时多添加了**
 
 	1.打开类向导窗口;
 	2.选择"消息"页,在显示的"现有处理程序"中选中需要删除的函数.在右侧点击删除处理程序即可.
 
-**3. MFC消息映射机制剖析---使用类向导添加的消息相应函数内部机制**
+**3. MFC消息映射机制剖析---使用类向导添加的消息响应函数内部机制(主要有3处信息)**
 
-1.添加了消息相应函数原型---在头文件中:
+1.添加了消息响应函数原型---在头文件中:
 
 	在类的头文件中.e.g.CTestView类的头文件中
 
@@ -1376,7 +1376,7 @@ CWnd类的CreateEx实现代码位于:.\Microsoft Visual Studio 10.0\VC\atlmfc\sr
 	ON_WM_LBUTTONDOWN()	//该宏将鼠标左键按下消息(WM_LBUTTONDOWN)与对应的消息相应函数关联起来.
 	END_MESSAGE_MAP()
 
-3.消息相应函数的实现---在源文件中:
+3.消息响应函数的实现---在源文件中:
 
 	void CtestView::OnLButtonDown(UINT nFlags, CPoint point)
 	{
@@ -1386,3 +1386,334 @@ CWnd类的CreateEx实现代码位于:.\Microsoft Visual Studio 10.0\VC\atlmfc\sr
 		CView::OnLButtonDown(nFlags, point);
 	}
 
+虚函数内部剖析:虚函数在系统中存在一个虚函数表(vtable)进行相关的构建.基类的虚函数在应用程序中使用的每个派生类,系统都要为它们分配一个vtable(且不管基类中虚函数是否确实在派生类中被重写).而且vtable表都要为基类的每一个虚函数提供一个4字节的输入项.因此,系统中如果存在较多的虚函数会占据较多的内存资源,对内存资源是一种浪费.
+
+**MFC消息映射机制:在每个能接收和处理消息的类中,会定义一个消息和消息函数静态对照表(也叫消息映射表),并且消息与对应消息处理函数指针是成对出现的.当有消息需要处理时,程序会自动搜索消息静态表,找到对应的消息处理函数进行处理.**
+
+### 4.2 绘制线条
+
+**1. 起点**
+
+鼠标左键按下的位置,需要一个成员变量保存这个位置(CPoint类):
+
+	1.添加一个成员变量(CPoint类),用于保存鼠标左键按下的点;
+		CDrawView右键->Add->Add Varialbe->Access选择private/Variable Type输入CPoint/Variable Name输入m_ptOrigin
+		添加完后,在构造函数中会自动进行初始化:
+		CDrawView::CDrawView()
+			: m_ptOrigin(0)		//成员变量的初始化
+		{
+			// TODO: 在此添加消息处理程序代码和/或调用默认值
+			
+		}
+	2.在鼠标左键按下的响应函数OnLButtonDown保存鼠标按下点的信息.
+		void CDrawView::OnLButtonDown(UINT nFlags, CPoint point)
+		{
+			// TODO: 在此添加消息处理程序代码和/或调用默认值
+			m_ptOrigin = point;
+			CView::OnLButtonDown(nFlags, point);
+		}
+
+**2.终点**
+
+鼠标左键弹起的位置,添加WM_LBUTTONUP消息的处理函数
+
+	添加WM_LBUTTONUP消息响应的处理函数
+	void CDrawView::OnLButtonUp(UINT nFlags, CPoint point)
+	{
+		// TODO: 在此添加消息处理程序代码和/或调用默认值
+		/*
+			在该函数中进行划线处理
+		*/
+		CView::OnLButtonUp(nFlags, point);
+	}
+
+#### 4.2.1 利用SDK全局函数实现画线功能
+
+	void CDrawView::OnLButtonUp(UINT nFlags, CPoint point)
+	{
+		// TODO: 在此添加消息处理程序代码和/或调用默认值
+		
+		HDC hdc;	//Windows平台下所有的图形操作都是由DC(Device Context设备描述表)句柄完成.
+		hdc = ::GetDC(m_hWnd);	//每个由CWnd类派生的类都有一个m_hWnd成员变量保存窗口句柄
+			//全局函数GetDC获得当前窗口的设备描述表
+		MoveToEx(hdc, m_ptOrigin.x, m_ptOrigin.y, NULL);
+		/*
+			//移动到线条的起点
+			para1:设备描述表的句柄
+			para2 & para3:移动到某个具体的点(x,y坐标)
+			para4:指向POING结构体的指针.用于保存移动操作前的鼠标位置.此处需要设为NULL
+		*/
+		LineTo(hdc, point.x, poing.y);
+		/*
+			//绘制一条到指定点的线
+			para1:设备描述表的句柄
+			para2 & para3:线条终点的x,y坐标
+		*/
+		:ReleaseDC(m_hWnd, hdc);	//释放设备描述表资源
+
+		CView::OnLButtonUp(nFlags, point);
+	}
+
+#### 4.2.2 利用MFC的CDC类实现画线功能
+
+MFC提供了一个设备描述表的封装类CDC,CDC类封装了所有与绘图相关的操作.CDC类有一个数据成员m_hDC,保存了DC句柄.
+
+	void CDrawView::OnLButtonUp(UINT nFlags, CPoint point)
+	{
+		// TODO: 在此添加消息处理程序代码和/或调用默认值
+		
+		CDC *pDC = GetDC();	//利用CWnd类的成员GetDC()可获得当前窗口的设备描述表对象的指针
+		pDC->MoveTo(m_ptOrigin);		//CDC类的MoveTo函数是移动到具体的某个点.para:CPoint类对象
+		pDC->LineTo(point);		//CDC类的LineTo函数划线到某个点.para:CPoint类对象
+		ReleaseDC(pDC);		//CWnd类的ReleaseDC(pDC)释放设备描述表资源
+
+		CView::OnLButtonUp(nFlags, point);
+	}
+
+#### 4.2.3 利用MFC的CClientDC类实现画线功能
+
+MFC提供的CClientDC类派生于CDC类,并且在构造时会自动调用GetDC()获得设备描述表,析构时自动调用ReleaseDC()函数释放设备描述表资源.
+
+	void CDrawView::OnLButtonUp(UINT nFlags, CPoint point)
+	{
+		// TODO: 在此添加消息处理程序代码和/或调用默认值
+		CClientDC dc(this);	//构造CClientDC对象时,需要一个CWnd类型的指针作为参数表示CClientDC对象属于哪个窗口.
+							//即在哪个窗口中绘图.此处this指代CDrawView对象的指针.
+		//如果需要在View类的父窗口即CMainFrame类中操作,可以使用CClientDC dc(GetParent());
+		dc.MoveTo(m_ptOrigin);
+		dc.LineTo(point);
+		
+		CView::OnLButtonUp(nFlags, point);
+	}
+
+**CxxxView窗口(视类窗口)与CMainFrame窗口(框架窗口)说明**
+
+	CxxxView窗口只有客户区,即窗口的白色区域部分;
+	CMainFrame窗口的客户区是菜单栏以下的所有部分(包括工具栏也属于客户区,因为可以浮动);非客户区是标题栏和菜单栏.
+	绘图操作一般在窗口的客户区进行.
+
+#### 4.2.4 利用MFC的CWindowDC类实现画线功能
+
+MFC提供的CWindowDC类也派生与CDC类,并且在构造时会自动调用GetWindowDC()获得设备描述表,析构时自动调用ReleaseDC()释放设备描述表资源.
+
+**CWindowDC对象可以访问到框架窗口的非客户区(即整个窗口),前面几种只能访问到窗口的客户区.**
+
+	void CDrawView::OnLButtonUp(UINT nFlags, CPoint point)
+	{
+		// TODO: 在此添加消息处理程序代码和/或调用默认值
+		CWindowDC dc(GetParent());	//构造CWindowDC对象时,需要一个CWnd类型的指针作为参数表示CWindowDC对象属于哪个窗口.
+		//即在哪个窗口中绘图.此处使用GetParent获得CMainFrame对象的指针.只有在CMainFrame窗口中才能看出效果
+		dc.MoveTo(m_ptOrigin);
+		dc.LineTo(point);
+
+		CView::OnLButtonUp(nFlags, point);
+	}
+	//此时可以在框架窗口的标题栏和菜单栏画线
+
+#### 4.2.5 在桌面窗口中划线
+
+CWindownDC对象可以在整个窗口中画线;CWnd类的GetDesktopWindow成员函数可以获得Windows桌面窗口的句柄.
+
+	void CDrawView::OnLButtonUp(UINT nFlags, CPoint point)
+	{
+		// TODO: 在此添加消息处理程序代码和/或调用默认值
+		CWindowDC dc(GetDesktopWindow());	
+		//构造CWindowDC对象时,需要一个CWnd类型的指针作为参数表示CWindowDC对象属于哪个窗口.
+		//即在哪个窗口中绘图.此处使用GetDesktopWindow获得Windows桌面窗口对象的指针
+		dc.MoveTo(m_ptOrigin);
+		dc.LineTo(point);
+
+		CView::OnLButtonUp(nFlags, point);
+	}
+
+#### 4.2.6 绘制彩色线条
+
+设备描述表默认是一个黑色画笔,因此绘制的线条都是黑色.如果绘制其他颜色,首先需要创建一个特定颜色的画笔,然后将此画笔选入设备描述表中.接下来绘制的线条颜色就有这个新画笔颜色决定.
+
+**1.创建画笔对象**
+
+	CPen(int nPenStyle, int nWidth, COLORREF crColor);
+	/*
+		para1:线型---PS_SOLID(实线)、PS_DASH(虚线)、PS_DOT(点线)
+		para2:线宽---1(1磅)
+		para3:笔的颜色,一般使用RGB宏构建
+			COLORREF RGB(BYTE bRed, BYTE bGreeen, BYTE bBlue);
+			/*
+				三个参数都是BYTE类型,取值为0~255即可.(0,0,0)表示黑色;(255,255,255)表示白色.
+			*/
+	*/
+
+**2.将画笔对象选入设备描述表中---画笔对象也是GDI对象**
+
+	CPen pen(PS_SOLID, 1, RGB(255, 0, 0));	//红色,实线,1磅的画笔
+	CClientDC dc(this);
+	CPen *pOldPen = dc.SelectObject(&pen);	//将GDI对象(此处为画笔)选入设备描述表,返回之前的GDI对象(画笔),为了后面的恢复
+	...	//一系列的画图操作
+	dc.SelectObject(pOldPen);	//将之前的GDI对象选入设备描述表,恢复到先前的状态.
+
+**绘制彩色线条实例**
+
+	void CDrawView::OnLButtonUp(UINT nFlags, CPoint point)
+	{
+		// TODO: 在此添加消息处理程序代码和/或调用默认值
+		CPen pen(PS_SOLID, 1, RGB(255, 0, 0));	//红色,实线,1磅
+		CClientDC dc(this);
+		CPen *pOldPen = dc.SelectObject(&pen);
+		dc.MoveTo(m_ptOrigin);
+		dc.LineTo(point);
+		dc.SelectObject(pOldPen);
+
+		CView::OnLButtonUp(nFlags, point);
+	}
+
+注意:画笔的宽度要小于等于1时,虚线线型才有效.
+
+### 4.3 使用画刷绘图
+
+MFC提供的CBrush类用于创建画刷对象.画刷通常用来填充一块区域.
+
+#### 4.3.1 简单画刷
+
+简单画刷,不需要将画刷选入设备描述表.
+
+	void CDrawView::OnLButtonUp(UINT nFlags, CPoint point)
+	{
+		// TODO: 在此添加消息处理程序代码和/或调用默认值
+		CBrush brush(RGB(255, 0, 0));	//创建一个红色画刷
+		CClientDC dc(this);
+		dc.FillRect(CRect(m_ptOrigin, point), &brush);
+		/*
+			//利用画刷填充拖曳过程中形成的矩形区域
+			para1:RECT结构体或CRect对象的指针,表示填充的矩形.一般使用CRect
+				CRect(POINT topLeft, POINT bottomRight);
+				/*
+					para1 & para2:矩形区域的左上角和右下角两个点.
+				*/
+			para2:画刷对象的指针
+		*/
+
+		CView::OnLButtonUp(nFlags, point);
+	}
+
+#### 4.3.2 位图画刷
+
+**1.创建一个位图具有位图资源的CBitmap对象**
+
+	1.添加一个位图资源
+	--->Insert--->Resource...--->选择Bitmap--->New--->则可创建一个默认名称为IDB_BITMAP1(该宏对应一个ID值)的位图资源.
+		并且可以在Resource View下编辑该位图资源
+	2.创建一个位图对象
+		CBitmap bitmap;	//创建一个位图对象
+	3.为位图对象加载位图资源
+		bitmap.LoadBitmap(IDB_BITMAP1);	//para:资源的ID值.IDB_BITMAP1为表示一个资源ID的宏.
+
+**2.构造CBrush类的位图画刷**
+
+	CBrush brush(&bitmap);	//将位图加载到画刷构成位图画刷
+
+**位图画刷实例**
+
+	void CDrawView::OnLButtonUp(UINT nFlags, CPoint point)
+	{
+		// TODO: 在此添加消息处理程序代码和/或调用默认值
+		CBitmap bitmap;
+		bitmap.LoadBitmap(IDB_BITMAP1);	//已经添加好了一个位图资源IDB_BITMAP1
+		CBrush brush(&bitmap);	//创建位图画刷
+		CClientDC dc(this);
+		dc.FillRect(CRect(m_ptOrigin, point), &brush);
+		//利用位图画刷填充矩形区域
+
+		CView::OnLButtonUp(nFlags, point);
+	}
+
+#### 4.3.3. 透明画刷
+
+利用CDC类的Rectangle函数绘制矩形
+
+	void CDrawView::OnLButtonUp(UINT nFlags, CPoint point)
+	{
+		// TODO: 在此添加消息处理程序代码和/或调用默认值
+		CClientDC dc(this);
+		//绘制矩形
+		dc.Rectangle(CRect(m_ptOrigin, point));
+		/*
+			para:RECT结构体或CRect对象的指针.一般使用CRect函数构建
+		*/
+
+		CView::OnLButtonUp(nFlags, point);
+	}
+
+**由于设备描述表中有一个默认的白色画刷,绘图时会用该画刷填充矩形区域.因此会出现当有位置重叠时,后面绘制的矩形将先前的矩形遮挡住.**
+
+**创建空画刷---因为无真正的透明画刷**
+
+	1.获取空画刷句柄:
+	HGDIOBJ GetStockObject(int fnObject);	//得到系统的标准画刷
+	/*
+		para:制定获取对象的类型.
+			e.g.
+				NULL_BRUSH--->空画刷
+				BLACK_BRUSH--->黑色画刷
+		retval:返回多种资源对象的句柄.HGDIOBJ实际为void *,在实际使用时,需要进行类型转换.一般转换为"(HBRUSH)"即可
+	*/
+	2.将空画刷句柄转换为画刷对象:---CBrush类的FromHandle静态函数实现
+	static CDC *PASCAL FromHandle(HDC hDC);
+	/*
+		para:DC句柄.HBRUSH属于HDC的一种.
+	*/
+	
+	//综合,创建一个空画刷
+	CBrush *pBrush = CBrush::FromHandle((HBRUSH)GetStockObject(NULL_BRUSH));
+	//访问CBrush类的静态成员函数--->CBrush::FromHandle...
+
+**实例---使用空画刷绘制矩形**
+
+	void CDrawView::OnLButtonUp(UINT nFlags, CPoint point)
+	{
+		// TODO: 在此添加消息处理程序代码和/或调用默认值
+		CClientDC dc(this);
+		CBrush *pBrush = CBrush::FromHandle((HBRUSH)GetStockObject(NULL_BRUSH));
+
+		//将空画刷选入设备描述表
+		CBrush *pOldBrush = dc.SelectObject(pBrush);
+		dc.Rectangle(CRect(m_ptOrigin, point));
+		//恢复先前的画刷
+		dc.SelectObject(pOldBrush);
+
+		CView::OnLButtonUp(nFlags, point);
+	}
+
+**静态成员函数、静态成员变量、非静态成员函数、非静态成员变量**
+
+	1.静态成员函数和静态成员变量属于类本身,在类加载的时候就为他们分配了内存.与有无对象无关.
+		可以直接通过类名::函数名或类名::变量名来访问
+	2.非静态成员函数和非静态成员变量属于对象的方法和数据,必须先产生类的对象,然后通过类的对象去访问.
+		
+	//实例
+	class point
+	{
+		public:
+			void output()
+			{}
+			static void init()
+			{}
+	};
+	voia main()
+	{
+		/*
+		Point pt;
+		pt.init();	//通过对象访问静态成员函数--->正确
+		pt.output();	//通过对象访问非静态成员函数--->正确
+		*/
+		Point::init();	//直接使用类名访问静态成员函数--->正确
+		Point::output();	//直接使用类名访问非静态成员函数--->错误.非静态成员函数属于对象,此时没有分配内存
+	}
+	3.静态成员函数中是不能调用非静态成员(包括非静态成员函数和非静态成员变量).因为可能还没有分配内存.只能访问静态成员变量.
+	4.非静态成员函数可以调用静态静态成员函数
+	5.静态成员变量一定要进行初始化,并且在类的定义之外进行初始化.
+	int Point::x = 0;
+	int Point::y = 0;
+
+### 4.4 绘制连续线条
+	
+	
