@@ -1716,4 +1716,130 @@ MFC提供的CBrush类用于创建画刷对象.画刷通常用来填充一块区�
 
 ### 4.4 绘制连续线条
 	
+**1.在CDrawView类中增加一个BOOL型的成员变量m_bDraw,用于表明鼠标左键是否被按下.**
+
+	private:
+		bool m_bDraw;
+
+	//会在构造函数中被自动初始化为false
+	CDrawView::CDrawView()
+	: m_bDraw(false)	//初始化bool型变量m_bDraw为false
+	, m_bOrigin(0)		//多个成员变量初始化
+	{
+		// TODO: 在此处添加构造代码
 	
+	}
+
+**2.在鼠标左键按下消息响应函数中设置该变量为true,在鼠标左键弹起的响应函数中设备为false.**
+
+	void CDrawView::OnLButtonDown(UINT nFlags, CPoint point)
+	{
+		// TODO: 在此添加消息处理程序代码和/或调用默认值
+		m_ptOrigin = point;		//仍然保留起始点
+		m_bDraw = true;
+		CView::OnLButtonDown(nFlags, point);
+	}
+
+	void CDrawView::OnLButtonUp(UINT nFlags, CPoint point)
+	{
+		// TODO: 在此添加消息处理程序代码和/或调用默认值
+		m_bDraw = false;
+		CView::OnLButtonUp(nFlags, point);
+	}
+
+**3.添加鼠标移动消息(WM_MOUSEMOVE)的响应函数OnMouseMove,并添加相关代码**
+
+	/*
+	首先判断鼠标左键按下是否为真,为真表示鼠标左键按下,此时可以进行画线操作.在鼠标移动过程中,
+	都是一个一个小点,只需要将这些小点连成线段即可.要注意线段的起点切换.
+	*/
+	void CtestView::OnMouseMove(UINT nFlags, CPoint point)
+	{
+		// TODO: 在此添加消息处理程序代码和/或调用默认值
+	
+		CClientDC dc(this);
+		CPen pen(PS_SOLID, 1, RGB(255, 0, 0));
+		CPen *pOldPen = dc.SelectObject(&pen);	//将pen选入到设备描述表
+
+		if (m_bTest == true)
+		{
+			dc.MoveTo(m_ptOrigin);
+			dc.LineTo(point);
+			m_bOrigin = point;	//保留当前点为下一次线段的起点
+		}
+		dc.SelectObject(pOldPen);	//还原原来的画笔	
+
+		CView::OnMouseMove(nFlags, point);
+	}
+
+### 4.5 绘制扇形效果的线条
+
+**保持起点不变(鼠标左键按下位置),分别绘制到鼠标移动点的直线,就会出现扇形效果.**
+
+	void CtestView::OnMouseMove(UINT nFlags, CPoint point)
+	{
+		// TODO: 在此添加消息处理程序代码和/或调用默认值
+	
+		CClientDC dc(this);
+		CPen pen(PS_SOLID, 1, RGB(255, 0, 0));
+		CPen *pOldPen = dc.SelectObject(&pen);	//将pen选入到设备描述表
+
+		if (m_bTest == true)
+		{
+			dc.MoveTo(m_ptOrigin);
+			dc.LineTo(point);
+			//m_bOrigin = point;	//注释掉该行或者删除即可
+		}
+		dc.SelectObject(pOldPen);	//还原原来的画笔	
+
+		CView::OnMouseMove(nFlags, point);
+	}
+
+**绘制带边线的扇形**
+
+	1.添加一个成员变量m_ptOld,用于保存鼠标移动的前一个点.
+		private:
+			CPoint m_ptOld;
+	2.在左键按下响应函数中赋值为当前按下点.
+		void CtestView::OnLButtonDown(UINT nFlags, CPoint point)
+		{
+			// TODO: 在此添加消息处理程序代码和/或调用默认值
+			//MessageBox(LPCTSTR("View Clicked1"));
+			//MessageBox(_T("View Clicked!"));
+			m_bTest = true;
+			m_ptOrigin = point;
+			m_ptOld = point;
+			CView::OnLButtonDown(nFlags, point);
+		}
+	3.在鼠标移动响应函数中添加代码:
+		void CtestView::OnMouseMove(UINT nFlags, CPoint point)
+		{
+			// TODO: 在此添加消息处理程序代码和/或调用默认值
+		
+			CClientDC dc(this);
+			CPen pen(PS_SOLID, 2, RGB(255, 0, 0));
+			CPen *pOldPen = dc.SelectObject(&pen);
+		
+			if (m_bTest == true)
+			{
+				dc.MoveTo(m_ptOrigin);
+				dc.LineTo(point);
+				//m_ptOrigin = point;
+				dc.LineTo(m_ptOld);	//画线到前一个点
+				m_ptOld = point;		//保留当前点,用作下一条线段的起点
+			}
+		
+			dc.SelectObject(pOldPen);
+		
+			CView::OnMouseMove(nFlags, point);
+		}
+		
+设置绘图模式函数:SetROP2--->暂时没有使用过.
+
+	int SetROP2(int nDrawMode);
+	/*
+		para:绘图模式.R2_BLACK、R2_WHITE、R2_MERGENOTPEN
+	*/
+***
+## Chapter 5 文本编程
+
