@@ -1843,3 +1843,85 @@ MFC提供的CBrush类用于创建画刷对象.画刷通常用来填充一块区�
 ***
 ## Chapter 5 文本编程
 
+### 5.1 插入符
+
+插入符(Caret):文本处理程序的编辑窗口中那条闪烁的竖线,用于提示用户输入.
+
+#### 5.1.1 创建文本插入符
+
+利用CWnd类的CreateSolidCaret()函数完成:
+
+	void CreateSolidCaret(int nWidth, int nHeight);
+	/*
+		para1:指定插入符的宽度(逻辑单位).如果为0,则系统将其设置为系统定义的窗口边界的宽度.
+		para2:指定插入符的高度(逻辑单位).如果为0,则系统将其设置为系统定义的窗口边界的高度.
+	*/
+
+**实例1---在视类窗口创建一个(10,20)的简单插入符**
+
+	/*因为视类窗口位于框架窗口之上,因此对窗口客户区的鼠标和键盘操作实际上都是在视类窗口上进行的.*/
+	step 1:为视类添加WM_CREATE(窗口创建消息)消息的响应函数OnCreate.
+	step 2:在OnCreate函数中添加下面的额代码.
+	int CtextView::OnCreate(LPCREATESTRUCT lpCreateStruct)
+	{
+		if (CView::OnCreate(lpCreateStruct) == -1)
+			return -1;
+	
+		// TODO:  在此添加您专用的创建代码
+		CreateSolidCaret(10, 20);	//创建一个插入符
+		ShowCaret();	//显示插入符---一定需要添加,因为插入符初始时是隐藏的.
+		return 0;
+	}
+
+**实例2---创建一个符合常规的插入符**
+
+实例1创建的插入符看着很别扭.根据文本信息来创建插入符是比较和情理的.
+
+	1.利用CDC类的GetTextMetrics成员函数获得设备描述表中当前字体的度量信息.
+		BOOL GetTextMetrics(LPTEXTMETRIC lpMetrics) const;
+		/*
+			para:保存从设备描述表中获得的当前字体的信息.
+			typedef struct tagTEXTMETRICW
+			{
+			    LONG        tmHeight;	//字体的高度---常用
+			    LONG        tmAscent;	//升序高度
+			    LONG        tmDescent;	//降序高度
+			    LONG        tmInternalLeading;
+			    LONG        tmExternalLeading;
+			    LONG        tmAveCharWidth;		//平均宽度,因为每个字符的宽度不一样,
+				//一般使用平均宽度/8作为插入符的宽度比较合理.
+			    LONG        tmMaxCharWidth;		//字符最大宽度
+			    LONG        tmWeight;
+			    LONG        tmOverhang;
+			    LONG        tmDigitizedAspectX;
+			    LONG        tmDigitizedAspectY;
+			    WCHAR       tmFirstChar;
+			    WCHAR       tmLastChar;
+			    WCHAR       tmDefaultChar;
+			    WCHAR       tmBreakChar;
+			    BYTE        tmItalic;
+			    BYTE        tmUnderlined;
+			    BYTE        tmStruckOut;
+			    BYTE        tmPitchAndFamily;
+			    BYTE        tmCharSet;
+			} TEXTMETRICW, *PTEXTMETRICW, NEAR *NPTEXTMETRICW, FAR *LPTEXTMETRICW;
+			
+			typedef TEXTMETRICW TEXTMETRIC;
+		*/
+	2.修改例1代码如下:
+	int CtextView::OnCreate(LPCREATESTRUCT lpCreateStruct)
+	{
+		if (CView::OnCreate(lpCreateStruct) == -1)
+			return -1;
+	
+		// TODO:  在此添加您专用的创建代码
+		CClientDC dc(this);
+		TEXTMETRIC tm;	//保存字体信息
+		dc.GetTextMetrics(&tm);		//得到设备描述表中的字体信息,并保存的TEXTMETRIC结构体中
+		CreateSolidCaret(tm.tmAveCharWidth / 8, tm.tmHeight);
+			//tm.tmAveCharWidth/8:作为宽度是一个比较合理的值.高度和设备描述表中的一样.
+		ShowCaret();
+		return 0;
+	}
+	
+#### 5.1.2 创建图形插入符
