@@ -1925,3 +1925,183 @@ MFC提供的CBrush类用于创建画刷对象.画刷通常用来填充一块区�
 	}
 	
 #### 5.1.2 创建图形插入符
+
+1.创建一个位图资源:
+
+	资源视图下右击text.rc--->选择"添加资源(A)"--->选择Bitmap--->得到一个ID名字叫"IDB_BITMAP1"的位图,
+		并进行位图的绘制.
+
+2.为CTextView类添加一个CBitmap的成员变量:
+
+	在CTextView类上右击--->选择添加(添加变量)--->选择访问private/变量类型CBitmap/变量名bitmap.
+	/*必须为CTextView类的成员变量,否则需要注意变量的生命周期*/
+
+3.在WM_CREATE消息的响应函数OnCreate中添加如下代码:
+
+	int CtextView::OnCreate(LPCREATESTRUCT lpCreateStruct)
+	{
+		if (CView::OnCreate(lpCreateStruct) == -1)
+			return -1;
+	
+		// TODO:  在此添加您专用的创建代码
+		bitmap.LoadBitmapW(IDB_BITMAP1);	//加载一个bitmap位图资源
+		CreateCaret(&bitmap);
+		/*
+			CWnd类的CreateCaret成员函数用于创建图形插入符.
+			void CreateCaret(CBitmap *bitmap);
+		*/
+		ShowCaret();
+		return 0;
+	}
+
+### 5.2 窗口重绘
+
+窗口发生重绘时会产生WM_PAINT消息,CTextView类中响应该消息的响应函数是OnDraw()函数.
+
+#### 5.2.1 OnDraw函数
+
+**如果希望输入的图形或文字始终能够显示在窗口上,则输入操作应该在OnDraw函数中处理.**
+
+	CString类支持的操作:
+		1)直接在声明变量时初始化
+			CString str("VC++ 深入详解");
+		2)由字符串赋值
+			CString str;
+			str = "VC++ 深入详解";
+		3)添加字符串资源:
+			Ctring str;
+			str.LoadString(IDS_STRING101);
+			/*
+			para为资源视图下,String Table中的ID.可以自己构建.在末尾添加编辑即可.
+			*/
+
+实例1---在窗口中输出指定的字符串(OnDraw函数中添加)
+
+	void CtextView::OnDraw(CDC* pDC)
+	{
+		CtextDoc* pDoc = GetDocument();
+		ASSERT_VALID(pDoc);
+		if (!pDoc)
+			return;
+		// TODO: 在此处为本机数据添加绘制代码
+		CString str("VC++ 深入详解");
+		pDC->TextOut(60, 60, str);	/*在(50,50)的位置显示str字符串*/
+	}
+
+实例2---使用添加字符串资源的方法在窗口中输出指定字符串
+
+	void CtextView::OnDraw(CDC* pDC)
+	{
+		CtextDoc* pDoc = GetDocument();
+		ASSERT_VALID(pDoc);
+		if (!pDoc)
+			return;
+		// TODO: 在此处为本机数据添加绘制代码
+	
+		CString str("VC++ 深入详解");
+		pDC->TextOut(60, 60, str);
+	
+		str.LoadString(IDS_STRING101);
+		/*
+			IDS_STRING101是自己在String Table中添加的.
+		*/
+		pDC->TextOutW(0, 200, str);	//(0,200)的位置显示str
+	}
+
+### 5.3 路径
+
+设备描述表中有一个路径层(path bracket).
+
+路径层:界定一个范围(特殊区域),主要和裁剪区域共同使用.如果与其他操作有重叠部分,则对其他的操作无影响.路径层利用CDC类的BeginPath和EndPath这两个函数来实现.
+
+**获得字符串显示时所占据的宽度和高度:CDC类的GetTextExtent函数**
+
+	CSize GetTextExtent(const CString& str) const;
+	/*
+		para:一个字符串.此处为字符串的引用
+		retval:CSize类型的对象.CSize包含两个成员:cx, cy(分别表示字符串的宽度和高度).
+	*/
+
+CDC类的GetTextMetrics是获得设备描述表中当前字体的度量信息.与GetTextExtent不同.
+
+实例---使用路径层
+
+	void CtextView::OnDraw(CDC* pDC)
+	{
+		CtextDoc* pDoc = GetDocument();
+		ASSERT_VALID(pDoc);
+		if (!pDoc)
+			return;
+		// TODO: 在此处为本机数据添加绘制代码
+	
+		CString str("VC++ 深入详解");
+		pDC->TextOut(60, 60, str);
+	
+		CSize cs = pDC->GetTextExtent(str);	//得到字符串显示时所占据的宽度和高度
+	
+		str.LoadString(IDS_STRING101);
+		pDC->TextOutW(0, 200, str);
+	
+		//pDC->BeginPath();
+		/*
+		如果没有注释掉,表示圈定一个矩形返回.该矩形返回凌驾于其他操作之上,但是不会对其他操作产生影响.
+		(即该显示的还是照常显示);
+		如果注释掉了,表示绘制一个矩形.由于矩形默认会采用设备描述表中的白色画刷填充,此时只能看到矩形
+		区域,前面的字符串("VC++ 深入详解")看不到了.
+		*/
+		pDC->Rectangle(60, 60, 60 + cs.cx, 60 + cs.cy);
+		//pDC->EndPath();
+		/*表示结束路径层*/
+	}
+
+**裁剪区域(clippint region):一个绘图区域,大小可由自己限定.整个客户区为最大的一个裁剪区域.主要用于和路径层产生一个"排除路径层"或者"只选择路径层显示"的效果.**
+
+CDC类的SelectClipPath函数用于设置裁剪区域和路径层的互操作的形式:
+
+	BOOL SelectClipPath(int nMode);
+	/*
+		para:指定互操作模式.
+			为"RGN_DIFF"---排除设置的路径层区域
+			为"RGN_AND"---当前裁剪区域和设置的路径层区域的交集(即只选择路径层显示)
+	*/
+
+实例---显示网格,但到设置路径层的位置让网格不穿过所设置的矩形区域/只保留矩形区域的网格
+
+	void CtextView::OnDraw(CDC* pDC)
+	{
+		CtextDoc* pDoc = GetDocument();
+		ASSERT_VALID(pDoc);
+		if (!pDoc)
+			return;
+		// TODO: 在此处为本机数据添加绘制代码
+	
+		CString str("VC++ 深入详解");
+		pDC->TextOut(60, 60, str);
+	
+		CSize cs = pDC->GetTextExtent(str);
+	
+		str.LoadString(IDS_STRING101);
+		pDC->TextOutW(0, 200, str);
+	
+		pDC->BeginPath();
+		pDC->Rectangle(60, 60, 60 + cs.cx, 60 + cs.cy);
+		pDC->EndPath();
+	
+		pDC->SelectClipPath(RGN_DIFF);
+		/*
+			RGN_DIFF:后续操作显示当前裁剪区域(整个客户区)排除掉路径层设置的矩形区域.
+			但对矩形区域那里原本就显示有的字符串("VC++ 深入详解")无影响.
+			如果选择RGN_DIFF:后续操作显示当前裁剪区域(整个客户区)与路径层区域的交集.
+			但对矩形区域那里原本就显示有的字符串("VC++ 深入详解")无影响.
+		*/
+	
+		for (int i=0; i<300; i+=10)	//显示一个网格
+		{
+			pDC->MoveTo(0, i);
+			pDC->LineTo(300, i);
+			pDC->MoveTo(i, 0);
+			pDC->LineTo(i, 300);
+		}
+	}
+
+### 5.4 字符输入
