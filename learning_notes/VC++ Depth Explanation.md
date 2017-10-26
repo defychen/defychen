@@ -2105,3 +2105,150 @@ CDC类的SelectClipPath函数用于设置裁剪区域和路径层的互操作的
 	}
 
 ### 5.4 字符输入
+
+**1.为CTextView类添加保存插入点的成员变量、保存字符串的成员变量以及鼠标左键按下消息的响应函数:**
+
+	1.添加保存插入点的成员变量m_ptOrigin;
+	2.添加保存输入字符串的成员变量m_strLine;
+	3.添加鼠标左键按下响应函数,并添加代码:
+		void CtextView::OnLButtonDown(UINT nFlags, CPoint point)
+		{
+			// TODO: 在此添加消息处理程序代码和/或调用默认值
+			SetCaretPos(point);	
+			/*SetCaretPos:移动插入点为鼠标左键按下的位置.	
+				para:插入点.*/
+			m_strLine = (_T(""));
+			/*当重新设置插入点时,需要清空保存的字符串.
+				m_strLine = (_T(""));	//VS2010需要这样清空
+			或者使用:
+				m_strLine.Empty();	//清空字符串
+			*/
+			m_ptOrigin = point;	//保存插入点
+			CView::OnLButtonDown(nFlags, point);
+		}
+
+**2.添加WM_CHAR消息的响应函数,并考虑输入回车字符和退格键(Backspace)的处理.**
+
+	1.添加WM_CHAR消息的响应函数OnChar;
+	2.回车键的处理(ASCII码是0x0d)
+		输入回车键,插入符换到下一行.此时插入符的横坐标不变,纵坐标加上当前字体高度
+		(由DC的GetTextMetrics函数可获得).并清空保存的字符串
+	3.退格键的处理(ASCII码是0x08)
+		1)设置当前文本颜色为背景色
+			COLORREF clr = dc.SetTextColor(dc.GetBkColor());
+		2)让当前文本以背景色显示,相当于擦除当前所有文本
+			dc.TextOut(m_ptOrigin.x, m_ptOrigin.y, m_strLine);
+		3)删掉文本的最后一个字符
+			m_strLine = m_strLine.Left(m_strLine.GetLength() - 1);
+			/*
+			Left:取字符串左边para个字符.
+			GetLength:得到字符串的长度.
+			*/
+		4)将原本的背景色再设置回去
+			dc.SetTextColor(clr);
+	4.如果是按下其他键,曾增加到字符串中
+		m_strLine += (wchar_t)nChar;	//VS2010必须将字符转成"wchar_t"形式.
+	5.随着字符的输入移动插入符
+		CSize sz = dc.GetTextExtent(m_strLine);	//得到字符串的宽度和高度
+		CPoint pt;
+		pt.x = m_ptOrigin.x + sz.cx;	//移动横坐标
+		pt.y = m_ptOrigin.y;			//纵坐标不变
+		SetCaretPos(pt);
+	6.将文本重新再输出
+		dc.TextOut(m_ptOrigin.x, m_ptOrigin.y, m_strLine);
+
+**实例---OnChar函数代码**
+	
+	void CtextView::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
+	{
+		// TODO: 在此添加消息处理程序代码和/或调用默认值
+		CClientDC dc(this);
+		TEXTMETRIC tm;
+		dc.GetTextMetrics(&tm);
+		if (0x0d == nChar)	//Enter key
+		{
+			m_strLine.Empty();
+			m_ptOrigin.y += tm.tmHeight;
+		} else if (0x08 == nChar)	//BackSpace key
+		{
+			COLORREF clr = dc.SetTextColor(dc.GetBkColor());
+			//dc.TextOut(m_ptOrigin.x, m_ptOrigin.y, m_strLine);
+			m_strLine = m_strLine.Left(m_strLine.GetLength() - 1);
+			dc.SetTextColor(clr);
+		} else
+		{
+			m_strLine += (wchar_t)nChar;
+		}
+	
+		CSize sz = dc.GetTextExtent(m_strLine);
+		CPoint pt;
+		pt.x = m_ptOrigin.x + sz.cx;
+		pt.y = m_ptOrigin.y;
+		SetCaretPos(pt);
+	
+		dc.TextOut(m_ptOrigin.x, m_ptOrigin.y, m_strLine);
+		CView::OnChar(nChar, nRepCnt, nFlags);
+	}
+
+#### 5.4.1 设置显示的字体
+
+MFC提供的CFont类用来专门设置字体.
+
+1.创建设置CFont字体对象
+
+	CFont font;
+
+2.初始化CFont对象---一般使用CFont类的CreatePointFont成员函数
+
+	BOOL CreatePointFont(int nPointSize, LPCTSTR lpszFaceName, CDC *pDC=NULL);
+	/*
+		para1:创建字体的高度,单位是一个点的十分之一.e.g.如果该值为120,则是创建一个12个点的字体
+		para2:字体的名称.e.g."楷体"、"宋体"等名称.
+		para3:CDC对象的指针.用来把para1制定指定的高度转换为逻辑单位.如果该值为空,则使用一个
+			屏幕设备描述表来完成这种转换.
+	*/
+
+3.将所设置的字体选入设备描述表---使用CDC类的SelectObject成员函数.在结束后并恢复
+
+	CFont *pOldFont = dc.SelectObject(&font);
+	...
+	dc.SelectObject(pOldFont);	//恢复到之前的字体
+
+实例---在OnChar设置显示的字体为楷体
+
+	void CtextView::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
+	{
+		// TODO: 在此添加消息处理程序代码和/或调用默认值
+		CClientDC dc(this);
+	+	CFont font;
+	+	font.CreatePointFont(300, (LPCTSTR)"楷体", NULL);	//vs2010中para2需要转换成LPCTSTR
+	+	CFont *pOldFont = dc.SelectObject(&font);
+		TEXTMETRIC tm;
+		dc.GetTextMetrics(&tm);
+		if (0x0d == nChar)	//Enter key
+		{
+			m_strLine.Empty();
+			m_ptOrigin.y += tm.tmHeight;
+		} else if (0x08 == nChar)	//BackSpace key
+		{
+			COLORREF clr = dc.SetTextColor(dc.GetBkColor());
+			//dc.TextOut(m_ptOrigin.x, m_ptOrigin.y, m_strLine);
+			m_strLine = m_strLine.Left(m_strLine.GetLength() - 1);
+			dc.SetTextColor(clr);
+		} else
+		{
+			m_strLine += (wchar_t)nChar;
+		}
+	
+		CSize sz = dc.GetTextExtent(m_strLine);
+		CPoint pt;
+		pt.x = m_ptOrigin.x + sz.cx;
+		pt.y = m_ptOrigin.y;
+		SetCaretPos(pt);
+	
+		dc.TextOut(m_ptOrigin.x, m_ptOrigin.y, m_strLine);
+	+	dc.SelectObject(pOldFont);
+		CView::OnChar(nChar, nRepCnt, nFlags);
+	}
+	
+	
