@@ -1154,3 +1154,18 @@ pthread_join()、pthread_testcancel()、pthread_cond_wait()、pthread_cond_timew
 			有的地方也用"__volatile__",意思是一样的.
 	.word 0xebfffffe:是一条死循环指令.常用于下软断点.
 	*/
+
+## 46. C语言函数声明中参数类型写在右括号后---古老的写法
+
+	int add(a, b)
+	int a;
+	int b;
+	{
+		return a + b;
+	}
+
+	/*上述是以前C语言函数的写法,现在都改了.上述相当于:*/
+	int add(int a, int b)
+	{
+		return a + b;
+	}

@@ -2251,4 +2251,131 @@ MFC提供的CFont类用来专门设置字体.
 		CView::OnChar(nChar, nRepCnt, nFlags);
 	}
 	
-	
+#### 5.4.2 字幕变色功能的实现
+
+1.设置在指定矩形范围内输出文字---CDC类的DrawText函数实现
+
+	int DrawText(const CString &str, LPRECT lpRect, UINT nFormat);
+	/*
+		para1:指定要输出的字符串
+		para2:指定文字显示范围的矩形
+		para3:指定文本输出的格式.
+			DT_LEFT--->从字符串的左边开始,逐渐向右输出文字;
+			DT_RIGHT--->从字符串的右边开始输出,逐渐向左输出文字;
+			DT_CENTER--->从字符串中间字符开始向两边扩展.
+	*/
+
+2.在OnCreate函数中添加定时器,用于发出定时器消息---CWnd类的SetTimer成员函数可以设置定时器
+
+	UINT SetTime(UINT nIDEvent, UINT nElapse, void (CALLBACK EXPORT *lpfnTimer)(HWND, UINT, UINT, DWORD));
+	/*
+		para1:指定一个非零值的定时器标识.用于标识一个定时器,并将该标识返回.后续定时器响应函数中应用该标识可以
+			知道具体是哪个定时器;
+		para2:指定定时器时间间隔,即每隔多久发送一次定时器消息(WM_TIMER).以毫秒(ms)为单位.
+			e.g.该值为1000表示每隔1s发送一次定时器消息;
+		para3:一个回调函数,一般指定为NULL即可.表示发出的WM_TIMER消息会放到消息队列中,然后由程序响应此消息的窗口对象来处理.
+	*/
+
+	/*在OnCreate函数中设置定时器(响应WM_CREATE消息)*/
+	int CTestView::OnCreate(LPCREATESTRUCT lpCreateStruct)
+	{
+		...
+		
+		SetTimer(1, 100, NULL);
+		/*标识符为1,每个100ms发出一次定时器消息.无回调函数*/
+		
+		return 0;
+	}
+
+3.添加响应WM_TIMER消息的响应函数OnTimer,并添加一个保存矩形宽度值不断增加的成员变量m_nWidth.
+
+	1.添加一个保存矩形宽度值不断增加的成员变量m_nWidth;
+	2.添加响应WM_TIMER消息的响应函数OnTimer,并在OnTimer中添加处理代码
+	void CTextView::OnTimer(UINT nIDEvent)
+	{
+		m_nWidth += 5;	//按5个像素点增加
+
+		CClientDC dc(this);
+		TEXTMETRIC tm;	//保存设备描述表中的字体信息
+		dc.GetTextMetrics(&tm);
+		CRect rect;
+		rect.left = 0;
+		rect.top = 200;		//左上角点
+		rect.right = m_nWidth;	//宽度不断变化
+		rect.bottom = rect.top + tm.tmHeight;	//高度不变
+
+		dc.SetTextColor(RGB(255, 0, 0));	//设置字体颜色为红色
+		CString str;
+		str.LoadString(IDS_STRING101);
+		/*IDS_STRING101是自己在String Table中添加的*/
+		dc.DrawText(str, rect, DT_LEFT);	//从字符串的左边开始,逐渐向右输出文字
+
+		CView::OnTimer(nIDEvent);
+	}
+
+	--------------------------------------------------------------
+	/*设置右对齐显示*/
+	void CTextView::OnTimer(UINT nIDEvent)
+	{
+		m_nWidth += 5;	//按5个像素点增加
+
+		CClientDC dc(this);
+		TEXTMETRIC tm;	//保存设备描述表中的字体信息
+		dc.GetTextMetrics(&tm);
+		CRect rect;
+		rect.left = 0;
+		rect.top = 200;		//左上角点
+		rect.right = m_nWidth;	//宽度不断变化
+		rect.bottom = rect.top + tm.tmHeight;	//高度不变
+
+		dc.SetTextColor(RGB(255, 0, 0));	//设置字体颜色为红色
+		CString str;
+		str.LoadString(IDS_STRING101);
+		/*IDS_STRING101是自己在String Table中添加的*/
+		dc.DrawText(str, rect, DT_LEFT);	//从字符串的左边开始,逐渐向右输出文字
+
+	+	rect.top = 150;
+	+	rect.bottom = rect.top + tm.tmHeight;
+	+	dc.DrawText(str, rect, DT_RIGHT);
+
+		CView::OnTimer(nIDEvent);
+	}
+
+	--------------------------------------------------------------
+	/*设置当颜色变色完设置为另一种颜色*/
+	/*设置右对齐显示*/
+	void CTextView::OnTimer(UINT nIDEvent)
+	{
+		m_nWidth += 5;	//按5个像素点增加
+
+		CClientDC dc(this);
+		TEXTMETRIC tm;	//保存设备描述表中的字体信息
+		dc.GetTextMetrics(&tm);
+		CRect rect;
+		rect.left = 0;
+		rect.top = 200;		//左上角点
+		rect.right = m_nWidth;	//宽度不断变化
+		rect.bottom = rect.top + tm.tmHeight;	//高度不变
+
+		dc.SetTextColor(RGB(255, 0, 0));	//设置字体颜色为红色
+		CString str;
+		str.LoadString(IDS_STRING101);
+		/*IDS_STRING101是自己在String Table中添加的*/
+		dc.DrawText(str, rect, DT_LEFT);	//从字符串的左边开始,逐渐向右输出文字
+
+		rect.top = 150;
+		rect.bottom = rect.top + tm.tmHeight;
+		dc.DrawText(str, rect, DT_RIGHT);
+
+		CSize sz = dc.GetTextExtent(str);	//得到字符串的宽度和高度信息
+		if (m_nWitdh > sz.cx)	//当矩形宽度超过字符串的宽度时设置为另一种颜色
+		{
+			m_nWidth = 0;
+			dc.SetTextColor(RGB(0, 255, 0));	//设置文本颜色为绿色
+			dc.TextOut(0, 200, str);
+		}
+
+		CView::OnTimer(nIDEvent);
+	}
+***
+## Chapter 6 菜单

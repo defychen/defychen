@@ -1972,7 +1972,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 										//而且这个也会显示在/dev/defy_test.
 	/*!< TEST ioctl CMD base*/
 	#define TEST_BASE 0xd1			//ioctl cmd base.幻数(type), 8 bit(0~0xff).
-	//根据./Documentation/ioctl/ioctl_num.txt选择,避免与已经使用的冲突*/
+	//根据./Documentation/ioctl/ioctl-number.txt选择,避免与已经使用的冲突*/
 	
 	/*
 	* ioctl list
