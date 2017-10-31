@@ -2379,3 +2379,50 @@ MFC提供的CFont类用来专门设置字体.
 	}
 ***
 ## Chapter 6 菜单
+
+### 6.1 菜单命令响应函数
+
+**添加一个菜单项,并添加响应函数**
+
+	1.在资源视图下,双击"Menu->Menu.rc->Menu->IDR_MAINFRAME"菜单资源
+		(前面Menu是新建的MFC文件名是Menu);
+	2.在右侧显示的菜单编辑器中.在"帮助"菜单后右键->新插入(I)即可得到一个新的菜单项.需要如下设置;
+		在属性窗口中(如没有可以右键选择属性):
+		1.Caption--->输入该菜单的名字;
+		2.Popup--->选择False(决定是否是弹出菜单,像文件、编辑、视图等顶层菜单),表示不是弹出式菜单;
+		3.ID--->IDM_TEST(M表示菜单Menu,后面加上该菜单的名字).
+			e.g.IDC--->Cursor(光标);IDI--->Icon(图标)
+	3.添加该菜单项的响应函数:
+		1.打开类向导(Class Wizard),快捷键Ctrl+Shift+x.
+		2.项目选择Menu;类名选择CMainFrame;命令中对象ID(B):选择IDM_TEST;
+			消息(S)选择COMMAND.在底部成员函数(M)会显示创建的响应函数的相关信息.
+		3.选择编辑代码(E)定位到所添加的成员函数位置.
+	4.在响应函数中添加如下代码:
+		void CMainFrame::OnTest()
+		{
+			// TODO: 在此添加命令处理程序代码
+			MessageBox(_T("MainFrame clicked!"));	//弹出一个消息框.
+		}
+
+**菜单分类:**
+
+	1.弹出式菜单(Popup设置为True的菜单).MFC中的顶层菜单.e.g.文件、编辑、查看等.也叫子菜单
+		由于设置了Popup为True,因此这种菜单不能响应命令.而且其ID项也不能修改(灰色显示)
+	2.菜单项(Popup设置为False的菜单).MFC子菜单下面的各个菜单.e.g.文件菜单下面的新建菜单.
+		这种菜单的ID可以输入和修改
+
+### 6.2 菜单命令的路由
+
+CMenuApp类和CMenuDoc都不是从CWnd类派生的,因此他们都没有MessageBox成员函数.如果需要弹出消息对话框,可以使用全局的MessageBox(::MessageBox)或者应用程序框架的函数:AfxMessageBox(也是全局函数).声明如下:
+
+	int AfxMessageBox(LPCTSTR lpszText, UINT nType=MB_OK, UINT nIDHelp=0);
+	/*因为后两个参数都有默认值,因此一般只需要给第一个参数赋值需要显示的字符串即可.*/
+	e.g.
+	1.在CMenuApp类的OnTest函数添加:
+		AfxMessageBox(_T("App clicked!"));
+	2.在CMenuDoc类的OnTest函数添加:
+		AfxMessageBox(_T("Doc clicked!"));
+
+CMenuView类和CMainFrame类都是直接从CWnd类派生的,因此可以直接使用MessageBox函数.
+
+**菜单项命令响应顺序依次是:视类、文档类、框架类、应用程序类.一般在框架类添加菜单命令的响应函数.**
