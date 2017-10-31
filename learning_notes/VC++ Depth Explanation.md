@@ -2413,6 +2413,8 @@ MFC提供的CFont类用来专门设置字体.
 
 ### 6.2 菜单命令的路由
 
+#### 6.2.1 程序类对菜单命令的响应顺序
+
 CMenuApp类和CMenuDoc都不是从CWnd类派生的,因此他们都没有MessageBox成员函数.如果需要弹出消息对话框,可以使用全局的MessageBox(::MessageBox)或者应用程序框架的函数:AfxMessageBox(也是全局函数).声明如下:
 
 	int AfxMessageBox(LPCTSTR lpszText, UINT nType=MB_OK, UINT nIDHelp=0);
@@ -2426,3 +2428,215 @@ CMenuApp类和CMenuDoc都不是从CWnd类派生的,因此他们都没有MessageB
 CMenuView类和CMainFrame类都是直接从CWnd类派生的,因此可以直接使用MessageBox函数.
 
 **菜单项命令响应顺序依次是:视类、文档类、框架类、应用程序类.一般在框架类添加菜单命令的响应函数.**
+
+#### 6.2.2 Windows消息的分类
+
+Windows消息主要分为三类:
+
+	1)标准消息--->除了WM_COMMAND之外,其他所有以"WM_"开头的消息都是标准消息.从CWnd派生的类都可以接收到这类消息.
+	2)命令消息--->来自菜单、加速键或工具栏按钮的消息.此类消息以WM_COMMAND形式呈现.
+		MFC中,通过菜单项标识(ID)来区分不同的命令消息;在SDK中,通过消息的wParam参数来识别.从CCmdTarget派生的类,
+		都可以接收命令消息.
+	3)通告消息--->由控件产生的消息.e.g.按钮的单击、列表框的选择等都会产生这类消息,目的是为了向其父窗口(通常是对话框)
+		通知事件的发生.这类消息也是以WM_COMMAND形式呈现.从CCmdTarget派生的类,都可以接收此类消息.
+	
+	PS:
+	1->由于CWnd类派生于CCmdTarget类.因此从CWnd派生的类(e.g.CFramwork类和CxxxView类)可以接收全部类型的消息;
+	2->对于只从CCmdTarget派生的类(e.g.CxxxDoc类和CxxxApp类),他们只能接收命令消息和通告消息,不能接收标准消息.
+
+#### 6.2.3 菜单命令的路由
+
+**使用类向导添加Test菜单项的命令响应函数内部机制(主要有3处信息)**
+
+1.添加了命令消息响应函数原型---在头文件中:
+
+	在类的头文件中.e.g.CTestView类的头文件中
+
+	// 生成的消息映射函数
+	protected:
+		DECLARE_MESSAGE_MAP()
+	public:
+		afx_msg void OnTest();	
+		//afx_msg是一个宏,表明该函数是一个消息相应函数的声明.
+	};
+
+2.添加消息映射宏---在源文件中:
+
+	在类的源文件中.e.g.CTestView类的源文件中:
+	
+	BEGIN_MESSAGE_MAP(CtestView, CView)	//该宏到END宏定义了该类的消息映射表.
+	ON_COMMAND(IDM_TEST, OnTest)	//添加了ON_COMMAND宏,将菜单ID号与命令响应函数关联起来.
+	// 标准打印命令
+	ON_COMMAND(ID_FILE_PRINT, &CView::OnFilePrint)
+	ON_COMMAND(ID_FILE_PRINT_DIRECT, &CView::OnFilePrint)
+	ON_COMMAND(ID_FILE_PRINT_PREVIEW, &CView::OnFilePrintPreview)
+	END_MESSAGE_MAP()
+
+3.命令消息响应函数的实现---在源文件中:
+
+	void CtestView::OnTest()
+	{
+		// TODO: 在此添加消息处理程序代码和/或调用默认值
+
+	}
+
+**菜单命令消息路由的具体过程:当点击某个菜单项时,最先接收到这个菜单命令消息的是框架类.框架类把接收到的这个消息交给它的子窗口,即视类,由视类首先进行处理.视类首先根据命令消息映射机制查找自身是否对此消息进行了响应,如果响应了,就调用响应函数对这个消息进行处理,消息路由过程结束;如果没有响应就交给文档类,文档类也进行一样的操作,响应了就结束,没有响应就把这个消息交还给视类,视类又把消息交还给框架类.框架类也进行一样的操作,响应了就结束,没有响应就交给应用程序类,由应用程序类做最后的处理.**
+
+### 6.3 基本菜单操作
+
+菜单项:可以通过菜单项的标识ID或者位置索引(从0开始)进行访问(e.g.文件下面的新建菜单就是菜单项).
+
+子菜单:只能通过索引号进行访问,因为子菜单没有标识号(e.g.文件、编辑等都属于子菜单).
+
+主菜单:整个菜单条就是主菜单,主菜单属于框架窗口.
+
+#### 6.3.1 标记菜单
+
+标记菜单:菜单项前面带有一个对号(√)的叫标记菜单.
+
+由于主菜单属于框架窗口的一部分,因此需要在框架类窗口创建完成之后再去访问菜单对象,即需要在CMainFrame类的OnCreate函数的最后(return之前实现标记菜单的功能).
+
+**为文件子菜单中的新建菜单项添加标记步骤:**
+
+	1.获得程序的菜单栏(即主菜单),使用CWnd的成员函数:GetMenu()来实现
+		CMenu *GetMenu() const;	//返回指向菜单栏(即主菜单)的指针
+	2.获得子菜单:通过指向菜单栏的指针获得指向某个索引号的子菜单的指针,通过CMenu类的GetSubMenu()成员函数实现
+		CMenu *GetSubMenu(int nPos) const;
+		/*
+			para:子菜单的索引号(从0开始)
+			retval:返回指向由参数nPos指定的子菜单的指针.
+		*/
+	3.对某个菜单项添加/移除标记:通过子菜单对其下的菜单项进行添加/移除标记的操作.通过CMenu类的CheckMenuItem成员函数实现
+		UINT CheckMenuItem(UINT nIDCheckItem, UINT nCheck);
+		/*
+			para1:使用索引号或者命令ID来指定需要处理的菜单项,选择由第二个参数决定.
+			para2:指定怎样设置菜单项以及如何定位菜单项的位置.取值为:
+				MF_CHECKED:设置菜单项的复选标记,即为标记菜单;
+				MF_UNCHECKED:移除菜单项的复选标记
+				MF_BYPOSITION:指定通过菜单项的位置来访问菜单项,即第一个参数为菜单项的索引号
+				MF_BYCOMMAND:指定通过菜单项的命令ID来访问菜单项,即第一个参数为菜单项的命令ID
+		*/
+
+实例1---通过索引号为"文件"子菜单中的新建菜单项添加标记
+
+	int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
+	{
+		...
+		/*在return之前添加*/
+		GetMenu()->GetSubMenu(0)->CheckMenuItem(0, MF_BYPOSITION | MF_CHECKED);
+		/*
+			文件子菜单的索引号为0.文件下的新建菜单项的索引号也为0
+		*/
+		
+		return 0;
+	}
+
+实例2---通过菜单项标识为"文件"子菜单中的新建菜单项添加标记
+
+	int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
+	{
+		...
+		/*在return之前添加*/
+		GetMenu()->GetSubMenu(0)->CheckMenuItem(ID_FILE_NEW, MF_BYCOMMAND | MF_CHECKED);
+
+		return 0;
+	}
+
+#### 6.3.2 默认菜单项
+
+默认菜单项:子菜单下有某个菜单项(只有一个)以粗体形式显示的就是该子菜单的默认菜单项.
+
+默认菜单项的实现,利用CMenu类的SetDefaultItem成员函数实现
+
+	BOOL SetDefaultItem(UINT uItem, BOOL fByPos = FALSE);
+	/*
+		para1:使用索引号或命令ID来指定需要设置为默认菜单项的菜单项,选择由第二个参数决定.
+		para2:
+			FALSE->第一个参数是菜单项的标识(即命令ID)
+			TRUE->第一个参数为位置索引(即索引号)
+	*/
+
+实例1---通过索引号设置"文件"子菜单中的打开菜单项为默认菜单项
+
+	int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
+	{
+		...
+		/*在return之前添加*/
+		GetMenu()->GetSubMenu(0)->CheckMenuItem(0, MF_BYPOSITION | MF_CHECKED);
+		GetMenu()->GetSubMenu(0)->SetDefaultItem(1, TRUE);		
+		
+		return 0;
+	}
+
+实例2---通过菜单项标识设置"文件"子菜单中的打开菜单项为默认菜单项
+
+	int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
+	{
+		...
+		/*在return之前添加*/
+		GetMenu()->GetSubMenu(0)->CheckMenuItem(0, MF_BYPOSITION | MF_CHECKED);
+		GetMenu()->GetSubMenu(0)->SetDefaultItem(ID_FILE_OPEN, FALSE);
+		/*打开菜单项标识为:ID_FILE_OPEN*/		
+		
+		return 0;
+	}
+
+**需要注意的点:**
+	
+	1.菜单项索引号的计算:分隔栏在菜单项中是占据一个索引位置的;
+	2.一个子菜单中的菜单项中只有一个默认菜单项.
+
+#### 6.3.3 图形标记菜单
+
+图形标记菜单:菜单项前面带有图形的叫做图形标记菜单.
+
+设置"打开"子菜单下的"新建"菜单项为图形标记菜单步骤:
+
+	1.为CMainFrame类添加一个CBitmap类型的成员变量m_bitmap
+	2.为m_bitmap成员变量加载位图资源
+		m_bitmap.LoadBitmap(IDB_BITMAP1);	//IDB_BITMAP1是自己创建的位图资源
+	3.调整位图资源的尺寸
+		int GetSystemMetrics(int nIndex);	//得到图形标记菜单上显示位图的尺寸大小值
+		/*
+			para:
+				SM_CXMENUCHECK:此时返回值为标记图形的宽度.即位图资源的宽度应该设置为该值
+				SM_CYMENUCHECK:此时返回值为标记图形的高度.即位图资源的高度应该设置为该值
+		*/
+		e.g.
+		CString str;
+		str.Format("x=%d, y=%d", GetSystemMetrics(SM_CXMENUCHECK), GetSystemMetrics(SM_CYMENUCHECK));
+		/*str.Format():按照一定的格式将结果保存到str中.*/
+		MessageBox(_T(str));	//此时可以打印出位图资源应该有的宽度和高度.
+		
+		PS:通过拖动改变位图资源的大小和上面MessageBox大小一样.拖动时右下角有一格用于显示当前位图的大小.
+	4.将指定的位图与菜单项关联起来,利用CMenu类的SetMenuItemBitmaps函数实现
+		BOOL SetMenuItemBitmaps(UINT nPosition, UINT nFlags, 
+			const CBitmap *pBmpUnchecked, const CBitmap *pBmpChecked);
+		/*
+			para1:取值由第二个参数决定.
+			para2:
+				MF_BYCOMMAND-->para1是菜单项标识(ID)
+				MF_BYPOSITION-->para1是菜单项的位置索引
+			para3:指定取消菜单项选中状态时显示的位图
+			para4:指定选中菜单项时显示的位图
+		*/
+
+实例---设置"打开"子菜单下的"新建"菜单项为图形标记菜单
+
+	int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
+	{
+		...
+		/*在return之前添加*/
+		GetMenu()->GetSubMenu(0)->CheckMenuItem(0, MF_BYPOSITION | MF_CHECKED);
+		GetMenu()->GetSubMenu(0)->SetDefaultItem(ID_FILE_OPEN, FALSE);
+		/*打开菜单项标识为:ID_FILE_OPEN*/
+		CString str;
+		str.Format("x=%d, y=%d", GetSystemMetrics(SM_CXMENUCHECK), GetSystemMetrics(SM_CYMENUCHECK));
+		MessageBox(str);	//调整好了位图资源的大小,上述显示标记图形的宽度和高度可以省略.
+
+		m_bitmap.LoadBitmap(IDB_BITMAP1);
+		GetMenu()->GetSubMenu(0)->SetMenuItemBitmaps(0, MF_BYPOSITION, &m_bitmap, &m_bitmap);
+		
+		return 0;
+	}
+		

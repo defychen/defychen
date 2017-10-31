@@ -90,3 +90,8 @@
 
 ***
 # MIPS
+
+
+asm volatile(".word 0xebfffffe");断点
+
+md 0x1801008c 4
