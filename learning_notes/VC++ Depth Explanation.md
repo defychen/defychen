@@ -2821,3 +2821,61 @@ Windows消息主要分为三类:
 **工具栏按钮和菜单栏中的某个菜单项相关联:只要将他们的ID设置为同一个标识即可.**
 
 由于工具栏上计算位置索引和菜单栏中某个菜单项计算位置索引可能不一致.因此在引用菜单栏中菜单项或工具栏中的工具按钮最好使用菜单项标识(e.g.ID_EDIT_CUT--->剪切)
+
+#### 6.3.7 快捷菜单
+
+快捷菜单也叫右键菜单,是单击鼠标右键弹出的菜单.
+
+添加快捷菜单步骤:
+
+	1.为Menu程序增加一个新的菜单资源IDR_MENU1,并编辑该菜单资源
+		1.快捷菜单显示时,顶级菜单是不出现的.因此可以设置任意文本(e.g.设置Caption为defy).同时只需要设置一个菜单项即可
+			(abc这一个子菜单即可),一般顶级菜单popup为True,标识为
+		2.在子菜单下添加两个菜单项
+			菜单1.Caption为"显示",ID为IDM_SHOW;
+			菜单2.Caption为"退出",ID为IDM_EXIT.
+	2.给CMenuView类添加WM_RBUTTONDOWN(即右键按下)的消息响应函数,并添加实现代码:
+		/*因为视类始终会覆盖在框架类之上,鼠标操作消息框架类捕捉不到*/
+
+		void CtestView::OnRButtonDown(UINT nFlags, CPoint point)
+		{
+			// TODO: 在此添加消息处理程序代码和/或调用默认值
+			CMenu menu;
+			menu.LoadMenu(IDR_MENU1);	//加载一个菜单资源
+			CMenu *pPopup = menu.GetSubMenu(0);	//得到菜单资源的第0个子菜单
+
+			ClientToScreen(&point);	//将客户区坐标转换为屏幕坐标
+			/*
+				屏幕坐标:以PC显示屏左上角为原点的坐标;
+				客户区坐标:以程序运行时客户区的左上角
+				因为后面的TrackPopupMenu是使用屏幕坐标,因此需要进行转换.
+			*/
+
+			pPopup->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
+			/*
+				TrackPopupMenu用于显示快捷菜单,函数原型为:
+				BOOL TrackPopupMenu(UINT nFlags, int x, int y, CWnd *pWnd, LPCRECT lpRect = NULL);
+				/*
+				para1:指定菜单在屏幕上显示的位置.TPM_LEFTALIGN(左对齐),TPM_RIGHTBUTTON(右键按下的位置).
+				para2 & para3:指定快捷菜单显示位置处的x坐标和y坐标.
+				para4:拥有快捷菜单的窗口对象,在CMenuView类中只需要指定为this即可.
+				para5:指定一块矩形区域,如果用户在该矩形区域内单击鼠标,快捷菜单仍保持显示,否则快捷菜单消失.
+					默认为NULL.一般不需要指定,保持默认值(NULL)即可.
+				*/
+			*/
+			CView::OnLButtonDown(nFlags, point);
+		}
+	3.为Menu程序添加快捷菜单上菜单项的命令响应函数,与前述的给子菜单下的菜单项添加命令响应函数一样:
+		void CtestView::OnShow()
+		{
+			// TODO: 在此添加消息处理程序代码和/或调用默认值
+			MessageBox(_T("View Show"));
+		}
+
+### 6.4 动态菜单操作
+
+**暂时没看**
+
+***
+
+## Chapter 7 对话框(一)
