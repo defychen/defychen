@@ -2639,4 +2639,185 @@ Windows消息主要分为三类:
 		
 		return 0;
 	}
+
+#### 6.3.4 禁用菜单项
+
+禁用某个菜单项的步骤:
+
+	1.在CMainFrame类的构造函数中把m_bAutoMenuEnable成员变量设置为FALSE;
+		此时就不需要对ON_UPDATE_COMMAND_UI或ON_COMMAND消息进行响应处理,CMenu类的
+		EnableMenuItem函数(禁用菜单项的函数)就能够正常工作.
+	2.禁用某个菜单项,利用CMenu类的EnalbeMenuItem函数来实现
+		UINT EnableMenuItem(UINT nIDEnableItem, UINT nEnable);
+		/*
+			para1:由第二个参数决定;
+			para2:
+				MY_BYCOMMAND->指定第一个参数为菜单项的标识ID;
+				MY_BYPOSITION->指定第一个参数为菜单项的位置索引;
+				MF_DISABLED->禁用菜单项VS2010显示为灰色
+				MF_ENABLED->使菜单项可用,用户可以选择这个菜单项;
+				MF_GRAYED->禁用菜单项,灰色显示
+			PS:
+			para2中,一般MF_DISABLED和MF_GRAYED一起使用.
+		*/
+
+实例1---通过索引号禁用"文件"子菜单中的打开菜单项
+
+	/*已经在构造函数中将m_bAutoMenuEnable成员变量设置为FALSE*/
+
+	int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
+	{
+		if (CFrameWnd::OnCreate(lpCreateStruct) == -1)
+			return -1;
+	
+		if (!m_wndStatusBar.Create(this))
+		{
+			TRACE0("未能创建状态栏\n");
+			return -1;      // 未能创建
+		}
+		m_wndStatusBar.SetIndicators(indicators, sizeof(indicators)/sizeof(UINT));
+	
+		GetMenu()->GetSubMenu(0)->EnableMenuItem(1, MF_BYPOSITION | MF_DISABLED | MF_GRAYED);
+	
+		return 0;
+	}
+
+实例2---通过菜单项标识禁用"文件"子菜单中的打开菜单项
+
+	/*已经在构造函数中将m_bAutoMenuEnable成员变量设置为FALSE*/
+
+	int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
+	{
+		if (CFrameWnd::OnCreate(lpCreateStruct) == -1)
+			return -1;
+	
+		if (!m_wndStatusBar.Create(this))
+		{
+			TRACE0("未能创建状态栏\n");
+			return -1;      // 未能创建
+		}
+		m_wndStatusBar.SetIndicators(indicators, sizeof(indicators)/sizeof(UINT));
+	
+		GetMenu()->GetSubMenu(0)->EnableMenuItem(ID_FILE_OPEN, 
+				MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
+	
+		return 0;
+	}
+
+#### 6.3.5 移除和装载菜单
+
+移除菜单:
+
+	调用CWnd类的SetMenu函数实现:
+		BOOL SetMenu(CMenu *pMenu);
+		/*
+			para:CMenu类型的指针,指向一个新菜单对象.如果为NULL,则表示移除当前菜单.
+		*/
+	
+	e.g.在CMainFrame类的OnCreate函数中设置移除菜单
+	int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
+	{
+		if (CFrameWnd::OnCreate(lpCreateStruct) == -1)
+			return -1;
+	
+		if (!m_wndStatusBar.Create(this))
+		{
+			TRACE0("未能创建状态栏\n");
+			return -1;      // 未能创建
+		}
+		m_wndStatusBar.SetIndicators(indicators, sizeof(indicators)/sizeof(UINT));
+	
+		GetMenu()->GetSubMenu(0)->EnableMenuItem(ID_FILE_OPEN, 
+				MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
+		SetMenu(NULL);	//移除菜单
 		
+		return 0;
+	}
+	
+
+重新装载菜单步骤:
+
+	1.在CMainFrame类中定义一个CMenu菜单对象的成员变量m_menu;
+	2.为CMenu对象加载一个菜单资源:
+		m_menu.LoadMenu(IDR_MAINFRAME);	//IDR_MAINFRAME是在资源视图->Menu下显示的菜单资源ID.
+	3.调用CWnd类的SetMenu函数实现重新装载菜单
+		SetMenu(&m_menu);
+
+	e.g.在CMainFrame类的OnCreate函数中设置移除菜单后重新状态菜单
+	int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
+	{
+		if (CFrameWnd::OnCreate(lpCreateStruct) == -1)
+			return -1;
+	
+		if (!m_wndStatusBar.Create(this))
+		{
+			TRACE0("未能创建状态栏\n");
+			return -1;      // 未能创建
+		}
+		m_wndStatusBar.SetIndicators(indicators, sizeof(indicators)/sizeof(UINT));
+	
+		GetMenu()->GetSubMenu(0)->EnableMenuItem(ID_FILE_OPEN, 
+				MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
+		SetMenu(NULL);	//移除菜单
+		
+		m_menu.LoadMenu(IDR_MAINFRAME);
+		SetMenu(&m_menu);
+		
+		return 0;
+	}
+
+	//如果在OnCreate函数中声明局部变量menu,可以使用CMenu类的Detach函数实现菜单句柄与菜单对象分离.
+	//此时菜单对象的销毁不会影响到菜单句柄.同样可以得到和定义成员变量一样的效果
+		int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
+	{
+		if (CFrameWnd::OnCreate(lpCreateStruct) == -1)
+			return -1;
+	
+		if (!m_wndStatusBar.Create(this))
+		{
+			TRACE0("未能创建状态栏\n");
+			return -1;      // 未能创建
+		}
+		m_wndStatusBar.SetIndicators(indicators, sizeof(indicators)/sizeof(UINT));
+	
+		GetMenu()->GetSubMenu(0)->EnableMenuItem(ID_FILE_OPEN, 
+				MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
+		SetMenu(NULL);	//移除菜单
+		
+		CMenu menu;
+		menu.LoadMenu(IDR_MAINFRAME);
+		SetMenu(&menu);
+		menu.Detach();	//菜单对象与菜单句柄分离
+		
+		return 0;
+	}
+
+#### 6.3.6 MFC菜单命令更新机制
+
+设置菜单项的状态方法---最好的方法
+
+	1.通过类向导(Class Wizard)为一个菜单项添加UPDATE_COMMAND_UI消息响应函数.
+	2.在响应函数中对菜单项的状态进行设置
+		void CMainFrame::OnUpdateEditCut(CCmdUI *pCmdUI)
+		{
+			// TODO: 在此添加命令更新用户界面处理程序代码
+			/*
+				利用CCmdUI的指针,可以决定一个菜单项是否可以使用(Enable函数)、
+				是否有标记,还可以改变菜单项的文本.
+			*/
+			pCmdUI->Enable(TRUE);
+			/*
+				Enable函数设置一个菜单项是否可以使用:
+					para=TRUE--->表示菜单项可用
+					para=FALSE--->表示禁用该菜单项
+			*/
+			/*
+				CCmdUI类的其他成员变量:
+					pCmdUI->m_nID:表示当前菜单项、工具栏按钮的标识ID;
+					pCmdUI->m_nIndex:表示当前菜单项的位置索引.
+			*/
+		}
+
+**工具栏按钮和菜单栏中的某个菜单项相关联:只要将他们的ID设置为同一个标识即可.**
+
+由于工具栏上计算位置索引和菜单栏中某个菜单项计算位置索引可能不一致.因此在引用菜单栏中菜单项或工具栏中的工具按钮最好使用菜单项标识(e.g.ID_EDIT_CUT--->剪切)
