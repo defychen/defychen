@@ -2953,3 +2953,60 @@ MFC中,所有控件都派生于CWnd类,因此控件也属于窗口.
 **非模态对话框**
 
 略.因为非模态对话框用的比较少.
+
+### 7.3 动态创建按钮
+
+动态创建按钮步骤:
+
+	1.在对话框上添加一个按钮(Button)控件.
+		Caption:Add; ID:IDC_BTN_ADD
+	2.添加该Add按钮的单击响应函数.在类向导中:
+		类选择:CTestDlg(基于对话框类);	命令选择:IDC_BTN_ADD; 消息选择:BN_CLICKED(单击消息)
+	3.在单击响应函数OnClickedBtnAdd中添加实现代码:
+		void CTestDlg::OnClickedBtnAdd()
+		{
+			// TODO: 在此添加控件通知处理程序代码
+			if (!m_btn.m_hWnd)	//m_btn为创建的CButton的成员变量.此处用于判断按钮是否已经创建
+			{
+				m_btn.Create(_T("New"), BS_DEFPUSHBUTTON | WS_VISIBLE | WS_CHILD, 
+					CRect(0, 0, 100, 100), this, 123);	//创建一个按钮
+			}else
+			{
+				m_btn.DestroyWindow();	//如果已经创建按钮,就销毁.
+				//m_btn.m_hWnd = NULL;	//销毁之后,按钮对象的句柄会被置空.因此不需要再置空.
+			}
+		}
+
+### 7.4 控件的访问
+
+#### 7.4.1 静态文本控件的操作
+
+创建一个静态文本控件"Number1:",当点击到这个静态文本控件,使其文本变为"数值1:".
+
+	1.创建一个静态文本控件(即Static Text控件),并修改属性:
+		Caption:"Number1:";	Notify:True(否则不能通告消息(e.g.响应鼠标单击消息))
+		ID:IDC_NUMBER1(必须修改ID,因为所有的静态文本控件默认ID都一样,不改在类向导中没有该ID).
+	2.在类向导中添加响应单击的消息响应函数:
+		命令:IDC_NUMBER1;	消息:STN_CLICKED(鼠标单击消息)
+	3.在单击消息响应函数OnClickedNumber1中添加实现代码:
+		void CTestDlg::OnClickedNumber1()
+		{
+			// TODO: 在此添加控件通知处理程序代码
+			CString str;
+			if (GetDlgItem(IDC_NUMBER1)->GetWindowText(str), str == "Number1:")
+			{
+				/*
+					CWnd *GetDlgItem(int nID) const;	//得到控件对象
+					GetWindowText(str);	//得到控件对象中的文本,并存放到CString中
+					逗号表达式的结果是最后一个表达式的返回值.
+
+					SetWindowText(_T("xxx"));	//使用字符串设置成控件对象的文本.
+				*/
+				GetDlgItem(IDC_NUMBER1)->SetWindowText(_T("数值1:"));
+			}else
+			{
+				GetDlgItem(IDC_NUMBER1)->SetWindowText(_T("Number1:"));
+			}
+		}
+
+#### 7.4.2 编辑框控件的操作
