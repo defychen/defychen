@@ -2879,3 +2879,134 @@ Windows消息主要分为三类:
 ***
 
 ## Chapter 7 对话框(一)
+
+### 7.1 对话框基本知识
+
+对话框是一个窗口,因此派生于CWnd类.在对话框上可以放置各种各样的标准控件和扩展控件.
+
+#### 7.1.1 常用控件介绍
+
+MFC中,所有控件都派生于CWnd类,因此控件也属于窗口.
+
+**常用控件**
+
+	------------------------------------------------------------------------------
+		控件								功能							对应控件类
+	------------------------------------------------------------------------------
+	静态文本框(Static Text)	显示文本,一般不接受输入信息					Static
+	图像控件(Picture)		显示位图、图标、方框和图元文件,一般			Static
+								不接受输入信
+	编辑框(Edit Box)			编辑正文,支持单行和多行编辑					CEdit
+	按钮(CButton)			响应用户输入,触发相应事件					CButton
+	复选框(Check Box)		用作标记选择,选中、未选中和不确定三种状态		CButton
+	单选按钮(Radio Button)	从两个或多个中选择一个						CButton
+	组框(Group Box)			显示正文和方框,将相关的空间组织在一起		CButton
+	列表框(List Box)			显示一个列表,用户可以从列表中选择一项或多项	CListBox
+	组合框(Combo Box)		编辑框+列表框,有简易式、下拉式和下拉列表式	CComboBox
+	滚动条(Scroll Bar)		从一个预定义范围中选取一个有效值			CScrollBar
+	------------------------------------------------------------------------------
+
+#### 7.1.2 对话框的种类
+
+**模态对话框**
+
+模态对话框是指当其显示时,程序会暂停执行,直到关闭这个对话框,才能继续执行其他任务.
+
+**非模态对话框**
+
+非模态对话框当其显示时,允许转而执行程序中的其他任务,可以不用关闭这个对话框.
+
+### 7.2 对话框的创建和显示
+
+**模态对话框创建的步骤:**
+
+	/*在一个单文档程序中,单击菜单栏一个子菜单弹出一个模态对话框*/
+	1.添加一个对话框资源
+		在资源视图下添加一个对话框资源.ID为IDD_DIALOG1;更改其Caption(对话框显示的名字)为Defy.
+	2.将创建的对话框资源和一个对话框类关联(MFC中,对资源的操作都是通过一个与资源相关联的类来完成)
+		1.选中创建的对话框--->右键--->添加类
+		2.在"MFC添加类向导"中输入相关联类的信息:
+			类名:输入要创建的类名.e.g.CTestDlg--->类名以C打头.
+			基类:选择基类为CDialog
+			.h文件和.cpp文件会自动创建
+		3.创建的对话框类的函数说明:
+			/*DoDataExchange:用来完成对话框数据的交换和校验.*/
+			void CTestDlg::DoDataExchange(CDataExchange* pDX)
+			{
+				CDialog::DoDataExchange(pDX);
+			}
+	3.为单文档程序创建一个子菜单
+		Caption:CTestDlg;	Popup:False;	ID:IDM_DIALOG.
+	4.为上述创建的子菜单添加COMMAND消息响应函数OnDialog(),有CxxView类捕捉到
+		method 1:直接在子菜单上右键->选择"添加事件处理程序";
+		method 2:使用类向导,ID选择IDM_DIALOG.
+	5.在响应函数中添加显示模态对话框的代码:
+		void CMenuView::OnDialog()
+		{
+			// TODO: 在此添加命令处理程序代码
+			CTestDlg dlg;	//CTestDlg是创建的和对话框关联的对话框类
+			dlg.DoModal();	//DoModal()函数显示一个模态对话框
+		}
+	6.在CxxxView中添加包含CTestDlg类的头文件
+		#include "TestDlg.h"	//去掉头部的"C"
+
+**非模态对话框**
+
+略.因为非模态对话框用的比较少.
+
+### 7.3 动态创建按钮
+
+动态创建按钮步骤:
+
+	1.在对话框上添加一个按钮(Button)控件.
+		Caption:Add; ID:IDC_BTN_ADD
+	2.添加该Add按钮的单击响应函数.在类向导中:
+		类选择:CTestDlg(基于对话框类);	命令选择:IDC_BTN_ADD; 消息选择:BN_CLICKED(单击消息)
+	3.在单击响应函数OnClickedBtnAdd中添加实现代码:
+		void CTestDlg::OnClickedBtnAdd()
+		{
+			// TODO: 在此添加控件通知处理程序代码
+			if (!m_btn.m_hWnd)	//m_btn为创建的CButton的成员变量.此处用于判断按钮是否已经创建
+			{
+				m_btn.Create(_T("New"), BS_DEFPUSHBUTTON | WS_VISIBLE | WS_CHILD, 
+					CRect(0, 0, 100, 100), this, 123);	//创建一个按钮
+			}else
+			{
+				m_btn.DestroyWindow();	//如果已经创建按钮,就销毁.
+				//m_btn.m_hWnd = NULL;	//销毁之后,按钮对象的句柄会被置空.因此不需要再置空.
+			}
+		}
+
+### 7.4 控件的访问
+
+#### 7.4.1 静态文本控件的操作
+
+创建一个静态文本控件"Number1:",当点击到这个静态文本控件,使其文本变为"数值1:".
+
+	1.创建一个静态文本控件(即Static Text控件),并修改属性:
+		Caption:"Number1:";	Notify:True(否则不能通告消息(e.g.响应鼠标单击消息))
+		ID:IDC_NUMBER1(必须修改ID,因为所有的静态文本控件默认ID都一样,不改在类向导中没有该ID).
+	2.在类向导中添加响应单击的消息响应函数:
+		命令:IDC_NUMBER1;	消息:STN_CLICKED(鼠标单击消息)
+	3.在单击消息响应函数OnClickedNumber1中添加实现代码:
+		void CTestDlg::OnClickedNumber1()
+		{
+			// TODO: 在此添加控件通知处理程序代码
+			CString str;
+			if (GetDlgItem(IDC_NUMBER1)->GetWindowText(str), str == "Number1:")
+			{
+				/*
+					CWnd *GetDlgItem(int nID) const;	//得到控件对象
+					GetWindowText(str);	//得到控件对象中的文本,并存放到CString中
+					逗号表达式的结果是最后一个表达式的返回值.
+
+					SetWindowText(_T("xxx"));	//使用字符串设置成控件对象的文本.
+				*/
+				GetDlgItem(IDC_NUMBER1)->SetWindowText(_T("数值1:"));
+			}else
+			{
+				GetDlgItem(IDC_NUMBER1)->SetWindowText(_T("Number1:"));
+			}
+		}
+
+#### 7.4.2 编辑框控件的操作
