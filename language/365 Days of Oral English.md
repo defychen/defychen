@@ -84,3 +84,35 @@
 
 			公开道歉要讲究艺术---无英文
 	I am really sorry for what you have suffered.
+
+### 1.3 其他礼貌用语
+
+**惯用单句**
+
+	Please.						//请
+	Excuse me.					//打扰了
+	Would you excuse me?		//打扰一下好吗?
+	After you./You first./Ladies first.	//您先请./女士优先.
+	Age before beauty.			//长者优先.
+	Pardon me.					//劳驾
+	I beg your pardon.			//请原谅我没听清/弄明白.
+	Congratulations.			//祝贺你(们).
+	Do you mind if I smoke?		//我想抽支烟,您介意吗?
+	Could you please tell the way to the cinema?	//您能告诉我去电影院怎么走吗?
+
+**实用对话**
+
+					Being Polite(礼貌用语)
+	Kate:Welcome to our university's 50th anniversary, sir. Please have a seat.	//50周年庆
+	Jack:Thank you. Wow， your school has so many honors。 Congratulations.
+	Kate:Thank you.
+	Jack:Excuse me. I want to see the dean, Mr. Li first. I was wondering if you could tell me where
+		his office is.	//先见一见李院长
+	Kate:Certainly. He's in the office building at the south end of the campus, just beside the library.
+			//at the south end of the campus:校园的南端
+	Jack:Excuse me?
+	Kate:Let me show you the way. Please follow me.
+	Jack:Thank you very much. It's very kind of you.
+	Kate:My pleasure.	//乐意效劳
+	Jack:This is it?	//这就到了?
+	Kate:He's up on the second floor.You'll have to use the stairs.
