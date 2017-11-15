@@ -3009,4 +3009,59 @@ MFC中,所有控件都派生于CWnd类,因此控件也属于窗口.
 			}
 		}
 
-#### 7.4.2 编辑框控件的操作
+#### 7.4.2 编辑框控件的操作---实现简单的加法运算
+
+**步骤:**
+
+1.添加3个静态文本控件,分别命名为"Number1:"、"Number2:"、"Sum:";
+
+2.添加3个编辑框控件,修改其ID为"IDC_ EDIT1"、"IDC_ EDIT2"、"IDC_EDIT3";
+
+3.添加一个按钮控件:
+
+	1.在对话框上添加一个按钮(Button)控件.
+		Caption:Add; ID:IDC_BTN_ADD
+	2.添加该Add按钮的单击响应函数.在类向导中:
+		类选择:CTestDlg(基于对话框类);	命令选择:IDC_BTN_ADD; 消息选择:BN_CLICKED(单击消息)
+	3.在单击响应函数OnClickedBtnAdd中添加实现代码:
+
+**实现的第一种方式:**
+
+	void CTestDlg::OnClickedBtnAdd()
+	{
+		int num1, num2, num3;	//用于保存编辑框中字符串转换后的值
+		TCHAR ch1[10], ch2[10], ch3[10];	//用于保存编辑框中的字符串,VS2010需要使用TCHAR
+		
+		GetDlgItem(IDC_EDIT1)->GetWidowText(ch1, 10);	//para1:接收文本缓冲区的指针;para2:保存在缓冲区的最大字符数
+		GetDlgItem(IDC_EDIT2)->GetWindowText(ch2, 10);
+
+		num1 = _ttoi(ch1);	//将数字组成的字符串转换为相应的数值
+		num2 = _ttoi(ch2);
+
+		num3 = num1 + num2;
+		_itot(num3, ch3, 10);	//表示将num3以10进制的形式形成字符串保存在ch3中
+		GetDlgItem(IDC_EDIT3)->SetWindowText((LPTSTR)ch3);	//将转换后的字符串写入到IDC_EDIT3编辑框中
+	}
+
+**实现的第二种方式:**
+
+	void CTestDlg::OnClickedBtnAdd()
+	{
+		int num1, num2, num3;
+		CString str1, str2, str3;	//用于保存编辑框中的字符串
+		
+		GetDlgItem(IDC_EDIT1)->GetWindowText(str1);	//从编辑框中读到的字符串保存到str1中
+		GetDlgItem(IDC_EDIT2)->GetWindowText(str2);
+
+		num1 = _ttoi(str1);
+		num2 = _ttoi(str2);
+		num3 = num1 + num2;
+		str3.Format(_T("%d"), num3);	//将num3以10进制的形式形成字符串保存到str3中
+
+		GetDlgItem(IDC_EDIT3)->SetWindowText(str3);
+	}
+
+
+	
+
+	
