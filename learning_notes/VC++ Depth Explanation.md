@@ -3040,7 +3040,7 @@ MFC中,所有控件都派生于CWnd类,因此控件也属于窗口.
 
 		num3 = num1 + num2;
 		_itot(num3, ch3, 10);	//表示将num3以10进制的形式形成字符串保存在ch3中
-		GetDlgItem(IDC_EDIT3)->SetWindowText((LPTSTR)ch3);	//将转换后的字符串写入到IDC_EDIT3编辑框中
+		GetDlgItem(IDC_EDIT3)->SetWindowText((LPCTSTR)ch3);	//将转换后的字符串写入到IDC_EDIT3编辑框中
 	}
 
 **实现的第二种方式:**
@@ -3061,6 +3061,45 @@ MFC中,所有控件都派生于CWnd类,因此控件也属于窗口.
 		GetDlgItem(IDC_EDIT3)->SetWindowText(str3);
 	}
 
+**实现的第三种方式:---编辑框与成员变量关联**
+
+1.编辑框与成员变量关联
+
+	打开类向导窗口->切换到"成员变量"页->在控件ID中选择"IDC_EDIT1"->选择添加变量
+		成员变量名称:m_num1; 类别:Value(表示为值); 变量类型:int(选择整型,则可以直接运算)
+	其他两个类似
+
+相关联后自动添加的代码:
+
+	1.三个成员变量以及在构造函数中进行了初始化
+	2.在DoDataExchange函数中:
+		void CTestDlg::DoDataExchange(CDataExchange* pDX)
+		{
+			CDialog::DoDataExchange(pDX);
+			DDX_Text(pDX, IDC_EDIT1, m_num1);	//实现对话框控件与类成员变量关联
+				//DDX---Dialog Data Exchange,对话框数据交换
+				//DDV---Dialog Data Validate,对话框数据校验
+			DDX_Text(pDX, IDC_EDIT2, m_num2);
+			DDX_Text(pDX, IDC_EDIT3, m_num3);
+		}
+		/*DoDataExchange实现对话框数据的交换和校验,如果需要获取对话框数据或者设置对话框控件
+		(也就是让数据生效)必须调用DoDataExchange函数.但是程序代码不是直接调用该函数,而是
+		调用UpdateData函数,进而自动去调用DoataExchange函数*/
+		BOOL UpdateData(BOOL bSaveAndValidate = TRUE);
+		/*
+			para:为TRUE时,表示正在获取对话框的数据;为FALSE时,表示设置对话框控件.
+		*/
+
+2.OnClickedBtnAdd函数中代码实现
+
+	void CTestDlg::OnClickedBtnAdd()
+	{
+		UpdateData(TRUE);	//获取对话框控件的数据
+		m_num3 = m_num1 + m_num2;
+		UpdateData(FALSE);	//设置对话框控件的数据(更新)
+	}
+
+还可以在关联时设置输入数据的范围.
 
 	
 
