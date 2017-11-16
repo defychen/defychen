@@ -3061,9 +3061,9 @@ MFC中,所有控件都派生于CWnd类,因此控件也属于窗口.
 		GetDlgItem(IDC_EDIT3)->SetWindowText(str3);
 	}
 
-**实现的第三种方式:---编辑框与成员变量关联**
+**实现的第三种方式:---编辑框与Value类别的成员变量关联**
 
-1.编辑框与成员变量关联
+1.编辑框与int成员变量关联
 
 	打开类向导窗口->切换到"成员变量"页->在控件ID中选择"IDC_EDIT1"->选择添加变量
 		成员变量名称:m_num1; 类别:Value(表示为值); 变量类型:int(选择整型,则可以直接运算)
@@ -3101,6 +3101,44 @@ MFC中,所有控件都派生于CWnd类,因此控件也属于窗口.
 
 还可以在关联时设置输入数据的范围.
 
-	
+**实现的第四种方式:---编辑框与Control类别的成员变量关联**
 
-	
+1.编辑框与CEdit成员变量关联
+
+	打开类向导窗口->切换到"成员变量"页->在控件ID中选择"IDC_EDIT1"->选择添加变量
+		成员变量名称:m_edit1; 类别:Control(表示为控件类型); 变量类型:CEdit(选择编辑框类)
+		CEdit类派生于CWnd类.
+	其他两个类似
+
+相关联后自动添加的代码:
+
+	1.三个成员变量以及在构造函数中进行了初始化
+	2.在DoDataExchange函数中:
+		void CTestDlg::DoDataExchange(CDataExchange* pDX)
+		{
+			CDialog::DoDataExchange(pDX);
+			DDX_Control(pDX, IDC_EDIT1, m_edit1);	//实现对话框控件与CEdit变量关联
+				//DDX---Dialog Data Exchange,对话框数据交换
+				//DDV---Dialog Data Validate,对话框数据校验
+			DDX_Control(pDX, IDC_EDIT2, m_edit2);
+			DDX_Control(pDX, IDC_EDIT3, m_edit3);
+		}
+
+2.OnClickedBtnAdd函数中代码实现
+
+	void CTestDlg::OnClickedBtnAdd()
+	{
+		int num1, num2, num3;
+		TCHAR ch1[10], ch2[10], ch3[10];
+		m_edit1.GetWindowText(ch1, 10);	//因为CEdit类派生于CWnd类,因此可以直接使用GetWindowText
+		m_edit2.GetWindowText(ch2, 10);
+
+		num1 = _ttoi(ch1);
+		num2 = _ttoi(ch2);
+		num3 = num1 + num2;
+		
+		_itot(ch3, num3, 10);
+		m_edit3.SetWindowText((LPCTSTR)ch3);
+	}
+
+### 7.4 控件的访问
