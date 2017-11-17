@@ -3141,4 +3141,159 @@ MFC中,所有控件都派生于CWnd类,因此控件也属于窗口.
 		m_edit3.SetWindowText((LPCTSTR)ch3);
 	}
 
-### 7.4 控件的访问
+### 7.5 对话框伸缩功能的实现
+
+**实现步骤:**
+
+1.添加一个按钮,并修改属性:
+
+	ID为:IDC_BUTTON1
+	Caption为:收缩<<		当用户单击此按钮后,切除对话框的一部分,并将此按钮文本更改为"扩展>>"
+
+2.为上述按钮添加单击(BN_CLICKED)消息响应函数OnClickedBtn1,先实现单击后文本发生变化的代码:
+
+	void CTestDlg::OnClickedBtn1()
+	{
+		if(GetDlgItem(IDC_BUTTON1)->GetWindowText(str), str == "收缩<<")
+		{
+			GetDlgItem(IDC_BUTTON1)->SetWindowText(_T("扩展>>"));
+		}else
+		{
+			GetDlgItem(IDC_BUTTON1)->SetWindowText(_T("收缩<<"));
+		}
+	}
+
+3.在对话框中添加一个分割条,用来划分对话框中要动态切除的部分:
+
+	1.使用VC++提供的图像控件(Picture control)拉出一条线,用来划分对话框要动态切除的部分
+		属性设置为:
+			ID:IDC_SEPARATOR	Sunken:选择True(此时分隔条呈现出一种下陷的状态)
+			Visible:设置为False
+	2.获得对话框的原始位置
+		static CRect rectLarge;
+		GetWindowRect(&rectLarge);	//在对话框类中调用GetWindowRect可以得到对话框的大小信息,并保存到&rectLarge中
+	3.获得切除后的对话框的大小和位置
+		static CRect rectSmall;	//保存切除后对话框的大小
+		
+		if(rectLarge.IsRectNull)	//仅执行一次,后续代码用于获取切除前和切除后的对话框大小信息
+		{
+			CRect rectSeparator;	//保存分隔条的大小信息
+			GetDlgItem(IDC_SEPARATOR)->GetWindowRect(&rectSeparator);	//获取分隔条的大小信息
+
+			rectSmall.left = rectLarge.left;
+			rectSmall.top = rectLarge.top;
+			rectSmall.right = rectLarge.right;
+			rectSmall.bottom = rectLarge.bottom;	//只需要更改右下角的纵坐标即可
+		}
+
+		CRect判断一个矩形是否为空的两个成员函数:
+			1.IsRectEmpty():如果矩形的宽度和高度都为0或是负值则说明矩形为空,返回True,非0值;否则返回0.
+			2.IsRectNull():如果矩形的左上角和右下角的四个坐标值都是0则说明矩形为空,返回True,非0值;否则返回0.
+			e.g.
+				CRect rect1(10, 10, 10, 10);
+				CRect rect2(0, 0, 0, 0);
+				rect1.IsRectEmpty();	//返回True,非0值
+				rect1.IsRectNull();		//返回False,0值
+				rect2.IsRectEmpty();	//返回True,非0值
+				rect2.IsRectNull();		//返回True,非0值
+	4.根据按钮单击情况来更改对话框的大小
+		if(str == "收缩<<")
+		{
+			SetWindowPos(NULL, 0, 0, rectSmall.Width(), rectSmall.Height(), SWP_NOMOVE | SWP_NOZORDER);
+		}
+		else
+		{
+			SetWindowPos(NULL, 0, 0， rectLarge.Width(), rectLarge.Height(), SWP_NOMOVE | SWP_NOZORDER);
+		}
+
+		/*
+			BOOL SetWindowPos(const CWnd *pWndInsertAfter, int x, int y, int cx, int cy, UINT nFlags);
+			//设置窗口的位置和大小
+			/*
+				para1:标识一个CWnd对象,以Z次序排序的窗口中位于当前窗口前面的那个窗口对象.一般为NULL即可;
+				para2 & para3:窗口左上角的x和y坐标;
+				para4 & para5:窗口的宽度和高度;
+				para6:设定窗口的尺寸和定位,取值如下:
+					SWP_NOMOVE:维持窗口当前位置,将忽略x和y参数
+					SWP_NOZORDER:维持当前的Z次序,将忽略pWndInsertAfter参数
+			*/
+		*/
+	
+4.实现代码:
+
+	void CTestDlg::OnClickedBtn1()
+	{
+		if(GetDlgItem(IDC_BUTTON1)->GetWindowText(str), str == "收缩<<")
+		{
+			GetDlgItem(IDC_BUTTON1)->SetWindowText(_T("扩展>>"));
+		}else
+		{
+			GetDlgItem(IDC_BUTTON1)->SetWindowText(_T("收缩<<"));
+		}
+
+		static CRect rectLarge;
+		static CRect rectSmall;
+		
+		if(rectLarge.IsRectNull())
+		{
+			CRect rectSeparator;
+			GetWindowRect(&rectLarge);
+			GetDlgItem(IDC_SEPARATOR)->GetWindowRect(&rectSeparator);
+
+			rectSmall.left = rectLarge.left;
+			rectSmall.top = rectLarge.top;
+			rectSmall.right = rectLarge.right;
+			rectSmall.bottom = rectSeparator.bottom;
+		}
+
+		if(str == "收缩<<")
+		{
+			SetWindowPos(NULL, 0, 0, rectSmall.Width(), rectSmall.Height(), SWP_NOMOVE | SWP_NOZORDER);
+		}
+		else
+		{
+			SetWindowPos(NULL, 0, 0, rectLarge.Width(), rectLarge.Height(), SWP_NOMOVE | SWP_NOZORDER);
+		}
+	}
+
+### 7.6 输入焦点的传递
+
+**实现光标在第一个编辑框中,当按下Enter键光标移动到下一个编辑框中**
+
+1.设置一个默认按钮(Enter键按下,是由默认按钮响应):
+
+	本例中,OK按钮是默认按钮.因为其Default Button设置为True.可以更改其他按钮为默认按钮
+
+2.为OK按钮添加消息响应函数(重写OK按钮的消息响应函数)---为了屏蔽掉默认的Enter键关闭对话框
+
+	void CTestDlg::OnBnClickOK()
+	{
+		//...
+		//CDialog::OnOK();	//屏蔽掉默认的按下Enter键关闭对话框的功能
+	}
+
+3.实现代码---实现光标的循环移动
+
+	void CTestDlg::OnBnClickOK()
+	{
+		//...
+		GetNextDlgTabItem(GetFocus())->SetFocus();
+		/*
+			CWnd *GetNextDlgTabItem(CWnd *pWndCtl, BOOL bPrevious = FALSE) const;
+			/*
+				该函数会按照各子控件的Tab序号循环地查找下一个窗口.
+				para1:当前窗口指针;
+				para2:使用默认时,表示取下一个窗口;如果为TRUE时表示取前一个窗口.
+			*/
+			GetFocus():返回当前焦点所在窗口的指针
+			SetFocus():设置得到窗口为焦点所在
+		*/
+		//CDialog::OnOK();	//屏蔽掉默认的按下Enter键关闭对话框的功能
+	}
+
+	/*Tab顺序:
+		打开对话框资源编辑器,选择Layout菜单->Tab Order菜单项,单击即可显示各个控件的Tab序号
+		改变Tab序号,只需要单击控件即可.
+	*/
+
+PS:对话框中存在默认按钮,当按下Enter键会调用默认按钮的消息响应函数;如果不存在,就会调用虚拟的ID为IDOK的消息响应函数,即虚拟的"OnxxxOk"函数,因此在实际应用中可以将ID为IDOK的按钮删掉,保留消息响应函数.
