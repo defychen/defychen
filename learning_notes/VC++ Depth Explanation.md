@@ -3364,3 +3364,410 @@ PS:对话框中存在默认按钮,当按下Enter键会调用默认按钮的消�
 		m_pBtn->ShowWindow(SW_SHOW);		//对方显示
 		CButton::OnMouseMove(nFlags, point);
 	}
+
+### 8.2 属性表单和向导的创建
+
+一个属性表单由一个或多个属性页组成.
+
+#### 8.2.1 创建属性页
+
+1.创建属性页
+
+	资源视图下的Dialog右键->添加资源->点开Dialog前的"+"号->选择IDD_PROPPAGE_LARGE(属性页也属于对话框)
+	创建3个属性页,并设置为:
+		1.	ID:IDD_PROP1;	Caption:Page1
+		2.	ID:IDD_PROP2;	Caption:Page2
+		3.	ID:IDD_PROP3;	Caption:Page3
+
+2.编辑3个属性页
+
+	属性页1:
+		1.添加一个组框(Group Box)---组框用来起一个分组的作用,可以放相关的一些选项放置到一个组框中.
+			组框的Caption:Please choose your career:
+		2.在组框中放置3个单选按钮(Radio Button)
+			单选按钮1的Caption:Programmer
+			单选按钮2的Caption:System Engineer
+			单选按钮3的Caption:Project Manager
+		3.在属性页上添加一个列表框控件(List Box),可以排列一些字符串提供给用户进行选择
+		4.在列表框控件上放置一个静态文本控件:
+			Caption为:Please select lacation:
+		5.调整控件位置,使控件变得美观
+	属性页2:
+		1.添加一个组框(Group Box)---组框用来起一个分组的作用,可以放相关的一些选项放置到一个组框中.
+			组框的Caption:Please choose your hobby:
+		2.在组框中添加4个复选框(Check Box),设置Caption分别为:
+			Football、Basketball、Volleyball、Swimming.
+	属性页3:
+		1.添加一个组合框(Combo Box),修改组合框的大小方法:
+			选中组合框->鼠标移动到右边向下的位置,但出现"上下拉动的一个图标",单击左键->会出现另一个"上下拉动的一个图标",
+			拉动该图标即可改变组合框下拉空间的大小.
+		组合框的类型(Type属性):
+			Simple(简易式):包含一个编辑框和一个总是显示的列表框;
+			Dropdown(下拉式):与Simple的区别是,仅当单击下拉箭头后,列表框才会弹出;
+			Drop List(下拉列表式):编辑框只读,只能从下拉列表中选择内容.---常用
+		2.在组合框上方放置一个静态文本控件:
+			Caption为:Please select your salary:
+	PS:使用Format(格式)菜单->Test Dialog(测试对话框)可以测试所设计的属性页(或对话框)显示效果.
+		快捷键"Ctrl+T",退出"Esc".
+
+3.为每个属性页关联一个属性页类
+
+	在资源试图下选择属性页1->右键添加类,并编辑:
+		类名:CProp1;		基类:CPropertyPage.	看看ID是:IDD_PROP1
+	同样方法为IDD_PROP2和IDD_PROP3分别添加新类:CProp2和CProp3.
+
+#### 8.2.2 创建属性表单
+
+1.添加一个属性表单类
+
+	打开类向导窗口,选择右边的添加类.
+		类名:CPropSheet;		基类:CPropertySheet
+
+2.在属性表单类中创建3个属性页的成员变量,并将属性页对象添加到属性表单中
+
+	1.在属性表单类上单击右键->选择添加3个成员变量:
+		访问:private;		变量类型输入:CProp1;	变量名:m_prop1
+		访问:private;		变量类型输入:CProp2;	变量名:m_prop2
+		访问:private;		变量类型输入:CProp3;	变量名:m_prop3
+	//会自动添加三个属性页的头文件
+	2.在属性表单类的构造函数中将属性页添加进去:
+		void AddPage(CPropertyPage *pPage);
+		/*para:指向需要添加到属性表单中的属性页对象*/
+	
+		//代码如下,两个构造函数都添加
+		CPropSheet::CPropSheet(UINT nIDCaption, CWnd *pParentWnd, UINT iSelectPage)
+			:CPropertySheet(nIDCaption, pParentWnd, iSelectPage)
+		{
+			AddPage(&m_prop1);
+			AddPage(&m_prop2);
+			AddPage(&m_prop3);
+		}
+
+		CPropSheet::CPropSheet(LPCTSTR pszCaption, CWnd *pParentWnd, UINT iSelectPage)
+			:CPropertySheet(pszCaption, pParentWnd, iSelectPage)
+		{
+			AddPage(&m_prop1);
+			AddPage(&m_prop2);
+			AddPage(&m_prop3);
+		}
+
+3.创建一个菜单项,并设置单击时显示属性表单
+
+	//全部基于CxxxView(试图类)添加
+	1.添加一个菜单项
+		Caption:属性表单;	ID:IDM_PROPERTYSHEET;	Pop-up设置为False
+	2.为该菜单项添加单击响应函数:OnPropertysheet,并添加实现代码:
+		void CxxxView::OnPropertysheet()
+		{
+			CPropSheet propSheet("属性表单");	//利用传递属性表单标题的构造函数创建属性表单对象
+			propSheet.DoModal();		//显示一个模态属性表单
+		}
+		//需要包含属性表单类的头文件
+		/*
+			#include "PropSheet.h" 
+		*/
+
+#### 8.2.3 向导的创建
+
+1.将属性表单显示改成向导显示:
+		
+	void CxxxView::OnPropertysheet()
+	{
+		CPropSheet propSheet("属性表单");	//利用传递属性表单标题的构造函数创建属性表单对象
+		propSheet.SetWizardMode();		//设置显示为向导形式
+		propSheet.DoModal();		//显示一个模态属性表单
+	}
+	//此时显示不是太合常规,需要修改
+
+2.为各个属性页重写OnSetActive虚函数---当属性页被选中时,应用程序框架就会调用属性页的OnSetActive函数
+
+	/*
+		属性表单类CPropertySheet类的SetWizardButtons成员函数用于设置向导对话框上的按钮
+		void SetWizardButtons(DWORD dwFlags);
+		/*
+		para的取值:
+			PSWIZB_BACK:设置一个"上一步"按钮
+			PSWIZB_NEXT:设置一个"下一步"按钮
+			PSWIZB_FINISH:设置一个"完成"按钮
+			PSWIZB_DISABLEDFINISH:设置一个"禁用的完成"按钮
+		*/
+	*/
+	属性页1:	CProp1类的OnSetActive函数
+		BOOL CProp1::OnSetActive()
+		{
+			((CPropertySheet *)GetParent())->SetWizardButtons(PSWIZB_NEXT);	//只有下一步按钮
+			//属性页的父窗口为属性表单窗口(GetParent),并且需要进行强制转换.
+			return CPropertyPage::OnSetActive();
+		}
+	属性页2:	CProp2类的OnSetActive函数
+		BOOL CProp2::OnSetActive()
+		{
+			((CPropertySheet *)GetParent())->SetWizardButtons(PSWIZB_BACK | PSWIZB_NEXT);
+			//有上一步和下一步按钮
+			//属性页的父窗口为属性表单窗口(GetParent),并且需要进行强制转换.
+			return CPropertyPage::OnSetActive();
+		}
+	属性页3:	CProp3类的OnSetActive函数
+		BOOL CProp2::OnSetActive()
+		{
+			((CPropertySheet *)GetParent())->SetWizardButtons(PSWIZB_BACK | PSWIZB_NEXT);
+			//有上一步和完成按钮
+			//属性页的父窗口为属性表单窗口(GetParent),并且需要进行强制转换.
+			return CPropertyPage::OnSetActive();
+		}
+
+**第一个属性页的处理**
+
+1.单选按钮的处理
+
+	1.设置第一个单选按钮(IDC_RADIO1)的Group属性为True,此时三个单选按钮构成一个Group.如果没有设置在类向导中的
+		CProp1类中看不到该ID
+	2.打开类向导,为第一个单选按钮(IDC_RADIO1)添加一个成员变量:
+		变量名:m_occuption	类别:Value	类型:int
+		//此时在构造函数中会自动将该成员变量初始化为-1.且三个单选按钮构成一组:
+		选中第一个单选按钮,m_occupation=0;
+		选中第二个单选按钮,m_occupation=1;
+		选中第三个单选按钮,m_occupation=2;
+		//如果值为-1,说明用户没有选择单选按钮
+
+2.进入下一个属性页的判断处理
+
+	/*当用户单击"下一步"按钮后,程序将会调用OnWizardNext这个虚函数.该函数如果返回0,自动进入下一个属性页;
+		如果返回-1,将禁止属性页发生变更.*/
+	1.为属性页重写OnWizardNext虚函数
+	2.添加实现代码
+		LPRESULT CProp1::OnWizardNext()
+		{
+			UpdateData();	//从控件得到成员变量的值.默认参数为TRUE
+			if(m_occupation == -1)
+			{
+				MessageBox(_T("Please choose your career!"));
+				return -1;
+			}
+			return CPropertyPage::OnWizardNext();
+		}
+
+3.添加工作地点
+
+	1.为CProp1类添加WM_INITDIALOG消息响应函数OnInitDialog,用于向列表框中增加一些工作地点
+	2.列表框对应的MFC类是:CListBox,其成员函数:AddString用于向列表框添加字符串
+	3.实现代码
+		BOOL CProp1::OnInitDialog()
+		{
+			...
+			((CListBox*)GetDlgItem(IDC_LIST1))->AddString(_T("北京"));
+			((CListBox*)GetDlgItem(IDC_LIST1))->AddString(_T("天津"));
+			((CListBox*)GetDlgItem(IDC_LIST1))->AddString(_T("上海"));
+			return TRUE;
+		}
+
+4.工作地点的处理
+
+	1.打开类向导,为列表框(IDC_LIST1)添加一个成员变量:
+		变量名:m_workAddr	类别:Value	类型:CString
+		//默认在构造函数中会进行初始化
+	2.职业和工作地点的完整判断
+		LPRESULT CProp1::OnWizardNext()
+		{
+			UpdateData();	//从控件得到成员变量的值.默认参数为TRUE
+			if(m_occupation == -1)
+			{
+				MessageBox(_T("Please choose your career!"));
+				return -1;
+			}
+			if(m_workAddr == _T(""))
+			{
+				MessageBox(_T("Please select your work location!"));
+				return -1;
+			}
+			return CPropertyPage::OnWizardNext();
+		}
+
+**第二个属性页的处理**
+
+1.为4个复选框控件各自关联一个成员变量
+
+	ID:IDC_CHECK1	成员变量:m_football		类别:Value	类型:BOOL
+	ID:IDC_CHECK2	成员变量:m_basketball	类别:Value	类型:BOOL
+	ID:IDC_CHECK3	成员变量:m_volleyball	类别:Value	类型:BOOL
+	ID:IDC_CHECK4	成员变量:m_swim			类别:Value	类型:BOOL
+	//选中时为TRUE,否则为FALSE
+
+2.为属性页重写OnWizardNext虚函数
+
+	LPRESULT CProp2::OnWizardNext()
+	{
+		UpdateData();	//从控件得到成员变量的值.默认参数为TRUE
+		if(m_footbal || m_basketball || m_volleyball || m_swim)	//任何一个为True就可以进入下一个属性页
+			return CPropertyPage::OnWizardNext();
+		else
+		{
+			MessageBox("Please choose your hobby!");
+			return -1;
+		}
+	}
+
+**第三个属性页的处理**
+
+组合框对应的MFC类是CComboBox,其成员函数AddString用于向组合框控件的列表框中添加字符串选项
+
+1.为CProp1类添加WM_INITDIALOG消息响应函数OnInitDialog,用于向组合框中增加一些薪资选项
+
+	BOOL CProp1::OnInitDialog()
+	{
+		...
+		((CComboBox*)GetDlgItem(IDC_COMBO1))->AddString(_T("1000元以下"));
+		((CComboBox*)GetDlgItem(IDC_COMBO1))->AddString(_T("1000-2000元"));
+		((CComboBox*)GetDlgItem(IDC_COMBO1))->AddString(_T("2000-3000元"));
+		((CComboBox*)GetDlgItem(IDC_COMBO1))->AddString(_T("3000元以上"));
+		return TRUE;
+	}
+
+2.取消组合框的自动排序,并且设置组合框中一个默认选项
+
+	1.设置组合框的sort属性为False---取消自动排序,按照添加顺序显示
+	2.设置一个默认选项
+		int SetCurSel(int nSelect);	//从组合框的列表框中选择一项显示在组合框的编辑框中
+		/*para:指定选择项的索引位置
+			=0:第一个索引项(从0开始)
+			=-1:清空该组合框的编辑框中的内容
+		*/
+
+3.实现代码
+
+	BOOL CProp1::OnInitDialog()
+	{
+		...
+		((CComboBox*)GetDlgItem(IDC_COMBO1))->AddString(_T("1000元以下"));
+		((CComboBox*)GetDlgItem(IDC_COMBO1))->AddString(_T("1000-2000元"));
+		((CComboBox*)GetDlgItem(IDC_COMBO1))->AddString(_T("2000-3000元"));
+		((CComboBox*)GetDlgItem(IDC_COMBO1))->AddString(_T("3000元以上"));
+		((CComboBox*)GetDlgItem(IDC_COMBO1))->SetCurSel(0);	//有了默认选项,就需要再判断用户是否进行了选择
+		return TRUE;
+	}
+
+4.为后续保存用户选择需要添加的操作
+
+	1.添加一个CString类型的成员变量:m_strSalary,用于接收用户的选择
+	2.2.为属性页重写OnWizardFinish虚函数
+		LPRESULT CProp3::OnWizardFinish()
+		{
+			int index;
+			index = ((CComboBox *)GetDlgItem(IDC_COMBO1))->GetCurSel();
+			//GetCurSel():得到组合框的列表框中当前选中项的位置,一个索引值
+			((CComboBox *)GetDlgItem(IDC_COMBO1))->GetLBText(index, m_strSalary);
+			/*GetLBText():从组合框的列表框中指定位置处(index)得到一个字符串,
+				并保存到para2(CString m_strSalary)中*/
+
+			return CPropertyPage::OnWizardFinish();
+		}
+
+#### 8.2.4 接收用户在向导中所做的选择
+
+1.在CxxxView类(视类)中接收用户的选择,为视类添加保存的成员变量
+
+	-------------------------------------------------------------------------
+		页面			用户的选择		对应视类成员变量类型		变量名
+	-------------------------------------------------------------------------
+		属性页1		careeer			int					m_iOccupation			
+	-------------------------------------------------------------------------
+		属性页1		location		CString				m_strWorkAddr
+	-------------------------------------------------------------------------
+		属性页2		hobby			BOOL				m_bLike[4]
+	-------------------------------------------------------------------------
+		属性页3		salary			CString				m_strSalary
+	-------------------------------------------------------------------------
+	//构造函数中会自动初始化
+
+2.在视类中实现代码
+
+	/*
+	一般情况下,CPropertySheet类的DoModal函数的返回值是IDOK或IDCANCEL.但如果属性表单被创建为向导后,
+	该函数的返回值将是ID_WIZFINISH或IDCANCEL
+	*/
+	void CxxxView::OnPropertysheet()
+	{
+		CPropSheet propSheet("属性表单");	//利用传递属性表单标题的构造函数创建属性表单对象
+		propSheet.SetWizardMode();		//设置显示为向导形式
+		if(ID_WIZFINISH == propSheet.DoModal())
+		{
+			m_iOccupation = propSheet.m_prop1.m_occupation;
+			m_strWorkAddr = propSheet.m_prop1.m_workAddr;
+			m_bLike[0] = propSheet.m_prop2.m_football;
+			m_bLike[1] = propSheet.m_prop2.m_basketball;
+			m_bLike[2] = propSheet.m_prop2.m_volleyball;
+			m_bLike[3] = propSheet.m_prop2.m_swim;
+			m_strSalary = propSheet.m_prop3.m_strSalary;
+			Invalidate();	//让视类无效,从而会引起窗口重绘.进而可以让OnDraw捕获,完成这些信息的输出
+		}
+	}
+
+3.OnDraw函数的输出
+
+	void CxxxView::OnDraw(CDC* pDC)
+	{
+		CtextDoc* pDoc = GetDocument();
+		ASSERT_VALID(pDoc);
+		if (!pDoc)
+			return;
+		// TODO: 在此处为本机数据添加绘制代码
+		CFont font;
+		font.CreatePointFont(300, (LPCTSTR)"楷体", NULL);	//vs2010中para2需要转换成LPCTSTR
+
+		CFont *pOldFont;
+		pOldFont = pDC->SelectObject(&font);
+
+		CString strTemp;
+		strTemp = "Your career: ";
+		
+		switch(m_iOccupation)
+		{
+			case 0:
+				strTemp += "Programmer";
+				break;
+			case 1:
+				strTemp += "System Engineer";
+				break;
+			case 2:
+				strTemp += "Project Manager";
+				break;
+			default:
+				break;
+		}
+		pDC->TextOut(0, 0, strTemp);
+
+		strTemp = "Your work location: ";
+		strTemp += m_strWorkAddr;
+
+		TEXTMETRIC tm;
+		pDC->GetTextMetrics(&tm);
+
+		pDC->TextOut(0, tm.tmHeight, strTemp);	//下一行输出
+
+		strTemp = "Your hobby: ";
+		if(m_bLike[0])
+		{
+			strTemp += "football ";
+		}
+		if(m_bLike[1])
+		{
+			strTemp += "basketball ";
+		}
+		if(m_bLike[2])
+		{
+			strTemp += "volleyball ";
+		}
+		if(m_bLike[3])
+		{
+			strTemp += "swim ";
+		}
+		pDC->TextOut(0, tm.tmHeight * 2, strTemp);	//第三行输出
+
+		strTemp = "Your salary level: ";
+		strTemp += m_strSalary;
+		pDC->TextOut(0, tm.tmHeight * 3, strTemp);
+
+		pDC->SelectObject(pOldFont);		//恢复原来的字体
+	}
+***
+## Chapter 9 定制应用程序外观

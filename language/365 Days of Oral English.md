@@ -124,3 +124,93 @@
 
 ### 1.4 基本问候
 
+**惯用单句**
+
+	Hi.								//你好.
+	What's up?/What's going on?		//怎么啦?发生什么事了?有什么新情况?
+	How are you?					//你好吗?
+	How are you getting on?			//稍郑重的场合的"你好吗?"
+	How are you doing?				//你还好吗?
+	How's everything?				//一切都好吗?很轻松的寒暄语
+	Fine, thanks. And you?			//很好,谢谢.你呢?
+	I'm OK. Thank you. And you?		//我还可以.谢谢,你呢?
+	How's life?						//日子过得怎样?
+	How's life been treating you?	//生活怎么样?
+	What's new?						//有什么变化吗?
+	Anything new?					//有什么新鲜事吗?
+	Have a nice day?				//祝你一天愉快.
+
+**实用对话**
+
+		Everyday Greetings(日常问候)
+	Sally:Good morning, Mike.
+	Mike:Morning, Sally. What's up? You seem in a hurry.
+	Sally:I have an exam at 9 o'clock, and it's already 8:30.
+	Mike:Don't worry. I'll drive you.
+	Sally:Thank you very much.
+	Mike:How is your thesis coming along?	//论文写得怎样了?
+	Sally:Quite well, thanks. I'll probably finish next week. But it is a lot of work.
+		I've been working on it for 6 months, and I'm so close to the end. I can feel it.
+		//还不错. 就要接近尾声了,我能感觉得到.
+	Mike:Wow, good for you! It sounds like it was a lot of work.I'm proud of you. Is this
+		the right building?		//真不错. 是在这幢楼里考试吗?
+	Sally:Yes, it's only 8:40. Thanks so much.
+	Mike:You are welcome. Good luck! Bye!
+	Sally:Have a nice day. Bye!
+
+### 1.5 久别重逢
+
+**惯用单句**
+
+	It's been a long time.		//好久不见.	It has的缩写.
+	Long time no see.			//好久没见了.		非正式用语.
+	I haven't seen you in years.	//我有好几年没见到你了.
+	It's nice to see youu again.	//很高兴能够再次见到你.
+	What a surprise to see you here!//真没想到在这儿见到你.
+	What a small world!				//这个世界真是太小了.
+	What luck running into you again!	//能见到你真是有幸.
+	What have you been up to?		//你一直忙些什么?
+	How have you been doing lately?	//近况如何?
+	Just so-so.		//马马虎虎.		非正式用语.
+	So far so good.	//到目前为止还好.
+	Same as usual.	//还是老样子.		Same as always.
+
+**实用对话**
+
+			Accidental Meeting(偶遇)
+	Tom:Hello, Ann. Is that you?	//是你吗?
+	Ann:Yes, it is. Hi, Tom. It's real surprise to see you here.
+	Tom:It's been a long time. Wha't new?
+	Ann:Nothing much. What about you? Is everything going well?	//一切还好吧?
+	Tom:Not bad, I guess.I just got back from Hawaii.	//我觉得还行
+	Ann:How was it?		//玩的怎样?
+	Tom:I had a good time. You seem to be in a hurry. Don't let me hold you up.
+		//可别让我该耽搁了.
+	Ann:Sorry, I've got a meeting in half an hour.	//半个小时后有个会议.
+	Tom:OK. I won't keep you then.	//那我就不耽搁你了.
+	Ann:Right. It was good to see you. Goodbye.		//见到你真高兴
+	Tom:Yes. Stay in touch. Bye.
+	Ann:Give me your e-mail, would you?	//把你的电子邮件给我,好吗?
+	Tom:Sure. It's txyb@gmail.com.
+
+**文化洗礼**
+
+		Waterloo Bridge(魂断蓝桥)
+	Roy:Myra! Myra! I can't believe it! It's you, isn't it? It's really you!
+	Myra:Oh Roy!
+	Roy:It's really you! Oh darling, let me look at you - I'm not dreaming, am I?
+		Think of finding you here waiting for me. It's a miracle!
+	Myra:Roy, you're alive.
+	Roy:Over the months I've waited for this moment. I'd begun to think it would never come.
+		How did you know I was coming? Did you telephone mother? No darling, none of that.
+		Chin up, where's your nerve? It's over, darling, it's all over. We're together for always.
+	Myra:Oh Roy, you're alive.
+	Roy:Yes, extravagantly. Oh, my poor darling, come on, we'll go sit down.
+
+### 1.6 日常告别
+
+**惯用单句**
+
+**实用对话**
+
+**文化洗礼**
