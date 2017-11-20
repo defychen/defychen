@@ -2,117 +2,125 @@
 
 # 1. The Very Career Oral English
 
-## Chapter 1 Social Intercourse Language(Éç½»ÓÃÓï)
+## Chapter 1 Social Intercourse Language(ç¤¾äº¤ç”¨è¯­)
 
-### 1.1 ¸ĞĞ»Óë»Ø´ğ¸ĞĞ»
+### 1.1 æ„Ÿè°¢ä¸å›ç­”æ„Ÿè°¢
 
-**¹ßÓÃµ¥¾ä**
+**æƒ¯ç”¨å•å¥**
 
-	Thank you for your help.			//Ğ»Ğ»ÄãµÄ°ïÖú.
-	I can't really thank you enough.	//Ì«¸ĞĞ»ÄãÁË.
-	It's very nice of you.				//ÄãÕæºÃ.
-	I'm very grateful for you.			//ÎÒ·Ç³£¸Ğ¼¤Äã.
-	I owe you one.						//ÎÒÇ·Äã¸öÈËÇé.
-	I do appreciate what you have done for me.	//ÎÒºÜ¸Ğ¼¤ÄãÎªÎÒËù×öµÄÒ»ÇĞ.
-	I'd like to express my gratitude.	//ÎÒÏë±í´ïÎÒµÄ¸Ğ¼¤Ö®Çé.
-	It's my pleasure.					//ÀÖÒâĞ§ÀÍ
-	You are welcome.					//²»ÓÃ¿ÍÆø.
-	No problem.							Ã»Ê²Ã´Âé·³µÄ.
+	Thank you for your help.			//è°¢è°¢ä½ çš„å¸®åŠ©.
+	I can't really thank you enough.	//å¤ªæ„Ÿè°¢ä½ äº†.
+	It's very nice of you.				//ä½ çœŸå¥½.
+	I'm very grateful for you.			//æˆ‘éå¸¸æ„Ÿæ¿€ä½ .
+	I owe you one.						//æˆ‘æ¬ ä½ ä¸ªäººæƒ….
+	I do appreciate what you have done for me.	//æˆ‘å¾ˆæ„Ÿæ¿€ä½ ä¸ºæˆ‘æ‰€åšçš„ä¸€åˆ‡.
+	I'd like to express my gratitude.	//æˆ‘æƒ³è¡¨è¾¾æˆ‘çš„æ„Ÿæ¿€ä¹‹æƒ….
+	It's my pleasure.					//ä¹æ„æ•ˆåŠ³
+	You are welcome.					//ä¸ç”¨å®¢æ°”.
+	No problem.							æ²¡ä»€ä¹ˆéº»çƒ¦çš„.
 
-**ÊµÓÃ¶Ô»°**
+**å®ç”¨å¯¹è¯**
 
-			Expressing and Responding to Thanks		//ÖÂĞ»ºÍ´ğĞ»
+			Expressing and Responding to Thanks		//è‡´è°¢å’Œç­”è°¢
 	John:Is something wrong?
 	Mary:Yes. My car is having problems.
 	John:What's wrong?
-	Mary:It won't start.	//·¢¶¯²»ÆğÀ´ÁË
-	John:Do you want me to take a look?		//ĞèÒªÎÒ¿´Ò»ÏÂÂğ?
+	Mary:It won't start.	//å‘åŠ¨ä¸èµ·æ¥äº†
+	John:Do you want me to take a look?		//éœ€è¦æˆ‘çœ‹ä¸€ä¸‹å—?
 	Mary:No, thank you. I think I can handle it.
 	John:Well, if you change your mind, let me know.
-	Mary:I will. Thanks. That's sweet of you.	//ÄãÕæºÃ.
-	John:No problem.	//Ã»Ê²Ã´µÄ
+	Mary:I will. Thanks. That's sweet of you.	//ä½ çœŸå¥½.
+	John:No problem.	//æ²¡ä»€ä¹ˆçš„
 	Mary:I might need some tools though. Do you know where I can get some?
 	John:Sure. I have all kinds of tools. Just ask. I'll be happy to get them for you.
 	Mary:Thanks. That would be very helpful.
-	John:Anything for you. Seriously, I don't mind helping.	//²»¿ÍÆø.ËµÕæµÄ,ÎÒ²»½éÒâ°ïÃ¦µÄ.
-	Mary:OK. If you really insist, I could always use the comany.	//ÎÒ»¹ÕæÊÇĞèÒª°ïÊÖ.
+	John:Anything for you. Seriously, I don't mind helping.	//ä¸å®¢æ°”.è¯´çœŸçš„,æˆ‘ä¸ä»‹æ„å¸®å¿™çš„.
+	Mary:OK. If you really insist, I could always use the comany.	//æˆ‘è¿˜çœŸæ˜¯éœ€è¦å¸®æ‰‹.
 
-**ÎÄ»¯Ï´Àñ**
+**æ–‡åŒ–æ´—ç¤¼**
 
-						°ÂË¹¿¨»ñ½±Õß±í´ï¸ĞĞ»
-		I'm very grateful to receive this award for "best actress". I can't begin to tell you how much I 
-	appreciate this greate honor.	//ÎÒÏÖÔÚÎŞ·¨±í´ïÎÒÊÇ¶àÃ´ÕäÏ§Õâ¸öÎ°´óµÄ½±Ïî.
-		There are many pepole I'd like to thank. First of all, I want to thank my parents for bringing me
-	into this world. I also want to express my gratitude to all of my teachers over the years, but especially
-	to my acting teacher, Jim Jones, who taught me everything I know. I also want to thank my husband, for his
-	understanding, and kindness. And finally, I want to express my appreciation to all of my friends for their
-	support, especially to Martin Miller, for being there when I needed him.
-		This award means a great deal to me. Words can't express how honored I feel at this moment. I will 
-	remember this night for the rest of my life. Thank you very much.
+						å¥¥æ–¯å¡è·å¥–è€…è¡¨è¾¾æ„Ÿè°¢
+		I'm very grateful to receive this award for "best actress". I can't begin to tell you
+	how much I appreciate this greate honor.	//æˆ‘ç°åœ¨æ— æ³•è¡¨è¾¾æˆ‘æ˜¯å¤šä¹ˆçæƒœè¿™ä¸ªä¼Ÿå¤§çš„å¥–é¡¹.
+		There are many pepole I'd like to thank. First of all, I want to thank my parents for
+	bringing me into this world. I also want to express my gratitude to all of my teachers over
+	the years, but especially to my acting teacher, Jim Jones, who taught me everything I know.
+	I also want to thank my husband, for his understanding, and kindness. And finally, I want
+	to express my appreciation to all of my friends for their support, especially to Martin
+	Miller, for being there when I needed him.
+		This award means a great deal to me. Words can't express how honored I feel at this 
+	moment. I will remember this night for the rest of my life. Thank you very much.
 
-### 1.2 µÀÇ¸Óë»Ø´ğµÀÇ¸
+### 1.2 é“æ­‰ä¸å›ç­”é“æ­‰
 
-**¹ßÓÃµ¥¾ä**
+**æƒ¯ç”¨å•å¥**
 
-	I'm terribly sorry.					//ÎÒ·Ç³£±§Ç¸.
-	I'm sorry for what I have done.		//ÎÒ¶ÔÎÒËù×öµÄÊÂ±íÊ¾±§Ç¸.
-	That was stupid of me.				//ÎÒÕæ´À.
-	How can I make it up to you?		//ÎÒÔõÑù²ÅÄÜ²¹³¥ÄãÄØ?
-	I hope you'll forgive me.			//ÎÒÏ£ÍûÄã»áÔ­ÁÂÎÒ.
-	I apologize.						//ÎÒµÀÇ¸.
-	Please accept my apologize.			//Çë½ÓÊÜÎÒµÄÇ¸Òâ.
-	Forget about it.					//ÍüÁËÕâÊÂ°É.
-	It doesn't matter.					//²»Òª½ô.
-	That's all right.					//Ã»¹ØÏµ.
+	I'm terribly sorry.					//æˆ‘éå¸¸æŠ±æ­‰.
+	I'm sorry for what I have done.		//æˆ‘å¯¹æˆ‘æ‰€åšçš„äº‹è¡¨ç¤ºæŠ±æ­‰.
+	That was stupid of me.				//æˆ‘çœŸè ¢.
+	How can I make it up to you?		//æˆ‘æ€æ ·æ‰èƒ½è¡¥å¿ä½ å‘¢?
+	I hope you'll forgive me.			//æˆ‘å¸Œæœ›ä½ ä¼šåŸè°…æˆ‘.
+	I apologize.						//æˆ‘é“æ­‰.
+	Please accept my apologize.			//è¯·æ¥å—æˆ‘çš„æ­‰æ„.
+	Forget about it.					//å¿˜äº†è¿™äº‹å§.
+	It doesn't matter.					//ä¸è¦ç´§.
+	That's all right.					//æ²¡å…³ç³».
 
-**ÊµÓÃ¶Ô»°**
+**å®ç”¨å¯¹è¯**
 
-		Saying Sorry and the Appropriate Way to Respond(µÀÇ¸Óë»Ø´ğµÀÇ¸)
+		Saying Sorry and the Appropriate Way to Respond(é“æ­‰ä¸å›ç­”é“æ­‰)
 	Tracy:I've got some bad news about the bike you lent me...
 	Peter:What's that?
-	Tracy:I fell on the way to school, and your bike got scratched. I'm really sorry.	//×ÔĞĞ³µ±»»®ÉËÁË
+	Tracy:I fell on the way to school, and your bike got scratched. I'm really sorry.	
+			//è‡ªè¡Œè½¦è¢«åˆ’ä¼¤äº†
 	Peter:Don't worry about it. It's not new. It already has a few scratches. Did you get hurt?
 	Tracy:No, thank you.
 	Peter:That's the most important thing.
 	Tracy:It's kind of you to say. I feel a little stupid.
 	Peter:Forget about it.
-	Tracy:When you lent me the bike it looked brand-new, almost, anyway. //¿´ÉÏÈ¥È«ĞÂµÄ,²»¹ÜÔõÑù,Ò²²î²»¶àÈ«ĞÂµÄ.
-	Peter:Maybe, but really I've fallen a couple of times and it's been hit once or twice as well.	//Ë¤¹ıÁ½Èı´Î
+	Tracy:When you lent me the bike it looked brand-new, almost, anyway.
+			//çœ‹ä¸Šå»å…¨æ–°çš„,ä¸ç®¡æ€æ ·,ä¹Ÿå·®ä¸å¤šå…¨æ–°çš„.
+	Peter:Maybe, but really I've fallen a couple of times and it's been hit once or twice as
+		well.	//æ‘”è¿‡ä¸¤ä¸‰æ¬¡
 	Tracy:I appreciate that. Thank you.
 		
-**ÎÄ»¯Ï´Àñ**
+**æ–‡åŒ–æ´—ç¤¼**
 
-			¹«¿ªµÀÇ¸Òª½²¾¿ÒÕÊõ---ÎŞÓ¢ÎÄ
+			å…¬å¼€é“æ­‰è¦è®²ç©¶è‰ºæœ¯---æ— è‹±æ–‡
 	I am really sorry for what you have suffered.
 
-### 1.3 ÆäËûÀñÃ²ÓÃÓï
+### 1.3 å…¶ä»–ç¤¼è²Œç”¨è¯­
 
-**¹ßÓÃµ¥¾ä**
+**æƒ¯ç”¨å•å¥**
 
-	Please.						//Çë
-	Excuse me.					//´òÈÅÁË
-	Would you excuse me?		//´òÈÅÒ»ÏÂºÃÂğ?
-	After you./You first./Ladies first.	//ÄúÏÈÇë./Å®Ê¿ÓÅÏÈ.
-	Age before beauty.			//³¤ÕßÓÅÏÈ.
-	Pardon me.					//ÀÍ¼İ
-	I beg your pardon.			//ÇëÔ­ÁÂÎÒÃ»ÌıÇå/ÅªÃ÷°×.
-	Congratulations.			//×£ºØÄã(ÃÇ).
-	Do you mind if I smoke?		//ÎÒÏë³éÖ§ÑÌ,Äú½éÒâÂğ?
-	Could you please tell the way to the cinema?	//ÄúÄÜ¸æËßÎÒÈ¥µçÓ°ÔºÔõÃ´×ßÂğ?
+	Please.						//è¯·
+	Excuse me.					//æ‰“æ‰°äº†
+	Would you excuse me?		//æ‰“æ‰°ä¸€ä¸‹å¥½å—?
+	After you./You first./Ladies first.	//æ‚¨å…ˆè¯·./å¥³å£«ä¼˜å…ˆ.
+	Age before beauty.			//é•¿è€…ä¼˜å…ˆ.
+	Pardon me.					//åŠ³é©¾
+	I beg your pardon.			//è¯·åŸè°…æˆ‘æ²¡å¬æ¸…/å¼„æ˜ç™½.
+	Congratulations.			//ç¥è´ºä½ (ä»¬).
+	Do you mind if I smoke?		//æˆ‘æƒ³æŠ½æ”¯çƒŸ,æ‚¨ä»‹æ„å—?
+	Could you please tell the way to the cinema?	//æ‚¨èƒ½å‘Šè¯‰æˆ‘å»ç”µå½±é™¢æ€ä¹ˆèµ°å—?
 
-**ÊµÓÃ¶Ô»°**
+**å®ç”¨å¯¹è¯**
 
-					Being Polite(ÀñÃ²ÓÃÓï)
-	Kate:Welcome to our university's 50th anniversary, sir. Please have a seat.	//50ÖÜÄêÇì
-	Jack:Thank you. Wow£¬ your school has so many honors¡£ Congratulations.
+					Being Polite(ç¤¼è²Œç”¨è¯­)
+	Kate:Welcome to our university's 50th anniversary, sir. Please have a seat.	//50å‘¨å¹´åº†
+	Jack:Thank you. Wowï¼Œ your school has so many honorsã€‚ Congratulations.
 	Kate:Thank you.
-	Jack:Excuse me. I want to see the dean, Mr. Li first. I was wondering if you could tell me where
-		his office is.	//ÏÈ¼ûÒ»¼ûÀîÔº³¤
-	Kate:Certainly. He's in the office building at the south end of the campus, just beside the library.
-			//at the south end of the campus:Ğ£Ô°µÄÄÏ¶Ë
+	Jack:Excuse me. I want to see the dean, Mr. Li first. I was wondering if you could tell me
+		where his office is.	//å…ˆè§ä¸€è§æé™¢é•¿
+	Kate:Certainly. He's in the office building at the south end of the campus, just beside the 
+		library.	//at the south end of the campus:æ ¡å›­çš„å—ç«¯
 	Jack:Excuse me?
 	Kate:Let me show you the way. Please follow me.
 	Jack:Thank you very much. It's very kind of you.
-	Kate:My pleasure.	//ÀÖÒâĞ§ÀÍ
-	Jack:This is it?	//Õâ¾Íµ½ÁË?
-	Kate:He's up on the second floor.You'll have to use the stairs.
+	Kate:My pleasure.	//ä¹æ„æ•ˆåŠ³
+	Jack:This is it?	//è¿™å°±åˆ°äº†?
+	Kate:He's up on the second floor.You'll have to use the stairs. The elevator isn't working.
+	Jack:Thanks again.
+
+### 1.4 åŸºæœ¬é—®å€™
+

@@ -3292,8 +3292,75 @@ MFC中,所有控件都派生于CWnd类,因此控件也属于窗口.
 	}
 
 	/*Tab顺序:
-		打开对话框资源编辑器,选择Layout菜单->Tab Order菜单项,单击即可显示各个控件的Tab序号
-		改变Tab序号,只需要单击控件即可.
+		打开对话框资源编辑器,选择格式(D)菜单->Tab键顺序菜单项(或者Ctrl+D),单击即可显示各个控件的Tab序号
+		改变Tab序号,只需要双击控件即可.
 	*/
 
 PS:对话框中存在默认按钮,当按下Enter键会调用默认按钮的消息响应函数;如果不存在,就会调用虚拟的ID为IDOK的消息响应函数,即虚拟的"OnxxxOk"函数,因此在实际应用中可以将ID为IDOK的按钮删掉,保留消息响应函数.
+
+***
+
+## Chapter 8 对话框(二)
+
+### 8.1 "逃跑"按钮的实现
+
+1.创建一个基于对话框的应用程序:Catchme, 并删除其上自动创建的所有控件.
+
+2.在对话框资源窗口上添加两个按钮控件:
+
+	1.添加一个按钮控件,修改Caption为:Can you catch me?
+	2.复制第一个按钮控件,设置其Visible为False(避免两个同时显示),并进行对齐的相关操作
+	PS:修改字体在对话框大窗口属性窗口中的Font中设置.
+
+3.创建一个CNewButton的新类,用于响应鼠标移动消息,隐藏按钮
+
+	打开类向导窗口,选择右边的添加类.
+		类名:CNewButton;		基类:CButton
+
+4.为对话框中的两个按钮添加成员变量
+
+	在资源视图下,选择需要添加变量的按钮->右键选择添加变量->并设置:
+		访问:private;		变量类型输入:CNewButton;	变量名:m_btn1  & m_btn2
+	PS:VS2010会自动添加CNewButton的头文件
+
+5.为新创建的CNewButton类添加鼠标移动消息以及一个CNewButton *类型的成员变量
+
+	1.为CNewButton类添加鼠标移动消息
+		void CNewButton::OnMouseMove(UINT nFlags, CPoint point)
+		{
+			// TODO: 在此添加消息处理程序代码和/或调用默认值
+	
+			CButton::OnMouseMoves(nFlags, point);
+		}
+	2.添加一个CNewButton * m_pBtn的成员变量
+		右键CNewButton类名->添加、添加变量
+			访问设置为:public;	变量类型:CNewButton;	变量名:m_pBtn
+		PS:m_pBtn用于两个按钮互相保存对方的地址
+
+6.在对话框CCatchmeDlg的OnInitDialog函数中保存按钮相互的地址
+
+	BOOL CCatchmeDlg::OnInitDialog()
+	{
+		CDialogEx::OnInitDialog();
+	
+		// 将“关于...”菜单项添加到系统菜单中。
+		...
+		// TODO: 在此添加额外的初始化代码
+	
+		m_btn1.m_pBtn = &m_btn2;	//保存按钮相互的地址,m_pBtn是public才能访问
+		m_btn2.m_pBtn = &m_btn1;	//保存按钮相互的地址,m_pBtn是public才能访问
+	
+		return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
+	}
+
+	//OnInitDialog函数是WM_INITDIALOG消息的响应函数,该消息是在对话框要显示之前发送的.
+
+7.在CNewButton类的OnMouseMove函数中实现隐藏和显示代码:
+
+	void CNewButton::OnMouseMove(UINT nFlags, CPoint point)
+	{
+		// TODO: 在此添加消息处理程序代码和/或调用默认值
+		ShowWindow(SW_HIDE);	//自身隐藏
+		m_pBtn->ShowWindow(SW_SHOW);		//对方显示
+		CButton::OnMouseMove(nFlags, point);
+	}
