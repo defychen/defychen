@@ -161,7 +161,44 @@
 ***
 # MIPS
 
+实现在某个指定位置下一个断点的操作:
 
-asm volatile(".word 0xebfffffe");断点
+		la 	t0, 0xa01ffff0
+		la 	t1, defy_test
+		lw 	t2, (t1)
+		sw 	t2, (t0)
+		addiu 	t1, t1, 4
+		lw 	t2, (t1)
+		sw 	t2, 4(t0)
+
+	defy_test:
+		nop
+		.word 0x1000ffff
+
+反汇编得到:
+
+	80000214:	3c098000 	lui	t1,0x8000
+	80000218:	25290230 	addiu	t1,t1,560
+	8000021c:	8d2a0000 	lw	t2,0(t1)
+	80000220:	ad0a0000 	sw	t2,0(t0)
+	80000224:	25290004 	addiu	t1,t1,4
+	80000228:	8d2a0000 	lw	t2,0(t1)
+	8000022c:	ad0a0004 	sw	t2,4(t0)
+	
+	80000230 <defy_test>:
+	80000230:	00000000 	nop
+	80000234:	1000ffff 	b	80000234 <defy_test+0x4>
+	80000238:	3c088001 	lui	t0,0x8001
+	8000023c:	2508ae68 	addiu	t0,t0,-20888
+	80000240:	01000008 	jr	t0
+	80000244:	00000000 	nop
+
+ARM的内嵌汇编断点指令
+
+asm volatile(".word 0xebfffffe");	//断点
+
+MIPS的内嵌汇编断点指令
+
+asm volatile(".word 0x1000ffff; nop");
 
 md 0x1801008c 4
