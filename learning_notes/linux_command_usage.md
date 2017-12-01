@@ -33,7 +33,7 @@
 	sed -i '/CONFIG_POSIX_MQUEUE/c CONFIG_POSIX_MQUEUE=y' linux-m3755-demo-new-kernel.config /*最好的办法*/
 	/*修改ali corp的配置:*/
 	sed -i '/CONFIG_POSIX_MQUEUE/c CONFIG_POSIX_MQUEUE=y' board/ali/c3922-demo/linux-m3755-demo-new-kernel.config
-***
+
 ## 2.dd命令
 *烧写文件(kernel,rootfs等等)到特定的区块.*
 
@@ -259,5 +259,11 @@
 	
 	md5sum命令的配置,在busybox中配置:
 		--->make busybox-menuconfig->Coreutils->md5sum
+
+## 20.awk命令
+
+awk是一个强大的文本分析工具.awk是把文件逐行读入,以空格为默认分隔符进行切片,切片的部分再进行各种分析处理.
+
+
 
 ## 13. wget命令
