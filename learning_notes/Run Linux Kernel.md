@@ -1,5 +1,5 @@
 # Run Linux Kernel
-
+***
 # Chapter 1 处理器体系结构
 
 1.ARMv4指令集的处理器架构有ARM7-TDMI,典型的处理器有三星的S3C44B0X;
@@ -22,13 +22,13 @@
 	2.定义AArch64和AArch32两套运行环境来分别运行64位和32位指令集,软件可动态切换运行环境;
 	3.AArch64也称为ARM64; AArch32也称为ARM32.
 
-## 1.精简指令集RISC和复杂指令集CISC的区别
+## 1.1 精简指令集RISC和复杂指令集CISC的区别
 
 	在实际使用中,20%的简单指令被经常用到,占程序总指令数的80%;而指令集里其余80%的复杂指令很少被用到,只占程序总指令数的20%.
 	将指令集和处理器进行重新设计,只保留常用的简单指令.而简单指令大部分时间能在一个cycle内完成,基于这种思想的指令集叫做RISC
 	(Reduced Instruction Set Computer)指令集.以前的指令集叫做CISC(Complex Instruction Set Computer)指令集.
 
-## 2.大小端字节序
+## 1.2 大小端字节序
 
 大端模式:数据的高字节存放在内存的低地址中;低字节存放在内存的高地址中.
 
@@ -62,7 +62,7 @@
 		*/
 	}
 
-## 3.指令的执行过程相关概念
+## 1.3 指令的执行过程相关概念
 
 **1.五级流水线**
 
@@ -105,7 +105,7 @@
 
 	将来自CPU的存储器请求发送到存储器子系统,并处理其下存储器子系统的应答数据和消息.
 
-## 4.内存屏障(memory barrier)
+## 1.4 内存屏障(memory barrier)
 
 **内存访问乱序产生原因**
 
@@ -121,7 +121,7 @@
 		而不去访问内存.
 	*/
 
-## 5.ARM的memory barrier(内存屏障)指令
+## 1.5 ARM的memory barrier(内存屏障)指令
 
 从ARMv7指令集开始,ARM提供3条内存屏障指令.
 
@@ -197,7 +197,7 @@
 		cmp r1, #0
 		beq poll_loop	//等于0,执行循环
 
-## 6.cache工作方式
+## 1.6 cache工作方式
 
 cache使用的地址编码方式和主存储器的类似,因此处理器可以使用访问主存储器的地址编码访问cache.
 
@@ -225,7 +225,7 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 		通过offset等即可获得所需数据.如果发生cache miss,处理器需要用物理地址进一步访问主存储器来获得数据,并将
 		数据填充到相应的cache line中.
 	
-## 7.cache映射方式---direct mapping, set-associative, full-associative
+## 1.7 cache映射方式---direct mapping, set-associative, full-associative
 
 **1.direct mappin(直接映射)**
 
@@ -266,7 +266,7 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 	此时地址0x00,0x40,0x80可以映射到同一个组(相同的index构成)中任意一个cache line.当cache line要发生替换操作时,
 	就有50%的概率可以不被替换,较少cache颠簸.
 
-## 8.32 KB的4路组相联的cache
+## 1.8 32 KB的4路组相联的cache
 
 	在Cortex-A7和Cortex-A9的处理器上有32 KB的4路组相联的cache:
 	cache大小:32 KB;		way:4路;		cache line:32 Byte
@@ -278,7 +278,7 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 	[12:5]---用于索引(Index)选择每一路上的cache line.
 	[31:13]---用作标记位(tag)
 
-## 9. ARM处理器的D-Cache和I-Cache组织方式
+## 1.9 ARM处理器的D-Cache和I-Cache组织方式
 
 	----------------------------------------------------------------------------------
 					Cortex-A7		Cortex-A9		Cortex-A15		Cortex-A53
@@ -312,7 +312,7 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 	D-cache:由于PIPT耗时,而现在处理器频率越来越高,D-cache也只能使用VIPT.
 	I-cache:因为I-cache通常是只读的,不需要进行写操作,也就不会出现多条表项引起的一致性错误.因此I-cache一般使用VIPT.
 
-## 10.二级页表架构中虚拟地址到物理地址查询页表的过程
+## 1.10 二级页表架构中虚拟地址到物理地址查询页表的过程
 
 **ARM内存管理架构**
 
@@ -324,7 +324,7 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 		需要软件来完成.页表查询是一个相对耗时的过程,理想状态下是TLB里存有页表相关信息.只有当TLB Miss时,才会去查询
 		页表,并且读入页表的内容.
 
-### 1.ARMv7-A架构的页表
+### 1.10.1 ARMv7-A架构的页表
 
 	ARMv7-A架构:支持安全扩展(Security Extensions),CA-15开始支持大物理地址扩展(Large Physical Address 
 		Extension, LPAE)和虚拟化扩展.如果使能了安全扩展,ARMv7-A分为Secure World和Non-secure World(也叫
@@ -364,7 +364,7 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 
 #### 还没有理清楚,需要进一步学习!!!!
 
-### 2.ARMv8-A架构的页表
+### 1.10.2 ARMv8-A架构的页表
 
 ARMv8-A架构支持64-bit操作系统,可以同时支持64-bit和32-bit应用程序.为了兼容ARMv7-A指令集,定义AArch64架构和AArch32架构.
 
@@ -395,3 +395,371 @@ AArch64架构支持安全扩展和虚拟化扩展.安全扩展把ARM世界分为
 	1,最多支持4级页表;
 	2,输入/输出地址最大有效位宽48-bit;
 	3,翻译的最小粒度可以是4KB,16KB或64KB.
+
+## 1.11 多核处理器中cache的一致性
+
+**略**
+
+## 1.12 cache在linux内核中的应用
+
+	1.内核中常用的数据结构通常是L1 cache对齐的.e.g mm_struct,fs_cache等使用"SLAB_HWCACHE_ALIGN"标志来创建slab
+		缓存描述符.
+	2.一些常用的数据结构在定义时就约定数据结构以L1 cache对齐.使用"____cacheline_aligned_in_smp和
+		____cacheline_internodealigned_in_smp"等宏来定义数据结构:
+		/*在目录./include/linux/mmzone.h中*/
+		struct zone{
+			...
+		}__cacheline_internodealigned_in_smp;	//表示该结构体cache line对齐
+	3.数据结构中频繁访问的成员可以单独占用一个cache line,或者相关的成员在cache line彼此错开.
+		e.g.struct zone数据结构中的zone->lock和zone->lru_lock可以让他们各自使用不同的cache line,以提高获取锁的效率.
+	4.slab的着色区和自旋锁的实现.
+
+## 1.13 ARM big.LITTLE架构
+
+ARM big.LITTLE架构:ARM的大小核概念.针对性能优化化的处理器内核称为大核,针对低功耗待机优化过的处理器内核称为小核.
+
+常见的大核处理器:Cortex-A15, Cortex-A57, Cortex-A72和Cortex-A73.
+
+常见的小核处理器:Cortex-A7, Cortex-A53.
+
+## 1.14 cache coherency和memory consistency
+
+cachecoherency:高速缓存一致性关注的是同一个数据在多个cache和内存中的一致性问题.解决方法主要是总线监听协议,e.g.MESI协议.
+
+memory consistency:处理器系统对多个地址进行存储器访问序列的正确性,即内存访问模型.
+
+## 1.15 cache的write back策略
+
+**略**
+
+## 1.16 cache line替换策略
+
+随机法(Random policy):随机地确定替换的cache block.有一个随机数产生器来生成随机数确定替换块.方法简单,易于实现,但命中率低.
+
+先进先出法(FIFO):选择最先调入的cache block进行替换.但是最先调入的块有可能被多次命中,因此不符合局部性规律.
+
+最少使用算法(LRU):选择最近最少使用的块来替换,这种算法较好的反映了程序局部性规律.
+
+	Cortex-A57:L1 cache采用LRU算法,L2 cache采用随机算法;
+	Cortex-A72:L2 cache采用伪随机算法(pseudo-random policy)或伪LRU算法(pseudo-least-recently-used policy).
+
+## 1.17 NUMA架构
+
+**略.**
+
+***
+
+# Chapter 2 内存管理
+
+## 2.1 物理内存初始化
+
+DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bootloader会把DDR的大小传递给linux内核.从linux内核来看DDR就是一段物理内存空间.
+
+### 2.1.1 内存大小
+
+在ARM Vexpress平台,内存定义在:arch/arm/boot/dts/vexpress-v2p-ca9.dts中
+
+	memory@60000000 {
+		device_type = "memory";
+		reg = <0x60000000 0x40000000>;	//起始地址0x60000000,大小为0x40000000(1GB)
+	};
+
+内核启动时,解析dts文件,实现代码位于:drivers/of/fdt.c中的early_init_dt_scan_memory()函数中.
+
+	[调用关系:start_kernel()->setup_arch()->setup_machine_fdt()->early_init_dt_scan_nodes()
+		->early_init_dt_scan_memory()]
+
+	/*
+		start_kernel:位于./init/main.c/start_kernel()--->该函数由汇编代码调用.e.g../arch/arm/kernel/head-common.S
+			调用.该函数会做一些初始化:init_IRQ(),tick_init()...
+		setup_arch:位于./arch/arm/kernel/setup.c/setup_arch()
+		setup_machine_fdt:位于./arch/arm/kernel/devtree.c/setup_machine_fdt()
+		early_init_dt_scan_nodes:位于./drivers/of/fdt.c/early_init_dt_scan_nodes()
+		early_init_dt_scan_memory:位于./drivers/of/fdt.c/early_init_dt_scan_memory()
+	*/
+
+	int __init early_init_dt_scan_memory(unsigned long node, const char *uname,
+					int depth, void *data)
+	{
+		...
+		while ((endp - reg) >= (dt_root_addr_cells + dt_root_size_cells)) {
+			u64 base, size;
+	
+			base = dt_mem_next_cell(dt_root_addr_cells, &reg);
+			size = dt_mem_next_cell(dt_root_size_cells, &reg);
+	
+			if (size == 0)
+				continue;
+			pr_debug(" - %llx ,  %llx\n", (unsigned long long)base,
+			    (unsigned long long)size);
+	
+			early_init_dt_add_memory_arch(base, size);	//得到内存的base_address和size信息.
+			//通过early_init_dt_add_memory_arch()->memblock_add()函数添加到memblock子系统中.
+		}
+
+	return 0;
+	}
+
+### 2.1.2 物理内存映射
+
+1.将页表中的页表项清零,在函数prepare_page_table()中实现(清除一级页表项的内容):
+
+	[start_kernel->setup_arch->paging_init->prepare_page_table]
+	/*
+		start_kernel:位于./init/main.c/start_kernel()--->该函数由汇编代码调用.e.g../arch/arm/kernel/head-common.S
+			调用.该函数会做一些初始化:init_IRQ(),tick_init()...
+		setup_arch:位于./arch/arm/kernel/setup.c/setup_arch()
+		paging_init:位于./arch/arm/mm/mmu.c/paging_init()
+		prepare_page_table:位于./arch/arm/mm/mmu.c/prepare_page_table().
+	*/
+	static inline void prepare_page_table(void)
+	{
+		unsigned long addr;
+		phys_addr_t end;
+	
+		/*
+		 * Clear out all the mappings below the kernel image.
+		 */
+		for (addr = 0; addr < MODULES_VADDR; addr += PMD_SIZE)
+	+		pmd_clear(pmd_off_k(addr));	//清零0x0~MODULES_VADDR
+	
+	#ifdef CONFIG_XIP_KERNEL
+		/* The XIP kernel is mapped in the module area -- skip over it */
+		addr = ((unsigned long)_etext + PMD_SIZE - 1) & PMD_MASK;
+	#endif
+		for ( ; addr < PAGE_OFFSET; addr += PMD_SIZE)
+	+		pmd_clear(pmd_off_k(addr));	//清零MODULES_VADDR~PAGE_OFFSET
+	
+		/*
+		 * Find the end of the first block of lowmem.
+		 */
+		end = memblock.memory.regions[0].base + memblock.memory.regions[0].size;
+		if (end >= arm_lowmem_limit)
+			end = arm_lowmem_limit;
+	
+		/*
+		 * Clear out all the kernel space mappings, except for the first
+		 * memory bank, up to the vmalloc region.
+		 */
+		for (addr = __phys_to_virt(end);
+		     addr < VMALLOC_START; addr += PMD_SIZE)
+	+		pmd_clear(pmd_off_k(addr));	//清零arm_lowmem_limit~VMALLOC_START
+	}
+
+2.创建页表,在函数map_lowmem()函数:
+
+	[start_kernel->setup_arch->paging_init->map_lowmem]
+	/*
+		start_kernel:位于./init/main.c/start_kernel()--->该函数由汇编代码调用.e.g../arch/arm/kernel/head-common.S
+			调用.该函数会做一些初始化:init_IRQ(),tick_init()...
+		setup_arch:位于./arch/arm/kernel/setup.c/setup_arch()
+		paging_init:位于./arch/arm/mm/mmu.c/paging_init()
+		map_lowmem:位于./arch/arm/mm/mmu.c/map_lowmem().
+	*/
+	static void __init map_lowmem(void)
+	{
+		struct memblock_region *reg;
+	+	phys_addr_t kernel_x_start = round_down(__pa(_stext), SECTION_SIZE);	//注意
+	+	phys_addr_t kernel_x_end = round_up(__pa(__init_end), SECTION_SIZE);	//注意
+	
+		/* Map all the lowmem memory banks. */
+		for_each_memblock(memory, reg) {
+			phys_addr_t start = reg->base;
+			phys_addr_t end = start + reg->size;
+			struct map_desc map;
+	
+			if (end > arm_lowmem_limit)
+				end = arm_lowmem_limit;
+			if (start >= end)
+				break;
+	
+			if (end < kernel_x_start) {
+				map.pfn = __phys_to_pfn(start);
+				map.virtual = __phys_to_virt(start);
+				map.length = end - start;
+				map.type = MT_MEMORY_RWX;
+	
+				create_mapping(&map);
+			} else if (start >= kernel_x_end) {
+				map.pfn = __phys_to_pfn(start);
+				map.virtual = __phys_to_virt(start);
+				map.length = end - start;
+				map.type = MT_MEMORY_RW;
+	
+	+			create_mapping(&map);	//映射函数.此处为物理内存直接映射(线性映射).
+			} else {
+				/* This better cover the entire kernel */
+				if (start < kernel_x_start) {
+					map.pfn = __phys_to_pfn(start);
+					map.virtual = __phys_to_virt(start);
+					map.length = kernel_x_start - start;
+					map.type = MT_MEMORY_RW;
+	
+	+				create_mapping(&map);
+				}
+	
+				map.pfn = __phys_to_pfn(kernel_x_start);
+				map.virtual = __phys_to_virt(kernel_x_start);
+				map.length = kernel_x_end - kernel_x_start;
+				map.type = MT_MEMORY_RWX;
+	
+	+			create_mapping(&map);
+	
+				if (kernel_x_end < end) {
+					map.pfn = __phys_to_pfn(kernel_x_end);
+					map.virtual = __phys_to_virt(kernel_x_end);
+					map.length = end - kernel_x_end;
+					map.type = MT_MEMORY_RW;
+	
+	+				create_mapping(&map);
+				}
+			}
+		}
+	}
+
+**kernel内部代码段和只读数据段划分:**
+
+	/*_stext:代码段起始;		_init_end:代码段结束.		__end_rodata:只读数据段结束.*/
+	//得到代码段起始和只读数据段的结束
+	extern int _stext;
+	extern int __end_rodata;
+	
+	u32 mem_start, mem_end;
+	mem_start = __pa(&_stext);		//转成物理地址
+	mem_end = __pa(&__end_rodata);	//转成物理地址
+
+	mem_start &= 0x0FFFFFFF;
+	mem_start |= 0xA0000000;	//转成DMA地址
+	mem_end &= 0x0FFFFFFF;
+	mem_end |= 0xA0000000;		//转成DMA地址.
+
+### 2.1.3 zone初始化
+
+**struct zone**
+
+页表初始化完成之后,内核对内存进行管理.内核采用区块zone的方式进行管理.
+
+	/*struct zone位于./include/linux/mmzone.h中*/
+	struct zone {
+		/* Read-mostly fields */
+	
+		/* zone watermarks, access with *_wmark_pages(zone) macros */
+		unsigned long watermark[NR_WMARK];	//每个zone在系统启动时会计算出3个水位值(WMARK_WIN, WMARK_LOW, 
+				//WMARK_HIGH).在页面分配器中和kswapd页面回收中用到.
+		long lowmem_reserve[MAX_NR_ZONES];	//zone中预留的内存.
+		struct pglist_data	*zone_pgdat;	//指向内存节点
+		struct per_cpu_pageset __percpu *pageset;	//维护Per-CPU页面,减少自旋锁的争用.
+		unsigned long		zone_start_pfn;	//zone开始页面的页帧号
+		unsigned long		managed_pages;	//zone中被伙伴系统管理的页面数量
+		unsigned long		spanned_pages;	//zone包含的页面数量
+		unsigned long		present_pages;	//zone实际管理的页面数量
+		const char		*name;
+	
+		ZONE_PADDING(_pad1_)
+		struct free_area	free_area[MAX_ORDER];	//管理空闲区域的数组
+		unsigned long		flags;
+		spinlock_t		lock;	//对zone保护的自旋锁
+	
+		ZONE_PADDING(_pad2_)
+		spinlock_t		lru_lock;	//对zone中LRU链表保护的自旋锁
+		struct lruvec		lruvec;	//LRU链表集合
+
+		ZONE_PADDING(_pad3_)
+		atomic_long_t		vm_stat[NR_VM_ZONE_STAT_ITEMS];	//zone计数
+	} ____cacheline_internodealigned_in_smp;
+
+**zone的划分**
+
+	/*mmzone.h位于./include/linux/mmzone.h中*/
+	enum zone_type {
+	#ifdef CONFIG_ZONE_DMA
+	+	ZONE_DMA,
+	#endif
+	#ifdef CONFIG_ZONE_DMA32
+	+	ZONE_DMA32,
+	#endif
+	+	ZONE_NORMAL,	//常用
+	#ifdef CONFIG_HIGHMEM
+	+	ZONE_HIGHMEM,	//常用
+	#endif
+	+	ZONE_MOVABLE,
+	#ifdef CONFIG_ZONE_DEVICE
+	+	ZONE_DEVICE,
+	#endif
+	+	__MAX_NR_ZONES
+	};
+
+**平台运行之后zone信息**
+
+	/*平台跑起来的打印信息,搜索zone就在附近*/
+	Virtual kernel memory layout:	//虚拟kernel内存布局
+	    vector  : 0xffff0000 - 0xffff1000   (   4 kB)
+	    fixmap  : 0xffc00000 - 0xfff00000   (3072 kB)
+	    vmalloc : 0xf0800000 - 0xff800000   ( 240 MB)
+	+	lowmem  : 0xc0000000 - 0xf0000000   ( 768 MB)	//ZONE_NORMAL
+	    pkmap   : 0xbfe00000 - 0xc0000000   (   2 MB)
+	    modules : 0xbf000000 - 0xbfe00000   (  14 MB)
+	      .text : 0xc3008000 - 0xc36e5b7c   (7031 kB)
+	      .init : 0xc36e6000 - 0xc3722000   ( 240 kB)
+	      .data : 0xc3722000 - 0xc3765c70   ( 272 kB)
+	       .bss : 0xc3765c70 - 0xc391a2d0   (1746 kB)
+
+**zone的初始化函数---free_area_init_core**
+
+	/*start_kernel->setup_arch->paging_init->bootmem_init->zone_sizes_init->
+		free_area_init_node->free_area_init_core*/
+	/*
+		start_kernel:位于./init/main.c/start_kernel()--->该函数由汇编代码调用.e.g../arch/arm/kernel/head-common.S
+			调用.该函数会做一些初始化:init_IRQ(),tick_init()...
+		setup_arch:位于./arch/arm/kernel/setup.c/setup_arch()
+		paging_init:位于./arch/arm/mm/mmu.c/paging_init()
+		bootmem_init:位于./arch/arm/mm/init.c/bootmem_init()
+		zone_sizes_init:位于./arch/arm/mm/init.c/zone_sizes_init()
+		free_area_init_node:位于./mm/page_alloc.c/free_area_init_node()
+		free_area_init_core:位于./mm/page_alloc.c/free_area_init_core().
+	*/
+
+### 2.1.4 空间划分
+
+4GB的虚拟地址空间划分方法---可在linux的menuconfig中进行划分
+
+	linux->menuconfig->Kernel Features->Memory split(3G/1G user/kernel split)
+		->3G/1G user/kernel split(通常为3GB的用户空间/1GB的内核空间).
+
+在driver中调用virt_to_phys和phys_to_virt时所在的文件:
+
+	/*virt_to_phys和phys_to_virt都在./arch/arm/include/asm/memory.h中*/
+	
+	/*
+	+ * These are *only* valid on the kernel direct mapped RAM memory.
+	+ * Note: Drivers should NOT use these.  They are the wrong
+	+ * translation for translating DMA addresses.  Use the driver
+	+ * DMA support - see dma-mapping.h.
+	+ 即为DMA地址转换需要去查看dma-mapping.h
+	 */
+	#define virt_to_phys virt_to_phys
+	static inline phys_addr_t virt_to_phys(const volatile void *x)
+	{
+		return __virt_to_phys((unsigned long)(x));
+	}
+	
+	#define phys_to_virt phys_to_virt
+	static inline void *phys_to_virt(phys_addr_t x)
+	{
+		return (void *)__phys_to_virt(x);
+	}
+
+	/*如果是为简单的no mmu的kernel,其转换简单如下:---线性映射即是如此*/
+	static inline phys_addr_t __virt_to_phys(unsigned long x)
+	{
+		return (phys_addr_t)x - PAGE_OFFSET + PHYS_OFFSET;
+		/*
+			PAGE_OFFSET为0xC000_0000;
+			PHYS_OFFSET为0.
+		*/
+	}
+	
+	static inline unsigned long __phys_to_virt(phys_addr_t x)
+	{
+		return x - PHYS_OFFSET + PAGE_OFFSET;
+	}

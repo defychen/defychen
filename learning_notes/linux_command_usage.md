@@ -2,7 +2,7 @@
 ***
 ## 1.sed命令
 
-*文本处理工具,属于管道命令,以行为单位进行处理,可以进行行替换、删除、新增、选取等.*
+文本处理工具,属于管道命令,以"行"为单位进行处理,可以进行行替换、删除、新增、选取等.
 
 **1)删除某行(不会真正删除某行,只是在屏幕上显示的时少了该行):**
 	
@@ -262,8 +262,85 @@
 
 ## 20.awk命令
 
-awk是一个强大的文本分析工具.awk是把文件逐行读入,以空格为默认分隔符进行切片,切片的部分再进行各种分析处理.
+awk是一个强大的文本分析工具.awk是把文件逐行读入,以空格为默认分隔符进行切片,切片的部分再进行各种分析处理.awk适合于一行当中多个列(由空格或者tab键分隔).
 
+语法格式:
 
+	awk '{对数据处理的动作}'	filename
+	last -n 5		//取出登录者的数据前5行
+	//结果为:	
+	martin.z pts/76       p8-martin-zhu.al Fri Dec  8 11:36   still logged in   
+	steve.ch pts/46       p8-steve-chen.al Fri Dec  8 11:35   still logged in   
+	steve.ch pts/26       p8-steve-chen.al Fri Dec  8 11:34   still logged in   
+	martin.z pts/25       p8-martin-zhu.al Fri Dec  8 11:30   still logged in   
+	wei.l    pts/71       10.8.7.81        Fri Dec  8 11:26   still logged in
+	取出账户和登录者的IP,且帐号与IP之间以[tab]隔开:
+	last -n 5 | awk '{print $1 "\t" $3}'		//tab键使用"\t"表示
+	//$0:表示整行;	$1:表示第一列(空格或tab键分开的)
+
+**实例1---awk基本应用**
+
+	//一个待处理的文件"grade.txt"
+	M.Tansley     05/99     48311     Green     8     40     44
+	J.Lulu     06/99     48317     green     9     24     26
+	P.Bunny     02/99     48     Yellow     12     35     28
+	J.Troll     07/99     4842     Brown-3     12     26     26
+	L.Tansley     05/99     4712     Brown-2     12     30     28
+
+	awk '{print $0}' grade.txt	//输出整个文件.使用$0输出整个文件
+	awk '{print $1, $4}' grade.txt	//输出第1列和第4列.中间的,表示以空格分开;如果是"\t"是使用tab分开
+	awk 'BEGIN {print "Name     Defy\n------------------------"}
+	> {print $1 "\t" $4}' grade.txt
+	/*BEGIN表示表头,会输出Name     Defy; \n表示换行*/
+
+**实例2---与正则表达式结合**
+
+	/*输出$4中包含Brown的所有整行*/
+	awk '$4 ~/Brown/ {print $0}' grade.txt
+	/*输出$3中等于48的所有整行*/
+	awk '$3== "48" {print $0}' grade.txt	//试过48不带""也是可以的
+	/*不包括*/
+	awk '$4 !~ /Brown/ {print $0}' grade.txt
+	/*不等于*/
+	awk '$4 != "Brown-2" {print $0}' grade.txt
+
+**实例3---padding脚本**
+
+	#!/bin/bash
+	file_size = `ls -l $1 | awk '{print $5}'`	
+	#"``"在键盘1的左边.	$1:表示需要padding的脚本.		$5表示文件的大小
+	echo $file_size		#打印出文件大小
+	residual_size = `expr $file_size % 16`	#%取余16
+	echo $residual_size
+	padding_size = `expr 16 - $residual_size`	#需要padding的大小
+	echo $padding_size
+	if [ $padding_size -eq 16]; then		#表示residual为0,不需要padding
+		echo No need to padding!
+	else
+		for(i = 0; i < padding_size; i++); do
+			print '\xff' >> $1	#输出一个"\xff"十六进制的ff到文件结尾
+			echo padding $i byte	#输出padding了多少次
+		done
+	fi
+
+**实例4---"-F"参数指定分隔符**
+
+	pwd
+	//得到"/zhsa122/usrhome/defy.chen/repository/Riscure/buildroot_Riscure/output/build"
+	
+	pwd | awk -F/ '{print $0}'	//原样打印路径(和pwd相同)
+	pwd | awk -F/ '{print $1}	//指定分隔符为"/".结果为空.因为第一个参数为空
+	pwd | awk -F/ '{print $2}'	//得到"zhsa122".第二个参数
+
+## 20.type命令
+
+type:用来显示指定命令的类型.
+
+	type ls
+	//ls is aliased to `ls --color=auto':表示为一个"命令别名"
+	type gcc
+	//gcc is /usr/local/gcc-4.9.1/bin/gcc:指示命令的路径
+	type -p gcc		//只显示路径(path)
+	///usr/local/gcc-4.9.1/bin/gcc
 
 ## 13. wget命令

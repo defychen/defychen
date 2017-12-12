@@ -129,3 +129,7 @@
 	##原因:
 		--->可能是因为在使用git commit "xxx"	//添加注释时没成功.
 		--->正确的应该是:git commit -m "xxx"	//应该有个"-m"
+
+## 7. git查看版本
+
+	git --version		//得到git version 2.3.0
