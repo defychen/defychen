@@ -211,6 +211,40 @@
 
 **惯用单句**
 
+	Good bye. Have a nice day!		//再见.祝你一天愉快!
+	So long.						//再见.(非正式的告别用语)
+	See you./See you tomorrow/in the office.	//回头见,明天见,办公室见
+	Remember me to your parents.	//代我向你父母问好.
+	Say hello to your family for me.//替我向你家人问好.
+	I had a really good time.		//我真的玩的很愉快.
+	Regards to Mary.				//代我向玛丽问好.
+	I hope we can get together again soon.	//希望我们很快就能再相聚.
+	Let's get together sometime.	//我们什么时候再聚吧.
+	Let's do lunch sometime.		//我们什么时候一起吃午饭吧.
+	Call me./Give me a call.		//给我打电话啊.
+	Don't forget to give me a call.	//别忘了给我打电话.	
+
 **实用对话**
 
+			Everyday Farewells
+	Ben:I really should be on my way.
+	Ella:Oh, don't go yet. Let's at least have one more.	
+		//哦,先别走啊.至少再喝一杯嘛.
+	Ben:No, thank you. I can't.
+	Ella:It't too bad you have to leave so early.	//你这么早就走了,太扫兴了.
+	Ben:Thank you very much. I had a really good time.
+	Ella:Thanks for comming. We should meet again sometime soon.
+		//咱们应该不久再找个时间聚一下.
+	Ben:That would be great.Actually, can I get your phone number, Ella?
+		That's assuming you don't mind if I call you sometime.
+		//如果你不介意我日后给你打电话的话.
+	Ella:Anytime. Your can reach me at 555-8929.	//你拨555-8929就能找到我.
+	Ben:OK. Got it.I'll call you sometime next week.
+		//下星期我会找时间给你打电话的.
+	Ella:Fine.
+	Ben:It't time to go and I hope we can get together again soon.
+	Ella:I hope so, too. Bye, Ben.
+
 **文化洗礼**
+
+### 1.7 晚上告别
