@@ -248,3 +248,109 @@
 **文化洗礼**
 
 ### 1.7 晚上告别
+
+**惯用单句**
+
+	Good night. See you tomorrow.	//晚安,明天见.
+	Good night. Have a nice dream.	//晚安,做个好梦.
+	Guess I should get going. Good night.
+		//我想我该走了,晚安.	此处省略了主语"I".
+	Oh, God! It's late. I've got to go.
+		//哦,天哪!这么晚了.我得走了.	"have got to"口语表达,必须,不得不.
+	Heavens! Look at the time.	//天哪!时候不早了.
+	I think I'd better leave now.	//我想我现在该走了.
+	Thank you for your hospitality.	//谢谢你的盛情款待.
+	I really must be going. It's rather late, and I've got to catch the last bus.
+		//我必须走了.时间太晚了,我还得赶末班车呢.
+
+**实用对话**
+
+				Evening Farewells
+	Lucy:Oh, God! It's late. I'm afraid I have to leave.
+	Jerry: But you just got here. Can't you stay a litter longer and have some tea?
+	Lucy: That's very kind of you. But if I don't go now, I'll miss the last bus.
+	Jerry: That's too bad.	//太遗憾了
+	Lucy: Thank you for your hospitality.
+	Jerry: Thanks for comming.
+	Lucy: How about next time we meet at my place? And I'll treat you to Chinese food.
+		I know how much you like it. We can order in and watch a video too. Anything 
+		you like, I promise.
+	Jerry: Great idea! I'm looking forward to it. See you then.
+	Lucy: Well, I really do have to go.
+	Jerry: Good night， then.	//那晚安吧.
+	Lucy: See you tomorrow.
+
+**文化洗礼**
+
+### 1.8 临行告别
+
+**惯用单句**
+
+	I've come to say goodbye.	//我是来告别的.
+	I'd like to say goodbye to everyone.	//我要向诸位告别拉.
+	I'm off tomorrow.			//我明天动身.
+	My flight leaves at 8 pm.	//我坐的是晚上8点的航班.
+	I'm catching the 9:15 train tomorrow morning.	//我要赶明天早上9:15的火车.
+		//9:15 quarter past nine/a quarter after nine.
+	Goodbye and thank you for all you have done for me.
+	Goodbye and thank you for everything.
+	I'm so sad to leave.		//要走了,我很难过.
+	I wish I could stay, but I have to go.
+	Be sure to drop me a line.	//一定给我写信啊.
+	Remember to write to me.	//记得给我写信.
+	Don't forget to give me a ring.	//别忘了给我打电话.
+	Please don't forget to say goodbye to the rest of the family for me.
+		//请别忘了代我向您家里的其他人告别.
+	Remember to look me up if you're ever in New York city.
+		//要是来纽约的话,要记得来看我.
+
+**实用对话**
+
+				Taking Leave(告别)
+	Jim: I want to say goodbye to everyone.
+	Lily: You're leaving so soon. When are you off?
+	Jim: I'm catching 9:15 train tomorrow morning.
+	Lily: How about I come and see you off?		//那我来送你怎么样?
+	Jim: You really don't need to. 	//你真的不用这么麻烦.
+	Lily: OK. I'll miss you. I hope we can see each other again soon.
+	Jim: I hope so, too. Thank you, Lily. Thank you for everything.	
+		//谢谢你为我所做的一切.
+	Lily: You're welcome.
+	Jim: Please say goodbye to the rest of the family for me.
+	Lily: OK. Take care, and I hope you have a good journey.	//祝你旅途愉快.
+	Jim: Thank you. Remember to look me up if you're ever in Washington.
+	Lily: Of course, I will.
+	Jim: Goodbye then. Thanks again for everything.
+	
+**文化洗礼**
+
+				布什的告别演说
+		Fellow citizens: For eight years, it has been my honor to serve as your President.
+	The first decade of this new century has been a period of consequence - a time set
+	apart.	//新世纪的第一个十年,是重要的十年---是与众不同的十年.
+	Tonight, with a thankful heart, I have asked for a final opportunity to share some
+	thoughts on the journey that we have traveled together and the future of our nation.
+		//请允许我在这最后的机会分享一些想法...
+		Five days from now, the world will witness the vitality of American democracy.(五天
+	以后,世界将见证美国民主的活力) In a tradition dating back to our founding(成立), the
+	presidency will pass to a successor chosen by you, the American people.(按照建国伊始
+	的传统,总统之职将传递给美国人民选出的继承者) Standing on the steps of the Capitol(国会)
+	will be a man whose history reflects the enduring(持久,延续) promise of our land.
+		//这位即将站在国会台阶上的人,他的历史彰显了我们这块土地所延续的承诺.
+		It has been the priviledge(特权,特殊荣幸) of a lifetime to serve as your President.
+	There have been good days and tough(艰难) days. But everyday I have been inspired by
+	the greatness(伟大) of our country and uplifted(举起,振奋) by the goodness(善良) of our
+	people. I have been blessed(我非常幸运) to represent this nation we love. And I will
+	always be honored to carry a titile that means more to me than any other: citizen of
+	the United States of America.
+		And so, my fellow Americans, for the final time, good night. May God bless this
+	house and our next president.(愿上帝保佑白宫,保佑下一届总统) And may God bless you and
+	our wonderful country. 
+
+### 1.9 临行告别
+
+**惯用单句**
+
+**实用对话**
+
+**文化洗礼**
