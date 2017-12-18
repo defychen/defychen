@@ -347,10 +347,91 @@
 	house and our next president.(愿上帝保佑白宫,保佑下一届总统) And may God bless you and
 	our wonderful country. 
 
-### 1.9 临行告别
+### 1.9 回应告别
 
 **惯用单句**
 
+	what a pity you have to leave so soon!	//你这么快就走了太遗憾了.
+	Why don't you stay a little longer?		//怎么不多待一会儿呢?
+	I hope to see you again.	//我希望能再见到你.
+	I'll miss you.		//我会想你的.
+	Take care. Bye.		//保重.再见.
+	Drive carefully.	//小心开车.
+	All the best.		//祝你一切都好.
+	Have a nice journey.	//旅途愉快.
+	Let's keep in touch.	//保持联系.
+	I hope everything goes well.	//希望一切顺利.
+	Come back when you have time.	//有时间就过来.
+
 **实用对话**
+
+				Responding to Farewell	//回应告别
+	Susan: Hi, Martin. I've been looking for you all morning.
+		//我找了你一上午.
+	Martin: What's up.
+	Susan: I want to say goodbye. I'm leaving for America tomorrow.
+		//我明天就要去美国了.
+	Martin: America? Did you get admitted to MIT?
+		//你被麻省理工学院录取了?
+	Susan: Yes.
+	Martin: Congratulations, Susan! I'm so happy for you.
+	Susan: Thank you.
+	Martin: I'm really going to miss you.	//我真的会想你的.
+	Susan: Me too. I'll write to you once I get settled. But I have so much to
+		do. You might have to wait a while. But I really will write you. I love
+		to write letters. I think it's more meaningful than e-mails or even a 
+		phone call.	//我一安顿好就给你写信.
+	Martin: OK. Take care and have a nice journey.
+	Susan: Thank you.
+	Martin: Look after yourself. Bye.
+	Susan: Bye.
+
+**文化洗礼**
+
+### 1.10 询问对方姓名与身份
+
+**惯用单句**
+
+	How do I address you?	//我该怎么称呼你呢?(用于非常正式的场合)
+	May I know you name, please?	//请问您叫什么名字?
+	Excuse me, are you Mr.Green?	//打扰一下,您是格林先生吗?
+	Excuse me, are you the newcomer?	//打扰一下,您是新来的吗?
+	I'm Tom Green. You are...?		//你是......?
+	I believe you are Paul Matthews, aren't you?
+		//我想你是保罗.马修斯先生,对吗?
+	Hello, are you an exchange student from America?
+		//你好,你是美国来的交换生吗?
+	You must be Professor Wang's assistant.
+		//你一定是王教授的助手吧.
+	You're that Mr. Roberts who works for MD company, aren't you?
+		//你是那个在MD公司工作的罗伯茨先生,对吧?
+	Are you an engineer?	//你是一个工程师吗?
+	May I know what you do?	//我能问一下你是做什么工作的吗?
+	I majored in English. And what was your major?
+		//我是学英语专业的.你学什么专业啊?
+	Who is the young man at the gate?
+		//大门旁边的那个年轻人是谁?
+
+**实用对话**
+
+			Asking for a Name and Identity(询问姓名和身份)
+	Mark: How do you do? I'm Mark Ronald.	//你好,我是马克.罗纳德.
+	Rose: Nice to meet you.
+	Mark: May I know your name, please?	//请问你叫什么名字?
+	Rose: I'm Rose Taylor. I think I've seen you somewhere before.
+		//我想我以前好像在什么地方见过你.
+	Mark: Ah, yes. I remember now. Were you at Mr. Johnson's dinner
+		party last month?	//你是不是上个月参加了约翰逊先生举行的宴会?
+	Rose: Yes, I was. You work for 3M, right?	//你在3M公司工作,对吗?
+	Mark: I did, but now I'm with Microsoft. How are things with you?
+		//但现在我在微软上班.你最近怎样?
+	Rose: Good.
+	Mark: May I know what you do?	//我能问一下你是做什么工作的吗?
+	Rose: I'm a fashion designer. Next month I have a fashion show.
+		I'd love it if you came. I can get you a couple of tickets,
+		so you can bring a friend if you like.
+		//如果你能来那就太好了.我可以为你弄两三张票.
+	Mark: Sure. That would be great. Good luck!	//那太棒了,祝你好运.
+	Rose: Thank you.
 
 **文化洗礼**
