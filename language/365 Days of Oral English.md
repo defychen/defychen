@@ -435,3 +435,266 @@
 	Rose: Thank you.
 
 **文化洗礼**
+
+### 1.11 介绍自己
+
+**惯用单句**
+
+	How do you do? I'm John West.	//你好,我是约翰.维斯特
+	Excuse me, my name is Sidney Carson.	//不好意思,我是西德尼.卡森
+	I'd like to introduce myself. My last name is Shen.
+		//我来介绍下我自己,我姓沈.	//last name:姓氏; first name:名字
+	Let me introduce myself. I'm Maggie.	//容我做一下自我介绍.我是麦琪
+	Please allow me to introduce myself. My name is Marry.
+	First, let me introduce myself. David Emory, director of the English department.
+		//大卫.埃默里,英语系主任.
+	Just call me Bob.	//叫我Bob就可以了.
+	I don't think we've met before. I'm Nancy.
+	I'm in the Personnel Department of MD company.
+		//我在MD公司的人事部工作.
+
+**实用对话**
+
+				Introducing Oneself(自我介绍)
+	Nancy: Hello, let me introduce myself. My name is Nancy.
+	Simon: Nice to meet you. I'm Simon. I don't think I've been seen you around before.
+		//我想我以前没见过你.
+	Nancy: No. I just started working here at IBM. I'm in the Sales Department.
+		//我刚来IBM工作.我在销售部。
+	Simon: What do you do there? //你在那儿做什么工作?
+	Nancy: I'm in the market research. And you?	//我是做市场调查的.
+	Simon: I've been with IBM for years. I'm Mr. Field's personal assistant. He's the
+		After-sales Services Director. He's such a nice boss. I like working for him.
+		//私人助理. 它是售后服务部经理.
+	Nancy: Really? I don't believe I've met him. Is he here now?	//他现在在这儿吗?
+	Simon: Yes, that's him over there, the tall and handsome one. Would you like me
+		to introduce you? //我把你介绍给他,好吗?
+	Nancy: Thanks. That would be lovely. You're right. He is kind of nice-looking.
+		//他真是有几分帅气.
+
+**文化洗礼**
+
+### 1.12 介绍他人
+
+**惯用单句**
+
+	Do you know Mark?
+	Have you met Kate before?	//你以前见过凯特吗?
+	I don't think you've met David, have you?	//我想你不认识大卫,是吗?
+	By the way, do you know each other?
+	May I introduce you to the staff?	//我把你介绍给全体员工,好吗?
+	I'd like you to meet Mr. Anderson, CEO of the company.
+		//我想让你见一下公司的首席执行官安德森先生.
+	Please allow me to introduce my colleague, Professor Zhang to you.
+		//请允许我把我的同事张教授介绍给你.
+	This is Nicolas Lee, manager of our company.	//公司经理
+	May I present Mr. John Grant, President Sino-American Friendship Association?
+		//我可以介绍下中美友好协会主席,约翰.格兰特先生吗?
+	I think you'll be good friends.
+	I think you'll get along well with each other.	//我觉得你们会相处得很好的.
+
+**实用对话**
+
+					Introducing Others(介绍他人)
+	Paul: Hi, Amy. How are you?
+	Amy: Fine, thanks. I'd like to introduce you to my father.
+	Pal: All right.		
+		(at Amy's house)
+	Amy: (to Father)This is Paul. (to Paul)This is my father. He works for IBM.
+	Father: How do you do, boy? Nice to meet you.
+	Paul: Nice to meet you, Mr. Clarke.
+	Amy: Paul is really into computers.	//保罗很热衷于计算机.
+	Father: Glad to hear that. We need more hard-working young people. The company
+		will continue to grow and for that to happen, we need people who are creative
+		and love to work hard.	//公司要想不断发展壮大
+	Paul: I have a dream, Mr. Clarke.
+	Father: Oh? What would that be?		//什么样的梦想?
+	Paul: I hope I can work for IBM someday too.	//我希望有朝一日我也能为IBM工作.
+	Father: Only if you study hard.		//只要你努力学习就没问题.
+
+**文化洗礼**
+
+### 1.13 回应介绍
+
+**惯用单句**
+
+	How nice to meet you!	//见到你很高兴!
+	I'm very pleased to make your acquaintance.	//能与你结识,我真的很高兴.
+	I've heard so much about you.	//久仰大名.
+	Mary has told me so much about you.	//玛丽跟我说了很多您的情况.
+	I'm very happy to have an opportunity to meet you.	//很高兴能有机会同您见面.
+	I'm sorry, what was your name again?	//对不起,再告诉一下您的名字好吗?
+	I have been wanting to meet you for some time.	//我一直很想见您.
+	I've been looking forward to meeting you.	//我一直期盼着能与您见面.
+	It's a pleasure to meet you!	//认识你我深感荣幸.
+	What a pleasure to meet you!
+
+**实用对话**
+
+				Responding to Introductions(回应介绍)
+	Bill: Cindy, I don't think you've met Professor Martin before.
+	Cindy: No, I haven't had the pleasure.	//没见过,我一直没有这个荣幸.
+	Bill: (To Martin)This is my friend and colleague, Cindy.
+		  (To Cindy) This is Mr. Martin from Columbia University.
+	Martin: How are you, Cindy?
+	Cindy: How do you do, Mr. Martin? I know you by reputation, and I am very
+		happy to have an opportunity to finally meet you.
+	Bill: Professor Martin has come to our university to give us a series of
+		accounting lectures.	//马丁教授这次来我们学校要做一个有关会计学方面的系列讲座.
+	Martin: Yes, and it's offered me an excellent chance to look around Beijing.
+		I have been looking forward to exploring.	//我一直期盼着能来这里观光呢.
+	Cindy: I could be your guide if you need one.
+	Martin: Really? That's so kind.
+	Cindy: Anytime. Just call whenever you want to go out. Bill has my number.
+	Martin: Thank you very much.
+
+**文化洗礼**
+
+### 1.14 提出邀请
+
+**惯用单句**
+
+	Would you like to join us? 	//你想加入我们吗?
+	Will you join us for lunch?	//你来和我们一起吃午饭吗?
+	Do you have time?	//你有时间吗?
+	Are you free tomorrow evening?	//明晚你有空吗?
+	Are you busy this afternoon?	//你今天下午忙吗?
+	What about going to a party?	//去参加聚会好吗?
+	How about going for a walk?		//去散步怎么样?
+	I was wondering whether you'd like to go on a picnic with us this Sunday.
+		//不知你本周日是否想和我们一起去野餐.
+	I want to invite you to my birthday party this Friday.
+	Will you accept my invitation?	//你会接受我的邀请吗?
+	Care to dance?	//你想跳个舞吗?
+	Let's go get coffee.	//咱们喝杯咖啡去.
+	Let's go for coffee.
+
+**实用对话**
+
+				Inviting Someone(邀请)
+	Jennifer: Hi, Charles. I want to let you know thath I finally found an apartment
+			in Haidian.	//我终于在海淀区找到房子了.
+	Charles: You did? That's great!
+	Jennifer: Year, I'm having a party this Saturday night. A sort of housewaming, and
+			I want to invite you. Are you busy?	//一种乔迁(就算是庆祝乔迁之喜吧)
+	Charles: No, I'm free. I'll be there. What time are things starting?
+				//派对什么时候开始?
+	Jennifer: Around 7.
+	Charles: OK. Great. Should I bring anything?
+	Jennifer: No, but thanks for offering. Actually, could you bring some fold-up chairs
+			for people if you have any? I'm afraid not everyone's going to have a seat.
+			Do you have any?	//谢谢你的好意.  折叠椅
+	Charles: Sure. I'll be happy to bring a few. What's the address? //带几把过去
+	Jennifer: Don't worry. I'll come pick you up at about 6:30.	//6:30左右开车来接你
+	Charles: Got it.	//好的.
+
+**文化洗礼**
+
+### 1.15 接受邀请
+
+**惯用单句**
+
+	OK!/All right./Great!	//好的.
+	You bet!/You bet your life.	//当然.一定.(俗语)
+	That's settled then.	//就这么定了.
+	Great! I'd love that.	//太好了!我很愿意.(I'd love to.)
+	That sounds great!		//听上去不错.
+	Sounds great!
+	It would be very nice to have dinner with you.	//能和你一起进餐真好.
+	I'd very much like to accept your invitation.	//我非常愿意接受你的邀请.
+	What a splendid ideal!	//真是个好主意.	(极好的,令人满意的)
+	We'd be delighted to attend your wedding.	//我们非常高兴参加你们的婚礼.
+	It would give us great pleasure to attend the banquet.
+		//我们非常荣幸能去参加这个宴会.
+	I'll be there.	//我会去的.
+
+**实用对话**
+
+			Accepting an Invitation(接受邀请)
+	Frank: Hi, Alice. What are you doing this Sunday?
+	Alice: Nothing really. Why? What's up?	//没什么.怎么了?有什么事吗?
+	Frank: If you're free, maybe you would like to come to a small party I'm having for my
+		birthday. It should be fun. You'll get to know lots of people.
+	Alice: Sounds great. I'd very much like to accept you invitation. Thanks. When?
+	Frank: Around 6:00 pm.
+	Alice: Do you need help setting up or anything? I don't mind. I like to do that kind of
+		thing. It's fun and I have a good eye for decorating.	
+		//你需要帮忙布置或其他什么的吗?  做室内布置很有趣,而且我对此很有眼光.
+	Frank: No. Thank you. I can handle it. But thanks for the offer.	//但还是要谢谢你的好意.
+	Alice: OK. I'll see you then.
+	Frank: Great. Have a good day! Thanks again for the offer.
+
+**文化洗礼**
+
+### 1.12 介绍他人
+
+**惯用单句**
+
+
+
+**实用对话**
+
+
+
+**文化洗礼**
+
+
+**************************************************************************************
+
+# Important words
+
+1.implementations(实现的名词)
+
+	The ARM architecture supports imlementations across a wide range of performance points.
+	//ARM体系结构支持跨多种性能点的实现.
+
+2.incorporate(包含、集成)
+
+	It incorporates these RISC architecture features.
+	它集成了这些RISC的结构特点.
+
+3.arithmetic(算术)
+
+	instruction that combine a shift with an arithmetic or logical operation.
+	//指令结合了算术或逻辑运算的移位操作.
+
+4.throughput(生产量、吞吐量)
+
+	Load and Store Multiple instructions to maximize data throughput
+	//数据吞吐量
+
+5.conform(符合)
+
+	an implementation must conform
+	//实现必须符合
+
+6.sequential(顺序)
+
+	Except where the architecture specifies differently, the programmer-visible behavior of an
+	implementation must be the same as a simple sequential execution of the program.
+	//除非体系结构有不同的定义,实现程序的程序员的可视行为必须与程序的简单顺序执行相同.
+
+7.comprehensive(广泛的,综合的,有理解力的)
+
+	The ARM instruction set is a set of 32-bit instructions providing comprehensive data-processing 
+	and control functions.	//全面的数据处理和控制功能.
+
+8.subset(子集)
+
+9.density(密度)
+
+	It provides significantly improved code density.	//它可以显著提高代码密度.
+
+10.profile(侧面,外形,配置文件)  variants(变体)
+
+	Architecture versions, profiles, and variants(架构版本、配置文件和变体.)
+
+11.evolved(进化,演变)
+
+	The ARM architecture has evolved significantly since its introduction, and ARM continues to 
+	develop it.	//ARM架构自推出以来发展迅速,并且ARM持续开发.
+
+12.denoted(表示)
+
+	Seven major versions of the architecture have been defined to date, denoted by the version 
+	numbers 1 to 7.	//由版本1-7表示.

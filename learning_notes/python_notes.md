@@ -13,7 +13,7 @@ python是解释型语言,执行时一行一行的翻译成机器码,翻译过程
 	$ python /*在linux中直接敲击命令python*/
 	>>> exit() /*>>>:表明进入python交互式环境.exit():退出python交互式环境*/
 
-*python使用最广的解释器是CPython.*
+python使用最广的解释器是CPython.
 
 **运行Python文件(".py"后缀)**
 
