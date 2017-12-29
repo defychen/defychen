@@ -452,7 +452,7 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 
 **1.链表的结构体**
 
-	#include <linux/list.h>	/*list链表的主要实现文件*/
+	#include <linux/list.h>		/*list链表的主要实现文件*/
 	#include <linux/types.h>	/*linux 3.x以上的包含一些list实现内容*/
 	
 	struct list_head {
@@ -530,6 +530,18 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 	ptr:为struct list_head *类型(也就是链表头).一般配合list_for_each(pos, head)遍历使用---会不断更新链表头放在pos里
 	type:自己定义的链表类型(自定义链表包含struct list_head *)e.g. struct score,在之前会调用插入节点将自定义类型插入进链表头.
 	member:自定义链表包含的内核链表链接域,e.g.list
+
+	PS:list_entry更像是一种将list_for_each(pos, head)遍历得到的pos转换为一个结构体.
+	list_for_each(pos, &score_head)		//从score_head中遍历得到的链表节点保存到pos中
+	{
+		tmp = list_entry(pos, struct score, list);
+		/*
+			pos:list_head *指针,对应的某个节点
+			struct score:自定义的带struct list_head的结构体
+			list:自定义结构体中的struct list_head list信息.
+		*/
+		printk(KERN_WARNING "num: %d, english: %d, math: %d\n", tmp->num, tmp->english, tmp->math);
+	}
 	*/
 
 **7.遍历链表**
@@ -540,6 +552,35 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 	pos:为struct list_head *类型(链表头类型),会自动不断更新
 	head:链表头
 	*/
+
+**8.linux标准链表宏定义**
+
+	/*位于头文件./includelinux/list.h中*/
+	/**
+	 * list_for_each_entry	-	iterate over list of given type
+	 * @pos:	the type * to use as a loop cursor.
+	+	使用自定义类型作为循环光标.相当于从链表中取出来的信息保存到该pos中
+	 * @head:	the head for your list.
+	+	链表头,需要初始化
+	 * @member:	the name of the list_head within the struct.
+	+	自定义结构体中包含的struct list_head信息(是直接使用自定义接受中包含的struct list_head所声明的变量名即可)
+	 */
+	#define list_for_each_entry(pos, head, member)				\
+		for (pos = list_first_entry(head, typeof(*pos), member);	\
+		     &pos->member != (head);					\
+		     pos = list_next_entry(pos, member))
+
+	/**
+	 * list_entry - get the struct for this entry
+	 * @ptr:	the &struct list_head pointer.
+	+	单独的list_head节点指针(一般是通过list_for_each得到的节点)
+	 * @type:	the type of the struct this is embedded in.
+	+	自定义的结构体
+	 * @member:	the name of the list_head within the struct.
+	+	自定义结构体中所包含的struct list_head的成员
+	 */
+	#define list_entry(ptr, type, member) \
+		container_of(ptr, type, member)
 
 **链表实例**
 

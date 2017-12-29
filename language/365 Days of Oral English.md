@@ -626,7 +626,191 @@
 
 **文化洗礼**
 
-### 1.12 介绍他人
+### 1.16 拒绝邀请
+
+**惯用单句**
+
+	I'd love to, but I can't.	//我很想去,但我不能.
+	I'm afraid I can't.	//我恐怕不行.
+	I'm not sure about it. I'll have to check.	//我不太清楚.我看一下吧.
+	Thanks, but unfortunately I already have plans.	//谢谢,但不巧的是我已经有计划了.
+	I wish I could, but I'll have a conference that day.
+		//我希望我能去,但我那天还有个会议.
+	It's very kind of you, but I have an appointment on Friday.
+		//你真好,但我周五有个约会.
+	I've already promised to meet Jennifer this evening, but thank you all the same.
+		//我已经答应今晚去见詹妮弗,不过还是要谢谢你.
+	Thank you very much for asking me, but I feel rather tired.
+		//谢谢你邀请我,不过我实在是太累了.
+	Much as I should like to, I'm afraid I won't be free next Sunday.
+		//虽然我很想去,但恐怕下星期天我没空.
+	I'll be busy all day long.	//我一整天都会很忙.
+	I can't spare a minute.	//我一分钟的时间都抽不出来.
+	I have to work overtime.	//我得加班.
+	I'm working overtime.	//我正在加班.
+
+**实用对话**
+
+			Refusing an Invitation(拒绝邀请)
+	Joe: Jane, I was wondering if you had any plans for Saturday afternoon.
+			//简,我想知道你周六下午是否有什么打算.
+	Jane: A friend and I are planing to go out. Why? What's up?
+			//怎么了?有什么事?
+	Joe: There's a special exhibition of French sculptures at the museum. I was hoping
+		you'd like to come with me.	//博物馆有一个法国雕塑的特别展览.我本希望你和我一起去.
+	Jane: I'm afraid I can't. I'm going to be out all day.
+			//我得外出一天呢.
+	Joe: What about Sunday?
+	Jane: I wish I could, but it's my mom's birthday.
+	Joe: May be next week?
+	Jane: Much as I'd like to, I'm afraid I won't be free next week. I have a lot of work.
+	Joe: Sorry to hear that. I was really looking forward to spending some time with you.
+		I really enjoyed our last chat.	//我真希望能和你多呆会儿.我们上次聊得很愉快.
+	Jane: I'm really sorry, too. Maybe I can give you a call sometime.
+		//也许我可以找个时间给你打电话.
+
+**文化洗礼**
+
+### 1.17 改变邀请
+
+**惯用单句**
+
+	Do you think it's convenient to postpone the appointment till 9:30?
+		//你看我们把约会推迟到9:30方便吗?
+	Is it okay if we postpone the appointment till next Sunday?
+		//我们把约会推迟到下个星期天可以吗?
+	I'm afraid I'll be a bit late. So many things to deal with.
+		//我恐怕要晚一点.太多的事情要处理了.
+	I don't have time to breathe today.	//我今天忙得都没时间喘气了.
+	I'm sorry I can't keep the appointment with you today.
+		//很抱歉我今天不能如期赴约了.
+	Do you mind if I change it to another time, say, Sunday?
+		//我改一下时间,比如星期天,可以吗?		say:口语用法,比如说.
+	Can we change the time and place?	//换个时间和地点行吗?
+	Let's fix another time/place.	//咱们再另定个时间/地点吧.
+	Can we make it a little later? I feel under the weather.
+		//我们可以晚一点约会吗?我不太舒服.
+	Can we put it off to the next day?	//我们能把它推迟到第二天吗?
+	Can we meet an hour earlier?	//咱们提前一个小时见面好吗?
+	I'm sorry to tell you that I have to cancel the lunch appointment with you.
+		//很抱歉地告诉你我不得不取消我们的午餐约会了.
+	Can we meet at McDonald's instead of KFC?	//见面地点由肯德基改成麦当劳.
+
+**实用对话**
+
+		Canceling after You've Already Accepted(接收邀请后有变)
+	Emma: Hello, Kevin. I hate to do this, but I have to cancel our appointment.
+	Kevin: Oh, no. Why? I was looking forward to seeing you at my new place.
+		//我一直盼着你来我新家看看呢.
+	Emma: Yeah, I really wanted to come too. But something unexpected in Shanghai has come
+		up. I have to fly out for a few days, but I'll be back soon.
+		//上海那边发生点意外,我得坐飞机去那里几天,不过我很快就回来了.
+	Kevin: No problem. Call me when you get back.	//你回来了就给我打电话.
+	Emma: I should have some free time next week. Say, next Wednesday evening?
+		//比如说下周三晚上,怎么样?
+	Kevin: That's good for me, but do you think you'll be back by then? I'd really like
+		to see you.	//我倒是没问题...我真的很想见你.
+	Emma: Yeah. I'm expecting to come back on Tuesday.	//我预计周二就回来了.
+	Kevin: Great! That's settled then.
+	Emma: OK.
+
+**文化洗礼**
+***
+
+## Chapter 2 Q & A for Interviews(面试问答)
+
+### 2.18 空闲职位咨询
+
+**惯用单句**
+
+	Are there any vacancies?	//请问还有职位空缺吗?
+	Is this vacancy still available?	//这个职位空缺还在吗?
+	Is it still vacant?		//这个职位还空着吗?
+	What kind of vacancies do you have?		//你们有哪些职位空缺?
+	What kind of openings are available?	//opening(职位空缺)
+	I saw a vacancy board outside for a plumber. Has the vacancy been filled?
+		//我在外面招工牌上看到要招一名水管工.招到了吗?
+	I'm looking for a job. Is it possible to find one here?
+		//我想找个工作,这里有吗?	
+	I would like to know if you have got a job for an accountant.
+		//我想知道你们是否有会计的工作.
+	Do you have any jobs for a part-time interpreter?
+		//你们有没有兼职口译员的工作?
+	Are there any vacancies for a typist in your firm?
+		//你们公司有打字员的空缺吗?
+	I'm enquiring about your advertisement for a sales manager in today's newspaper.
+	Is this position still open?
+		//我今天在报纸上看到你们招聘销售经理的广告,我想问一下这个职位现在还空着吗?
+	Can I still apply for the open position?
+		//我还能申请这个空缺的职位吗?
+
+**实用对话**
+
+			Calling about a Position(打电话询问职位)
+	Operator: Hello, this is ABC corporation. May I help you?
+		//接线员
+	Brian: Yes. I'm enquiring about your advertisement for a sales manager in today's
+		newspaper. Is this position still open?
+	Operator: Yes, but do you have any experience as a sales manager?
+	Brian: Yes. I have a lot of previous experience in sales. I have worked for the
+		sales department of two companies since finishing my university.
+		//我以前在销售方面有很多经验.自从大学毕业后我在两家公司的销售部门工作过.
+	Operator: That sounds fine. Please give me your name and phone number and I'll
+		set up an appointment for an interview for you. It will most likely be in
+		a couple of days' time. Is that all right for you?
+		//把您的名字和电话号码告诉我,我给您约一下面试.很可能就在两三天之后.这个时间合适吗?
+	Brian: Yes. My name is Brian and my phone number is 5294870.
+	Operaotr: Thank you.
+
+**文化洗礼**
+
+### 2.19 应聘资格咨询
+
+**惯用单句**
+
+	What kind of requirements to apply for this position?	//应聘这个职位有什么条件?
+	Do you think my educational background suits for this position?
+		//您觉得我的教育背景适合这个职位吗?
+	Does this position require experience?	//这个职位需要有经验吗?
+	What skills do you think are required for the job?
+		//您认为这份工作需要什么技能?
+	What are the qualifications you require for this job?
+		//从事这项工作你们要求具有什么资格?
+	What are the duties that come with this job?	//这份工作有哪些职责?
+	What sorts of responsibilities does this secretary's job involve?
+		//这份秘书工作涉及哪些职责?
+	What qualities do you look for in the person who is to fill the position?
+		//你们要求做这份工作的人需要具备哪些品质?
+	What are you looking for in an employee?	//你们要求雇员做到什么?
+	Do you have requirements for English level?	//你们对英语水平有要求吗?
+	Do you require the applicant to pass CET Band 6?
+		//你们要求求职者过大学英语6级吗?
+	What kind of degree are you looking for?	//你们要求什么学位?
+	Does this job require any certificate of technical qualifications?
+		//这份工作要求什么技术证书吗?
+
+**实用对话**
+
+			Inquiring about the Job Qualification Requirements(应聘资格咨询)
+	Brook: What are the requirements to apply for the position?
+	Interviewer: Your major must be computer.
+	Brook: Do you think my educational backgound suits this position?
+	Interviewer: Yes. I'm quite satisfied with your qualifications.
+		//我对你的条件相当满意.
+	Brook: Does this job require that new employees take any kind of training
+		course?	//参加培训课程
+	Interviewer: Generally speaking, traning new members is usually necessary. And we
+		offer new employees a one-week training course.
+	Brook: Could you tell me something about the job?
+	Interviewer: Yes, of course. You would be responsible for the design and development
+		of products, and also be in charge of the evaluation of software programs, 
+		including complex software system, to ensure product feature and operation
+		compliance.	//对软件程序的测定...运行符合性(compliance:服从、听从)
+	Brook: Oh, I see. I believe I can do the job well.
+
+**文化洗礼**
+
+### 2.19 空闲职位咨询
 
 **惯用单句**
 
@@ -637,8 +821,6 @@
 
 
 **文化洗礼**
-
-
 **************************************************************************************
 
 # Important words
@@ -685,9 +867,10 @@
 
 	It provides significantly improved code density.	//它可以显著提高代码密度.
 
-10.profile(侧面,外形,配置文件)  variants(变体)
+10.profile(侧面,外形,扼要介绍,配置文件)  variants(变体)
 
 	Architecture versions, profiles, and variants(架构版本、配置文件和变体.)
+	ARMv7 provides three profiles.	//ARMv7提供3简介(相当于:ARMv7分为3种.)
 
 11.evolved(进化,演变)
 
@@ -698,3 +881,40 @@
 
 	Seven major versions of the architecture have been defined to date, denoted by the version 
 	numbers 1 to 7.	//由版本1-7表示.
+
+13.obsolete(过时)
+
+	The first three version are now obsolete.	//最先的三个版本现在已经过时了.
+
+14.latency(延迟)
+
+	Implements a programmers' model designed for low-latency interrupt processing.
+		//实现为低延迟中断处理而设计的程序员模型.
+
+15.be qualified(胜任,鉴定合格.一般翻译为限定).  specify(指定)
+
+	Architecture versions can be qualified with variant letters to specify additional instructions 
+	and other functionality that are included as an architecture extension.
+	//体系结构版本可以用变体字母限定,指定(specify翻译为指定、详述)作为架构扩展所包含的附加指令和其他功能. 
+
+16.invasive(侵略性的)、trace(追踪)
+
+	debug usually refers to invasive debug, that permits modification of the state of the processor.
+		//调试通常指侵入式调试,允许修改处理器的状态.
+	trace usually refers to non-invasive debug, that does not permit modification of the state of the
+	processor.	//跟踪通常指的是非侵入性调试，不允许修改处理器的状态.
+
+17.ISA(Instruction Set Architecture)---指令集架构
+
+18.deprecate(不赞成、反对)
+
+	ARM deprecates any use of this extension.	
+	//ARM反对针对这种扩展的任何使用.(是FCSE(Fast Context Switch Extension)扩展,因为已经过时了)
+
+19.flat(平面)
+
+	a single, flat address space(单一、平面地址空间)
+
+20.facility(工具、设施、便利)
+
+	The architecture provides facilities for:	//ARMv7架构提供的便利如下:
