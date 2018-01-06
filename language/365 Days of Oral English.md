@@ -769,7 +769,7 @@
 **惯用单句**
 
 	What kind of requirements to apply for this position?	//应聘这个职位有什么条件?
-	Do you think my educational background suits for this position?
+	Do you think my educational background suits this position?
 		//您觉得我的教育背景适合这个职位吗?
 	Does this position require experience?	//这个职位需要有经验吗?
 	What skills do you think are required for the job?
@@ -810,6 +810,161 @@
 
 **文化洗礼**
 
+### 2.20 工作详情咨询
+
+**惯用单句**
+
+	I'm inquiring about the job as an accountant.	//我想问一下有关这份会计工作的情况.
+	I come to inquire about this position.	//我来是想了解一下这个职位的情况.
+	Do you mind if I ask something about work?	//您介意我问一下有关工作方面的事吗?
+	Would you please tell me something about the job?
+		//能否请您谈谈关于工作方面的事呢?
+	Would you please tell me what's the specific work?
+		//您能告诉我具体是哪方面的工作吗?
+	Could you explain it in detail?	//您能详细的解释下吗?
+	Could you give me a brief introduction to the office work?
+		//您能简单地介绍下办公室的工作吗?
+	What do I do?	//我需要做什么工作?
+	What are my duties?
+	It's said that your company is very strict with the staff. Is that correct?
+		//据说你们公司对员工要求很严,是吗?
+	Working here involves a busy schedule and overtime. Is this true?
+		//在这里工作很忙,还要经常加班.对吧?
+	Am I going to be in charge of this?	//我要负责这个吗?
+	Is it my duty?	//这是我的职责吗?
+	Could you tell me about the work schedule?	//您能告诉我工作时间表吗?
+	Do you need me to travel often for this job?	//这份工作需要经常出差吗?
+	Does the work demand overtime often?	//这份工作需要经常加班吗?
+
+**实用对话**
+
+			Inquiring about Work Requirements(询问工作要求)
+	Tina: Excuse me. Do you mind if I ask some things about the work for this company?
+		//您介意我问一下有关这个公司的工作方面的事情吗?
+	Receptionist: Not at all. Go ahead.	//接待员   不介意,你问吧.
+	Tina: I've heard that the company is very strict with its staff. Is that true?
+	Receptionist: Not really, so long as you follow all the regulations.
+		//也不一定,只要你遵守全部的规章制度就没问题.
+	Tina: If you make mistakes in your job, you'll be fired. Is it right?
+	Receptionist: No. Everyone has a chance to correct his or her mistakes. The most
+		important thing is to be responsible for your work.
+		//最重要的是要对你的工作负责.
+	Tina: Working here involves a busy schedule and overtime. Is that true?
+	Receptionist: Yes. That's true. We always busy. The comany attaches great importance
+		to high efficiency. Sometimes we have to work overtime, but not always. And we 
+		have extra pay for extra work.	//公司非常讲究高效率(attach importance to...重视)
+	Tina: It seems that working in foreign enterprise is not the same as I expected. 
+		Thank you for your help.	//看来在外企工作和我以前想象的不一样.
+
+**文化洗礼**
+
+### 2.21 常见问题问答
+
+**惯用单句**
+
+	How would you describe your personality?	//你怎样描述自己的个性?
+	I always take the initiative in every situation and I am aggressive.
+		//我办事主动,有进取心.		(initiative:主动; aggressive:有进取心的.)
+	What's your greatest strength?	//你最大的长处是什么?
+	I manage my time perfectly so that I can always get things done on time.
+		//我极懂分配时间,因此总能按时完成任务.
+	What are your weak points?	//你的缺点是什么?
+	I'm afraid I'm a perfectionist.	//恐怕我是个完美主义者.
+	Why do you want to work for us?	//你为什么想来我们公司工作?
+	Frankly speaking, I'm interested in being an assitant.
+		//坦率地说,是因为我对助理工作很感兴趣.
+	What kind of salary are you looking for?	//你期望拿到什么样的薪水?
+	What would you offer to someone with my qualifications and potential?
+		//对于与我同等条件和潜力的人你们会给多少?
+	What is the normal salary range in this company for this type of work?
+		//对于贵公司的这类工作,标准的薪资范围是多少?
+	What is the salary that you expect while on probation?
+		//在试用期间,你期望工资是多少?		//probation:试用期,见习期
+	In this period, I can only get the basic salary.	//在这期间,我只拿基本工资即可.
+	How does 3,000 yuan per month sound to you?	//你觉得月薪3000元怎么样?
+	Is it negotiable?	//有商量的余地吗?		(negotiable:可商量的,可商议的.)
+	Do you have any other questions?	//你还有其他问题吗?
+	I was wondering if there is any chance of promotion.	//我想知道是不是有升职的机会.
+	Do you have a retirement plan?	//你们有退休福利计划吗?
+	Are there paid holidays?	//有带薪休假吗?
+	May I ask something about the salary and benefits in your company?
+		//我能问一下工资和福利方面的事情吗?
+	When will I know your decision?	//我什么时候才能知道你们的决定?
+	Within a week.	//一周之内.
+
+**实用对话**
+
+				Salary and Benefits(工资和福利待遇)
+	Interviewer: Do you have any other questions?
+	Betty: Yes, may I ask something about the salary and benefits in your company?
+	Interviewer: According to our regulations, you will be on probation for the first
+		three months.	//规定,头三个月是试用期
+	Betty: What is the salary while on probation?
+	Interviewer: In this period, you can only get the basic salary 2,500 yuan per month.
+	Betty: That sounds fine.
+	Interviewer: The salary will be deposited into the bank on the 15th of every month.
+		Your salary will be raised every year in October, depending on your performance
+		evaluation. You can get a bonus once a year, and it is normallly in December.
+		//deposited:存放.奖金每年一次,一般在十二月发放.	(bonus:奖金)
+	Betty: Are there paid holidays?	//有带薪假期吗?
+	Interviewer: Yes, you may enjoy a seven-day paid holiday in the first year. After
+		that, you can have two more days each year.
+		//第一年你可以享受7天的带薪休假.之后每年增加两天.
+
+**文化洗礼**
+
+### 2.22 难题问答
+
+**惯用单句**
+
+	Where do you picture yourself in five years?	//你对自己未来五年有什么愿景规划?
+	My goals involve growing with a company where I can continue to learn.
+		//我的目标是,和公司一起发展成长,在这样的公司里我能够不断学习进步.
+	Why should I hire you?	//我为什么要聘用你呢?
+	I can bring profit to this company.	//我能给公司带来利润.
+	You know a lot about administration. Why don't you choose to work for a company
+	looking for managers?	//你很懂管理,为什么不选择到招聘经理人的公司工作?
+	I'm more attracted to writing articles.	//我对写文章更感兴趣.
+	Why are you leaving your present position?	//你为什么要离开目前的职位?
+	I desire to leave my present position as a secretary so that I can get into the
+	marketing field.	//我要放弃秘书一职是因为我想在市场营销领域有所发展.
+	Can you tell me how you see the future trends of this industry?
+		//你能否谈谈你怎么看待这个行业的未来趋势?
+	It's still developing, but I do believe it has a bright future.
+		//这个行业仍在发展,但我坚信它的前景是光明的.
+	Do you think you are qualified for it?	//你认为你胜任这份工作吗?
+	That's for sure, but I still need to learn.	//那是肯定的,但我仍然需要学习.
+	You are over-qualified for this position. Why would you be interested?
+		//你的资历远远超过这个职位的要求,你为什么会对这个职位感兴趣呢?
+	What do you like and dislike about your previous job?
+		//对于你的前一份工作,你都有哪些喜欢和不喜欢的地方?
+	I'm afraid I need to make a long list for you.
+		//恐怕我得给您列个长单子一条一条说了.
+	What do your past employers think of you?
+		//你以前的老板怎么看待你?
+	He thought I did a great job.	//他认为我工作表现不错.
+
+**实用对话**
+
+			Job interview for a Position as a Reporter(应聘记者)
+	Interviewer: I can see by your resume here that you studied business administration.
+		//从你的简历上看你是学工商管理的.	resume:简历
+	Belinda: That's right.
+	Interviewer: So I wonder why you want to work for a newspaper.	//报社
+	Belinda: I did reporting for the university newspaper at my school. And I've always
+		been very interested in journalism.	//而且我对新闻工作一直很感兴趣.
+	Interviewer: But journalism - it's a very different profession from administration.
+		You know a lot about administration. Why don't you choose to work for a company
+		looking for managers?
+	Belinda: I studied administration, yes, but I am more attracted to writing articles.
+		I want to use my knowledge of business to write financial news.
+		//我想运用我所学的商业知识来写财经新闻.
+	Interviewer: A new reporter must expect to work many hours.	//新闻记者肯定要长时间工作的.
+	Belinda: I know that starting reporters work many hours. I am very willing to take on
+		the challenge.	//我知道刚开始做记者是要长时间工作的.我很乐意接收挑战.
+
+**文化洗礼**
+
 ### 2.19 空闲职位咨询
 
 **惯用单句**
@@ -821,6 +976,7 @@
 
 
 **文化洗礼**
+
 **************************************************************************************
 
 # Important words

@@ -1210,3 +1210,37 @@ pthread_join()、pthread_testcancel()、pthread_cond_wait()、pthread_cond_timew
 	{
 		return a + b;
 	}
+
+## 47. GNU C语言中的unused属性
+
+unused属性用于函数和变量,表示该函数或变量可能不使用.
+
+	/*********************************************************/
+	#include <stdio.h>
+
+	int main()
+	{
+		int ai = 10;
+		int bi = 11;
+
+		printf("%d\n", bi);
+
+		return 0;
+	}
+
+	编译:gcc -g -Wall xxx.c -o xxx.o
+	/*
+		在编译中使用了-Wall(会显示所有的编译警告信息),就会出现warning:
+		warning: unused variable "ai"...
+	*/
+
+	/***********************去除warning**********************************/
+	#include <stdio.h>
+	int main()
+	{
+		int __attribute__((unused)) ai = 10;
+		int bi = 11;
+
+		printf("%d\n", bi);
+		return 0;
+	}

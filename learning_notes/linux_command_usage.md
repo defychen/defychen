@@ -343,4 +343,10 @@ type:用来显示指定命令的类型.
 	type -p gcc		//只显示路径(path)
 	///usr/local/gcc-4.9.1/bin/gcc
 
+## 21.echo命令
+
+	//echo等追加到文件末尾
+	1.覆盖	echo "..." > filename
+	2.追加	echo "..." >> filename
+
 ## 13. wget命令

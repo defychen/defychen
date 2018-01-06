@@ -471,7 +471,8 @@ strip函数:去掉前导和结尾空格,将字符串之间的多个空格变成�
 
 从文件名序列"NAMES..."取出文件名最后一个点号"."之前的部分(前缀部分),如果没有前缀，返回空.
 
-	$(basename src/foo.c src-1.0/bar.c /home/jack/.font.cache-1 hacks)	//返回值为:src/foo src-1.0/bar /home/jack/.font hacks
+	$(basename src/foo.c src-1.0/bar.c /home/jack/.font.cache-1 hacks)	//返回值为:src/foo src-1.0/bar /home/
+	jack/.font hacks
 
 **$(addsuffix SUFFIX, NAMES...)**
 
@@ -753,6 +754,71 @@ N.s:是不需要预处理的汇编源文件;N.S:是需要预处理的汇编源�
 	*/
 	GIT_VERSION_CHECK := $(shell if [ $(GIT_VERSION) -ge 23 ] ; then echo true; else echo false; fi)
 
+### 2.编译内核模块的Makefile中的($(KERNELRELEASE))
+
+	在编译内核模块时,通常的Makefile写法如下:
+	ifneq ($(KERNELRELEASE), )	//KERNELRELEASE是在内核源码的顶层Makefile中定义的一个变量,在第一次读取此
+		//Makefile时,KERNELRELEASE没有被定义.此时make将会执行else之后的内容
+		//ifneq后面必须有空格.
+	obj-m += alibsf.o	//这些语法属于kbuild语法,由内核的kbuild去解析.此处表示要生成alibsf.ko
+	alibsf-y := bsf_core.o bsf_ioctl.o bsf_rpc.o
+	else
+	KDIR := .../linux-directory		//表示内核源码目录
+	all:
+		make -C $(KDIR) M=$(shell pwd) modules	//make -C:表示跳转到内核源码下读取那里的Makefile.
+			//M=$(shell pwd):表示返回到当前目录继续执行. 后面的modules编译为模块时所带参数
+		//可能需要指定ARCH和CROSS_COMPLIE,此时应该
+		make -C $(KDIR) M=$(shell pwd) modules ARCH=arm CROSS_COMPILE=$(CROSS_COM)
+			//执行ARCH和CORSS_COMPILE
+	clean:	//删除一些临时文件
+		rm -rf *.mod.c
+		rm -rf *.ko .*.ko.cmd
+		rm -rf *.o .*.o.cmd
+		rm -rf modules.*
+		rm -rf .tmp_versions *.symvers
+	endif
+
+### 3.buildroot中的.mk中的语法
+
+	ALIAS_CODE_DIR = $(@D)/codes	//$(@D):从git上拉下来的目录
+	ALIAS_INSTALL_DIR = $(ALIAS_CODE_DIR)/install
+
+	ifneq ($(BR2_ENVIRONMENT_CUSTOMER), y)	//非release的时候
+	define ALIAS_BUILD_CMDS
+		$(MAKE) clean -C $(ALIAS_CODE_DIR)
+		$(MAKE) $(ALIAS_MAKE_FLAGS) -C $(@D)/codes	//进入到该目录下编译
+		$(MAKE) $(ALIAS_MAKE_FLAGS) -C $(@D)/alibsf
+	endef
+	
+	define ALIAS_INSTALL_TARGET_CMDS
+		@mkdir -p $(TARGET_DIR)/app/as
+		$(INSTALL) -m 0755 -D $(ALIAS_INSTALL_DIR)/* $(TARGET_DIR)/app/as
+			//拷贝到目标目录
+		# Install alibsf module to target directory
+		rm -rf $(TARGET_DIR)/lib/modules/$(LINUX_VERSION_PROBED)/extra
+		mkdir -p $(TARGET_DIR)/lib/modules/$(LINUX_VERSION_PROBED)/extra
+		$(INSTALL) -m 0755 -D $(@D)/alibsf/alibsf.ko $(TARGET_DIR)/lib/modules/$(LINUX_VERSION_PROBED)/extra
+		if grep -q "extra/alibsf.ko" $(TARGET_DIR)/lib/modules/$(LINUX_VERSION_PROBED)/modules.dep; then 	\
+			//then结尾后应该是"空格+tab然后再\":一定要注意此处
+			echo "alibsf has been install";	\	//结尾后应该是tab然后在\
+		else	\	//结尾后应该是tab然后在\
+			echo "extra/alibsf.ko:" >> $(TARGET_DIR)/lib/modules/$(LINUX_VERSION_PROBED)/modules.dep;	\
+				//结尾后应该是tab然后在\
+			echo "extra/alibsf.ko" >> $(TARGET_DIR)/lib/modules/$(LINUX_VERSION_PROBED)/modules.order;	\
+				//结尾后应该是tab然后在\
+		fi
+	endef
+	endif
+
+### 4.linux下的modprobe:module ath.ko not found in modules.dep
+
+	编辑modules.dep.此文件一般在"./lib/modules/$(LINUX_VERSION_PROBED)/modules.dep"
+	在后面增加:
+	echo "extra/alibsf.ko:" >> $(TARGET_DIR)/lib/modules/$(LINUX_VERSION_PROBED)/modules.dep
+	echo "extra/alibsf.ko" >> $(TARGET_DIR)/lib/modules/$(LINUX_VERSION_PROBED)/modules.order
+	PS:如上的问题3.
+	modprobe也是通过rmmod进行删除.
+
 ***
 
 # Makefile碰到的问题
@@ -760,8 +826,9 @@ N.s:是不需要预处理的汇编源文件;N.S:是需要预处理的汇编源�
 ## 1.把目录当成文件来操作
 
 	make: execvp: /zhsa022/usrhome/defy.chen/repository/work_viaccess/buildroot: Permission denied
-	/*错误原因:If you see an error like this when you run make, it means make is attempting to execute a directory, 
-	not a program. Which means you probably have extra spacing in one of your variables in your config/make files.*/
+	/*错误原因:If you see an error like this when you run make, it means make is attempting to 
+	execute a directory, not a program. Which means you probably have extra spacing in one of 
+	your variables in your config/make files.*/
 	/*问题描述:将目录当成了文件来操作.原因:是因为在Makefile中指定buildroot路径时,后面多加了一个"空格"*/
 
 ## 2.从git上只拉下源码的方法
