@@ -659,6 +659,216 @@ return语句不可返回指向"栈内存"的"指针"或者"引用",因为该内�
 
 ## Chapter 7 内存管理
 
+### 7.1 内存分配方式
+
+1.在静态存储区分配.
+
+	内存在程序编译的时候就已经分配好,这块内存在程序的运行期间都存在.e.g.全局变量、static变量,常量字符串
+
+2.在栈上创建.
+
+	函数内的局部变量是在栈上创建,函数执行结束自动释放这些存储单元.栈上分配的内存容量有限.
+
+3.从堆上分配,也叫动态内存分配.
+
+	使用malloc或者new申请的内存,需要程序员自己free或delete释放内存.使用灵活,容量一般较大.
+
+### 7.2 常见的内存对策
+
+1.如果指针p是函数的参数,那么在函数的入口处用assert(p != NULL)进行检查;
+
+2.使用malloc或new申请内存后,应该立即检查指针值是否为NULL,防止使用指针值为NULL的内存.
+
+	p = malloc(size);
+	if (p == NULL)
+	{
+		/*some error message*/
+	}
+
+3.数组和动态内存一定要赋初值,防止未被初始化的内存作为右值使用.
+
+	p = malloc(size);
+	memset(p, 0, size);	//对动态内存进行初始化
+
+4.避免数组或指针的下标越界(多1或少1的情况).
+
+5.动态申请的内存和释放必须配对,防止内存泄漏.
+
+6.用free或delete释放了内存之后,立即将指针设置为NULL,防止产生"野指针".
+
+### 7.3 指针与数组的对比
+
+数组要么在静态存储区被创建(e.g.全局数组),要么在栈上被创建.数组名对应着(而不是指向)一块内存,其地址和容量在生命期内保持不变,只有数组的内容可以改变.
+
+指针是可以随时指向任意类型的内存块,是"可变的".常用指针来操作动态内存.
+
+1.修改内容
+
+	//数组
+	char a[] = "hello";	//字符数组a的容量是6个字符,其内容为"hello\0".注意最后有"\0".
+	a[0] = 'X';	//数组a的内容是可以修改的.
+	cout << a << endl;	//可以正确输出
+	
+	//指针
+	char *p = "world";	//指针p指向常量字符串"world"(位于静态存储区,内容为world\0).
+	p[0] = 'X';	//常量字符串的内容是不可以被修改的.编译时不会出错,但是运行时会出错.
+	cout << p << endl;
+
+2.内容复制与比较
+
+	//数组
+	char a[] = "hello";
+	char b[10];
+	strcpy(b, a);	//复制字符串
+	if (strcmp(b, a) == 0)	//字符串比较
+
+	//指针
+	int len = strlen(a);	//求字符串a的长度.为真正的字符数(不包括结束的\0)
+	char *p = (char *)malloc(sizeof(char) * (len + 1));	//多分配一个存放"\0"
+	strcpy(p, a);
+	if (strcmp(p, a) == 0)
+
+3.计算内存容量
+
+	//sizeof可以计算数组的容量(字节数)
+	char a[] = "hello world";	//其字节数为12(11+'\0')
+	char *p = a;
+	cout << sizeof(a) << endl;	//12字节
+	cout << sizeof(p) << endl;	//4字节.为计算一个指针变量的字节数.
+	//sizeof(char *):为计算一个指针变的字节数,而不是p所指的内容.
+	//C/C++没办法知道指针所指的内存容量,除非在申请时记住它.
+
+4.数组作为函数的参数传递
+
+	void func(char a[100])
+	{
+		cout << sizeof(a) << endl;	//数组会自动退化为同类型的指针.因此为4字节
+	}
+
+### 7.4 指针参数传递内存
+
+1.函数的参数是一个指针,该参数指针是不能用来申请动态内存
+
+	void GetMemory(char *p, int num)
+	{
+		p = (char *)malloc(sizeof(char) * num);
+		//指针作为函数参数时,只能修改指针所指向内存的内容,不能为指针参数申请内存.
+		//此处申请的内存没有地方会释放,会造成内存泄漏
+	}
+
+	void Test(void)
+	{
+		char *str = NULL;
+		GetMemory(str, 100);	//str仍然为NULL
+		strcpy(str, "hello");	//运行错误
+	}
+
+2.可以使用"指向指针的指针"来作为函数参数申请内存
+
+	void GetMemory2(char **p, int num)
+	{
+		*p = (char *)malloc(sizeof(char) * num);
+		//此处相当于传进来的(**p)的内容(*p)被修改为一段malloc的内存
+	}
+
+	void Test2(void)
+	{
+		char *str = NULL;
+		GetMemory2(&str, 100);	//参数为&str,而不是str
+		strcpy(str, "hello");
+		cout << str << endl;
+		free(str);	//释放str指向的内存
+	}
+
+3.使用函数的返回值来传递动态内存
+
+	char *GetMemory3(int num)
+	{
+		char *p = (char *)malloc(sizeof(char) * num);
+		return p;
+		//指针返回堆内存是可以的,其释放由用户控制
+	}
+
+	void Test3(void)
+	{
+		char *str = NULL;
+		str = GetMemory3(100);	//返回的堆内存指针被赋值给了str,此时str指向一段堆内存
+		strcpy(str, "hello");
+		cout << str << endl;
+		free(str);	//释放str指向的内存
+	}
+
+4.函数返回值不能返回"栈内存",因为栈内存在函数结束就自动被释放掉
+
+	char *GetString(void)
+	{
+		char p[] = "hello world";
+		return p;	//返回栈内存,编译器会将提出警告
+	}
+
+	void Test4(void)
+	{
+		char *str = NULL;
+		str = GetString4();	//str也不是NULL指针,但是内容不是"hello world"而是垃圾
+		cout << str << endl;
+	}
+
+5.指针指向常量字符串,位于静态存储区(属于"只读"内存块),在程序生命周期内恒定不变
+
+	char *GetString2(void)
+	{
+		char *p = "hello world";
+		return p;	//指针指向常量字符串,位于静态存储区,在程序生命周期内恒定不变
+	}
+
+	void Test4(void)
+	{
+		char *str = NULL;
+		str = GetString2();	//str永远不变
+		cout << str << endl;
+	}
+	
+### 7.5 野指针
+
+free掉的指针只是将指针所指向的内存给释放掉,但是指针本身并没有被干掉.指针代表的地址仍然不变(非NULL),只是该地址所对应的内存是垃圾,此时指针成了"野指针".
+
+	char *p = (char *)malloc(100);
+	strcpy(p, "hello");
+	free(p);	//p所指的内存被释放,但是p所指的地址仍然不变
+	...
+	if (p != NULL)	//此时(p!=NULL)会成立,没有起到防错作用
+	{
+		strcpy(p, "world");	//出错
+	}
+
+1.指针变量在创建的同时应当被初始化.要么为NULL,要么指向合法的内存.
+
+	char *p = NULL;
+	char *str = (char *)malloc(100);
+
+2.指针被free或delete后,应该置为NULL.
+
+3.指针超越了变量的作用范围.
+
+	class A
+	{
+		public:
+			void func(void)
+			{
+				cout << "func of class A" << endl;
+			}
+	};
+
+	void Test(void)
+	{
+		A *p;
+		{
+			A a;
+			p = &a;	//{}构成一个语句块,语句块中的局部变量到"}"被自动释放.
+		}
+		p->func();	//由于a已经消失,p指向a,p成了"野指针".
+	}
+
 ***
 
 ## Chapter 7 内存管理
