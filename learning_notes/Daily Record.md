@@ -54,7 +54,18 @@
 	4.wmic bios--->bios相关信息,不好查看.
 	PS:上述所有的查看都可以加上:list brief
 	e.g. wmic memorychip list brief--->显示内存的相关信息.
+
+## 6.MSB和LSB
+
+在一些硬件的Spec中,经常会出现MSB和LSB,意思如下:
+
+	MSB:Most Significant Bit,最高有效位.通常MSB位于二进制的最左侧;
+	LSB:Least Significant Bit,最低有效位.通常LSB位于二进制的最右侧.
+	(如果MSB=1,则表示数据为负值;如果MSB=0,则表示数据为正.)
 	
+## 7.meeting minutes
+
+	meeting minutes:会议记录
 	
 
 

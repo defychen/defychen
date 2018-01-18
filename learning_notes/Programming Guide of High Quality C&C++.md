@@ -869,6 +869,242 @@ free掉的指针只是将指针所指向的内存给释放掉,但是指针本身
 		p->func();	//由于a已经消失,p指向a,p成了"野指针".
 	}
 
+### 7.6 malloc/free和new/delete的区别
+
+malloc/free是C++/C的库函数,new/delete是C++的运算符.都可用于动态内存的申请和释放.
+
+对于内部数据类型(e.g.int,char...等),malloc/free和new/delete并无区别;
+
+对于非内部数据类型(e.g.类类型等),new执行时会自动调用类的构造函数申请内存并完成初始化,delete执行时会自动调用类的析构函数清除内容并释放内存.malloc和free不具备该功能.
+
+	class Obj
+	{
+		public:
+			Obj(void){cout << "Initialization" << endl;}
+			~Obj(void){cout << "Destroy" << endl;}
+		void Initialize(void){cout << "Initialization" << endl;}
+		void Destroy(void){cout << "Destroy" << endl;}
+	};
+	/*使用malloc/free的方式*/
+	void UseMallocFree(void)
+	{
+		Obj *a = (Obj *)malloc(sizeof(Obj));	//malloc动态申请内存	
+		a->Initialize();		//调用类的初始化函数完成初始化
+		...
+		a->Destroy();	//调用类的析构函数完成清除工作
+		free(a);	//释放内存
+	}
+	/*使用new/delete的方式*/
+	void UseNewDelete(void)
+	{
+		Obj *a = new Obj;	//会自动调用类的构造函数完成申请动态内存并初始化
+		...
+		delete a;	//会自动调用类的析构函数完成清除并释放内存
+	}
+
+### 7.7 内存耗尽处理
+
+如果在申请动态内存时找不到足够大的内存块,malloc和new将返回NULL指针,宣告内存申请失败.失败处理方式:
+
+1.判断指针是否为NULL,如果是则马上用return语句终止本函数
+
+	void func(void)
+	{
+		A *a = new A;
+		if (a == NULL)
+		{
+			/*释放多处申请的内存在return*/
+			return;	//如果有多处申请了内存,必须先释放再return
+		}
+	}
+
+2.判断指针是否为NULL,如果是则马上用exit(1)来终止整个程序的运行
+
+	void func(void)
+	{
+		A *a = new A;
+		if (a == NULL)
+		{
+			cout << "Memory Exhausted" << endl;	//exhausted:耗尽,筋疲力尽
+			exit(1);	//终止整个程序的运行
+		}
+		...
+	}
+
+"内存耗尽"测试程序
+
+	void main(void)
+	{
+		float *p = NULL;
+		while(TRUE)
+		{
+			p = new float[1000000];	//申请1000000个float大小的内存
+			cout << "eat memory" << endl;
+			if (p == NULL)
+			{
+				exit(1);	//耗尽了就退出了整个程序
+			}
+		}
+	}
+	//这个程序会无休止的运行下去,因为操作系统支持"虚拟内存",内存用完了,自动会用硬盘空间顶替.
+	//此时,硬盘会咯吱咯吱的响,但是系统对键盘、鼠标毫无反应.
+
+### 7.8 malloc/free的使用要点
+
+malloc函数原型
+
+	void *malloc(size_t size);
+
+用malloc申请一块长度为length的整数类型的内存程序:
+
+	int *p = (int *)malloc(sizeof(int) * length);
+	/*
+		注意点:
+		1.类型转换.因为malloc返回的类型为"void *",需要进行显示的类型转换
+		2.malloc申请内存时,不识别申请的内存是什么类型,它只关心内存的字节数.因此使用sizeof(类型)*length来申请.	
+	*/
+
+测试各种类型所占的字节数:
+
+	cout << sizeof(char) << endl;
+	cout << sizeof(unsigned char) << endl;
+	cout << sizeof(int) << endl;
+	cout << sizeof(unsigned int) << endl;
+	cout << sizeof(long) << endl;
+	cout << sizeof(unsigned long) << endl;
+	cout << sizeof(float) << endl;
+	cout << sizeof(double) << endl;
+	cout << sizeof(void *) << endl;
+
+free的函数原型
+
+	void free(void *memblock);
+
+使用
+
+	free(p);	//p为malloc申请后赋值的指针
+	/*
+		注意点:
+		1.如果p是NULL指针,则free对p无论操作多少次都不会出问题;
+		2.如果p不是NULL指针,那么对p连续操作两次就会导致程序运行错误.
+	*/
+
+### 7.9 new/delete的使用要点
+
+	class Obj
+	{
+		public:
+			Obj(void);	//无参数的构造函数
+			Obj(int x);	//带一个参数的构造函数
+		...
+	};
+
+	void Test(void)
+	{
+		Obj *a = new Obj;	//调用无参数的构造函数
+		Obj *b = new Ojb(1);	//调用带一个参数的构造函数.初值为1
+		...
+		...
+		delete a;
+		delete b;
+	}
+
+如果用new来创建对象数组,则只能使用无参数的构造函数.
+
+	Obj *objects = new Obj[100];	//创建100个动态对象
+	//错误的写法:
+	Obj *objects = new Obj[100](1);	//这种写法是错误的
+
+delete释放数组对象
+
+	delete []objects;	//正确的写法
+	delete objects;		//错误的写法.相当于只delete objects[0],其他99没有被释放掉.
+
 ***
 
-## Chapter 7 内存管理
+## Chapter 8 C++函数高级特性
+
+待看
+
+***
+
+## Chapter 9 类的构造函数、析构函数与赋值函数
+
+待看
+
+***
+
+## Chapter 10 类的继承与组合
+
+待看
+
+***
+
+## Chapter 11 其他编程经验
+
+**1 使用const提高函数的健壮性**
+
+使用const关键,不仅仅是const常量.而是表示被const修饰的东西受到强制保护,可以预防意外的变动,提高程序的健壮性.
+
+1.1 const修饰函数的参数
+
+const只能修饰输入参数,不能修饰输出参数(否则参数将失去输出功能).
+
+	1.const修饰指针传递输入参数,防止意外地改动该指针,起到保护作用
+		void StringCopy(char *strDestination, const char *strSource);
+		//此时,如果函数体试图改动strSource的内容,编译器将指出错误.
+
+	2.对于非内部数据类型的输入参数,应该将"值传递"的方式改为"const引用传递",可以提高效率
+		void func(A a);	改为 void func(const A &a);
+		//对于非内部数据类型的"值传递",由于函数将需要产生临时对象复制该参数,需要消耗临时对象的构造、复制、析构时间.
+		//采用"引用传递"仅借用下参数的别名,不需要产生临时对象.在加上const修饰,防止参数被修改.达到与值传递相同的目的
+
+	3.对于内部数据类型的输入参数,"值传递"就不需要改为"const引用传递"
+		void func(int x); 不应该改为 void func(const int &x);
+		//因为内部数据类型在复制临时参数时,不需要构造、析构的时间.复制也很快,因此没有必要.
+
+1.2 const修饰函数的返回值
+
+const修改函数的指针返回值,表示函数的返回值(即指针)的内容不能被修改,而且该返回值只能被赋值给加const修饰的同类型指针.
+
+	const char *GetString(void);
+	//正确调用
+	const char *str = GetString();
+	//错误的调用
+	char *str = GetString();	//出现编译错误
+
+对于函数返回值采用"值传递方式",因为函数会把返回值复制到外部临时的存储变量中,此时加const修饰无意义.
+
+	const int GetInt(void);	//加const无必要
+	const A GetA(void);		//加const无必要
+
+1.3 const修饰成员函数
+
+任何不会修改数据成员的函数都应该声明为const类型.如果在编写const成员函数时,不慎修改了数据成员,或者调用了其他非const成员函数,编译器将指出错误,这样可以提高程序的健壮性.
+
+	class Stack
+	{
+		public:
+			void Push(int elem);
+			int Pop(void);
+			int GetCount(void)	const;	//const成员函数,此时该函数不能修改数据成员,
+										//也不能调用非const成员函数
+		private:
+			int m_num;
+			int m_data[100];
+	};
+
+	int Stack::GetCount(void) const
+	{
+		++m_num;	//编译错误,const成员函数企图修改数据成员m_num
+		Pop();		//编译错误,const成员函数企图调用非const函数
+		return m_num;
+	}
+
+**2 程序效率**
+
+程序的时间效率是指运行速度,空间效率是指程序占用内存或外村的状况.
+
+全局效率是指站在整个系统的角度上考虑的效率,局部效率是指站在模块或函数的角度上考虑的效率.
+
+***

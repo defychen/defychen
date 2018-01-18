@@ -917,7 +917,7 @@
 
 **惯用单句**
 
-	Where do you picture yourself in five years?	//你对自己未来五年有什么愿景规划?
+	Where do you picture yourself in five years?	//你对自己未来五年有什么远景规划?
 	My goals involve growing with a company where I can continue to learn.
 		//我的目标是,和公司一起发展成长,在这样的公司里我能够不断学习进步.
 	Why should I hire you?	//我为什么要聘用你呢?
@@ -965,7 +965,234 @@
 
 **文化洗礼**
 
-### 2.19 空闲职位咨询
+### 2.23 薪金待遇
+
+**惯用单句**
+
+	What salary would you expect to get?	//你希望拿多少薪水?
+	= How much money are you looking for in this job?
+	= What are your salary expectations?
+	I'm looking for 3 thousand yuan a month.	//我希望月薪是3000元.
+	I'd like to start at 4,000 yuan a month.	//我希望我的起薪每月4000元.
+	What's your monthly salary now?	//你目前的月薪是多少?
+	How much money do you earn presently?	//你目前挣多少钱?
+	How much money do you get now?	//你目前挣多少钱?
+	May I ask about the salary?	//我能问一下薪水吗?
+	When is the payday?	//哪天发工资?
+	I'd like to know whether there is insurance or not.	//我想知道是否有保险.
+	Could you please tell me about the insurance?	//您能不能给我说一下保险的事?
+	Would you please tell me ahout the pay scale first?
+		//您能先跟我说说你们的工资标准吗?	scale:标准,等级
+	There is a raise after three month's probation period according to your performance.
+		//三个月的试用期后将根据工作表现加薪.
+	The starting salary is not high, but the fringe benefits are pretty good.
+		//起薪不会太高,但福利很好.		fringe:边缘,fringe benefits = benefit"附加福利"
+	You'll get a bonus once a year.	//一年有一次奖金.
+	The bonus is paid by month.	//奖金按月发.
+	What are the benefits?	//都有些什么福利待遇?
+	I'd like to ask about the benefits.	//我想了解下福利待遇.
+	Can I ask about the vacations and sick leave?	//我能问一下假期和病假情况吗?	sick leave:病假
+	Could you please tell me something about the wages?	//wage:工资
+	//salary:一般按月发放;	wages:多用复数,指按小时、日或星期发放的报酬.
+
+**实用对话**
+
+			About the Salary(关于薪水)
+	Interviewer: First of all, thank you for accepting this job.
+	David: It's my pleasure.
+	Interviewer: What are your salary expectations?
+	David: Would you please tell me about your pay scale first?
+	Interviewer: We'll offer you a monthly salary to begin with. In addition, we offer 1%
+		commission on all your sales. You'll also enjoy life insurance and health insurance.
+		What starting salary would you expect here?
+		//起初我们按月给你发工资. commission:佣金,手续费. life insurance:人寿保险
+	David: Based on my skills and experience, I'd like to start at 4,000 yuan a month.
+	Interviewer: That sounds reasonable.
+	David: Do I have paid vacation?
+	Interviewer: Yes, you'll have two weeks' paid vacation a year. And you'll get an 
+		additional week after 4 years, and then again after 9 years if you decide to
+		stay that long. We promote from within based on performance, so there is an 
+		excellent chance that you could become a sales manager, or even a regional
+		manager.	//from within:内部提拔.
+
+**文化洗礼**
+
+### 2.24 工作期望
+
+**惯用单句**
+
+	What would you like to be in 5 years?	//五年后你想做到什么职位?
+	Where do you want to be in 10 years?	//你希望10年后的自己是什么样?
+	What are your long-range career objectives?
+		//你的长期事业目标是什么?		long-range=long-term:长期的. careen:事业,职业
+	What are your long-term career goals?
+	How do you plan to achieve your career goals?
+		//你计划怎样实现自己的事业目标?
+	What are the most important rewards you expect to get?
+		//你希望得到的最重要的回报是什么?
+	What if you are not promoted to manager in three years?
+		//如果三年后你没有升到经理一职怎么办?
+	What position do you want to start with?	//你想从哪个职位开始干?
+	I need more opportunities for career growth.	//我在事业上需要有更多的发展机会.
+	Is there any chance to get a promotion?	//我有机会得到提升吗?
+	Is there any opportunity to get promoted?
+	I am dedicated to being the best in this field.
+		//我决心要在这一行里成为最好的.		dedicated:专注的,献身的.
+	I don't want any specific job title.	//我不需要什么特别的头衔.
+	I want to improve quickly.	//我想快速进步.
+
+**实用对话**
+
+			Expecting Advancement(期望升职)
+	Interviewer: If we give you the job, what is the most important thing you
+		expect to get?	//你希望得到的最重要的东西是什么?
+	Harold: Well, I just want to enjoy what I am doing. It's the most important
+		thing to me.	//我只想在工作中找到快乐
+	Interviewer: Just this?	//就只有这个?
+	Harold: Yes, because I think being interested in things is the best teacher.
+		I'll have more opportunities for career growth.
+		//因为我觉得兴趣是最好的老师,这样我在事业上就会有更多的发展机会.
+	Inerviewer: Do you want to get a promotion?
+	Harold: Yes, of coure.
+	Interviewer: Where would you like to be in 5 years?
+	Harold: In five years, I'd like to be a senior manager of this corporation.
+	Interviewer: How do you plan to accomplish this?	//你计划怎么做到呢?
+	Harold: By doing whatever is necessary.	//做任何该做的事.
+
+**文化洗礼**
+***
+
+## Chapter 3 Actual Combat in Interviews(面试实战)
+
+### 2.25 能力介绍
+
+**惯用单句**
+
+	I'm very careful in my job.	//我工作非常认真.
+	Being too careful is my weak point.	//办事过于认真是我的弱点.
+	I'm good at this kind of work.	//我很擅长这类工作.
+	I do well in this kind of work.
+	I'm very capable of doing this kind of work.	//capable:有能力的,能干的.
+	I can easily build team spirit among my co-workers.
+		//我可以轻松地在同事之间建立起团队精神.
+	I work well under pressure.	//我在压力之下仍然可以工作得很好.
+	I know how to collect information crucial to the decision-making process.
+		//我知道怎样收集对决策过程至关重要的信息.	crucial:至关重要的.
+	It's not difficult to get along with different people.
+		//与不同的人处好关系并不难.
+	I work well with all types of people.	//我可以和各式各样的人相处的很好.
+	To get used to new circumstances isn't too difficult for me.
+		//适应新环境对我来说并不难.	get used to:习惯于.
+	I'm very competent in this area.	//我在这个领域非常在行. competent:有能力的,胜任的.
+	I can take on jobs that bother other people.
+		//我能承担别人认为麻烦的工作.	take on:承担
+	I know it like the back of my hand.	//我对这方面了如指掌.
+	I know my math.	//这一行当我很熟.
+	I'm a professional.	//我是专业人员.
+
+**实用对话**
+
+		Talking about One's Ability(谈论个人能力)
+	Interviewer: What is your greatest strength?
+	Cindy: I think I'm very good at planning. I manage my time perfectly so that I can
+		always get things done on time.
+	Interviewer: Why do you think you'd be a good fit for this job?
+		//你为什么认为自己适合这项工作呢?
+	Cindy: Because I am very competent in this area.
+	Interviewer: Can you work under pressure?
+	Cindy: Yes. I work well under pressure and find it stimulating. However, I believe
+		planning and the proper management of my time can reduce tight deadlines.
+		//压力有刺激作用. stimulating: 刺激. tight:紧的. 使最后期限变得不那么紧张.
+	Interviewer: Are you more of a follower or a leader?
+		//你更像一个追随者还是领导者?	follower:追随者
+	Cindy: I don't try to go ahead of people and lead them. I'd rather cooperate with
+		everybody else, and get the job done by working together.
+		//我并不试图去超越别人及领导别人. 
+
+**文化洗礼**
+
+### 2.26 性格介绍
+
+**惯用单句**
+
+	I'm not quite sure what kind of personality I have.	//我也说不好我有什么性格.
+	I don't know what kind of person I am.	//我也不知道自己是哪种人.
+	I'm quite active and energetic.	//我积极活跃并且充满活力.
+	I'm neither introverted nor extroverted.	//我既不内向也不外向.
+	I think I'm quite outgoing.	//我认为我很外向友好.
+	I have dual personality.	//我有双重性格.
+	I have many basic principles in my life.	//我的生活是有一些基本原则的.
+	I like to work with people who are honest, dedicated to their work and have
+	integrity.	//我喜欢和诚实、对工作投入、为人正直的人一起工作.	integrity:正直,诚实.
+	Sometimes I'm reserved and enjor being alone.	
+		//有时我沉默寡言,喜欢独处.	reserved:缄默的,话不多的;保留.
+	I keep close contact with my friends.	//我和我的朋友们经常联络.
+	I'm a very patient man.	//我是个很有耐心的人.
+	I'm very cautious with work.	//我对工作很谨慎.
+
+**实用对话**
+
+			Introducing Personality(性格介绍)
+	Interviewer: What kind of personality do you think you have?
+	Jean: I'm quite active and enegetic. I approach things enthusiastically and I don't
+		like leaving things half done.	
+		//我热情对待每件事情,不喜欢半途而废. enthusiastically:热情的,热心的.
+	Interviewer: Do you think you are introverted or extroverted?
+	Jean: I'm quite outgoing, I think. I enjoy mixing and doing things with others.
+		//我喜欢和别人打成一片,一起工作.	mix with:与人进行社会交往.
+	Interviewer: What do you think is the most important thing for you to be happy?
+		//对你来说幸福最重要的是什么?
+	Jean: I maintain that the most important thing is having good friends. A person can't
+		live all by himself, I think. A friend in need is a friend indeed. The more really
+		close friends I have, the better.	//患难见真情.真正亲密的朋友我拥有的越多越好.
+	Interviewer: What kind of people do you like to work with?
+	Jean: People who are honest, dedicated to their work and have integrity.
+
+**文化洗礼**
+
+### 2.27 个人爱好
+
+**惯用单句**
+
+	I have many hobbies.	//我有很多爱好.
+	I usually watch movies in my spare time.	//我在业余时间通常看电影.
+	I spend most of my spare time reading.	//我把大部分时间都用在阅读上了.
+	I like to cook and watch old movies.	//我喜欢烹饪和看老电影.
+	I enjoy reading biographies.	//我喜欢读传记.
+	I enjoy sports, music, films and books.
+	I like almost all kinds of sports and I also like to listen to classical music.
+		//几乎各类运动我都喜欢,我还喜欢听古典音乐.
+	I read everything I can get my hands on but I like love stories the best.
+		//我拿到什么书就看什么书,不过我最喜欢看言情小说. get one's hands on:得到.
+	Sightseeing has always interested me.	//我一向对观光很感兴趣.
+	Growing flowers is one of my favorite pastimes.	//养花是我最喜欢的消遣之一.
+	There is nothing I like more than modern dance. It always makes me feel vigorous.
+		//我最喜欢现代舞.它总是让我感到充满活力.	vigorous:精力旺盛的.
+	In my spare time, I like playing the violin with some friends.
+		//业余时间,我喜欢和朋友们一起拉小提琴.	violin:小提琴.
+	I have great interest in traditional Chinese paintings.
+		//我对传统中国画十分感兴趣.
+
+**实用对话**
+
+			Hobbies(个人爱好)
+	Interviewer: What do you do in your spare time?
+	Park: I have many hobbies. I like almost all kinds of sports and I also like to
+		listen to calssical music.
+	Interviewer: What sports do you like best?
+	Park: Football. It's a very exciting game because it keeps you alert and I also
+		enjoy the team spirit of football.	//alert:警觉的,警惕的.思维敏捷的.
+	Interviewer: Do you like reading books?
+	Park: Yes. I enjoy reading biographies, especially those well-known statesman,
+		militarists, scientists and artists. I can learn a lot from their life histories.
+		//著名的政治家,军事家,科学家和艺术家.我能从他们的生平学到很多东西.
+	Interviewer: Who are your favorite authors?	//你最喜欢的作家有哪些?
+	Park: I like the novels of Dickens very much. I've read almost all of them in Chinese
+		translation. I wish I could read them in the original.	//我希望我能读他的原著.
+
+**文化洗礼**
+
+### 2.27 个人爱好
 
 **惯用单句**
 
@@ -979,7 +1206,7 @@
 
 **************************************************************************************
 
-# Important words
+# ARM Spec Important words
 
 1.implementations(实现的名词)
 

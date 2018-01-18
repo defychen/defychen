@@ -29,7 +29,7 @@ python使用最广的解释器是CPython.
 raw_input()读取的内容永远是以字符串的形式返回,如果需要整数必须:
 
 	birth = int(raw_input('Please input your date of birth'))	
-	#出生日期是一个整数,需要使用int进行转换为整型
+	#出生日期是一个整数,需要使用int进行转换,转换为整型
 
 **输出打印:**
 
@@ -37,9 +37,10 @@ raw_input()读取的内容永远是以字符串的形式返回,如果需要整�
 	>>> print 'The quick brown fox', 'jumps over', 'the lazy dog'
 	# 其输出为The quick brown fox jumps over the lazy dog(","会输出空格,但是会忽略","后面的空格)
 ***
+
 ## 2、Python基础
 
-Pathon的注释以"#"开头;以":"结尾时,缩进的语句视为代码块.
+Python的注释以"#"开头;以":"结尾时,缩进的语句视为代码块.
 
 python使用"\n"换行,还可以用'''...'''表示多行内容(另起一行就是输出另一行)
 
@@ -137,9 +138,9 @@ Unicode输出中文:
 
 	输出形式:print '字符串 %s %d' %('字符串', 整型)
 
-### 2.4 Python中2进制、8进制、10进制、16禁止相关转换
+### 2.4 Python中2进制、8进制、10进制、16进制相关转换
 
-	//只有转成10进制才接收两个参数;转成其他进制的只接收一个参数
+	//只有转成10进制才能接收两个参数;转成其他进制的只能接收一个参数
 	/************转成10进制**************/
 	1.2进制转10进制
 	int('1001', 2)	//int:表示需要转成的十进制; '1001':需要转换的源数据; 2:源数据的进制
@@ -159,7 +160,7 @@ Unicode输出中文:
 	5.10进制转16进制
 	hex(10)
 	结果为:'0xa'
-	//非十10进制转其他进制
+	//非10进制转其他进制
 	6.16进制转2进制
 	bin(0xa)
 	结果为'0b1010'
@@ -180,6 +181,7 @@ Unicode输出中文:
 	print 'v value: 0x%x' % v	//将v以16进制输出
 
 ***
+
 ## 3、其他一些常用的学习
 
 ### 3.1 list和tuple
@@ -207,10 +209,10 @@ tuple与list非常类似,但tuple一旦初始化就不能修改.使用"(...)"识
 	classmates = ('Michael', 'Bob', 'Tracy')	#tuple变量,不能再修改(因此没有append、insert方法)
 	classmates[0/1/2]	#可以获取tuple元素
 	t = ()	#空tuple
-	t = (1,)	#定义只有一个元素的tuple,必须写完后加","(e.g. t = (1)默认会认为是t = 1---按小括号计算)
+	t = (1,)	#定义只有一个元素的tuple,必须在1后面加","(e.g. t = (1)默认会认为是t = 1---按小括号计算)
 	/*特例*/
 	t = ('a', 'b', ['A', 'B'])	#第三个元素为list，因此可以对第三个元素进行重新赋值
-	t[2][0] = 'X'	#tuple指向不便,仍然为list.但是list自身中的元素可以改变
+	t[2][0] = 'X'	#tuple指向不变,仍然为list.但是list自身中的元素可以改变
 	t[2][1] = 'Y'
 
 **切片**
@@ -224,16 +226,16 @@ tuple与list非常类似,但tuple一旦初始化就不能修改.使用"(...)"识
 	L[0:3]	/*取到3截止,但是不包括3位置的元素*/
 	L[:3]	/*从索引0开始,到3截止.包括L[0],L[1],L[2]三个元素*/
 	L[-2:]	/*取倒数元素,L[-2], L[-1]---倒数第一个元素*/
-	L[-2:-1]	/*取L[-2],到-1截止.因此就取一个*/
+	L[-2:-1]	/*取L[-2],到-1截止(不包括-1这个元素).因此就取一个*/
 
 实例
 	
 	L=range(99)	/*L=[0, 1, 2,...,99]---0~99的数列*/
-	L[:10]		/*取list L中的前10个数*/
+	L[:10]		/*取list L中的前10个数(0~9)*/
 	L[-10:]		/*取后10个数*/
-	L[10:20]	/*前11~20个数*/
-	L[:10:2]	/*前10个数,每两个取一个*/
-	L[::5]		/*所有数,每5个取一个*/
+	L[10:20]	/*前10~20之间的数(10~19)*/
+	L[:10:2]	/*前10个数中,每两个取一个(0,2,4,6,8)*/
+	L[::5]		/*所有数,每5个取一个(0,5,10,...)*/
 	L[::]		/*取整个list*/
 
 tuple和字符串也可以使用切片
@@ -256,7 +258,7 @@ tuple和字符串也可以使用切片
 	else:
 		print 'kid'
 
-*非零、非空字符串、非空list均为True*
+非零、非空字符串、非空list均为True
 
 **循环**
 
@@ -308,7 +310,7 @@ dict相比于list查找和插入的速度快,但是浪费内存(同时存储"key
 set只存储key,不存储value.使用"set([])"标识.
 
 	s = set([1, 2, 3])	/*相比较tuple,增加了"set"标识符,中间为一个"list"*/
-	s = set([1, 1, 2, 2, 3, 3])	/*去掉重复元素,因此最后显示结果为"set([1, 2, 3])"*/
+	s = set([1, 1, 2, 2, 3, 3])	/*自动去掉重复元素,因此最后显示结果为"set([1, 2, 3])"*/
 	s.add(4)	/*添加一个元素使用add方法,重复的会去掉*/
 	s.remove(4)	/*删除元素*/
 
@@ -336,7 +338,7 @@ set只存储key,不存储value.使用"set([])"标识.
 
 ### 3.4 迭代
 
-list/tuple/dict/str(字符串)等可迭代对象都可以用"for...in"来实现遍历,成这种遍历为迭代(Iteration).
+list/tuple/dict/str(字符串)等可迭代对象都可以用"for...in"来实现遍历,称这种遍历为迭代(Iteration).
 
 	//list
 	names = ['Michael', 'Tracy', 'Bob']
@@ -347,12 +349,12 @@ list/tuple/dict/str(字符串)等可迭代对象都可以用"for...in"来实现�
 	for word in words:
 		print 'word: %s' % word	/*如果不行:print 'word:', word*/
 	//dict
-	d = ['a':1, 'b':2, 'c':3]
-	for key in d:	/*判断key是否在dict中*/
+	d = {'a':1, 'b':2, 'c':3}
+	for key in d:	/*编译dict中的key*/
 		print key	/*打印key*/
-		print d['key']	/*打印value*/
-	/*默认迭代"key"*/
-	for vlaue in d.itervalues():	/*迭代value*/
+		print d[key]	/*打印value*/
+	/*默认迭代key*/
+	for value in d.itervalues():	/*迭代value*/
 	for k, v in d.iteritems():		/*迭代key和value*/
 	//字符串
 	for ch in 'ABC':
@@ -369,6 +371,11 @@ list/tuple/dict/str(字符串)等可迭代对象都可以用"for...in"来实现�
 
 	for x, y in [(1, 1), (2, 4), (3, 9)]:
 		print x, y
+	/* 会打印出:
+		1 1
+		2 4
+		3 9
+	*/
 
 ### 3.5 列表生成式
 
@@ -396,6 +403,7 @@ list/tuple/dict/str(字符串)等可迭代对象都可以用"for...in"来实现�
 	//list中包含字符串和整数
 	L = ['Hello', 'World', 18, 'IBM', 'Apple']
 	[s.lower() for s in L if isinstance(s, str)]	/*增加判断是否为字符串*/
+	isinstance(s, str)	//判断s是否为字符串.True:表示为字符串;False:不是字符串.
 	
 ***
 
@@ -469,7 +477,7 @@ list/tuple/dict/str(字符串)等可迭代对象都可以用"for...in"来实现�
 
 	def fib(max):
 		n, a, b = 0, 1, 1	/*赋值,会对应的赋值*/
-		for n < max:
+		while n < max:	/*while循环*/
 			print a
 			a, b = b, a + b	/*赋值,会对应的赋值*/
 			n = n + 1
@@ -478,9 +486,9 @@ list/tuple/dict/str(字符串)等可迭代对象都可以用"for...in"来实现�
 
 其实为一个tuple,按位置赋给对应的变量.
 
-	import path	/*引入path module*/
+	import math	/*引入math module*/
 	
-	def move(x, y, step, angle=0):	/*angle带默认参数,放于最后*/
+	def move(x, y, step, angle=0):	/*angle带默认参数,放在最后*/
 		nx = x + step * math.cos(angle)		/*math module的cos函数"math.cos(angle)"*/
 		ny = y - step * math.sin(angle)
 		return nx, ny	/*返回nx, ny两个值.会组成一个tuple"(nx, ny)"*/
@@ -517,7 +525,7 @@ list/tuple/dict/str(字符串)等可迭代对象都可以用"for...in"来实现�
 	enroll('Bob', 'M', 7)	/*依次赋值, 7是赋给age的值*/
 	enroll('Adam', 'M', city='Tianjin')	/*age使用默认值,city改变需要明确参数名*/
 
-默认参数使用"list"的默认出现问题,因此尽量使用不可变对象(None, int，str)
+默认参数使用"list"会出现问题,因此尽量使用不可变对象(None, int，str)
 
 	def add_end(L=[])	/*参数L带有默认值"[]",空的list*/
 		L.append('END')
@@ -536,7 +544,7 @@ list/tuple/dict/str(字符串)等可迭代对象都可以用"for...in"来实现�
 		L.append('END')
 		return L	/*此时不会出错*/
 
-**可变参数(list/tuple)**
+**可变参数**
 
 在Python函数中,传给函数的参数的个数可变称为可变参数的函数.
 
@@ -683,7 +691,7 @@ reduce()函数接收两个参数.一个函数,一个list.函数从list中取两�
 	
 	def char2num(s):
 		return {'0':0, '1':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9}[s]
-fand
+
 	reduce(fn, map(char2num, '13579'))	//结果为:13579
 
 	// str2int函数
@@ -981,7 +989,7 @@ python对匿名函数的支持有限
 		def score(self):	//此处相当于"getter_score(self)"
 			return self.__score
 
-		@score.setter	//"@xxx.setter"相当于"xxx.setter",将set方法变成属性
+		@score.setter	//"@xxx.setter"相当于"setter_xxx",将set方法变成属性
 		def score(self, value):	//此处相当于"setter_score(self, value)"
 			if not isinstance(value, int):
 				raise ValueError('score must be integer!')
@@ -998,14 +1006,14 @@ python对匿名函数的支持有限
 定义读写/只读属性方法
 
 	class Student(object):
-		@property	//相当于get_birth,只读属性
+		@property	//相当于getter_birth,只读属性
 		def birth(self):
 			return self.__birth
-		@birth.setter	//相当于birth_setter,写属性
+		@birth.setter	//相当于setter_birth,写属性
 		def birth(self, value)
 			self.__birth = value
 		@property
-		def age(self):	//相当于get_age,只读属性
+		def age(self):	//相当于getter_age,只读属性
 			return 2017 - self.__birth
 
 **多重继承,也叫Mixin**
@@ -1059,8 +1067,9 @@ python对匿名函数的支持有限
 			return self			//定义迭代对象.实例本身为迭代对象,故返回自己
 		def next(self):			//Python中的for循环会不断调用迭代对象的next()方法拿到循环的下一个值
 			self.a, self.b = self.b, self.a + self.b	//计算下一个值
-			if self.a > 100000	//循环退出条件
-				raise StopIteration();	//抛出"StopIteration;"---终止循环."后面有分号"
+			if self.a > 100000:	//循环退出条件
+				raise StopIteration()	//抛出"StopIteration;"---终止循环.
+					//以前的记录"StopIteration();---后面有分号".但是测试过有没有都正确.没有";"比较和常规.
 			return self.a	//返回下一个值
 
 	//调用
@@ -1077,10 +1086,10 @@ python对匿名函数的支持有限
 	...
 	>>>Hello = type('Hello', (object, ), dict(hello=fn))   #创建Hello class
 	>>>h = Hello
-	>>>h.Hello()     #打印出"Hello, world"
+	>>>h.hello()     #打印出"Hello, world"
 
 	//2)通过type创建class的方法(type()函数中各参数说明)
-	para 1.class的名称---首字母大写字符串
+	para 1.class的名称---首字母大写的字符串
 	para 2.继承tuple---只有一个父类需要写成:(object, )---后面带逗号
 	para 3.方法名称与函数绑定---这里将函数fn绑定到方法hello上
 
@@ -1090,6 +1099,7 @@ python对匿名函数的支持有限
 
 创建类实例的流程是:先定义metaclass,然后创建类,最后通过类创建实例.
 ***
+
 ## 8、错误、调试和测试
 
 Python的"pdb"以单步方式执行代码.
@@ -1233,7 +1243,7 @@ logging还可以将错误记录到日志文件,见后面的logging模块.
 
 **通过logging.basicConfig函数对logging输出进行相关配置**
 
-*针对logging.info('...')不能打印的情况,调整打印级别*
+针对logging.info('...')不能打印的情况,调整打印级别
 
     import logging
     logging.basicConfig(level=logging.DEBUG,
@@ -1281,10 +1291,12 @@ pdb.set_trace():设置一个断点
 ### 8.7 文档测试
 
 **暂时没看**
+
 ***
+
 ## 9 IO编程
 
-同步IO:相当于每个步骤依序进行,后面的必须等待前面的完成(等待过程是阻塞的过程).e.g.CPU输出100M数据只需要0.01s,磁盘接收这100M数据需要10s.同步情况下,CPU会阻塞等待这100M数据写完在往下执行.
+同步IO:相当于每个步骤依序进行,后面的必须等待前面的完成(等待过程是阻塞的过程).e.g.CPU输出100M数据只需要0.01s,磁盘接收这100M数据需要10s.同步情况下,CPU会阻塞等待这100M数据写完再往下执行.
 
 异步IO:当某个步骤出现阻塞,后面的程序不会一直等待阻塞的程序执行完毕,而是继续往下执行.e.g.CPU不等待,只是通知磁盘"写",后续代码接着执行.
 
@@ -1346,6 +1358,7 @@ pdb.set_trace():设置一个断点
 	with open('./defy/test.txt', 'w') as f:
 		f.write('Hello, world!')	//这种方法不用调用f.close(),系统自动调用.代码简洁
 ***
+
 ## 10 os模块
 
 **os模块**
@@ -1381,11 +1394,15 @@ pdb.set_trace():设置一个断点
 	
 	[x for x in os.listdir('.') if os.path.isfile(x) and os.path.splitext(x)[1] == '.py']
 	//列出所有的.py文件---os.path.split(x)返回的为tuple,因此"os.path.splitext(x)[1]"相当于取后面的扩展名
+
 ***
+
 ## 11 序列化及JSON
 
 **略**
+
 ***
+
 ## 12 进程和线程
 
 ### 12.1 多进程(multiprocessing)
@@ -1403,7 +1420,7 @@ pdb.set_trace():设置一个断点
 
 **2)multiprocessing---跨平台的多进程模块**
 
-	from multiprocessing import Process	//从multiprocessing导入Process类,该类用于创建一个子进程
+	from multiprocessing import Process	//从multiprocessing模块导入Process类,该类用于创建一个子进程
 	import os
 	
 	#子进程执行的函数代码
@@ -1417,7 +1434,7 @@ pdb.set_trace():设置一个断点
 											//args:子进程执行的函数参数,是一个tuple.只有一个时需要加逗号('test',)
 		print 'Process will start.'
 		p.start()			//启动子进程
-		p.join()			//等待子进程结束在继续往下运行,常用于进程间同步
+		p.join()			//等待子进程结束再继续往下运行,常用于进程间同步
 		print 'Process end.'
 
 **3)进程池Pool---用于批量创建子进程**
@@ -1472,7 +1489,7 @@ pdb.set_trace():设置一个断点
 	#读数据进程执行的代码
 	def read(q):
 		while True:		//死循环
-			value = q.get(True)		//参数True会导致:如果队列中没有数据是调用线程暂停,直至有数据会继续
+			value = q.get(True)		//参数True会导致:如果队列中没有数据使调用线程暂停,直至有数据会继续
 									//如果为False会导致:如果队列中为空,会引发异常.所以一般为True
 			print 'Get %s from queue.' % value
 
@@ -1534,7 +1551,7 @@ pdb.set_trace():设置一个断点
 	lock = threading.Lock()		//线程锁
 	
 	def change_it(n):
-		#先存后取,结果为0
+		#先存后取,结果为不便.(此处仍为0)
 		global balance	//表明为全局变量
 		balance = balance + n
 		balance = balance - n
@@ -1557,7 +1574,9 @@ pdb.set_trace():设置一个断点
 	print balance
 
 **操作系统出现硬盘狂响,点窗口无反应是因为开的任务(进程/线程)过多,操作系统忙着切换任务,此时根本没有时间去执行任务.**
+
 ***
+
 ## 13 摘要算法(SHA/MD5)
 
 Python的hashlib提供了常用的摘要算法(MD5, SHA1等).
@@ -1582,7 +1601,7 @@ Python的hashlib提供了常用的摘要算法(MD5, SHA1等).
 	md5.update('python hashlib?')
 	print md5.hexdigest()
 
-**MD5:最常见的摘要算法,速度快,生成的长度是32个16进制字符串(128 bit).**
+**MD5:最常见的摘要算法,速度快,生成的长度是32个16进制字符串(32*4 = 128 bit = 16 byte).**
 
 实例---SHA1调用
 
@@ -1592,10 +1611,14 @@ Python的hashlib提供了常用的摘要算法(MD5, SHA1等).
 	sha1.update('python hashlib?')
 	print sha1.hexdigest()		//计算得到sha1值
 
-**SHA1:生成的长度是40个16进制的字符串(160 bit).**
+	//结果为:b752d34ce353e2916e943dc92501021c8f6bca8c
+
+**SHA1:生成的长度是40个16进制的字符串(40*4 = 160 bit = 20 byte).**
 
 **摘要算法不是加密算法,不能用于加密---因为无法通过摘要反推明文.**
+
 ***
+
 ## 14 网络编程
 
 网络通信:就是两台计算机上的两个进程之间的通信.(e.g.本地浏览器进程与新浪服务器上的某个web服务进程在通信;QQ进程与腾讯的某个服务器上的某个进程在通信).
@@ -1640,13 +1663,13 @@ socket:表示打开了一个网络连接.
 
 **客户端:**
 
-主动发起连接的叫客户端,被动相应连接的叫服务器.
+主动发起连接的叫客户端,被动响应连接的叫服务器.
 
 实例:
 
 	import socket	//导入socket库
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)	
-	//创建一个socket,AF_INET:IPv4协议(IPv4---AF_INET6);SOCK_STREAM:面向流的TCP协议
+	//创建一个socket,AF_INET:IPv4协议(IPv6---AF_INET6);SOCK_STREAM:面向流的TCP协议
 	s.connect(('www.sina.com.cn', 80))	//IP地址+端口号.---IP地址可由域名"www.sina.com.cn"自动转换
 	//端口号分类:80 web服务标准端口;25 SMTP服务端口;21 FTP服务端口.端口号<1024---Internet标准服务端口;>1024可以任意使用.
 	s.send('GET / HTTP/1.1\r\nHost: www.sina.com.cn\r\nConnection: close\r\n\r\n')
@@ -1672,7 +1695,7 @@ socket:表示打开了一个网络连接.
 
 **服务器:**
 
-1)创建一个基于IPv4和TCP协议的Socket:
+1)创建一个基于IPv4和TCP协议的socket:
 
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -1685,7 +1708,7 @@ socket:表示打开了一个网络连接.
 
 3)监听端口:
 	
-	s.listen(5)	//参数表示最大的连接数量,为设置s的一种属性.经过这个设置后socket就可以等待客户端的连接了.
+	s.listen(5)	//参数表示最大的连接数量,为设置socket的一种属性.经过这个设置后socket就可以等待客户端的连接了.
 	print 'Waiting for connection...'
 
 4)接收客户端连接,并创建线程处理客户端连接:
@@ -1706,7 +1729,7 @@ socket:表示打开了一个网络连接.
 			time.sleep(1)			//睡眠1s
 			if data == 'exit' or not data:	//发送'exit'或没有数据就退出线程循环---进而结束该线程
 				break
-			sock.send('Hello, %s' % data)	//添加Hello头发送给客户端
+			sock.send('Hello, %s' % data)	//添加Hello头然后发送给客户端
 		sock.close()	//关闭socket
 		print 'Connection from %s:%s closed.' % addr
 

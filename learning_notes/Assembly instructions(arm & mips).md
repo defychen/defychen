@@ -197,11 +197,11 @@
 
 ## 3.1 ARM内嵌汇编
 
-**1.内嵌汇编断点指令**
+### 3.1.1 内嵌汇编断点指令
 
 	asm volatile(".word 0xebfffffe");	//ARM的断点
 
-**2.内嵌汇编操作PC指针**
+### 3.1.2 内嵌汇编操作PC指针
 
 	//获取PC指针
 	#define get_pc(x) {asm volatile("mov %0, r15" :"=r"(x));}
@@ -218,8 +218,68 @@
 
 ## 3.2 MIPS内嵌汇编
 
-**1.内嵌汇编断点指令**
+### 3.2.1 内嵌汇编断点指令
 
 	asm volatile(".word 0x1000ffff; nop");	//MIPS的断点
 
+### 3.2.2 协处理器0(CP0)的功能及操作指令
+
+**1. 协处理器0(CP0)---系统控制协处理器**
+
+	标号	寄存器助记符/名称		功能描述							备注
+	0	Index			TLB阵列的入口索引					与MMU、TLB有关
+	1	Random			产生TLB阵列的随机入口索引			与MMU、TLB有关
+	2	EntryLo0		偶数虚拟页的入口地址的低位部分		与MMU、TLB有关
+	3	EntryLo1		奇数虚拟页的入口地址的低位部分		与MMU、TLB有关
+	4	Context			指向内存虚拟页表入口地址的指针		与MMU、TLB有关
+	5	PageMask		控制TLB入口中可变页面的大小		与MMU、TLB有关
+	6	Wired			控制固定的TLB入口的数目			与MMU、TLB有关
+	7	保留		
+	8	BadVAddr		记录最近一次地址相关异常的地址	
+	9	Count			处理器记数周期
+	10	EntryHi			TLB入口地址的高位部分				与MMU、TLB有关
+	11	Compare			定时中断控制	
+	12	Status			处理器状态和控制寄存器	
+	13	Cause			保存上一次异常原因	
+	14	EPC				保存上一次异常时的程序计数器	
+	15	PRId			处理器标志和版本	
+	16	Config			配置寄存器，用来设置CPU的参数	
+	17	LLAddr			加载链接指令要加载的数据存储器地址	
+	18	WatchLo			观测点watchpoint地址的低位部分		与调试有关
+	19	WatchHi			观测点watchpoint地址的高位部分		与调试有关
+	20	保留		
+	21	保留		
+	22	保留		
+	23	Debug			调试控制和异常状况	与调试有关
+	24	DEPC			上一次调试异常的程序计数器			与调试有关
+	25	保留		
+	26	ErrCtl			控制Cache指令访问数据和SPRAM		与Cache有关
+	27	保留		
+	28	TagLo/DataLo	Cache中Tag接口的低位部分			与Cache有关
+	29	保留		
+	30	ErrorEPC		上一次系统错误时的程序计数器	
+	31	DESAVE			用于调试处理的暂停寄存器			与调试有关
+
+	PS:CP0的9号寄存器($9)里面保存处理器记数周期,该值任何时刻点都不会相同.可当做一个随机值.
+
+**2. 协处理器0(CP0)操作指令**
+
+	mfc0:从协处理器0(CP0)的某个寄存器复制数据到通用寄存器
+	mtc0:从通用寄存器复制数据到协处理器0(CP0)的某个寄存器
+
+**3. 通过CP0的9号寄存器($9)获取随机值的内嵌汇编**
+
+	#define get_random(val) \
+		do { \
+			asm volatile("mfc0 %0, $9" : "=r"(val)); \
+		}while(0)
+
+	/*
+		mfc0 %0	//编译器会自动选择一个空闲的CPU通用寄存器来装载val变量的地址.
+				//理解为:该空闲寄存器就代表该变量.
+		$9	//表示协处理器0(CO0)的9号寄存器.存放的是处理器记数周期,作为一个随机值.
+		: "=r"(val)	//语法格式mfc0 %0, $9 :"=r"(val)->output:"r"(val)->input:修饰
+					//此处为代表output为val,即输出CP0的$9寄存器中的值给val.也即得到一个随机值
+		//PS:如果后面的input没有,中间的":"可以不需要
+	*/
 md 0x1801008c 4
