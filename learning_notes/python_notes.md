@@ -707,7 +707,7 @@ reduce()函数接收两个参数.一个函数,一个list.函数从list中取两�
 		return {'0':0, '1':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9}[s]
 
 	def str2int(s):
-		return reduce(lambda x, y: x * 10 + y, map(char2num, s))---lambda para : expression
+		return reduce(lambda x, y: x * 10 + y, map(char2num, s)) //---lambda para : expression
 
 ### 5.2 filter函数
 
@@ -807,7 +807,7 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 python对匿名函数的支持有限
 ***
 
-## 6、模块
+## 6. 模块
 
 在Python中,一个".py"文件就是一个模块(module).
 
@@ -827,7 +827,7 @@ python对匿名函数的支持有限
 
 ### 6.1 导入模块
 
-	#!/usr/bin/python	//制定可执行程序路径
+	#!/usr/bin/python	//指定可执行程序路径
 	# -*- coding: utf-8	-*-		//使用utf-8编码
 
 	'a test module'		//注释
@@ -860,7 +860,7 @@ python对匿名函数的支持有限
 
 ### 6.2 别名
 
-	try:	//Python IO的两套库"cStringIO"和"StringIO",接口和功能相同.cStringIO用c下的,速度快.
+	try:	//Python IO的两套库"cStringIO"和"StringIO",接口和功能相同.cStringIO用c写的,速度快.
 		import cStringIO as StringIO	//优先导入cStringIO作为StringIO,"as"相当于别名
 	except ImportError:	//导入失败会捕获到ImportError
 		import StringIO	//失败再导入StringIO.后面的代码均可以用StringIO正常工作
@@ -882,7 +882,7 @@ python对匿名函数的支持有限
 	def _private_2(name):	//细节被隐藏
 		return 'Hi, %s' % name
 	
-	def greeting(name):	//公开greeting函数.借口公开,细节隐藏.
+	def greeting(name):	//公开greeting函数.接口公开,细节隐藏.
 		if len(name) > 3:
 			return _private_1(name)
 		else:

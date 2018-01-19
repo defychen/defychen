@@ -2604,7 +2604,11 @@ Windows消息主要分为三类:
 		*/
 		e.g.
 		CString str;
-		str.Format("x=%d, y=%d", GetSystemMetrics(SM_CXMENUCHECK), GetSystemMetrics(SM_CYMENUCHECK));
+		str.Format(_T("x=%d, y=%d"), GetSystemMetrics(SM_CXMENUCHECK), GetSystemMetrics(SM_CYMENUCHECK));
+		/*上述必须转换"_T",否则会报错:
+		error C2664: “void ATL::CStringT<BaseType,StringTraits>::Format(const wchar_t 
+		*,...)”: 不能将参数 1 从“const char [3]”转换为“const wchar_t *”. 
+		*/
 		/*str.Format():按照一定的格式将结果保存到str中.*/
 		MessageBox(_T(str));	//此时可以打印出位图资源应该有的宽度和高度.
 		
@@ -2631,7 +2635,11 @@ Windows消息主要分为三类:
 		GetMenu()->GetSubMenu(0)->SetDefaultItem(ID_FILE_OPEN, FALSE);
 		/*打开菜单项标识为:ID_FILE_OPEN*/
 		CString str;
-		str.Format("x=%d, y=%d", GetSystemMetrics(SM_CXMENUCHECK), GetSystemMetrics(SM_CYMENUCHECK));
+		str.Format(_T("x=%d, y=%d"), GetSystemMetrics(SM_CXMENUCHECK), GetSystemMetrics(SM_CYMENUCHECK));
+		/*上述必须转换"_T",否则会报错:
+		error C2664: “void ATL::CStringT<BaseType,StringTraits>::Format(const wchar_t 
+		*,...)”: 不能将参数 1 从“const char [3]”转换为“const wchar_t *”. 
+		*/
 		MessageBox(str);	//调整好了位图资源的大小,上述显示标记图形的宽度和高度可以省略.
 
 		m_bitmap.LoadBitmap(IDB_BITMAP1);
@@ -3057,7 +3065,10 @@ MFC中,所有控件都派生于CWnd类,因此控件也属于窗口.
 		num2 = _ttoi(str2);
 		num3 = num1 + num2;
 		str3.Format(_T("%d"), num3);	//将num3以10进制的形式形成字符串保存到str3中
-
+		/*上述必须转换"_T",否则会报错:
+		error C2664: “void ATL::CStringT<BaseType,StringTraits>::Format(const wchar_t 
+		*,...)”: 不能将参数 1 从“const char [3]”转换为“const wchar_t *”. 
+		*/
 		GetDlgItem(IDC_EDIT3)->SetWindowText(str3);
 	}
 
