@@ -66,6 +66,11 @@
 ## 7.meeting minutes
 
 	meeting minutes:会议记录
+
+## 8.c.f的意思
+
+	c.f.	//意思是请参照,请比较
+	c.f.kl.proto	//请参照kl.proto文件
 	
 
 
