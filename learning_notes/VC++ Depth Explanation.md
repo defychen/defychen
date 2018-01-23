@@ -3888,223 +3888,104 @@ PS:对话框中存在默认按钮,当按下Enter键会调用默认按钮的消�
 
 ### Step 4. 实现"Calc"按钮的消息处理函数
 
-	#if 0
-	static void str2char(CString str, unsigned char *ch, int length)
+	static void str2char(unsigned char *ch, const CString str, int &length)
 	{
 		int pos = 0;
-		CString test;
+		int count = 0;	//用于统计字符串中字节个数
+		//CString test;
 		int i = 0;
 		int num = 0;
-		pos = str.Find(_T(' '));
-		test.Format(_T("%d"), pos);
-		AfxMessageBox(_T("Execute to there"));
-		AfxMessageBox(test);
-	
-		while ((pos != -1) && (i<length))
-		{
-			CString field = str.Left(pos);
-			//AfxMessageBox(field);
-			//field = _T("0x") + field;
-			num = _tcstol(field.GetBuffer(0), NULL, 16);
-			//char *p = NULL;
-			//p = new char[3];
-			//memset(p, 0, 3);
-			//sprintf(p, "%s", field);
-			//num = (int)strtol(p, NULL, 16);
-			//num = _ttoi(field.GetBuffer(0));
-			//input_test[i] = (unsigned char)_ttoi(field.GetBuffer(0));
-			test.Format(_T("%d"), num);
-			//AfxMessageBox(_T("xxxxxxxxxxxxx"));
-			//AfxMessageBox(test);
-			//sprintf(&input_test[i], "0x%x", num);
-			//num = 1;
-			unsigned char a = 135;
-	
-			ch[i] = num;
-			test.Format(_T("%d"), ch[i]);
-			//AfxMessageBox(_T("xxxxxxxxxxxxx"));
-			//AfxMessageBox(test);
-			//output += input_test[i];
-			i++;
-			str = str.Right(str.GetLength() - pos - 1);
-			pos = str.Find(_T(' '));
-		}
-	}
-	#else
-	static void str2char(CString str, unsigned char *ch, int &length)
-	{
-		int pos = 0;
-		CString test;
-		int i = 0;
-		int num = 0;
-		int count = 0;
-		pos = str.Find(_T(' '));
-		test.Format(_T("%d"), pos);
+		pos = str.Find(_T(' '));	//查找CString中的空格,找到了返回空格所在的位置.没找到返回-1
+		//test.Format(_T("%d"), pos);	//将返回空格的位置pos格式化成CString,以便后续输出
 		//AfxMessageBox(_T("Execute to there"));
-		//AfxMessageBox(test);
+		//AfxMessageBox(test);	//非对话框类/单文档窗口类的函数应该调用"AfxMessageBox"输出
 	
 		while (pos != -1)
 		{
 			count++;
-			CString field = str.Left(pos);
-			//AfxMessageBox(field);
-			//field = _T("0x") + field;
+			CString field = str.Left(pos);	//取str字符串从最左边到pos位置所有的字符串(也就是一个字节)
+			//AfxMessageBox(field);	//打印出取出的字符串,主要用于调试
+			//field = _T("0x") + field;	//两个字符串可以直接使用"+"进行连接
 			num = _tcstol(field.GetBuffer(0), NULL, 16);
-			//char *p = NULL;
-			//p = new char[3];
-			//memset(p, 0, 3);
-			//sprintf(p, "%s", field);
-			//num = (int)strtol(p, NULL, 16);
-			//num = _ttoi(field.GetBuffer(0));
-			//input_test[i] = (unsigned char)_ttoi(field.GetBuffer(0));
-			test.Format(_T("%d"), num);
-			//AfxMessageBox(_T("xxxxxxxxxxxxx"));
-			//AfxMessageBox(test);
-			//sprintf(&input_test[i], "0x%x", num);
-			//num = 1;
-			unsigned char a = 135;
+			/*
+				_tcstol(const wchar_t *nptr, wchar_t **endptr, int base);
+				para1:表示要进行扫描的字符串指针.此处field.GetBuffer(0):读出CString的内容.
+					GetBuffer真正作用是返回一个可写的缓冲指针,如果有写的动作后面必须调用ReleaseBuffer.
+				para2:存储扫描后无法转化的剩余字符串(e.g.转换8进制时,类似a,b这种字符是转换不了的.就存储在
+					该参数中).
+				para3:转化的进制(e.g.2,8, 10,16等)
+				retval:返回转化后对应的值.
+			*/
 	
-			ch[i] = num;
-			test.Format(_T("%d"), ch[i]);
-			//AfxMessageBox(_T("xxxxxxxxxxxxx"));
-			//AfxMessageBox(test);
-			//output += input_test[i];
+			ch[i] = num;	//存储到数组里
 			i++;
-			str = str.Right(str.GetLength() - pos - 1);
+			str = str.Right(str.GetLength() - pos - 1);	//去掉已经取出来的存储到字符数组中的字符
 			pos = str.Find(_T(' '));
 		}
-		length = count;
-		//test.Format(_T("%d"), length);
-		//AfxMessageBox(_T("Execute to there"));
-		//AfxMessageBox(test);
+		length = count;	//保存统计出来的字节数
 	}
-	#endif
 	
-	static void char2str(CString &str, unsigned char *buf, int length)
+	static void char2str(CString &str, const unsigned char *buf, int length)
 	{
 		CString temp = _T("");
 		int i = 0;
 		for (; i < length; i++)
 		{
-			temp.Format(_T("0x%02x"), buf[i]);
+			temp.Format(_T("0x%02x"), buf[i]);	//转成"0x"16进制后放到CString中
 			str += temp;
-			str += _T(",");
-			if ((i+1)%8 == 0)
+			str += _T(",");	//增加分隔符","
+			if ((i+1)%8 == 0)	//为8的整数倍就换行
 			{
-				str += _T("\r\n");
+				str += _T("\r\n");	//\r:return; \n:next
+				/*
+					Linux:\n表示回车+换行;
+					Windows:\r\n表示回车+换行;
+					Mac:\r表示回车+换行.
+				*/
 			}
 		}
-		AfxMessageBox(str);
+		//AfxMessageBox(str);
 	}
 	
 	void CCrypto_ToolDlg::OnBnClickedBtnCalc()
 	{
 		// TODO: 在此添加控件通知处理程序代码
 		CString input, iv, key;
-		CString iv_show;
-		CString key_show;
-		CString input_show;
-		CString output_show;
-		CString temp = _T("");
-		int size = 0;
-		int num = 0;
+		CString iv_show, key_show, input_show, output_show;
+		unsigned char input_buf[2048]={0};
+		unsigned char output_buf[2048]={0};
+		unsigned char iv_buf[32] = {0};
+		unsigned char key_buf[16] = {0};
 		int input_length = 0;
 		int key_length = 0;
 		int iv_length = 0;
+
+		int size = 0;
+		int num = 0;
 		//int pos;
 		//CString resToken;
 		//int curPos = 0;
-		unsigned char input_buf[64]={0};
-		unsigned char iv_buf[32] = {0};
-		unsigned char key_buf[16] = {0};
-		unsigned char output_buf[64]={0};
 		CString str;
+
+		GetDlgItem(IDC_EDIT_INPUT)->GetWindowText(input);	//得到input编辑框IDC_EDIT_INPUT的字符串信息
+		GetDlgItem(IDC_EDIT_IV)->GetWindowText(iv);	//得到IV编辑框IDC_EDIT_IV的字符串信息
+		GetDlgItem(IDC_EDIT_KEY)->GetWindowText(key);	//得到key编辑框IDC_EDIT_KEY的字符串信息
 	
-		//char *ch;
-		GetDlgItem(IDC_EDIT_INPUT)->GetWindowText(input);
-		GetDlgItem(IDC_EDIT_IV)->GetWindowText(iv);
-		GetDlgItem(IDC_EDIT_KEY)->GetWindowText(key);
+		/*Transfer "CString" to "char *" */
+		str2char(iv_buf, iv, iv_length);
+		str2char(key_buf, key, key_length);
+		str2char(input_buf, input, input_length);
+		Aes Aes_test(16, key_buf);	//调用AES的函数,设置key
 	
-		/*Transform CString IV to char *IV */
-	#if 0
-		str2char(iv, iv_buf, 16);
-		str2char(key, key_buf, 16);
-		str2char(input, input_buf, 64);
-	#endif
-		str2char(iv, iv_buf, iv_length);
-		str2char(key, key_buf, key_length);
-		str2char(input, input_buf, input_length);
-		Aes Aes_test(16, key_buf);
-	
-		/*Transform char *IV to CString IV */
-		char2str(key_show, key_buf, key_length);
+		/*Transfer "char *" to "CString" */
 		char2str(iv_show, iv_buf, iv_length);
-		//char2str(output, iv_buf, 16);
+		char2str(key_show, key_buf, key_length);
 		Aes_test.InvCipher(input_buf, output_buf);
 		char2str(output_show, output_buf, input_length);
 		char2str(input_show, input_buf, input_length);
-	
-		//temp.Format(_T("0x%x"), iv_buf[0]);
-		//MessageBox(temp);
-		//output += temp;
-		//output += _T(",");
-		//temp.Format(_T("0x%x"), iv_buf[1]);
-		//output += temp;
 	
 		GetDlgItem(IDC_EDIT_INPUT)->SetWindowText(input_show);
 		GetDlgItem(IDC_EDIT_KEY)->SetWindowText(key_show);
 		GetDlgItem(IDC_EDIT_IV)->SetWindowText(iv_show);
 		GetDlgItem(IDC_EDIT_OUTPUT)->SetWindowText(output_show);
-		//MessageBox(input);
-	#if 0
-		iv.Format(_T("%d"), input.GetLength());
-		MessageBox(iv);
-		ch = (char *)input.GetBuffer(0);
-		//ch = "ab";
-		iv.Format(_T("%s"), ch);
-		MessageBox(iv);
-		output += ch;
-		GetDlgItem(IDC_EDIT_OUTPUT)->SetWindowText(output);
-	#endif
-	
-		//input_test[0] = (unsigned char)input.GetAt(0);
-		//output += input_test[0];
-		//GetDlgItem(IDC_EDIT_OUTPUT)->SetWindowText(output);
-	
-	
-		//GetDlgItem(IDC_EDIT_OUTPUT)->SetWindowText(output);
-	#if 0
-		for (int i=0; i<64; i++)
-		{
-			AfxExtractSubString(str, input, i, TCHAR(""));
-			if (str == _T(""))
-			{
-				iv.Format(_T("%d"), i);
-				MessageBox(iv);
-				break;
-			}
-			num = _ttoi(str);
-			if ((num>=0) || (num<= 255))
-			{
-				input_test[i] = num;
-			}
-			//str_array.Add(str);
-			//AfxMessageBox(str);
-		}
-	#endif
-		//size = str_array.GetSize();
-		//iv.Format(_T("%d"), size);
-		//output = (CString)input_test;
-		//MessageBox(output);
-		//AfxMessageBox(TCHAR(input_test));
-		//MessageBox(input);
-		//GetDlgItem(IDC_EDIT_OUTPUT)->SetWindowText((LPCTSTR)str_array);
-	#if 0
-		resToken = input.Tokenize(_T(""), curPos);
-		while(resToken != _T(""))
-		{
-			//_tprintf_s(_T("Resulting token: %s\n"), resToken);
-			resToken = input.Tokenize(_T(""), curPos);
-		}
-	#endif
 	}
