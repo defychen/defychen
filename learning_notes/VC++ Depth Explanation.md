@@ -3793,3 +3793,318 @@ PS:对话框中存在默认按钮,当按下Enter键会调用默认按钮的消�
 
 ***
 ## Chapter 11 绘图控制
+
+***
+
+# Example
+
+## Chapter 1. Crypto_Tool Developing
+
+### Step 1. 创建一个基于对话框的Crypto_Tool对话框
+
+	文件->新建->项目->名称为"Crypto_Tool"->应用程序类型页中
+		应用程序类型:基于对话框; MFC的使用:在静态库中使用MFC(E)
+	->主框架样式:勾选上"粗框架"和"系统菜单",其他去掉.
+	->生成的类:选择CMFCrypto_ToolDlg的基类"CDialog"
+
+### Step 2. 构建对话框上的各种图标
+
+1.Static Text(静态文本)
+
+	1.拖动一个"Static Text",设置Caption属性为"Algo";
+	2.拖动一个"Static Text",设置Caption属性为"Mode";
+	3.拖动一个"Static Text",设置Caption属性为"Crypto";
+	4.拖动一个"Static Text",设置Caption属性为"Key";
+	5.拖动一个"Static Text",设置Caption属性为"IV";
+	6.拖动一个"Static Text",设置Caption属性为"Input";
+	7.拖动一个"Static Text",设置Caption属性为"Output";
+
+2.Combo Box(组合框)
+
+	1.在Algo右边添加一个"Combo Box",设置ID为"IDC_COMBO_ALGO"
+		在外观下的"Type"可以选择"Combo Box",一般为默认的"Dropdown"即可.看着比较舒服
+		在行为下的"Sort"一定要设置为"False",否则在添加"Combo选择项时会自动排序"
+	2.在Mode右边添加一个"Combo Box",设置ID为"IDC_COMBO_MODE"
+	3.在Crypto右边添加一个"Combo Box",设置ID为"IDC_COMBO_CRYPTO"
+
+	PS:在行为下的"Sort"一定要设置为"False",否则在添加"Combo选择项时会自动排序"
+
+3.Edit Control(编辑框)
+
+	1.在Key的右边添加一个"Edit Control",设置ID为"IDC_EDIT_KEY"
+		在行为下的"Multiline"选择"True"--->支持多行输入
+		在外部下的"Auto HScroll"选择"False"
+		在外部下的"Vertical Scroll"选择"True"--->垂直滚动条(设置之后不是很好看)
+		在外部下的"Horizontal Scroll"选择"False"--->水平滚动条
+	2.在IV的右边添加一个"Edit Control",设置ID为"IDC_EDIT_IV"
+		可以直接复制key右边的,属性也会直接复制过来
+	3.在Input的下方添加一个"Edit Control",设置ID为"IDC_EDIT_INPUT"
+	4.在Output的下方添加一个"Edit Control",设置ID为"IDC_EDIT_OUTPUT"
+
+4.Button(按钮)
+
+	添加一个按钮,用于计算加解密.设置Caption为"Calc",ID为"IDC_BTN_CALC"
+
+5.调整各个图标位置,使其变得美观
+
+### Step 3. 实现在Combo Box(组合框)中添加选项以及增加"Calc"按钮的消息处理函数
+
+1.为Combo Box(组合框)添加选项
+
+	//在OnInitDialog()函数中实现添加选项的功能
+	BOOL CCrypto_ToolDlg::OnInitDialog()
+	{
+		CDialog::OnInitDialog();
+	
+		// 设置此对话框的图标。当应用程序主窗口不是对话框时，框架将自动
+		//  执行此操作
+		SetIcon(m_hIcon, TRUE);			// 设置大图标
+		SetIcon(m_hIcon, FALSE);		// 设置小图标
+	
+		// TODO: 在此添加额外的初始化代码
+		((CComboBox *)GetDlgItem(IDC_COMBO_ALGO))->AddString(_T("AES"));
+		((CComboBox *)GetDlgItem(IDC_COMBO_ALGO))->AddString(_T("TDES"));
+		((CComboBox *)GetDlgItem(IDC_COMBO_ALGO))->SetCurSel(0);
+		//设置默认选项,有了默认选项,显示对话框会比较好看
+		//Combo Box一定要设置"Sort"为False,显示才会按照添加的顺序显示
+
+		((CComboBox *)GetDlgItem(IDC_COMBO_MODE))->AddString(_T("ECB"));	
+		((CComboBox *)GetDlgItem(IDC_COMBO_MODE))->AddString(_T("CBC"));
+		((CComboBox *)GetDlgItem(IDC_COMBO_MODE))->AddString(_T("CTR"));
+		((CComboBox *)GetDlgItem(IDC_COMBO_MODE))->SetCurSel(0);
+	
+		((CComboBox *)GetDlgItem(IDC_COMBO_CRYPTO))->AddString(_T("Encrypt"));
+		((CComboBox *)GetDlgItem(IDC_COMBO_CRYPTO))->AddString(_T("Decrypt"));
+		((CComboBox *)GetDlgItem(IDC_COMBO_CRYPTO))->SetCurSel(0);
+	
+		return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
+	}
+
+2.为"Calc"按钮添加消息处理函数
+
+	点击"Calc"按钮,右键->添加事件处理函数->选择默认即可
+	函数名为:
+	void CCrypto_ToolDlg::OnBnClickedBtnCalc()
+
+### Step 4. 实现"Calc"按钮的消息处理函数
+
+	#if 0
+	static void str2char(CString str, unsigned char *ch, int length)
+	{
+		int pos = 0;
+		CString test;
+		int i = 0;
+		int num = 0;
+		pos = str.Find(_T(' '));
+		test.Format(_T("%d"), pos);
+		AfxMessageBox(_T("Execute to there"));
+		AfxMessageBox(test);
+	
+		while ((pos != -1) && (i<length))
+		{
+			CString field = str.Left(pos);
+			//AfxMessageBox(field);
+			//field = _T("0x") + field;
+			num = _tcstol(field.GetBuffer(0), NULL, 16);
+			//char *p = NULL;
+			//p = new char[3];
+			//memset(p, 0, 3);
+			//sprintf(p, "%s", field);
+			//num = (int)strtol(p, NULL, 16);
+			//num = _ttoi(field.GetBuffer(0));
+			//input_test[i] = (unsigned char)_ttoi(field.GetBuffer(0));
+			test.Format(_T("%d"), num);
+			//AfxMessageBox(_T("xxxxxxxxxxxxx"));
+			//AfxMessageBox(test);
+			//sprintf(&input_test[i], "0x%x", num);
+			//num = 1;
+			unsigned char a = 135;
+	
+			ch[i] = num;
+			test.Format(_T("%d"), ch[i]);
+			//AfxMessageBox(_T("xxxxxxxxxxxxx"));
+			//AfxMessageBox(test);
+			//output += input_test[i];
+			i++;
+			str = str.Right(str.GetLength() - pos - 1);
+			pos = str.Find(_T(' '));
+		}
+	}
+	#else
+	static void str2char(CString str, unsigned char *ch, int &length)
+	{
+		int pos = 0;
+		CString test;
+		int i = 0;
+		int num = 0;
+		int count = 0;
+		pos = str.Find(_T(' '));
+		test.Format(_T("%d"), pos);
+		//AfxMessageBox(_T("Execute to there"));
+		//AfxMessageBox(test);
+	
+		while (pos != -1)
+		{
+			count++;
+			CString field = str.Left(pos);
+			//AfxMessageBox(field);
+			//field = _T("0x") + field;
+			num = _tcstol(field.GetBuffer(0), NULL, 16);
+			//char *p = NULL;
+			//p = new char[3];
+			//memset(p, 0, 3);
+			//sprintf(p, "%s", field);
+			//num = (int)strtol(p, NULL, 16);
+			//num = _ttoi(field.GetBuffer(0));
+			//input_test[i] = (unsigned char)_ttoi(field.GetBuffer(0));
+			test.Format(_T("%d"), num);
+			//AfxMessageBox(_T("xxxxxxxxxxxxx"));
+			//AfxMessageBox(test);
+			//sprintf(&input_test[i], "0x%x", num);
+			//num = 1;
+			unsigned char a = 135;
+	
+			ch[i] = num;
+			test.Format(_T("%d"), ch[i]);
+			//AfxMessageBox(_T("xxxxxxxxxxxxx"));
+			//AfxMessageBox(test);
+			//output += input_test[i];
+			i++;
+			str = str.Right(str.GetLength() - pos - 1);
+			pos = str.Find(_T(' '));
+		}
+		length = count;
+		//test.Format(_T("%d"), length);
+		//AfxMessageBox(_T("Execute to there"));
+		//AfxMessageBox(test);
+	}
+	#endif
+	
+	static void char2str(CString &str, unsigned char *buf, int length)
+	{
+		CString temp = _T("");
+		int i = 0;
+		for (; i < length; i++)
+		{
+			temp.Format(_T("0x%02x"), buf[i]);
+			str += temp;
+			str += _T(",");
+			if ((i+1)%8 == 0)
+			{
+				str += _T("\r\n");
+			}
+		}
+		AfxMessageBox(str);
+	}
+	
+	void CCrypto_ToolDlg::OnBnClickedBtnCalc()
+	{
+		// TODO: 在此添加控件通知处理程序代码
+		CString input, iv, key;
+		CString iv_show;
+		CString key_show;
+		CString input_show;
+		CString output_show;
+		CString temp = _T("");
+		int size = 0;
+		int num = 0;
+		int input_length = 0;
+		int key_length = 0;
+		int iv_length = 0;
+		//int pos;
+		//CString resToken;
+		//int curPos = 0;
+		unsigned char input_buf[64]={0};
+		unsigned char iv_buf[32] = {0};
+		unsigned char key_buf[16] = {0};
+		unsigned char output_buf[64]={0};
+		CString str;
+	
+		//char *ch;
+		GetDlgItem(IDC_EDIT_INPUT)->GetWindowText(input);
+		GetDlgItem(IDC_EDIT_IV)->GetWindowText(iv);
+		GetDlgItem(IDC_EDIT_KEY)->GetWindowText(key);
+	
+		/*Transform CString IV to char *IV */
+	#if 0
+		str2char(iv, iv_buf, 16);
+		str2char(key, key_buf, 16);
+		str2char(input, input_buf, 64);
+	#endif
+		str2char(iv, iv_buf, iv_length);
+		str2char(key, key_buf, key_length);
+		str2char(input, input_buf, input_length);
+		Aes Aes_test(16, key_buf);
+	
+		/*Transform char *IV to CString IV */
+		char2str(key_show, key_buf, key_length);
+		char2str(iv_show, iv_buf, iv_length);
+		//char2str(output, iv_buf, 16);
+		Aes_test.InvCipher(input_buf, output_buf);
+		char2str(output_show, output_buf, input_length);
+		char2str(input_show, input_buf, input_length);
+	
+		//temp.Format(_T("0x%x"), iv_buf[0]);
+		//MessageBox(temp);
+		//output += temp;
+		//output += _T(",");
+		//temp.Format(_T("0x%x"), iv_buf[1]);
+		//output += temp;
+	
+		GetDlgItem(IDC_EDIT_INPUT)->SetWindowText(input_show);
+		GetDlgItem(IDC_EDIT_KEY)->SetWindowText(key_show);
+		GetDlgItem(IDC_EDIT_IV)->SetWindowText(iv_show);
+		GetDlgItem(IDC_EDIT_OUTPUT)->SetWindowText(output_show);
+		//MessageBox(input);
+	#if 0
+		iv.Format(_T("%d"), input.GetLength());
+		MessageBox(iv);
+		ch = (char *)input.GetBuffer(0);
+		//ch = "ab";
+		iv.Format(_T("%s"), ch);
+		MessageBox(iv);
+		output += ch;
+		GetDlgItem(IDC_EDIT_OUTPUT)->SetWindowText(output);
+	#endif
+	
+		//input_test[0] = (unsigned char)input.GetAt(0);
+		//output += input_test[0];
+		//GetDlgItem(IDC_EDIT_OUTPUT)->SetWindowText(output);
+	
+	
+		//GetDlgItem(IDC_EDIT_OUTPUT)->SetWindowText(output);
+	#if 0
+		for (int i=0; i<64; i++)
+		{
+			AfxExtractSubString(str, input, i, TCHAR(""));
+			if (str == _T(""))
+			{
+				iv.Format(_T("%d"), i);
+				MessageBox(iv);
+				break;
+			}
+			num = _ttoi(str);
+			if ((num>=0) || (num<= 255))
+			{
+				input_test[i] = num;
+			}
+			//str_array.Add(str);
+			//AfxMessageBox(str);
+		}
+	#endif
+		//size = str_array.GetSize();
+		//iv.Format(_T("%d"), size);
+		//output = (CString)input_test;
+		//MessageBox(output);
+		//AfxMessageBox(TCHAR(input_test));
+		//MessageBox(input);
+		//GetDlgItem(IDC_EDIT_OUTPUT)->SetWindowText((LPCTSTR)str_array);
+	#if 0
+		resToken = input.Tokenize(_T(""), curPos);
+		while(resToken != _T(""))
+		{
+			//_tprintf_s(_T("Resulting token: %s\n"), resToken);
+			resToken = input.Tokenize(_T(""), curPos);
+		}
+	#endif
+	}
