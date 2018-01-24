@@ -30,7 +30,7 @@ S3C2440有130个I/O端口,分为GPA、GPB、...、GPJ.
 	1)GPxUP某位为1时,相应引脚内部无上拉电阻.
 	2)GPxUP某位为0时,相应引脚使用内部上拉电阻.
 
-![](http://i.imgur.com/1DrbR2Z.png)
+![](images/Up.png)
 
 上拉电阻/下拉电阻作用---当GPIO引脚处于第三态(非输出高低电平(只有在输出才存在),处于高阻态,即相当于没接芯片)时,此时的电平状态有上拉/下拉电阻确定.
 
@@ -40,7 +40,7 @@ S3C2440有130个I/O端口,分为GPA、GPB、...、GPJ.
 
 单个引脚的操作有3中:输出高低电平、检测引脚状态(输入)、中断.---最终都是通过读写寄存器来完成.
 
-![](http://i.imgur.com/9PYXAYH.png)
+![led & key](images/Led_key.png)
 
 实例---点亮LED1
 
@@ -52,7 +52,7 @@ S3C2440有130个I/O端口,分为GPA、GPB、...、GPJ.
 
 2)以总线方式访问硬件---Nor Flash
 
-![](http://i.imgur.com/0OPatOe.png)
+![](images/Nor_cpu.png)
 
 地址线ADD1~ADDR20,可寻址1MB的大小,因此Nor Flash大小为1MB.
 
@@ -455,7 +455,7 @@ ARM CPU两种工作状态:
 
 ARM920T有31个通用寄存器和6个程序状态寄存器(32位,属于CPU的寄存器).37个寄存器被分为7组,不同的模式下可以使用不同的特定寄存器.
 
-![](http://i.imgur.com/E55h87j.png)
+![](images/CPU_register.png)
 
 	1---37个寄存器:
 		1---31个通用寄存器:
@@ -522,7 +522,7 @@ CPU运行过程中,检测外设发生某些不预期事件的方法:
 
 1)处理流程:
 
-![](http://i.imgur.com/9exhaJv.png)
+![](images/interrupt.png)
 
 	1)Request sources:中断源,分为带子寄存器和非带子寄存器;
 	2)SUBSRCPND(SUB SOURCE PENDING)寄存器:0X4A000018---用来标识INT_RXD0、INT_TXD0等中断的发生.针对子中断,
@@ -547,7 +547,7 @@ CPU运行过程中,检测外设发生某些不预期事件的方法:
 
 **S3C2440异常向量表:**
 
-![](http://i.imgur.com/UdiqJgJ.png)
+![](images/Exception_Vectors.png)
 
 1)head.S代码---设置中断向量表
 
@@ -790,7 +790,7 @@ UART特点:
 
 最精简的UART连线:
 
-![](https://i.imgur.com/HBQ0hH5.png)
+![](images/Uart.png)
 
 	只有3根电线:
 	TxD--->用于发送数据;
@@ -825,7 +825,7 @@ e.g.UART数据发送波形实例:
 
 	UART使用7个数据位、偶较验、2个停止位的格式传输字符'A'(其值为65,二进制为0b1000001),TTL/CMOS逻辑电平和RS-232逻辑电平.
 
-![](https://i.imgur.com/yTFU6Ww.png)
+![](images/Uart_send_data.png)
 
 **3.S3C2410/S3C2440 UART的特性**
 
@@ -942,7 +942,7 @@ Bootloader启动:MIPS CPU上电从0xBFC0_0000(虚拟地址)执行;ARM CPU则从0
 
 1.嵌入式linux系统的典型分区结构
 
-![](http://i.imgur.com/fcTssq6.png)
+![](images/Partition.png)
 
 	1.Bootloader:引导加载程序,上电后执行的第一个程序;
 	2.Boot parameters:存放一些可设置的参数,e.g.IP地址、串口波特率、要传递给内核的命令行参数等;

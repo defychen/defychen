@@ -35,11 +35,12 @@
 	sed -i '/CONFIG_POSIX_MQUEUE/c CONFIG_POSIX_MQUEUE=y' board/ali/c3922-demo/linux-m3755-demo-new-kernel.config
 
 ## 2.dd命令
-*烧写文件(kernel,rootfs等等)到特定的区块.*
+
+烧写文件(kernel,rootfs等等)到特定的区块.
 
 **step1 读取板子各个分区信息:**
 
-*/proc目录下保存板子分区信息以及CPU等信息*
+/proc目录下保存板子分区信息以及CPU等信息
 
 	cat /proc/mtd	//mtd:各个分区信息(得到比如kernel所在的分区mtd4)
 	cat /proc/cpuinfo	//板子的cpu信息(arm架构等等)
@@ -51,17 +52,18 @@
 
 **step3 进行烧写(dd)**
 
-*e.g. /dev/mtdblock4为存放kernel的分区.*
+	e.g. /dev/mtdblock4为存放kernel的分区.
 
-*切换到需要烧写的已经编译好的文件目录进行烧写*
+切换到需要烧写的已经编译好的文件目录进行烧写
 	
 	cd /mnt/nfs/buildroot/s3922-2/buildroot/output/images
 	dd if=./main_bin.ubo of=/dev/mtdblock4	//if:需要烧写的文件;of:烧写的目标区块.
+
 **step4 烧写完毕，重启:reboot**
 
 ## 3. tree命令
 
-*以树状图列出目录的内容,主要用于查看目录结构*
+以树状图列出目录的内容,主要用于查看目录结构
 
 **常用的为(更多可以man tree或info tree):**
 
@@ -74,14 +76,14 @@
 
 ## 5.zip命令
 
-*GNU zip---gzip(gz)和bzip2(bz2)两种压缩格式，压缩比:gzip>bzip2*
+GNU zip---gzip(gz)和bzip2(bz2)两种压缩格式，压缩比:gzip>bzip2
 
-*解压方法:*
+解压方法:
 	
 	tar -xvzf filename.tar.gz	/*x:解压;v:列出解压出来的文件;z:gz格式;f:后面接文件名*/
 	tar -xvjf filename.tar.bz2	/*x:解压;v:列出解压出来的文件;j:bz2格式;f:后面接文件名*/
 
-*创建压缩包的方法:*
+创建压缩包的方法:
 
 	tar -cvjf 要创建的压缩包名(filename.tar.bz2) 包含的文件名
 	tar -cvjf test.tar.bz2 ./test/	/*将test所有文件创建成为一个test.tar.bz2的压缩包*/

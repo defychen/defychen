@@ -282,7 +282,7 @@ linux系统初始化的时候,为每个物理页面创建一个page对象,所有
 
 x86结构物理地址空间布局:
 
-![x86_phys_layout](http://i.imgur.com/efrsB2z.png)
+![](images/x86_phys.png)
 
 ### 3.虚拟地址与物理地址映射
 
@@ -290,7 +290,7 @@ x86结构物理地址空间布局:
 
 虚拟地址与物理地址映射(x86 architecture):
 
-![va_to_phys address mapping](http://i.imgur.com/rT6kFuT.png)
+![](images/va_to_phys_address_mapping.png)
 
 ## 2.2 memory mapping
 

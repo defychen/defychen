@@ -49,7 +49,7 @@ ARMv8-a去掉了privilege level的概念,使用EL0-EL3(Exception Level).ELn的n�
 
 ARMv8 Exception Level:
 
-![](https://i.imgur.com/GUSAoVf.png)
+![ARMv8 Exception Level](images/ARMv8_Exception_level.png "ARMv8 Exception Level")
 
 	说明:
 	1.在AArch64中,已经没有User、SVC、ABT等处理器模式的概念.为了向前兼容,在AArch32中,将这些模式map到了

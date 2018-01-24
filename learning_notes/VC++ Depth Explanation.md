@@ -239,7 +239,7 @@ GetMessage()---从消息队列中取出消息
 
 Windows应用程序的消息处理机制:
 
-![](https://i.imgur.com/GvV1Qd4.png)
+![Windows Message Handling Mechanism](images/Windows_Message_Handling_Mechanism.png)
 
 1.OS接收到应用程序的窗口消息,将消息投递到该应用程序的消息队列中;
 
@@ -4133,7 +4133,7 @@ PS:对话框中存在默认按钮,当按下Enter键会调用默认按钮的消�
 		unsigned char* RotWord(unsigned char* word);        //密钥移位
 		//Dump();
 		//DumpKey();
-		//	DumpTwoByTwo(char* a); 
+		//DumpTwoByTwo(char* a); 
 	};
 
 2.在Aes.cpp文件中复制如下代码(该代码由网上下载得到):
