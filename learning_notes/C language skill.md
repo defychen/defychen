@@ -711,7 +711,7 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 			char c;		/*char(1) + 7*/---指定了8字节
 			double d;	/*double(8)*/
 			int i;		/*int() + 4*/
-		};	/*总共16字节*/
+		};	/*总共24字节*/
 	#pragma pack()
 
 ## 20、统计某个数所占的字节数
@@ -1238,7 +1238,7 @@ unused属性用于函数和变量,表示该函数或变量可能不使用.
 	#include <stdio.h>
 	int main()
 	{
-		int __attribute__((unused)) ai = 10;
+		__attribute__((unused)) int ai = 10;
 		int bi = 11;
 
 		printf("%d\n", bi);
