@@ -1244,3 +1244,39 @@ unused属性用于函数和变量,表示该函数或变量可能不使用.
 		printf("%d\n", bi);
 		return 0;
 	}
+
+## 48. uint8_t/uint16_t/uint32_t/uint64_t数据类型详解
+
+针对跨平台,不同的平台会有不同的字长(e.g.32位机器和64位机器).利用uint8_t...等定义数据类型占用的字节数统一,可以有效的运行于不同.
+
+	/*
+		uint8_t...等的定义位于"/usr/include/stdint.h"
+	*/
+	/*unsigned*/
+	typedef unsigned char			uint8_t;	//1个字节;_t表示typedef
+	typedef unsigned short int		uint16_t;	//2个字节;_t表示typedef
+	#ifndef __uint32_t_defined
+	typedef unsigned int			uint32_t;	//4个字节;_t表示typedef
+	#endif
+	#if __WORDSIZE == 64
+	typedef unsigned long int		uint64_t;	//8个字节;_t表示typedef
+	#else
+	__extension__
+	typedef unsigned long long int	uint64_t;	//8个字节;_t表示typedef
+	#endif
+
+	/*singed*/
+	#ifndef __int8_t_defined
+	#define __int8_t_defined
+	typedef signed char				int8_t;
+	typedef short int				int16_t;
+	typedef int						int32_t;
+	#if __WORDSIZE == 64
+	typedef long int				int64_t;
+	#else
+	__extension__
+	typedef long long int			int64_t;
+	#endif
+	#endif
+
+	PS:无论平台怎么变,这样的类型所占的字节大小不变.

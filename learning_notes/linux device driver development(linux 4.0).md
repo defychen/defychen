@@ -1006,7 +1006,7 @@ poll函数实现了调用select而阻塞的进程可以被等待队列头部唤�
 
 ioctl()命令生成:
 
-	#define CA_DSC_BASE	0xc1	/*幻数("type"),8 bit(0-0xff),
+	#define CA_DSC_BASE	0xc1	/设备类型字段,也叫*幻数("type"),8 bit(0-0xff),
 	根据./Documentation/ioctl/ioctl_num.txt选择,避免与已经使用的冲突*/
 	#define CA_SET_FORMAT	_IOW(CA_DSC_BASE, 1, int/*format*/)		/*命令CA_SET_FORMAT*/
 	/* _IOW:表示写(从应用程序角度看);CA_DSC_BASE:type;1:序列号-8 bit(0-0xff);int:size(数据类型字段)
@@ -1080,13 +1080,20 @@ ioctl()命令生成:
 解决:加上编译屏障
 
 	#define barrier() __asm__ __volatile__("":::"memory")	/*汇编时的编译屏障*/
+	//可以改成:#define barrier() {asm volatile("":::"memory")}
+	/*
+	memory强制gcc编译器假设RAM所有内存单元均被汇编指令修改,这样CPU中的registers和cache中已缓存的内存单元中
+	的数据将被作废.CPU在需要的时候必须重新读取内存中的数据.这就阻止了CPU将registers或cache中的数据用于去优化
+	指令,而不去访问内存.
+	"":::表示空指令.barrier操作不用在此插入一条串行化的汇编指令.
+	*/
 
 	1)e = d[4095];
-	barrier();	/*未加barrier()时,1和3、4句可能会在汇编时乱序,加上之后按照正常的逻辑顺序排布*/
+	barrier();	/*未加barrier()时,1和3、4句可能会在编译时乱序,加上之后按照正常的逻辑顺序排布*/
 	3)b = a;
 	4)c = a;
 
-*volatile的作用*
+volatile的作用
 
 	volatile int i = 10; /*volatile会告诉编译器,i的值随时可能发生变化，每次使用i的值必须从其地址去读.*/
 	int j = i;
@@ -1095,11 +1102,63 @@ ioctl()命令生成:
 
 volatile一般用于修饰register,因为register容易被其他的操作更改其值.
 
-**执行乱序**
+	#define GET_CHIP_DWORD (*(volatile unsigned int *)0x18000000)
+	
+	unsinged int get_soc_chip_id(void)
+	{
+		unsigned int chip_dw = GET_CHIP_DWORD;
+		unsigned int chip_id = ((chip_dw & 0xffff0000)>>16);	//取高16bit
+		...	/*other operations*/
+	}
+
+	/*
+		如果有多个地方调用get_soc_chip_id.因为都会使用GET_CHIP_DWORD去获得chip_dw,没有volatile
+		会导致第一次调用之后所有操作都使用第一次的保留的.有可能会出错.因此使用volatile.
+	*/
+
+**执行乱序---常见于多个CPU**
 
 即使编译后的指令顺序正确,但是有CPU是"乱序执行(Out-of-Order-Execution)"策略,CPU本质决定的.
 
-内核有一些内存屏障指令来确保执行正序(DMB/DSB/ISB等)----用的比较少.
+	//CPU0上执行:
+	while (f == 0);
+	print x;
+	
+	//CPU1上执行:
+	x = 42;
+	f = 1;
+
+	/*
+		疑问:CPU0上打印的x不一定是42.
+		解释:因此CPU1即使"f=1"编译在"x=42"后面,执行时仍然可能先于"x=42"完成.所以这时候CPU0上的
+		打印不一定是42.
+	*/
+	因此,处理器为了处理多核间一个核的内存行为对另一个核可见的问题,引入了内存屏障指令.
+	用来确保执行正序(DMB/DSB/ISB等).
+	DMB(数据内存屏障):在DMB之后的显示内存访问执行前,保证所有在DMB指令之前的内存访问完成;
+	DSB(数据同步屏障):等待所有在DSB指令之前的指令完成(1,所有显示内存访问均完成;2,所有缓存、跳转预测和TLB
+		维护操作均完成);
+	ISB(指令同步屏障):Flush流水线,使得所有ISB之后执行的指令都是从缓存或内存中获得的.
+
+	PS:Linux内核中的自旋锁、互斥体等互斥逻辑,都用到上述指令.
+
+在linux内核中的"./include/asm-generic/io.h"中,定义了读写IO就具有读写IO寄存器屏障的功能.
+
+	#ifndef ioread32
+	#define ioread32 ioread32
+	static inline u32 ioread32(const volatile void __iomem *addr)
+	{
+		return readl(addr);		//readl的实现中具有__iormb(),读IO屏障
+	}
+	#endif
+
+	#ifndef iowrite32
+	#define iowrite32 iowrite32
+	static inline void iowrite32(u32 value, volatile void __iomem *addr)
+	{
+		writel(value, addr);	//writel的实现中具有__iowmb(),写IO屏障
+	}
+	#endif
 
 ### 7.3 中断屏蔽
 
@@ -1113,11 +1172,11 @@ volatile一般用于修饰register,因为register容易被其他的操作更改�
 
 linux的异步I/O、进程调度都依赖于中断,因此不能长时间的屏蔽中断(会导致数据丢失或者系统崩溃).临界区代码需要尽快执行完.
 
-*SMP的多CPU引发的竟态常常使用中断屏蔽+自旋锁.*
+local_irq_disable()和local_irq_enable()只能禁止和使能本CPU内的中断.因此SMP的多CPU引发的竟态常常使用中断屏蔽+自旋锁.
 
-local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外,还保存CPU的中断信息.
+local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外,还保存CPU的中断位信息.
 
-**禁止/使能中断低半部:local_bh_disable()/local_bh_enalbe().**
+**禁止/使能中断低半部:local_bh_disable()/local_bh_enalbe()--->用的比较少.**
 
 ### 7.4 原子操作
 
@@ -1127,16 +1186,25 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 
 1)定义一个原子变量(整型),并初始化为1;
 
-2)原子变量减1,并测试是否为0.第一个设备会使得原子变量变为0(为ture);如果再使用一个设备将会导致测试值为非0(为false),则退出.
+2)对原子变量进行相关的操作及判断:
+
+**实例---使用原子变量使设备只能被一个进程打开**
 
 	static atomic_t xxx_available = ATOMIC_INIT(1);	/*定义原子变量并初始化为1*/
 
 	static int xxx_open(struct inode *inode, struct file *filp)
 	{
 		...
-		if(!atomic_dec_and_test(&xxx_available))	/*原子变量xxx_available-1并测试是否为0,为0表示true则跳出;
-		其他值表示已经打开了一个设备,为false,取反后为真,进入后面的代码*/
+		if(!atomic_dec_and_test(&xxx_available))
 		{
+			/*
+			atomic_dec_and_test(&xxx_available):先进行dec(减1)操作,然后test(测试)是否为0.也就是和0比较,
+			如果为0(相当于测试0为真)返回ture;否则返回false.刚开始xxx_available这个原子变量为1,dec之后变为0,
+			与0相等test成功返回true,取反之后变为false,跳出if.此时xxx_available变为0.当再一次调用open的时候,
+			由于该值为0,dec之后变为-1,与0不相等test失败返回false,取反之后变为true,进入if.由于做了dec操作,
+			因此在if中需要调用:
+				atomic_inc(&xxx_available);将xxx_available恢复到0.
+			*/
 			atomic_inc(&xxx_available);
 			return -EBUSY;	/*已经打开*/
 		}
@@ -1155,7 +1223,7 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 1)定义原子变量并初始化:
 	
 	atomic_t v = ATOMIC_INIT(i);	/*定义原子变量v并初始化为i*/
-	void atomic_set(atomic_t *v, int i);	/*设备原子变量v的值为i*/
+	void atomic_set(atomic_t *v, int i);	/*设置原子变量v的值为i*/
 
 2)获取原子变量的值:
 	
@@ -1168,31 +1236,34 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 	void atomic_inc(atomic_t *v);			/*原子变量v自增1*/
 	void atomic_dec(atomic_t *v);			/*原子变量v自减1*/
 
-4)操作并测试/返回:
+4)先测试返回原来的值,在进行inc/dec操作:
 	
-	int atomic_inc_and_test(atomic_t *v);	/*原子变量v自增1并测试是否为0,为0返回true;否则返回false*/
-	int atomic_dec_and_test(atomic_t *v);	/*原子变量v自减1并测试是否为0,为0返回true;否则返回false*/
-	int atomic_sub_and_test(int i, atomic_t *v);	/*原子变量v减i后并测试是否为0,为0返回true;否则返回false*/
+	int atomic_inc_and_test(atomic_t *v);	
+		/*原子变量先执行自增1操作,然后测试是否与0相等.相等返回true,否则返回false*/
+	int atomic_dec_and_test(atomic_t *v);
+		/*原子变量先执行自减1操作,然后测试是否与0相等.相等返回true,否则返回false*/
+	int atomic_sub_and_test(int i, atomic_t *v);
+		/*原子变量先执行减i操作,然后测试是否与0相等.相等返回true,否则返回false*/
 	
 	int atomic_add/sub_and_return(int i, atomic_t *v);	/*原子变量v加/减i后返回新值*/
-	int atomic_inc/dec(atomic_t *v);	/*原子变量v自增/自减后返回新值*/
+	int atomic_inc/dec_return(atomic_t *v);	/*原子变量v自增/自减后返回新值*/
 
 **位操作**
 
 	void set_bit(nr, void *addr);	/*设置地址addr的第nr位,即写1*/
 	void clear_bit(nr, void *addr);	/*清除地址addr的第nr位,即写0*/
-	void change_bit(nr, void *addr);	/*将地址addr的第nr位反转*/
+	void change_bit(nr, void *addr);	/*将地址addr的第nr位反置(1变0,0变1)*/
 	test_bit(nr, void *addr);	/*返回addr的第nr位*/
 	...
 
 ### 7.5 自旋锁
 
-自旋锁是一种对临界资源进行互斥访问的手段.特点:如果所被占用,试图获得锁的代码将会一直处于"自旋"状态,等待锁.
+自旋锁是一种对临界资源进行互斥访问的手段.特点:如果锁被占用,试图获得锁的代码将会一直处于"自旋"状态,等待锁.
 
 **自旋锁的操作步骤:**
 
-	spinloc_t lock;			/*定义一个自旋锁*/
-	spin_lock_init(&lock);	/*初始化自旋锁,会调用内容中./include/linux/spinlock.h中宏"spin_lock_init"进行初始化*/
+	spinlock_t lock;			/*定义一个自旋锁*/
+	spin_lock_init(&lock);	/*初始化自旋锁,会调用内核中./include/linux/spinlock.h中宏"spin_lock_init"进行初始化*/
 	...
 	spin_lock(&lock);		/*获取自旋锁,保护临界区.如果没有获得锁,将会处于自旋,直到锁持有者释放*/
 	.../*临界区*/
@@ -1213,7 +1284,8 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 	int xxx_open(struct inode *inode, struct file *filp)
 	{
 		...
-		spin_lock(&lock);	/*试图获得锁,该核上操作该临界资源的其他进程被CPU暂时停止调度.其后续代码单独执行,直到释放调度重新启用*/
+		spin_lock(&lock);	/*试图获得锁,该核上操作该临界资源的其他进程被CPU暂时停止调度.其后续代码单独执行,
+							直到释放锁调度重新启用*/
 		if(xxx_count)		/*已经打开了设备*/
 		{
 			spin_unlock(&lock);	/*释放锁*/
@@ -1237,57 +1309,113 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 
 *使用技巧:*
 
-由于多核SMP的情况下,自旋锁可以保证临界区不受别的CPU抢占进程打扰(其他CPU上的抢占调度仍然正常运行),本CPU抢占调度禁止.但是还是会受到中断的影响.
+自旋锁主要针对SMP或单CPU但内核可抢占的情况,对于单CPU和内核不支持抢占的情况,自旋锁没用(退化为空操作).对于支持抢占的系统,单核会直接将整个核的抢占调度禁止;多核SMP的情况会禁止本核的抢占调度,但其他核继续正常的抢占调度.
 
-	spin_lock_irq() = spin_lock() + local_irq_disable()	/*自旋锁+关中断*/
-	spin_unlock_irq() = spin_unlock() + local_irq_enable()	/*释放锁+开中断*/
-	spin_lock_irqsave() = spin_lock() + local_irq_save()	/*自旋锁+关中断+保存状态字*/
-	spin_unlock_irqrestore() = spin_unlock() + local_irq_restore()	/*释放锁+开中断+恢复状态字*/
-	spin_lock_bh() = spin_lock() + local_bh_disable()	/*自旋锁+关底半部*/
-	spin_unlock_bh() = spin_unlock() + bh_irq_enable()	/*释放锁+开底半部*/
+由于多核SMP的情况下,自旋锁保证本核临界区不受别的CPU核的抢占进程干扰(其他CPU核的抢占调度仍然正常运行),本CPU核抢占调度禁止.但是中断可以打破这种禁止抢占调度的情况(中断的优先级比抢占调度的高).因此,在某些特殊情况下需要在获得的锁的同时关中断,释放的时候开中断.
+
+	spin_lock_irq() = spin_lock() + local_irq_disable()	/*获得锁的同时关中断*/
+	spin_unlock_irq() = spin_unlock() + local_irq_enable()	/*释放锁的同时开中断*/
+	spin_lock_irqsave() = spin_lock() + local_irq_save()	/*获得锁的同时关中断并保存状态字*/
+	spin_unlock_irqrestore() = spin_unlock() + local_irq_restore()	/*释放锁的同时开中断并恢复状态字*/
+	spin_lock_bh() = spin_lock() + local_bh_disable()	/*获得锁的同时关中断底半部*/
+	spin_unlock_bh() = spin_unlock() + bh_irq_enable()	/*释放锁的同时开中断底半部*/
 
 **一般使用的是:进程上下文中"spin_lock_irqsave()/spin_unlock_irqrestore()",中断上下文中(中断服务程序中)"spin_lock()/spin_unlock()"**
 
+在自旋锁锁定期间不能调用可能引起进程调度的函数(e.g.copy_from_user(), copy_to_user(), kmalloc(), msleep()等),否则可能导致内核崩溃.
+
 **读写自旋锁**
 
-读写自旋锁对临界资源允许读的并发,写只能有一个进程操作,读和写也不能同时进行.
+读写自旋锁对临界资源允许读的并发(多个读操作),但写只能有一个进程操作,读和写也不能同时进行.
 
-	rwlock_t lock;			/*定义读写自旋锁rwlock*/
-	rwlock_init(&lock);		/*初始化rwlock*/
+	rwlock_t rwlock;			/*定义读写自旋锁rwlock*/
+	rwlock_init(&rwlock);		/*初始化rwlock*/
 
-	read_lock(&lock);		/*读时获取锁,正常每个需要读取临界资源的操作都应该调用读锁定函数*/
+	//下面获得读的锁函数,多个进程都可以调用.
+	read_lock(&rwlock);		/*读时获取锁,正常每个需要读取临界资源的操作都应该调用读锁定函数*/
 	...						/*读临界资源*/
-	read_unlock(&lock);		/*释放*/
+	read_unlock(&rwlock);		/*释放*/
 
-	write_lock(&lock);		/*写时获取锁,只能有一个进程可获得*/
+	//下面获得写的锁函数,只能有一个进程可以调用.
+	write_lock(&rwlock);		/*写时获取锁,只能有一个进程可获得*/
 	...						/*操作临界资源*/
-	write_unlock(&lock);
+	write_unlock(&rwlock);
 
-*顺序锁和RCU(读-复制-更新)省略*
+顺序锁和RCU(读-复制-更新)省略
 
 ### 7.6 信号量
 
-信号量允许多个线程进入临界区.
+信号量(Semaphore)用于同步和互斥,保护临界资源,信号量值可以是0,1或者n.
+
+信号量操作函数:
+
+	struct semaphore sem;	//定义一个名称为sem的信号量
+	void sema_init(struct semaphore *sem, int val);	//初始化信号量,并设置信号量sem的值为val
+	void down(struct semaphore *sem);	--->用的比较少
+	//尝试获取信号量,没有获取成功会导致睡眠,且不能被打断,因此不能在中断上下文中使用
+	int down_trylock(struct semaphore *sem);
+	//尝试获取信号量,成功获取返回0;失败立即返回非0值.不会导致调用者睡眠,因此可以用于中断上下文
+	int down_interruptible(struct semaphore *sem);
+	//尝试获取信号量,成功获取返回0;没有成功获取会进入睡眠状态,但是能被信号打断,此时返回非0值.
+	void up(struct semaphore *sem);	//释放信号量sem,唤醒等待者.
+
+	/*
+	down_trylock和down_interruptbile的使用区别:
+		1.如果需要立即返回的使用down_trylock,允许睡眠使用down_interruptible.因此:
+		down_interruptible使用的较多.
+		2.使用:
+			//down_trylock和down的使用
+			if (file->f_flags & O_NONBLOCK)	//非阻塞模式
+			{
+				if (down_trylock(&xxx_sem))	//没有获取成功会立即返回非0
+				{	
+					pr_err("try again\n");
+					return -EAGAIN;
+				}
+			}
+			else
+			{
+				down(&xxx_sem);	//阻塞模式的话就睡眠,不能被打断
+			}
+
+			//down_interruptible的使用
+			if (down_interruptible(&xxx_sem))	//没有获取成功睡眠,但是可以被其他信号打断,此时返回非0
+			{
+				return -EINTR;
+			}
+	*/
 
 ### 7.7 互斥体
 
-互斥体只允许一个线程进入临界区.
+互斥体用于多个进程之间对资源的互斥.
 	
 	struct mutex my_mutex;		/*定义互斥体my_mutex,一般在设备结构体中*/
 	mutex_init(&my_mutex);		/*初始化mutex,一般在xxx_init(模块初始化函数中)*/
+	void mutex_lock(struct mutex *my_mutex);
+	//尝试获取互斥体,没有获取成功会导致睡眠,且不能被打断,因此不能在中断上下文中使用
+	int mutex_lock_interrutible(struct mutex *my_mutex);
+	//尝试获取互斥体,成功获取返回0;没有成功获取会进入睡眠状态,但是能被信号打断,此时返回非0值.
+	int mutex_trylock(struct mutex *my_mutex);
+	//尝试获取互斥体,成功获取返回0;失败立即返回非0值.不会导致调用者睡眠,因此可以用于中断上下文
+	void mutex_unlock(struct mutex *my_mutex);	//释放互斥体
+
+	//实例
 	mutex_lock(&my_mutex);		/*获取互斥体mutex,一般在操作临界资源前调用*/
 	mutex_unlock(&my_mutex);	/*释放互斥体mutex,对临界资源操作完成后调用*/
 
+互斥体是进程级的,用于多个进程之间对资源的互斥.如果资源竞争失败,会发生进程上下文切换,当前进程进入睡眠状态,CPU将运行其他进程.由于进程上下文切换的开销大,因此,只有当进程占用资源时间较长时,用互斥体才是比较好的选择.
+
 **互斥体与自旋锁的区别:**
 
-1)临界区较小,宜用自旋锁;临界区很大,应该使用互斥体
+1)临界区较小,宜用自旋锁(会关抢占调度,因此必须小);临界区很大,应该使用互斥体(可以睡眠,发生进程上下文切换,因此适合临界区的场合).
 
-2)互斥体保护的临界区可以包含阻塞代码;自旋锁由于自旋效应,不能用于阻塞的场合.
+2)互斥体保护的临界区可以包含阻塞代码(可以睡眠);自旋锁由于自旋效应,不能用于阻塞的场合(会关抢占调度).
 
-3)互斥体用于进程上下文;自旋锁可用于中断上下文和进程上下文.
+3)互斥体用于进程上下文(可以睡眠,时间开销可以比较大);自旋锁适合于中断上下文(关抢占调度).
 
 ***
-## 第八章 Linux设备驱动中的阻塞与非阻塞I/O
+
+## Chapter 8 Linux设备驱动中的阻塞与非阻塞I/O
 
 阻塞和非阻塞I/O是用户空间对设备的两种访问方式.
 
@@ -1297,15 +1425,17 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 
 **阻塞时进程会睡眠,让出CPU资源给其他进程,睡眠的进程会放入一个等待队列中等待被唤醒.**
 
-	/*阻塞的读串口的一个字符*/
+1.阻塞方式打开串口,然后阻塞的读取串口的一个字符
+
 	char buf;
 	fd = open("/dev/ttyS1", O_RDWR);	/*默认会以阻塞方式打开*/
 	...
-	ret = read(fd, &buf, 1);	/*阻塞读一个字符,只有读到才会返回.否则会一直阻塞在这里*/
-	if(ret)
+	len = read(fd, &buf, 1);	/*阻塞读一个字符,只有读到才会返回.否则会一直阻塞在这里*/
+	if(len)
 	printf("%c\n", buf);
 
-	/*非阻塞的读串口的一个字符*/
+2.非阻塞方式打开串口,然后循环尝试读取串口的一个字符
+
 	char buf;
 	fd = open("/dev/ttyS1", O_RDWR | O_NONBLOCK);	/*非阻塞方式打开*/
 	...
@@ -1313,9 +1443,15 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 		continue;
 	printf("%c\n", buf);
 
+3.文件默认是以阻塞方式打开,后续需要修改为非阻塞方式:
+
+	fd = open("dev/ttyS1", O_RDWR);
+	...
+	fcntl(fd, F_SETFL, O_NONBLOCK);	//设置fd对应的IO为非阻塞.
+
 ### 8.1 等待队列
 
-*等待队列用于实现阻塞进程的唤醒.*
+等待队列用于实现阻塞进程的唤醒.
 
 **等待队列的一些操作:**
 
