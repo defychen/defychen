@@ -1477,21 +1477,22 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 
 5)等待事件(事件没发生就一直阻塞)
 
-	wait_event(queue, condition);	/*condition满足时,queue代表的等待队列头部中的队列被唤醒(进程唤醒了与否????)*/
+	wait_event(queue, condition);	/*condition满足时,queue代表的等待队列头部中的队列元素被唤醒(进程也就被唤醒了)*/
 	wait_event_interruptible(queue, condition);		/*可以被中断信号打断*/
 	wait_event_timeout(queue, condition, timeout);	/*timeout:阻塞等待的超时时间(以jiffy为单位)*/
 	wait_event_interruptible_timeout(queue, condition, timeout);	/*结合中断、超时*/
 
 6)唤醒队列
 
-	void wake_up(wait_queue_head_t *queue);	/*唤醒以queue为等待队列头部中的与等待队列元素绑定的所有进程*/
-	void wake_up_interruptible(wait_queue_head_t *queue);
+	void wake_up(wait_queue_head_t *queue);	/*唤醒以queue为等待队列头部中的与等待队列元素绑定的所有进程,
+		包括处于TASK_INTERRUPTIBLE和TASK_UNINTERRUPTIBLE的进程.*/
+	void wake_up_interruptible(wait_queue_head_t *queue); /*只能唤醒处于TASK_INTERRUPTIBLE的进程.*/
 
 7)在等待队列上睡眠
 
-	sleep_on(wait_queue_head_t *queue);		/*queue为等待队列头部中的与等待队列元素绑定的所有进程睡眠,
-	并且处于TASK_UNINTERRUPTIBLE*/
-	interruptible_sleep_on(wait_queue_head_t *queue);
+	sleep_on(wait_queue_head_t *queue);		/*将当前的进程设置为TASK_UNINTERRUPTIBLE,并定义一个等待队列元素,
+		将该元素加入到等待队列头部queue,等待被唤醒.*/
+	interruptible_sleep_on(wait_queue_head_t *queue); /*将当前的进程设置为TASK_INTERRUPTIBLE,其他一样.*/
 
 **实例:**
 
@@ -1505,13 +1506,14 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 		do {
 			avail = device_writable(...);	/*是否可写*/
 			if(availe < 0) {	/*不可写*/
-				if(filp->f_flags & O_NONBLOCK) { /*非阻塞*/
+				if(filp->f_flags & O_NONBLOCK) { /*判断是否为非阻塞*/
 					ret = -EAGAIN;
 					goto out;
 				}
 				__set_current_state(TASK_INTERRUPTIBLE);	/*改变进程状态:TASK_INTERRUPTIBLE*/
 				schedule();			/*调度其他进程执行*/ /*当队列被唤醒时,可以调度到该进程*/
-				if(signal_pending(current)){ /*signal_pending:检测当前队列的唤醒是否为信号唤醒,如果是返回非0.否则返回0.*/
+				if(signal_pending(current)) { 
+				/*signal_pending:检测当前队列的唤醒是否为信号唤醒,如果是返回非0.否则返回0.*/
 					ret = -ERESTARTSYS;	/*重启系统*/
 					goto out;
 				}
@@ -1526,9 +1528,391 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 	return ret;
 	}
 
+**实例---globalfifo设备驱动**
+
+1.globalfifo设备结构体
+
+	struct globalfifo_dev {
+		struct cdev cdev;
+		uint32_t current_len;
+		uint8_t mem[GLOBALFIFO_SIZE];
+		struct mutex mutex;
+		wait_queue_head_t r_wait;
+		wait_queue_head_t w_wait;
+	};
+
+	struct globalfifo_dev *devp = NULL;
+
+2.globalfifo模块加载函数
+
+	static int __init globalfifo_init(void)
+	{
+		int ret;
+		dev_t devno = MKDEV(globalfifo_major, 0);
+		
+		if (globalfifo_major)
+		{
+			ret = register_chrdev_region(devno, 1, "globalfifo");
+		}else
+		{
+			ret = alloc_chrdev_region(&devno, 0, 1, "globalfifo");
+			globalfifo_major = MAJOR(devno);
+		}
+		if (ret < 0)
+			return ret;
+
+		globalfifo_devp = kzalloc(sizeof(struct globalfifo_dev), GFP_KERNEL);
+		if (globalfifo_devp == NULL) {
+			ret = -ENOMEM;
+			goto fail_malloc;
+		}
+
+		globalfifo_setup_cdev(globalfifo, 0);
+		
+		mutex_init(&globalfifo_devp->mutex);	  //初始化mutex
+		init_waitqueue_head_t(&globalfifo_devp->r_wait);  //初始化读队列头
+		init_waitqueue_head_t(&globalfifo_devp->w_wait);  //初始化写队列头
+
+		return 0;
+	fail_malloc:
+		unregister_chrdev_region(devno, 1);
+		return ret;
+	}
+
+	module_init(globalfifo_init);
+
+3.globalfifo读函数
+
+	static ssize_t globalfifo_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
+	{
+		int ret;
+		struct globalfifo_dev *dev = filp->private_data;
+		DECLARE_WAITQUEUE(wait, current);  //声明一个等待队列元素,并与当前的读进程绑定
+		
+		mutex_lock(&dev->mutex);	  //拿到锁
+		add_wait_queue(&dev->r_wait, &wait);  //将等待队列元素加入到读等待队列头部
+		
+		while(dev->current_len == 0)  //当前fifo为空就循环
+		{
+			if (filp->f_flags & O_NONBLOCK) { //如果为非阻塞
+				ret = -EAGAIN;
+				goto out;
+			}
+
+			__set_current_state(TASK_INTERRUPTIBLE);  //改变当前进程的状态为TASK_INTERRUPTIBLE
+			mutex_unlock(&dev->mutex);  //释放mutex
+			schedule();  //切换进程,当前进程会进入睡眠状态
+			if (signal_pending(current))  //判断当前睡眠进程是否是被信号打断
+			{
+				ret = -ERESTARTSYS;
+				goto out2;
+			}
+			mutex_lock(&dev->mutex);
+		}
+
+		if (count > dev->current_len) //如果需要读取的长度比fifo中的数据长度大
+			count = dev->current_len;
+
+		if (copy_to_user(buf, dev->mem, count)) {
+			ret = -EFAULT;
+			goto out;
+		} else {
+			memcpy(dev->mem, dev->mem + count, dev->current_len - count);
+			dev->current_len -= count;
+			pr_info("read %d bytes, current_len: %d\n", count, dev->current_len);
+		}
+		
+		wake_up_interruptible(&dev->w_wait);  //唤醒写进程
+		ret = count;
+	out:
+		mutex_unlock(&dev->mutex);
+	out2;
+		remova_wait_queue(&dev->r_wait, &wait);
+		set_current_state(TASK_RUNNING);
+		return ret;
+	}
+
+3.globalfifo写函数
+
+	static ssize_t globalfifo_write(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
+	{
+		int ret;
+		struct globalfifo_dev *dev = filp->private_data;
+		DECLARE_WAITQUEUE(wait, current);  //声明一个等待队列元素,并与当前的读进程绑定
+		
+		mutex_lock(&dev->mutex);	  //拿到锁
+		add_wait_queue(&dev->w_wait, &wait);  //将等待队列元素加入到写等待队列头部
+		
+		while(dev->current_len == GLOBALFIFO_SIZE)  //当前fifo为满就循环
+		{
+			if (filp->f_flags & O_NONBLOCK) { //如果为非阻塞
+				ret = -EAGAIN;
+				goto out;
+			}
+
+			__set_current_state(TASK_INTERRUPTIBLE);  //改变当前进程的状态为TASK_INTERRUPTIBLE
+			mutex_unlock(&dev->mutex);  //释放mutex
+			schedule();  //切换进程,当前进程会进入睡眠状态
+			if (signal_pending(current))  //判断当前睡眠进程是否是被信号打断
+			{
+				ret = -ERESTARTSYS;
+				goto out2;
+			}
+			mutex_lock(&dev->mutex);
+		}
+
+		if (count > GLOBALFIFO_SIZE - dev->current_len) //如果需要读取的长度比fifo中剩下的空间大
+			count = GLOBALFIFO_SIZE - dev->current_len;
+
+		if (copy_from_user(dev->mem + dev->current_len, buf, count)) {
+			ret = -EFAULT;
+			goto out;
+		} else {
+			dev->current_len += count;
+			pr_info("written %d bytes, current_len: %d\n", count, dev->current_len);
+		}
+		
+		wake_up_interruptible(&dev->r_wait);  //唤醒读进程
+		ret = count;
+	out:
+		mutex_unlock(&dev->mutex);
+	out2;
+		remova_wait_queue(&dev->w_wait, &wait);
+		set_current_state(TASK_RUNNING);
+		return ret;
+	}
+
 ### 8.2 轮询操作
 
-参见:select/poll操作
+非阻塞I/O的应用程序通常会使用select/poll/epoll系统调用查询是否可对设备进行无阻塞的访问.select/poll/epoll系统调用最终会调用到设备驱动中的poll函数.
+
+	select:在BSD Unix中引入的,比较常见,适用于监听的fd数量较少的场合.用的比较广
+	poll:在System V中引入,见的比较少;
+	epoll:在linux2.5.45内核引入的,是扩展的poll.适用于监听大量的fd.
+
+#### 8.2.1 应用程序中的轮询编程
+
+**1.应用程序中select的使用**
+
+1.函数原型:
+
+	int select(int numfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, 
+		struct timeval *timeout);
+	/*
+		para1:需要检查的号码最高的fd+1.一般为最后打开的那个文件返回的fd+1(因为fd的值是依次增大).
+		para2:读的文件描述符集.
+		para3:写的文件描述符集.
+		para4:异常处理的文件描述符集(一般为NULL).
+		para5:超时时间.
+		返回:当读文件描述符集/写文件描述符集有文件变得可读/写.select函数返回.如果没有文件满足读写要求,
+			调用select的进程阻塞且睡眠(一旦变得可读写,就会被唤醒,相当于一直在调用驱动中的poll函数).
+	*/
+
+2.struct timeval结构体
+
+	//用于设置select函数的超时时间
+	struct timeval {
+		int tv_sec;		//秒
+		int tv_usec;	//微秒
+	};
+
+3.文件描述符集的设置
+
+	FD_ZERO(fd_set *set);	//清除一个文件描述符集set
+	FD_SET(int fd, fd_set *set);	//将一个文件描述符fd加入到文件描述符集set中
+	FD_CLR(int fd, fd_set *set);	//将一个文件描述符fd从文件描述符集set中清除
+	FD_ISSET(int fd, fd_set *set);	//判断文件描述符fd是否被置位
+
+**2.应用程序中poll的使用**
+
+	//poll的功能和原理和select相似,由于用的比较少.书中介绍也比较少
+	int poll(struct pollfd *fds, nfds_t nfds, int timeout);
+
+**3.应用程序中epoll的使用**
+
+1.创建epoll句柄
+
+	int epoll_create(int size);
+	/*
+		para:内核要监听的fd数量.
+		retval:返回一个int epfd(epoll的句柄)
+		PS:因为会返回一个fd,因此在使用完后需要调用close(epfd);
+	*/
+
+2.设置需要监听的事件类型
+
+	int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
+	/*
+		para1:epoll_create返回的epfd.
+		para2:针对para3(fd)需要执行的动作:
+			EPOLL_CTL_ADD:注册新的fd到epfd中;
+			EPOLL_CTL_MOD:修改已经注册的fd的监听事件;
+			EPOLL_CTL_DEL:从epfd中删除一个fd.
+		para3:需要监听的fd.
+		para4:告诉内核需要监听的事件类型
+			struct epoll_event {
+				__uint32_t events;	/* Epoll events */
+				epoll_data_t data;	/* User data variable */
+			};
+			events可以是下面宏的"或":
+			EPOLLIN:表示对应的文件描述符可以读;
+			EPOLLOUT:表示对应的文件描述符可以写;
+			EPOLLPRI:表示对应的文件描述符有紧急数据可读;
+			EPOLLERR:表示对应的文件描述符发生错误;
+			EPOLLHUP:表示对应的文件描述符被挂断;
+			EPOLLONESHOT:一次性监听,监听完之后,如果需要继续监听这个fd的话,需要重新调
+			用该函数加入到epoll中.
+	*/
+
+3.等待事件的产生
+
+	int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout);
+	/*
+		para1:epoll_create返回的epfd.
+		para2:输出参数,用来从内核得到事件的集合.
+		para3:告诉内核本次最多接收多少事件(该值不能大于epoll_create时的size).
+		para4:超时时间(单位ms.0->立即返回;-1->永久等待).
+		retval:返回需要处理的事件数目.返回0表示已超时.
+	*/
+
+#### 8.2.2 设备驱动中的轮询编程
+
+1.poll函数原型
+
+	unsigned int (*poll)(struct file *filp, struct poll_table *wait);
+	/*
+		para1:file结构体指针;
+		para2:轮询表指针.
+		该函数的主要任务:
+			1.对可能引起设备文件状态变化的等待队列调用poll_wait函数,将对应的等待队列头部加
+			入到poll_table中;
+			2.返回表示是否能对设备进行无阻塞读、写访问的掩码(POLLIN/POLLOUT/POLLRDNORM/
+			POLLWRNORM等).
+	*/
+
+2.poll_wait函数原型
+
+	void poll_wait(struct file *filp, wait_queue_head_t *queue, poll_table *wait);
+	/*
+		para1:file结构体指针;
+		para2:需要加入到poll_table中的等待队列头部;
+		para3:struct poll_table结构体.
+		该函数作用:
+				把当前进程添加到wait参数指定的等待列表(poll_table)中,由于该poll_table
+				还包括等待队列头部,因此可以唤醒queue的信息也可以唤醒因select而睡眠的进程.
+		PS:该函数不会阻塞的等待某个时间的发生,实际的阻塞是在select处.
+	*/
+
+#### 8.2.3 轮询操作的实例
+
+**1.globalfifo设备驱动的poll函数**
+
+	static unsigned int globalfifo_poll(struct file *filp, poll_table *wait)
+	{
+		//PS:poll_table可以为struct poll_table,也可以去掉struct
+		unsigned int mask = 0;
+		struct globalfifo_dev *dev = filp->private_data;
+		
+		mutex_lock(&dev->mutex);
+		poll_wait(filp, &dev->r_wait, wait);
+			//将r_wait等待队列头部加入到poll_table,使得唤醒读队列的也可以唤醒select进程
+		poll_wait(filp, &dev->w_wait, wait);
+			//将w_wait等待队列头部加入到poll_table,使得唤醒写队列的也可以唤醒select进程
+
+		if (dev->current_len != 0) {
+			mask |= POLLIN | POLLRDNORM; //非空返回可读标志
+		}
+
+		if (dev->current_len != GLOBALFIFO_SIZE) {
+			maks |= POLLOUT | POLLWRNORM; //非满返回可写标志
+		}
+		mutex_unlock(&dev->mutex);
+		return mask;
+	}
+
+**2.用户空间使用select监控globalfifo的可读写状态**
+
+	#define FIFO_CLEAR 0x1	/*一条ioctl*/
+	#define BUFFER_LEN 20
+	void main(void)
+	{
+		int fd, num;
+		char rd_ch[BUFFER_LEN];
+		fd_set rfds, wfds;	/*读、写文件描述符集*/
+		fd = open("/dev/globalfifo", O_RDONLY | O_NONBLOCK);
+		if (fd != -1) {
+			if (ioctl(fd, FIFO_CLEAR, 0) < 0)	//将driver中的FIFO清0
+				printf("Error ioctl failed\n");
+			
+			while(1) {
+				FD_ZERO(&rfds); //将rfds文件描述符集清空
+				FD_ZERO(&wfds); //将wfds文件描述符集清空
+				FD_SET(fd, &rfds); //将fd加入到rfds
+				FD_SET(fd, &wfds); //将fd加入到wfds
+
+				select(fd+1, &rfds, &wfds, NULL, NULL); //不返回就一直睡眠.
+				//数据可获得
+				if (FD_ISSET(fd, &rfds)) //可读
+					printf("Poll monitor: can be read\n");
+				if (FD_ISSET(fd, &wfds)) //可写
+					printf("Poll monitor: can be written\n");
+			}
+		} else {
+			printf("Device open fail\n");
+		}
+	}
+
+	PS:当调用echo命令时,相当于调用驱动的write函数,往里面写数据.
+
+**2.用户空间使用epoll监控globalfifo的可读状态**
+
+	#define FIFO_CLEAR 0x1
+	#define BUFFER_LEN 20
+	void main(void)
+	{
+		int fd;
+		int ret;
+
+		fd = open("/dev/globalfifo", O_RDONLY | O_NONBLOCK);
+		if (fd != -1) {
+			struct epoll_event ev_globalfifo;
+			int epfd;
+			if (ioctl(fd, FIFO_CLEAR, 0) < 0)
+				printf("Error ioctl fail\n");
+
+			epfd = epoll_create(1); //创建epfd
+			if (epfd < 0) {
+				perror("epoll create fail\n");
+				return;
+			}
+
+			memset(&ev_globalfifo, 0x0, sizeof(struct epoll_event));
+			ev_globalfifo.events = EPOLLIN | EPOLLPRI; //读事件
+			
+			ret = epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &ev_globalfifo);
+			if (ret < 0) {
+				perror("epoll ctl fail\n");
+				return;
+			}
+
+			ret = epoll_wait(epfd, &ev_globalfifo, 1, 15000);
+			if (ret < 0) {
+				perror("epoll wait fail\n");
+			} else if (ret == 0) {
+				printf("No data input in FIFO within 15 seconds.\n");
+			} else {
+				printf("FIFO is not empty\n");
+			}
+
+			ret = epoll_ctl(epfd, EPOLL_CTL_DEL, fd, &ev_globalfifo); //从epfd中去掉fd
+			if (ret < 0)
+				perror("epoll ctl fail\n");
+			close(epfd); //需要关掉epfd
+		} else {
+			printf("Device open fail\n");
+		}
+	}
+
 ***
 
 ## 第九章 Linux设备驱动中的异步通知和同步I/O
@@ -1547,7 +1931,7 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 
 3)异步通知:可以主动通知应用程序访问设备.
 
-*三种I/O方式可以相互补充.*
+三种I/O方式可以相互补充.
 
 ### 9.2 异步编程
 
@@ -1629,7 +2013,7 @@ linux有众多信号(SIGIO、SIGINT(Ctrl+c)、SIGTERM(kill进程))
 
 e.g. 一个程序中同时对两个文件进行读/写操作,使用异步I/O时,第一个发起读写后不会发生阻塞,继续往下执行;第二个发起读写后,也继续往下执行.最终通过检查两个读/写状态决定确定完成情况.
 
-*异步I/O是借用了多线程模型,用开启新的线程以同步的方法做I/O.*
+异步I/O是借用了多线程模型,用开启新的线程以同步的方法做I/O.
 
 	/*异步读aio_read*/
 	#include <aio.h>	/*aio的头文件*/
@@ -1672,8 +2056,10 @@ e.g. 一个程序中同时对两个文件进行读/写操作,使用异步I/O时,
 		return 0;
 	}
 
-*异步I/O(AIO)在字符设备中一般不需要实现.*
+异步I/O(AIO)在字符设备中一般不需要实现.
+
 ***
+
 ## 第十章 中断与时钟
 
 ### 10.1 中断与定时器

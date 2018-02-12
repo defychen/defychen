@@ -47,7 +47,9 @@ JDK:Jave Development Kit,Jave开发套件.
 	3)运行class文件
 		java MyApp		//java运行class文件.运行时不需要带扩展名,会自动寻找".class"文件
 	//最终在DOS控制输出"I can study Java well!"
+
 ***
+
 ## Chapter 2 熟悉Eclipse开发工具
 
 ### 2.1 熟悉Eclipse
@@ -94,7 +96,9 @@ Eclipse是IBM公司开发的IDE集成开发工具,是Java集成开发工具之�
 			System.out.println("Hello Java, " + say);	//输出文字信息到控制台
 		}
 	}
+
 ***
+
 ## Chapter 3 Java语言基础
 
 ### 3.1 Java程序基本结构
@@ -120,7 +124,7 @@ Eclipse是IBM公司开发的IDE集成开发工具,是Java集成开发工具之�
 			byte mybyte = 124;			//byte型变量,占用一个字节
 			short myshort = 32564;		//short型变量,占用两个字节
 			int myint = 45784612;		//int型变量,占用4个字节
-			long mylong = 46789451L;	//long型变量,占用8个字节.且必须数字后面有"L/l"---46789451L
+			long mylong = 46789451L;	//long型变量,占用8个字节.且数字后面必须有"L/l"---46789451L
 			long result = mybyte + myshort + myint + mylong;
 			System.out.println("The result of sum: " + result);	//输出结果"92606751"
 		}
@@ -130,8 +134,8 @@ Eclipse是IBM公司开发的IDE集成开发工具,是Java集成开发工具之�
 
 	public class SumNumber{
 		public static void main(String[] args){
-			float f1 = 13.23f;		//单精度浮点型,占用4字节.且必须数字后面有"F/f"---13.23f.
-			//虽然占4 byte,但是有效数字只有7 bit.因此一般显示为一个7 位的数据
+			float f1 = 13.23f;		//单精度浮点型,占用4字节.且数字后面必须有"F/f"---13.23f.
+			//虽然占4 byte,但是有效数字只有7 bit.因此一般显示为一个7位的数据
 			double d1 = 4562.12d;	//双精度浮点型,占用8字节.数字后面可以带"D/d"
 			double d2 = 45678.1564;	//由于默认浮点型为double,因此也可省略.
 			double result = f1 + d1 + d2;
@@ -142,7 +146,7 @@ Eclipse是IBM公司开发的IDE集成开发工具,是Java集成开发工具之�
 
 **3.字符类型**
 
-	publice class Export{
+	public class Export{
 		public static void main(String[] args){
 			int i = 'd';	//定义int型变量.可以直接将一个Unicode字符赋值给int型(Java采用Unicode编码)
 			char c = 97;	//char型变量,占用2个字节---与C不同的地方
@@ -158,6 +162,7 @@ Eclipse是IBM公司开发的IDE集成开发工具,是Java集成开发工具之�
 	char char2 = '\u2605';		//"\u":Unicode编码.得到Unicode位置2605的字符"★"
 	System.out.println("The escape character print: " + char1 + char2);
 	//输出多个变量直接后面使用"+ 变量名".结果为The escape character print:\★.
+	PS:escape原意为逃跑,在此处为转义的意思.
 
 **4.布尔类型**
 
@@ -175,7 +180,8 @@ java中系统内存划分:系统区(OS)、程序区(Program)、数据区(Data).�
 		static int age;	//非final常量,可以在别的地方进行赋值
 		public static void main(String[] args){
 			final int NUMBER;	//常量一般大写表示,且只能初始化一次.
-			NUMBER = 1235;
+			NUMBER = 1235;	
+			//成员方法中的常量可以在定义之后再进行初始化(与类的成员变量不同的地方),但也只能初始化一次.
 			age = 22;
 			System.out.println("Constant PI value is: " + PI);	//结果为3.14
 			System.out.println("NUMBER value is: " + NUMBER);	//结果为1235
@@ -227,7 +233,7 @@ java中系统内存划分:系统区(OS)、程序区(Program)、数据区(Data).�
 	public class Calculation{
 		public static void main(String[] args){
 			int a = 2;
-			int a = 5;
+			int b = 5;
 			boolean result1 = ((a > b) && (a != b));	//false
 			boolean result2 = ((a > b) || (a != b));	//true
 			System.out.println("result1: " + result1);	//显示为:result1: false
@@ -312,12 +318,12 @@ java中系统内存划分:系统区(OS)、程序区(Program)、数据区(Data).�
 闰年:能被4整除且不能被100整除或者能被400整除.
 
 	import java.util.Scanner;
-	public class LeapYear{
+	public class LeapYear{	//leap year:闰年.
 		public static voic main(String[] args){
 			Scanner scan = new Scanner(System.in);
 			System.out.println("Please input a year:");
 			long year = scan.nextLong();
-			if((year % 4 == 0 && year / 100 != 0) || (year % 400 == 0)){
+			if((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)){
 				System.out.println(year + "is a leap year!");
 			}else{
 				System.out.println(year + "is not a leap year!");
@@ -341,5 +347,243 @@ java中系统内存划分:系统区(OS)、程序区(Program)、数据区(Data).�
 			System.out.println("The volume of Sphere is: " + volume);
 		}
 	}
+
 ***
+
 ## Chapter 4 Java流程控制
+
+### 4.1 复合语句
+
+复合语句"{}"以整个语句块为单位,相当于一条语句.
+
+	public class Compound{	//类的"{}"也可以认为是一个复合语句
+		public static void main(String[] args){	//main方法"{}"是一个复合语句
+			int y = 40;
+			System.out.println("Print y value: " + y);
+			int z = 245;
+			boolean b;
+			{	//复合语句
+				b = y > z;
+				System.out.println("y > z,is this true: " + b);
+			}
+		}
+	}
+
+### 4.2 条件语句
+
+**实例1---验证用户登录信息的合法性**
+
+使用if...else if...else实现
+
+	import java.util.Scanner;
+	public class CheckLogin{
+		public static void main(String[] args){
+			Scanner scan = new Scanner(System.in);
+			System.out.println("Please input login name:");
+			String username = scan.nextLine();	//接收一行用户输入名
+			System.out.println("Please input login password:");
+			String password = scan.nextLine();
+			if(!username.equals("mr")){
+				//String.equals("xxx")方法,判断变量存储的字符是否为"xxx",是返回true,否返回false
+				//此处用于验证,因此取反
+				System.out.println("Invalid login name.");
+			} else if(!password.equals("mrsoft")){
+				System.out.println("Invalid login password");
+			} else {
+				System.out.println("Congrantulations, Login succeed!");
+			}
+		}
+	}
+
+**实例2---为新员工分配部门**
+
+	import java.util.Scanner;
+	public class Example{
+		public static void main(String[] args){
+			Scanner scan = new Scanner(System.in);
+			System.out.println("Please Input the name of the new employee:");
+			String name = scan.nextLine();
+			System.out.println("Please input the Program language of the employee:");
+			String language = scan.nextLine();
+			switch(language.hashCode()){ //计算字符串的hash值,调用String.hashCode()方法即可
+				case 3254818:	//java的哈希值
+				case 2301506:	//Java的哈希值
+				case 2269730:	//JAVA的哈希值
+					System.out.println("Employee"+name+"will be assigned to Java department.");
+					break;
+				case 3104:		//C#的哈希值
+				case 2112:		//C#的哈希值
+					System.out.println("Employee"+name+"will be assigned to C# department.");
+					break;
+				case -709190099:		//Asp.net的哈希值?
+				case 955463181:		//Asp.net的哈希值?
+				case 9745901:		//Aap.net的哈希值?
+					System.out.println("Employee"+name+"will be assigned to Asp.net department.");
+					break;
+				default:
+					System.out.println("Our company don't need"+language+
+						"program language developer.");
+			}
+		}
+	}
+
+### 4.3 循环语句
+
+foreach语句:是for语句的简化版本,主要用于遍历数组.在Java 5之后增加的语法.所有的foreach语句都可以改写为for语句形式.
+
+语法格式:
+
+	for(元素变量x : 遍历对象obj) {	//相当于将对象obj(一般为数组名即可)进行遍历,遍历得到的每个值都存放到x中.
+		//因此,x不用进行初始化.
+		使用x的Java语句;
+	}
+
+foreach语句的使用---遍历一个一维数组.
+
+	public class Repetition{
+		public static void main(String[] args){
+			int arr[] = {7, 10, 1};	//定义一个一维数组
+			System.out.println("The element in the array is:");
+			foreach(int x : arr){
+				System.out.println(x+"\t");
+			}
+		}
+	}
+
+**实例1---使用while循环遍历数组**
+
+	public class ErgodicArray{	//ergodic:遍历
+		public static void main(String[] args){
+			String[] aves = new String[] {"白鹭","丹顶鹤","黄鹂","鹦鹉","乌鸦","喜鹊","布谷鸟",
+				"灰纹鸟","百灵鸟"};
+			/*
+			创建一个数组并初始化方法:
+				xxx(类型)[] 变量名 = new xxx(类型)[]{"初始化信息"};
+			*/
+			int index = 0;
+			System.out.println("我的花园有很多鸟,种类包括: ");
+			while(index < aves.length){ //String.length是可以得到数组的长度(即元素个数)
+				System.out.print(aves[index++]+" ");
+				/*
+				System.out.print()不换行
+				System.out.println()换行.
+				*/
+			}
+		}
+	}
+
+**实例2---使用for循环输出九九乘法表**
+
+	public class MultiplicationTable{	//multiplication:乘法
+		public static void main(String[] args){
+			for(int i=1; i<9; i++){
+				for(int j=1; j<=i; j++){
+					System.out.print(j+"*"+i+"="+j*i+"\t");
+				}
+				System.out.println();	//输出一个换行符
+			}
+		}
+	}
+
+### 4.4 跳转语句
+
+**1.break语句**
+
+break语句只会跳出自己所在的那一层循环(只能跳出一层).
+
+	public class MultiplicationTable{
+		public static void main(String[] args){
+			int a = 0;
+			for(int i=0; i<=9; i++){
+				for(int j=0; j<=9; j++){
+					break; //会将最里层的for直接跳出去,因此后面的不执行.
+					a++;
+				}
+				a++; //会执行10次
+			}
+			System.out.println("The value is: " + a); //值为10
+		}
+	}
+
+**2.continue语句**
+
+continue语句只会跳过自己所在的那一层后面的语句,进行下一次循环.
+
+	public class ContinueDemo{
+		public static void main(String[] args){
+			int i= 0;
+			System.out.println("All the odd number among 10:");
+			while(i < 10){
+				i++;
+				if (i % 2 == 0){
+					continue;	//偶数直接跳过
+				}
+				System.out.print(i + " ");	//输出所有奇数的值
+			}
+		}
+	}
+
+**实例1---终止循环体(终止单层和双层循环)**
+
+	public class BreakCyc{
+		public static void main(String[] args){
+			System.out.println("\n-----------终止单层循环--------------");
+			String[] array=new String[]{"白鹭","丹顶鹤","黄鹂","鹦鹉","乌鸦","喜鹊","老鹰",
+			"布谷鸟","老鹰","灰纹鸟","老鹰","百灵鸟"};
+			System.out.println("在你发现第一只老鹰之前,告诉我都有什么鸟.");
+			foreach(String bird : array){
+				if (bird.equals("老鹰"))
+					break;
+				System.out.print("有: " + bird + " ");
+			}
+
+			System.out.println("\n-----------终止双层层循环--------------");
+			int[][] myScores=new int[][]{{67,78,63,22,66},
+				{55,68,78,95,44},{95,97,92,93,81}}; //二维数组的声明int[][] myScores...
+			System.out.println("这次考试成绩:\n 数学 \t语文 \t英语 \t美术 \t历史");
+			No1:foreach(int[] first : myScores){ //No1:类似标号,标识这一层循环
+				foreach(int second : first){
+					System.out.print(i + "\t");
+					if (i < 60){
+						System.out.println("\n等等, "+i+"分的是什么?这个为什么不及格?");
+						break No1;	//标识跳出No1这一层循环,即为最外层循环
+					}
+				}
+				System.out.println();
+			}
+		}
+	}
+
+**实例2---循环体的过滤器(continue的使用)**
+
+	public class CycFilter{
+		public static void main(String[] args){
+			String[] array=new String[]{"白鹭","丹顶鹤","黄鹂","鹦鹉","乌鸦","喜鹊","老鹰",
+				"布谷鸟","老鹰","灰纹鸟","老鹰","百灵鸟"};
+			System.out.println("在我的花园里有很多鸟类,但是最近来了几只老鹰,请帮我把他们抓走.");
+			int eagleCount = 0;
+			foreach(String bird : array){
+				if (bird.equals("老鹰")){
+					System.out.println("发现一只老鹰,已经抓到笼子里.");
+					eagleCount++;
+					continue; //直接结束本次循环
+				}
+				System.out.println("搜索鸟类,发现了:" + bird);
+			}
+			System.out.println("一共捉到了: "+eagleCount+"只老鹰.");
+		}
+	}
+
+### 4.5 经典范例
+
+**1.使用for循环输出空心的菱形**
+
+略
+
+**2.使用for循环输出杨辉三角**
+
+略
+
+***
+
+## Chapter 5 Java数组

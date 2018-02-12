@@ -559,11 +559,12 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 	/**
 	 * list_for_each_entry	-	iterate over list of given type
 	 * @pos:	the type * to use as a loop cursor.
-	+	使用自定义类型作为循环光标.相当于从链表中取出来的信息保存到该pos中
+	+	使用自定义类型作为循环光标.相当于从链表中取出来的信息保存到该pos中(使用包含struct list_head的
+	+	自定义结构体指针即可)
 	 * @head:	the head for your list.
 	+	链表头,需要初始化
 	 * @member:	the name of the list_head within the struct.
-	+	自定义结构体中包含的struct list_head信息(是直接使用自定义接受中包含的struct list_head所声明的变量名即可)
+	+	自定义结构体中包含的struct list_head信息(是直接使用自定义结构体中包含的struct list_head所声明的变量名即可)
 	 */
 	#define list_for_each_entry(pos, head, member)				\
 		for (pos = list_first_entry(head, typeof(*pos), member);	\
@@ -581,6 +582,72 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 	 */
 	#define list_entry(ptr, type, member) \
 		container_of(ptr, type, member)
+
+	/**
+	 * list_for_each_entry_safe - iterate over list of given type safe against removal of list entry
+	 * @pos:	the type * to use as a loop cursor.
+	+	使用包含struct list_head的自定义结构体指针即可
+	 * @n:		another type * to use as temporary storage
+	+	使用包含struct list_head的自定义结构体指针即可(这个用于保存下一个节点信息),因此可以用于删除节点信息
+	 * @head:	the head for your list.
+	+	连表头,需要初始化
+	 * @member:	the name of the list_head within the struct.
+	+	自定义结构体中包含的struct list_head信息(直接使用自定义结构体中包含的struct list_head的变量名即可)
+	 */
+	#define list_for_each_entry_safe(pos, n, head, member)			\
+		for (pos = list_first_entry(head, typeof(*pos), member),	\
+			n = list_next_entry(pos, member);		\
+			 &pos->member != (head);				\
+			 pos = n, n = list_next_entry(n, member))
+
+	/*********************************使用*******************************************************/
+	struct test_session_key_node {
+		struct list_head key_node;
+		...	
+	};
+
+	struct test_session_node {
+		struct list_head session_node;
+		...
+		struct list_head key_list;	//list的链表头
+	};
+
+	typedef struct TEST_PRIV {
+		...
+		struct list_head g_session_list;	//全局的链表头
+	}TEST_PRIV;
+
+	TEST_PRIV *priv;
+	priv = malloc(sizeof(TEST_PRIV));
+	memset(priv, 0x00, sizeof(TEST_PRIV));
+
+	INIT_LIST_HEAD(&priv->g_session_list);	//初始化链表
+	
+	struct test_session_node *s = NULL;
+	struct test_session_key_node *key = NULL, *_key = NULL;
+	if (list_empty(&priv->g_session_list))	//判断该链表是否为空
+		return NULL;
+	list_for_each_entry(s, &priv->g_session_list, session_node); {	 //仅仅遍历g_session_node,取出节点信息
+		...
+		return s;
+	}
+
+	INIT_LIST_HEAD(&s->key_list);	//初始化key_list链表
+	list_add(&s->session_node, &priv->g_session_list);	//加入到g_session_node链表
+
+	list_for_each_entry_safe(key, _key, &s->key_lise, key_node) {
+		if (list_is_last(&key->key_node, &s->key_list))	//key->key_node是s->key_list链表的最后一个节点
+			list_del_init(&key->key_node);	//删掉该节点并初始化
+		else
+			list_del(&key->key_node);	//仅仅只是删除该节点
+		FREE(key);	//释放key占用的信息
+	}
+	
+	if (list_is_last(&s->session_node, &priv->g_session_list))
+		list_del_init(&s->session_node);
+	else
+		list_del(&s->session_node);
+	FREE(s);
 
 **链表实例**
 
@@ -1280,3 +1347,35 @@ unused属性用于函数和变量,表示该函数或变量可能不使用.
 	#endif
 
 	PS:无论平台怎么变,这样的类型所占的字节大小不变.
+
+## 49. 一些宏的INVALID判断以及switch的转换
+
+	#define FORMAT_RAW			(0)
+	#define FORMAT_188			(1)
+	#define FORMAT_188_LTSID	(2)
+	#define FORMAT_200			(3)
+
+	#define FMT_188		(0)
+	#define FMT_LTSID	(1)
+	#define FMT_200		(2)
+
+	//需要判断传进来的format是否合法
+	#define INVALID_FORMAT(format) ( \
+		(format) != FORMAT_RAW && \
+		(format) != FORMAT_188 && \
+		(format) != FORMAT_188_LTSID && \
+		(format) != FORMAT_200)
+	//需要将API接口的数据转换为最终给寄存器配的数据
+	static const int32_t g_switch_format[] = {
+		[FORMAT_RAW] = 0,
+		[FORMAT_188] = FMT_188,
+		[FORMAT_188_LTSID] = FMT_LTSID,
+		[FORMAT_200] = FMT_200,
+	};
+
+	//使用
+	if (INVALID_FORMAT(format)) {
+		/*some error information*/
+	}
+	
+	ts_format = g_switch_format[format];
