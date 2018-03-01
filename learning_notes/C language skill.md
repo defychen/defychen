@@ -617,37 +617,45 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 		struct list_head g_session_list;	//全局的链表头
 	}TEST_PRIV;
 
-	TEST_PRIV *priv;
-	priv = malloc(sizeof(TEST_PRIV));
-	memset(priv, 0x00, sizeof(TEST_PRIV));
-
-	INIT_LIST_HEAD(&priv->g_session_list);	//初始化链表
+	int32_t xxx_attach(void) //初始化函数中
+	{
+		TEST_PRIV *priv;
+		priv = malloc(sizeof(TEST_PRIV));
+		memset(priv, 0x00, sizeof(TEST_PRIV));
+		...
+		INIT_LIST_HEAD(&priv->g_session_list);	//初始化链表
+	}
 	
-	struct test_session_node *s = NULL;
-	struct test_session_key_node *key = NULL, *_key = NULL;
-	if (list_empty(&priv->g_session_list))	//判断该链表是否为空
-		return NULL;
-	list_for_each_entry(s, &priv->g_session_list, session_node); {	 //仅仅遍历g_session_node,取出节点信息
+	int32_t xxx_open(void)
+	{
+		struct test_session_node *s = NULL;
+		struct test_session_key_node *key = NULL, *_key = NULL;
+		if (list_empty(&priv->g_session_list))	//判断该链表是否为空
+			return NULL;
+		list_for_each_entry(s, &priv->g_session_list, session_node); {	 //仅仅遍历g_session_node,取出节点信息
 		...
 		return s;
+		}
+		INIT_LIST_HEAD(&s->key_list);	//初始化key_list链表
+		list_add(&s->session_node, &priv->g_session_list);	//加入到g_session_node链表
 	}
 
-	INIT_LIST_HEAD(&s->key_list);	//初始化key_list链表
-	list_add(&s->session_node, &priv->g_session_list);	//加入到g_session_node链表
-
-	list_for_each_entry_safe(key, _key, &s->key_lise, key_node) {
-		if (list_is_last(&key->key_node, &s->key_list))	//key->key_node是s->key_list链表的最后一个节点
-			list_del_init(&key->key_node);	//删掉该节点并初始化
-		else
-			list_del(&key->key_node);	//仅仅只是删除该节点
-		FREE(key);	//释放key占用的信息
-	}
+	int32_t xxx_close(int32_t session)
+	{
+		list_for_each_entry_safe(key, _key, &s->key_lise, key_node) {
+			if (list_is_last(&key->key_node, &s->key_list))	//key->key_node是s->key_list链表的最后一个节点
+				list_del_init(&key->key_node);	//删掉该节点并初始化
+			else
+				list_del(&key->key_node);	//仅仅只是删除该节点
+			FREE(key);	//释放key占用的信息
+		}
 	
-	if (list_is_last(&s->session_node, &priv->g_session_list))
-		list_del_init(&s->session_node);
-	else
-		list_del(&s->session_node);
-	FREE(s);
+		if (list_is_last(&s->session_node, &priv->g_session_list))
+			list_del_init(&s->session_node);
+		else
+			list_del(&s->session_node);
+		FREE(s);
+	}
 
 **链表实例**
 

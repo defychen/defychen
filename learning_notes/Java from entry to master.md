@@ -587,3 +587,444 @@ continue语句只会跳过自己所在的那一层后面的语句,进行下一�
 ***
 
 ## Chapter 5 Java数组
+
+### 5.1 一维数组
+
+**5.1.1 创建一维数组**
+
+方法
+
+	方法1
+	int arr[];	//数组元素类型 数组名字[] (单个的"[]"表示要创建的数组为一维数组)
+	方法2
+	String[] str; //数组元素类型[] 数组名字
+
+为数组分配内存
+
+	arr = new int[5]; //数组名字 = new 数组元素类型[数组元素个数]
+	PS:使用new关键字为数组分配内存时,数组中各个元素的初始化值都为0
+
+声明一维数组并分配内存
+
+	int month[] = new int[12];	//前面的中括号不可以填写内容,否则会出错.
+
+**5.1.2 初始化一维数组**
+
+	方法1:
+	int arr[] = new int[]{1, 2, 3, 5, 25}; //创建5个元素的数组,其值为1, 2, 3, 5, 25
+	方法2:
+	int arr2[] = {34, 23, 12, 6}; //创建4个元素的数组,其值依次为34, 23, 12, 6.此时省略了new int等.
+
+**实例1---一维数组求和**
+
+	public class SumNum{
+		public static void main(String[] args){
+			int[] num = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+			int sum = 0;
+			System.out.println("The sum of array: ");
+			for(int i=0; i<10; i++){
+				if(i==9){
+					System.out.println(num[i] + "="); //输出一个"="
+				}else{
+					System.out.println(num[i] + "+"); //输出一个"+"
+				}
+				sum = sum + num[i];
+			}
+			System.out.println(sum); //输出和
+		}
+	}
+
+**实例2---获取一维数组的最小值**
+
+	public class MinNum{
+		public static void main(String[] args){
+			int[] num = {8, 3, 4, 1, 6, 10};
+			System.out.println("输出一维数组: ");
+			for(int i=0; i<num.length; i++){ //求数组的长度"num.length"
+				System.out.print(num[i] + " ");
+			}
+			int min = num[0];
+			for(int j=0; j<num.length-1; j++){
+				if(min > num[j+1]){
+					min = num[j+1];
+				}
+			}
+			System.out.println("\n一维数组的最小值为: " + min);
+		}
+	}
+
+### 5.2 二维数组
+
+**5.2.1 创建**
+
+创建
+
+	int arr[][];
+	
+为二维数组分配内存
+
+	1.每一维分配相同的内存
+	a = new int[2][4];
+	2.每一维单独分配内存
+	a = new int[2][];
+	a[0] = new int[2];	//a[0]这个一维分配2内存
+	a[1] = new int[3];	//a[1]这个一维分配3内存
+
+**5.2.2 初始化**
+
+	int myarr[][] = {{12, 0}, {45, 10}};
+
+**实例---输出一个3行4列所有元素都为0的矩阵**
+
+	public class Matrix{
+		public static void main(String[] args){
+			int a[][] = new int[3][4]; //创建成功默认会所有元素初始化为0
+			System.out.println("输出3行4列的数组: ");
+			for(int i=0; i<a.length; i++){
+				for(int j=0; j<a[i].length; j++){
+					System.out.print(a[i][j] + " ");
+				}
+				System.out.println();	//输出一个空格
+			}
+		}
+	}
+
+### 5.3 数组综合应用实例
+
+####实例1---对矩阵进行转置运算
+
+转置即为行变为列,列变为行.
+
+	public class ArrayRowColumnSwap{
+		public static void main(String[] args){
+			int arr[][] = new int[][]{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}}; //二维数组
+			System.out.println("转置前的矩阵是: ");
+			printArray(arr);
+			int arr2[][] = new int[arr.length][arr.length]; //3*3的矩阵
+			for(int i=0; i<arr.length; i++){ //转置就是行变为列,列变为行
+				for(int j=0; j<arr[i].length; j++){
+					arr2[j][i] = arr[i][j];
+				}
+			}
+			System.out.println("转置后的矩阵是: ");
+			printArray(arr2);
+		}
+		private static void printArray(int[][] arr){
+			for(int i=0; i<arr.length; i++){
+				for(int j=0; j<arr[i].length; j++){
+					System.out.print(arr[i][j] + " ");
+				}
+				System.out.println();
+			}
+		}
+	}
+
+####实例2---求方阵的逆
+
+方阵的逆即为方阵主对角线上所有元素的和(Trace of the Matrix).逆同时也是方阵所有特征值之和.
+
+	public class ArrayRowColumnSwap{
+		public static void main(String[] args){
+			int arr[][] = new int[][]{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}}; //二维数组
+			int tr = 0;
+			System.out.println("方阵arr[][]是: ");
+			for(int i=0; i<arr.length; i++){
+				for(int j=0; j<arr[i].length; j++){
+					System.out.print(arr[i][j] + " ");
+				}
+				System.out.println();
+			}
+			for(int i=0; i<arr.length; i++){
+				tr += arr[i][i];
+			}
+			System.out.println("方阵arr[][]的逆是: " + tr);
+	}
+
+### 5.4 数组的基本操作
+
+#### 5.4.1 使用foreach遍历二维数组
+
+	public class Tautog{
+		public static void main(String[] args){
+			int arr[] = {{3, 4, 3}, {1, 2}};
+			System.out.println("二维数组元素是: ");
+			for(int x[] : arr){	//foreach语句遍历数组
+				for(int e : x){
+					System.out.print(e + " ");
+				}
+				System.out.println();
+			}
+		}
+	}
+
+#### 5.4.2 填充替换数组元素
+
+**1.fill(int[] a, int value)**
+
+a:需要进行替换的数组名; value:替换到数组的值. retval:填充后的数组.
+
+	import java.util.Arrays; //导入java.util.Arrays类.数组操作是调用该类的方法
+	public class Swap{
+		public static void main(String[] args){
+			int arr[] = new int[5];
+			Array.fill(arr, 8);	//全部填充为8
+			for(int i=0; i<arr.length; i++){
+				System.out.print("第"+(i+1)+"个元素是:"+arr[i]);
+			}
+		}
+	}
+
+**2.fill(int[] a, int fromIndex, int toIndex, int value)**
+
+a:需要进行填充的数组名; fromIndex:填充的起始下标; toIndex:填充的结束下标(不包括); value:填充到的数组的值; retval:填充后的数组. PS:如果索引值大于填充数组的长度,会报ArrayIndexOutOfBoundsException(数组越界异常).
+
+	import java.util.Arrays; //导入java.util.Arrays类
+	public class Displace{
+		public static void main(String[] args){
+			int arr[] = new int[]{45, 12, 2, 10, 1};
+			Arrays.fill(arr, 1, 3, 8); //替换arr[1],arr[2]为8
+			for(int i=0; i<arr.length; i++){
+				System.out.print("第"+(i+1)+"个元素是:"+arr[i]);
+			}
+		}
+	}
+
+#### 5.4.3 对数组进行排序
+
+**Arrays.sort(obj)**
+
+sort对任意数组进行升序排序; obj:进行升序排序的数组名称. retval:排序后的数组.
+
+	import java.util.Arrays;
+	public class Taxis{
+		public static void main(String[] args){
+			int arr[] = new int[]{23, 42, 12, 8, 5, 10};
+			System.out.println("原一维数组是: ");
+			for(int i=0; i<arr.length; i++){
+				System.out.print(arr[i] + " ");
+			}
+			Arrays.sort(arr);
+			System.out.println("\n升序排列后的数组是: ");
+			for(int i=0; i<arr.length; i++){
+				System.out.print(arr[i] + " ");
+			}
+		}
+	}
+
+#### 5.4.4 复制数组
+
+**1.copyOf(arr, int newlength)**
+
+复制数组到长度为newlength的数组.
+
+arr:要进行复制的数组; newlength:新数组的长度.如果新数组长度大于arr的长度,则用0填充;如果小于就会截取. retval:复制后的数组.
+
+	import java.util.Arrays;
+	public class Cope{
+		public static void main(String[] args){
+			int arr[] = new int[]{23, 42, 12};
+			System.out.println("复制前的数组: ");
+			for(int i=0; i<arr.length; i++){
+				System.out.print(arr[i] + " ");
+			}
+			int newarr[] = Arrays.copyOf(arr, 5); //newarr长度为5,复制arr数据到新数组.
+			System.out.println("复制后的数组: ");
+			for(int i=0; i<newarr.length; i++){
+				System.out.print(newarr[i] + " ");
+			}
+		}
+	}
+
+**2.copyOfRange(arr, int fromIndex, int toIndex)**
+
+复制数组arr[fromIndex]到下标为toIndex的数组值到新数组,toIndex可以超出原数组的长度,超出的会填充为0.
+
+arr:原数组; fromIndex:起始复制下标; toIndex:终止下标/超出(视为指定长度). retval:新数组.
+
+	import java.util.Arrays;
+	public class Repeat{
+		public static void main(String[] args){
+			int arr[] = new int[]{23, 42, 12, 84, 10};
+			System.out.println("原来的数组: ");
+			for(int i=0; i<arr.length; i++){
+				System.out.print(arr[i] + " ");
+			}
+			int newarr[] = Arrays.copyOfRange(arr, 0, 3); //复制23, 42, 12.
+			System.out.println("\n新数组: ");
+			for(int i=0; i<newarr.length; i++){
+				System.out.print(newarr[i] + " ");
+			}
+		}
+	}
+
+#### 5.4.5 范例
+
+**1.一维、二维数组所占内存比较**
+
+	public class OneArrayMemory{
+		public static void main(String[] args){
+			int num1 = 1024*1024*2;
+			int[] arr1 = new int[num1];
+			for(int i=0; i<arr1.length; i++){
+				arr1[i]=1;
+			}
+			//计算内存总数(以MB为单位)
+			long memory1 = Runtime.getRuntime().totalMemory()/1024/1024;
+			System.out.println("一维数组占用内存为: " + memory1); //为15MB
+			int num2 = 1024*1024;
+			int[][] arr2 = new int[num2][2];
+			for(int i=0; i<num2; i++){
+				arr2[i][0] = 1;
+				arr2[i][1] = 1;
+			}
+			//计算内存总数(以MB为单位)
+			long memory2 = Runtime.getRumtime().totalMemory()/1024/1024;
+			System.out.println("二维数组占用内存为: " + memory2); //为30MB
+		}
+	}
+
+**2.使用插入排序法排序**
+
+	public class InsertSort{
+		public static void main(String[] args){
+			int[] array = new int[]{20, 40, 90, 30, 80, 70, 50};
+			System.out.println("排序前: ");
+			for(int i=0; i<array.length; i++){
+				System.out.print(array[i] + " ");
+			}
+			int tmp;
+			int j;
+			for(int i=1; i<array.length; i++){
+				for(j=i-1; j>=0 && array[j]>tmp; j--){
+					array[j+1]=array[j]; //数据往后移动.以便找到位置
+				}
+				array[j+1] = tmp; //找到位置插入数据
+			}
+			System.out.println("排序后: ");
+			for(int i=0; i<array.length; i++){
+				System.out.print(array[i] + " ");
+			}
+		}
+	}
+
+***
+
+## Chapter 6 字符串
+
+### 6.1 创建字符串
+
+**1.String():创建一个字符串**
+
+	String s = new String(); //创建一个空串
+
+**2.String(char a[]):用一个字符数组a创建一个字符串**
+
+	char a[] = {'g', 'o', 'o', 'd'};
+	String s = new String(a); //等价于String s = new String("good");
+
+**3.String(char a[], int offset, int length):提取一个字符数组a(从offset开始,提取length长)创建一个字符串**
+
+	char a[] = {'s', 't', 'u', 'd', 'e', 'n', 't'};
+	String s = new String(a, 2, 4); //等价于String s = new String("udent");
+
+### 6.2 字符串操作
+
+#### 6.2.1 字符串连接
+
+字符串连接使用"+"进行连接
+
+**1.字符串与字符串连接**
+
+	String s1 = new String("Hello");
+	String s2 = new String("world");
+	String s3 = s1 + " " + s2; //将s1和s2连接后的结果赋值给s3(此时s3为"Hello world")
+
+**2.字符串与其他数据类型连接**
+
+	public class link{
+		public static void main(String[] args){
+			int booktime = 4;
+			float practice = 2.5f;
+			System.out.println("我每天要花费" + bootime + "小时看书;" + practice +
+				"小时上机练习"); //字符串与整型数,浮点数连接.此时会将其他数据类型转换为字符串类型.
+		}
+	}
+
+#### 6.2.2 获取字符串信息
+
+**1.获取字符串长度---String.length()**
+
+	String s = "We are students";
+	System.out.println("字符串的长度是: " + s.length()); //结果为15
+
+**2.获取指定字符的索引位置**
+
+1.indexOf("s")方法:搜索字符串,得到某个字符首次出现的位置.如果没有检索到字符,则返回-1.
+
+	public class Select{
+		public static void main(String[] args){
+			String s = "We are students";
+			System.out.println("字符s在字符串中首次出现的位置是: " + s.indexOf("s"));
+			//字符s首次出现的位置在7.索引是从0开始.
+		}
+	}
+
+2.lastIndexOf("s")方法:搜索字符串,得到某个字符最后出现的位置.如果没有检索到字符,则返回-1.
+
+	String s = "We are students";
+	System.out.println("字符s在字符串中最后出现的位置是: " + s.lastIndexOf("s"));
+	//字符s最后出现的位置在14.所以从0开始.
+	PS:如果lastIndexOf(" ");如果参数为空字符串" ",则返回字符串的长度(和length方法相同)
+
+**3.获取指定索引位置的字符---String.charAt(int index)**
+
+	String s = "hello world";
+	char mychar = s.charAt(6); //得到索引位置为6的字符.该字符为"w"
+
+#### 6.2.3 去除字符串中的空格
+
+**1.去除字符串的前导、尾部空格String.trim()**
+
+	public class Blank{
+		public static void main(String[] args){
+			String s1 = "    Jave class    "; //前后各4个空格.总长18个字符
+			String s2 = s1.trim(); //去掉前导、尾部空格
+			System.out.println("原始字符串的长度: " + s1.length());
+			System.out.println("去掉前导、尾部空格的字符串长度: " + s2.length()); //此时长度为10.
+		}
+	}
+
+**2.去除字符串中的所有空格**
+
+1.StringTokenizer()方法:使用分割和追加实现去除空格.
+
+StringTokenizer(String str, String delim); 
+
+说明: str:要去除空格的字符串; delim:需要去掉的字符(此处为空格);  retval: StringTokenizer
+
+	import jave.util.StringTokenizer;	//包声明
+	public class StringTo{
+		public static void main(String[] args){
+			String text = "  We are students  ";
+			System.out.println("原字符串是: " + text);
+			StringTokenizer st = new StringTokenizer(text, " "); //使用空格分割字符串
+			StringBuffer sb = new StringBuffer();	//定义字符串缓冲对象.字符串生成器
+			int i = 1;
+			while(st.hasMoreTokens()){ //一个空格表示一个Token.判断是否还有空格
+				i++;
+				sb.append(st.nextToken()); //取从当前的Token到下一个Token之间的字符串进行追加
+			}
+			System.out.println("去掉字符串中的空格之后的字符串是: ");
+			System.out.println(sb.toString()); //将StringBuffer转成字符串(sb.toString()).结果为"Wearestudents"
+		}
+	}	
+
+2.replaceAll()方法:将空格用""替换
+
+str.replaceAll(String regex, String replacement)
+
+str:要处理的字符串; regex:str中想要被替换的字符串; replacement:新字符串,用于替换regex.
+
+	String s = " J a v a 编 程 词 典 ";
+	s = s.replacement(" ", ""); //将空格用没有空格替换,即去掉空格
+	System.out.println("去掉空格后的字符串: " + s); //得到"Java编程词典"
