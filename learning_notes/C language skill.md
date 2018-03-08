@@ -363,7 +363,7 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 	test test1[5] = {0};	/*全部成员初始化为0*/---这样初始化会出现warning
 	test test1[5] = {{0}};	//这样初始化不会出现warning
 
-## 15、bit位的表示
+## 15、bit位域/位段的表示
 
 	// Case 1: using int(有符号的整数)
 	struct test{
@@ -371,6 +371,8 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 		int b : 2;
 		int c : 3;	/*表示结构体中的一个成员占的bit位个数*/
 	};
+
+	PS:位域/位段其中成员必须是整数 
 
 	int main()
 	{
@@ -392,6 +394,8 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 		unsinged int c : 3;
 	};
 	/*使用无符号整数时,可以输出不需转换的值*/
+
+	/*位域主要用于标识某个特性,可以节省空间(有点像寄存器的使用)*/
 
 ## 16、函数指针的使用
 
@@ -820,9 +824,11 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 		ROTL(x, 8) & (0x00ff00ff)--->取其中的第0和2字节
 	3)最后两个步骤取"或",得到交换的字节序
 	
-	/*总结为:*/
+	/*按字节交换(字节全部交换),也叫SWAP.
+	即: 1 2 3 4--->4 3 2 1
+	*/
 	#define BYTESWAP(x) ((ROTR((x), 8) & 0xff00ff00) | (ROTL((x), 8) & 0x00ff00ff))
-	
+
 ## 23、memcpy写buffer时出现溢出
 
 	UINT32 src = 0x12345678;	//4 byte,16进制表示的数据
@@ -1387,3 +1393,70 @@ unused属性用于函数和变量,表示该函数或变量可能不使用.
 	}
 	
 	ts_format = g_switch_format[format];
+
+## 50. 交换首尾数据
+
+	void rever_char(uint8_t c[], uint32_t n)
+	{
+		uint8_t temp = 0;
+		uint32_t i = 0;
+		uint32_t j = n - 1;
+		uint32_t m = (n - 1) / 2;
+		for (i=0; i<=m; i++) {
+			j = n - 1 - i;
+			temp = c[i];
+			c[i] = c[j];
+			c[j] = temp;
+		}
+	}
+
+## 51. 计算CRC32的源码
+
+	#define CRC32_DEFAULT_V		(0xEDB88320)
+	static uint32_t crc32_table_flag = 0; //表示CRC32 table初始化了与否
+	static uint32_t crc32_table[256] = {0};
+
+	void init_crc32_table(uint32_t *table)
+	{
+		uint32_t c = 0;
+		int32_t i = 0;
+		int32_t j = 0;
+
+		if (NULL == table)
+			return;
+
+		if (!crc32_table_flag) { //表示table没有被构建
+			for (i=0; i<256; i++) {
+				c = (uint32_t)i;
+				for (j=0; j<8; j++) {
+					c = (c&1) ? (CRC32_DEFAULT_V ^ (c>>1)) : c>>1;
+				}
+				table[i] = c;
+			}
+			crc32_table_flag = 1;
+		}
+	}
+
+	uint32_t get_crc32(uint8_t *data, uint32_t size)
+	{
+		uint32_t i = 0;
+		uint32_t naccum = 0;
+
+		if (NULL == data)
+			return naccum;
+
+		init_crc32_table(crc32_table);
+
+		naccum = naccum ^ 0xffffffff;
+		for (i=0; i<size; i++) {
+			naccum = crc32_table[((int32_t)naccum ^ (*data++)) & 0xff] ^ (naccum >> 8);
+			/*
+			PS:*data++:表示先取data的值,然后data指针往后移动.
+			第一次取的为data[0];第二次为:data[1];第三次为:data[2]...
+			相当于:data[i];
+			*/
+		}
+		return naccum ^ 0xffffffff;
+	}
+
+网址可见:[正确的计算CRC32的源码](http://blog.sina.com.cn/s/blog_6f7a12790100n1vs.html)

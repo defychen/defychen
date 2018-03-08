@@ -1028,3 +1028,503 @@ str:要处理的字符串; regex:str中想要被替换的字符串; replacement:
 	String s = " J a v a 编 程 词 典 ";
 	s = s.replacement(" ", ""); //将空格用没有空格替换,即去掉空格
 	System.out.println("去掉空格后的字符串: " + s); //得到"Java编程词典"
+
+#### 6.2.4 字符串替换(严格区分大小写)
+
+**1.replace()方法:替换所有与指定字符串相匹配的字符串.**
+
+str.replace(String regex, String replacement);
+
+regex:要被替换的字符串; replacement:新字符串,用来替换regex. retval:返回替换后的字符串.
+
+	String s = "bad bad study";
+	String news = s.replace("bad", "good"); //此时news为"good good study"(全部替换了)
+
+**2.replaceFirst()方法:替换第一个匹配的字符串.**
+
+str.replaceFirst(String regex, String replacement);
+
+regex:想要被替换的字符串; replacement:新字符串,用来替换regex. retval:返回替换后的字符串.
+
+	String s = "bad bad study";
+	s = s.replaceFirst("bad", "good"); //此时s为"good bad study"(仅第一个匹配的字符串被替换了)
+
+#### 6.2.5 判断字符串
+
+**1.判断字符串是否相等**
+
+1.equals()方法:严格区分大小写的比较两个字符串是否相等.
+
+str.equals(String otherstr);
+
+str:参与比较的一个字符串对象; otherstr:参与比较的另一个字符串对象; retval:返回boolean类型.
+
+2.equalsIgnoreCase()方法:忽略大小写的比较两个字符串是否相等.
+
+str.equalsIgnoreCase(String otherstr);
+
+str:参与比较的一个字符串对象; otherstr:参与比较的另一个字符串对象; retval:返回boolean类型.
+
+实例---"=="、equals和equalsIgnoreCase区别
+
+	public class Opinion{
+		public static void main(String[] args){
+			String s1 = new String("I am a student");
+			String s2 = new String("I am a student");
+			String s3 = new String("I AM A STUDENT");
+			String s4 = s1;
+
+			boolean b1 = (s1 == s2); //"=="比较的是两个的内存位置,因为s1,s2内存位置不相同因此为"false"
+			boolean b2 = (s1 == s4); //相同的位置,因此为"true"
+			boolean b3 = s1.equals(s2); //大小写都相同,因此为"true"
+			boolean b4 = s1.equals(s3); //大小写不同,因此为"false"
+			boolean b5 = s1.equalsIgnoreCase(s2); //忽略大小写,为"true"
+			boolean b6 = s1.equalsIgnoreCase(s3); //忽略大小写,为"true"
+			
+			System.out.println("s1 == s2: " + b1);
+			System.out.println("s1 == s4: " + b2);
+			System.out.println("s1 equals s2: " + b3);
+			System.out.println("s1 equals s3: " + b4);
+			System.out.println("s1 equalsIgnoreCase s2: " + b5);
+			System.out.println("s1 equalsIgnoreCase s3: " + b6);
+		}
+	}
+
+**2.判断字符串的开始与结尾**
+
+1.startsWith()方法:判断当前字符串对象是否以参数指定的字符串开始.
+
+str.startsWith(String prefix);
+
+prefix:指作为前缀的字符串; retval:返回boolean类型
+
+2.endsWith()方法:判断当前字符串对象是否以参数指定的字符串结尾.
+
+str.endsWith(String suffix);
+
+suffix:指作为后缀的字符串; retval:返回boolean类型.
+
+实例---判断变量是否以指定的字符串开始和结尾.
+
+	public class StartOrEnd{
+		public static void main(String[] args){
+			String num1 = "22045612";
+			String num2 = "21304578";
+
+			boolean b1 = num1.startsWith("22"); //因为num1是以"22"开始,为true
+			boolean b2 = num1.endsWith("78"); //num1不是以"78"结尾,为false
+			boolean b3 = num2.startsWith("22"); //num2不是以"22"开始,为false
+			boolean b4 = num2.endsWith("78"); //num2是以"78"结尾,为true
+		}
+	}
+
+#### 6.2.6 字母大小写转换
+
+**1.toLowerCase()方法**
+
+将字符串中的大写字母转换为小写字母(数字和非字符等不受影响.)
+
+str.toLowerCase();
+
+str:要进行转换的字符串; retval:转成小写后的字符串
+
+**2.toUpperCase()方法**
+
+将字符串中的小写字母转换为大写字母(数字和非字符等不受影响.)
+
+str.toUpperCase();
+
+str:要进行转换的字符串; retval:转成大写后的字符串.
+
+实例---字符串的大小写转换
+
+	public class UpAndLower{
+		public static void main(String[] args){
+			String s = new String("abc DEF");
+			String news1 = s.toLowerCase(); //此时news1为"abc def"
+			String new2 = s.toUpperCase(); //此时news2为"ABC DEF"
+			...
+		}
+	}
+
+#### 6.2.7 字符串分割
+
+**1.split(String sign)方法**
+
+用指定的分割符对字符串进行分割.
+
+str.split(String sign);
+
+sign:分割字符串用的分割符; retval:分割后的字符串,应该存放在一个字符数组中.
+
+实例---对字符串进行分割
+
+	public class Division{
+		public static void main(String[] args){
+			String s = new String("abc, def, ghi, gkl");
+			String[] news = s.split(","); //用逗号分割,分割出来4份
+			System.out.println("分割后的字符串是: ");
+			for(int i=0; i<news.length; i++){
+				System.out.println(news[i]);
+			}
+		}
+	}
+	/*会得到: 
+		abc
+		def
+		ghi
+		gkl
+	*/
+
+**2.split(String sign, int limit)方法**
+
+用指定的分割符对字符串进行分割,并限定分割的份数.
+
+str.split(String sign, int limit);
+
+sign:分割字符串用的分割符; limit:限制的分割份数. retval:分割后的字符串,应该存放在一个字符数组中.
+
+实例---限制分割份数的分割
+
+	public class Division2{
+		public static void main(String[] args){
+			String s = new String("abc, def, ghi, gkl");
+			String[] news2 = s.split(",", 2); //分割为2份,分割符为","(逗号)
+			for(int i=0; i<news.length; i++){
+				System.out.println("分割一次后的字符串是: ");
+				System.out.println(news2[i]);
+			}
+		}
+	}
+
+	PS:定义多个字符分割符使用"|".e.g. ",|="(表示逗号或等于号); "，|。"(表示逗号或句号)
+
+**实例---判断字符串是否是数字格式(全部是数字)**
+
+	public class CheckNumber{
+		public static void main(String[] args){
+			String s = "12312312";
+			if(CheckNumber.IsNumber(s)){ //调用类的方法"类名.类方法(...)"
+				System.out.println(s + "是数字格式");
+			}else{
+				System.out.println(s + "不是数字格式");
+			}
+		}
+		public static boolean IsNumber(String str){
+			char[] c = str.toCharArray(); //将字符串转为字符数组(str.toCharArray())
+			for(int i=0; i<c.length; i++){
+				if(Character.isDigit(c[i])){
+				//判断字符是否是数字:Character.isDigit(字符),是返回true;不是返回false.
+				}else{
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+
+### 6.3 格式化字符串
+
+**1.日期格式化**
+
+	import java.util.Date; //Date包,可以获取时间信息
+	import java.util.Locale; //Locale包,可以设置本地为"US/CN"
+	public class Example{
+		public static void main(String[] args){
+			Date today = new Date(); //声明一个Date对象,获取到时间信息
+			String a = String.format(Locale.US, "%tb", today);
+			//para1:设置本地为US(美国); "%tb":表示格式化为"月份缩写格式".即为格式化为月份的英文缩写
+			String b = String.format(Local.US, "%tB", today);
+			//para1:设置本地为US(美国); "%tb":表示格式化为"月份全写格式".即为格式化为月份的英文全写
+			String c = String.format("%ta", today);
+			//"%ta":表示格式化为星期简称格式
+			String d = String.format("%tA", today);
+			//"%tA":表示格式化为星期全称格式
+			String e = String.format("%tY", today);
+			//"%tY":表示格式化为4位的年份值
+			String f = String.format("%ty", today);
+			//"%ty":表示格式化为2位的年份值
+			String g = String.format("%tm", today);
+			//"%tm":表示格式化为2位的月份值
+			String h = String.format("%td", today);
+			//"%td":表示格式化为2位的日期值
+			String i = String.format("%te", today);
+			//"%te":表示格式化为1位的日期值
+			...
+		}
+	}
+
+**2.时间格式化**
+
+	import java.util.Date;
+	public class GetTime{
+		public static void main(String[] args){
+			Date date = new Date();
+			System.out.println("默认时间格式: " + date); //Wed Feb 14 16:28:48 CST 2018
+			System.out.println("2位数字的24小时制的小时: " + String.format("%tH", date));
+			//"%tH":2位数字24小时制的小时(00~24).此处为16
+			System.out.println("2位数字的12小时制的小时: " + String.format("%tI", date));
+			//"%tI":2位数字的12小时制的小时.此处为04.
+			System.out.println("2位数字的24小时制的小时: " + String.format("%tk", date));
+			//"%tk":2位数字24小时制的小时(0~24:前面的0会省略).此处为16
+			System.out.println("2位数字的12小时制的小时: " + String.format("%tl", date));
+			//"%tl":2位数字的12小时制的小时(0~12:前面的0会省略).此处为4.
+			System.out.println("两位数字的分钟: " + String.format("%tM", date));
+			//"%tM":2位数字中的分钟.此处为28
+			System.out.println("两位数字中的秒钟: " + String.format("%tS", date));
+			//"%tS":2位数字中的秒钟.此处为48
+			System.out.println("时区缩写: " + String.format("%tZ", date));
+			//"%tZ":时区缩写.此处为"CST"
+			System.out.println("上午还是下午: " + String.format("%tp", date));
+			//"%tp":上午或下午标记.此处为"下午"
+		}
+	}
+
+**3.日期时间组合格式化**
+
+	%tF--->"年-月-日"格式(4位的年份)----->2008-03-25
+	%tD--->"月/日/年"格式(2位的年份)----->03/25/08
+	%tc--->全部日期和时间信息------------>星期二 三月 25 15:20:00 CST 2008
+	%tr--->"时:分:秒 PM/AM"格式(12时制)->03:22:06 下午
+	%tT--->"时:分:秒"格式(24时制)------->15:23:50
+	%tR--->"时:分"格式(24时制)---------->15:25
+
+**4.常规类型格式化**
+
+	%b--->格式化为boolean类型
+	%s--->格式化为String类型
+	%c--->格式化为字符类型
+	%d--->格式化为10进制整数
+	%0--->格式化为8进制整数
+	%x--->格式化为16进制整数
+
+	public class General{
+		public static void main(String[] args){
+			String str1 = String.format("%d", 400/2);
+			//格式化为10进制整数.结果(200)存放在String类型中
+			String str2 = String.format("%b", 3 > 5);
+			//格式化为boolean类型,结果(false)存放在String类型中
+			String str3 = String.format("%x", 200);
+			//格式化为16进制整数.结果(c8)存放在String类型中
+			...
+		}
+	}
+
+实例---将金额格式化成大写
+
+略
+
+实例---将数字格式化成货币格式
+
+略.
+
+### 6.4 正则表达式
+
+略
+
+### 6.5 字符串生成器
+
+略
+
+***
+
+## Chapter 7 类和对象
+
+### 7.1 面向对象
+
+类:是同一类事物的统称.封装对象的属性(成员变量表示)和行为(成员方法表示)的载体.
+
+面向对象的特点:
+
+1.封装:将同一类事物的特性与功能包装在一起,对外暴露调用的接口.
+
+2.继承:从已有的类中派生出新的类,新的类能吸收已有类的数据属性和行为,并能扩展新的能力.
+
+3.多态:同一个类的不同子类对象对同一个方法的调用产生不同的结果.主要体现在重写与重载两方面.
+
+	package com.defy;
+
+	/*人的类*/
+	public class Person{
+		public void cut(){
+		}
+
+		public static void main(String[] args){
+			Person player = new Player(); //不同子类对象
+			Person cooker = new Cooker(); //不同子类对象
+			Person cuter = new Cuter(); //不同子类对象
+
+			player.cut();
+			cooker.cut();
+			cuter.cut();
+		}
+	}
+
+	/*演员*/
+	class Player extends Person{ //extends:继承的关键字
+		/*重写父类方法*/
+		public void cut(){
+			System.out.println("停止演戏");
+		}
+	}
+
+	/*厨师*/
+	class Cooker extends Person{ //extends:继承的关键字
+		/*重写父类方法*/
+		public void cut(){
+			System.out.println("开始切菜");
+		}
+	}
+
+	/*理发师*/
+	class Cuter extends Person{ //extends:继承的关键字
+		/*重写父类方法*/
+		public void cut(){
+			System.out.println("开始剪头发");
+		}
+	}
+	//运行结果:
+	停止演戏
+	开始切菜
+	开始剪头发
+
+### 7.2 类
+	
+实例---自定义图书类
+
+	public class Book{
+		private String title; //成员变量
+		private String author; //成员变量
+		private double price; //成员变量
+
+		/*静态成员:static声明的变量、常量和方法称为静态成员.
+			1.静态成员属于类所有,所有的对象共享类的静态成员;
+			2.静态成员的在本类或其他类中调用方法:"类名.静态类成员";
+			3.静态方法中不可以使用this关键字;
+			4.静态方法中不可以直接调用非静态方法;
+			5.类的方法中的局部变量不可以声明为static;
+			6.非静态成员方法可以调用静态成员方法.
+		*/
+		static int book_num = 5;
+
+		public Book(String title, String author, double price){
+			//构造方法(1,无返回值;2,函数名与类名相同)
+			this.title = title; 
+			this.author = author;
+			this.price = price;
+			/*
+			this:this引用就是一个对象的引用(可以认为指代的就是构造的对象)
+			this可以调用类的成员变量和方法.也可以直接当作构造方法使用:
+			this("《Java从入门到精通》", "xxx科技", 59.8);
+				//此处this相当于Book(构造方法)
+			*/
+		}
+
+		public String getTitle(){ //成员函数
+			/*成员方法中定义的变量为局部变量
+			e.g.在该方法中定义: int id = 0; //为局部变量
+			*/
+			return title; //此处相当于省略了this(实际上为:this.title);
+		}
+
+		public String getAuthor(){ //成员函数
+			return author;
+		}
+
+		public double getPrice(){ //成员函数
+			return price;
+		}
+	}
+
+	//在com.mingrisoft包创建类文件(Test),在Test类的main方法创建一个Book对象并输出其属性
+	public class Test{
+		public static void main(String[] args){
+			/*
+				main方法称为主方法(静态的(static)、没有返回值(void)、
+				形参为数组(String[] args))
+			*/
+			Book book = new Book("《Java从入门到精通》", "xxx科技", 59.8);
+			System.out.println("书名: " + book.getTitle());
+			System.out.println("作者: " + book.getAuthor());
+			System.out.println("价格: " + book.getPrice() + "元");
+
+			System.out.println("书本数量: " + Book.book_num); //调用静态常量
+		}
+	}
+
+权限修饰符的说明
+
+	private->本类:可见;	  同package的其他类或子类:不可见;	其他package的类或子类:不可见
+	protected->本类:可见;	  同package的其他类或子类:可见;	其他package的类或子类:不可见
+	public->本类:可见;	  同package的其他类或子类:可见;	其他package的类或子类:可见
+
+### 7.3 对象
+
+1.创建:使用"new"操作符;
+
+2.访问:访问对象的属性和行为使用"对象.类成员"(静态成员除了使用"类名.静态成员"之外,也可以使用"对象.静态成员")
+
+3.对象销毁:Java语言拥有一套完整的垃圾回收机制,Java的垃圾回收器将自动回收无用的被占用的内存资源(不需要手动回收).
+
+实例---统计图书销量
+
+	public class Book{
+		private static int counter = 0; //静态私有成员
+		public Book(String title){ //构造函数
+			System.out.println("售出图书: " + title);
+			counter++;
+		}
+
+		public static int getCounter(){
+			return counter; //统计得到售出的图书数量
+		}
+	}
+
+	//在项目中创建Test类,在main方法中创建Book对象并得到售出图书数量
+	public class Test{
+		public static void main(String[] args){
+			String[] titles = {"《Java从入门到精通》", "《Java编程词典》", "《视频学Java》"};
+			for(int i=0; i<5; i++){
+				new Book(titles[new Random().nextInt(3)]);
+				/*
+					new Random():创建一个随机数
+					nextInt(3):限制数据为整型,且范围在0 ~ 3(不包括3,即为:0,1,2)
+				*/
+			}
+			System.out.println("总共销售了" + Book.getCounter() + "本图书!");
+		}
+	}
+
+实例---单例模式的应用
+
+单例模式:实例化的对象只有一个叫单例模式.
+
+	public class Emperor{
+		private static Emperor emperor = null; //对象的初始化可以被赋值为"null"
+		private Emperor() { //将构造方法私有,此时只能在类内部进行对象的创建
+		}
+		public static Emperor getInstance(){
+			if(emperor == null){
+				emperor = new Emperor(); //对象为null时,创建一个对象.
+			}
+			return emperor; //否则就直接返回已经拥有的对象.保证唯一(单例)
+		}
+		public void getName(){
+			System.out.println("我是皇帝--->Defy");
+		}
+	}
+	//在项目中创建Test类,在main方法中调用静态getInstance方法创建Emperor对象并输出名字
+	public class Test{
+		public static void main(String[] args){
+			System.out.println("创建皇帝1对象: ");
+			Emperor emperor1 = Emperor.getInstance();
+			emperor1.getName();
+			System.out.println("创建皇帝2对象: ");
+			Emperor emperor2 = Emperor.getInstance();
+			emperor2.getName();
+			System.out.println("创建皇帝3对象: ");
+			Emperor emperor3 = Emperor.getInstance();
+			emperor3.getName();
+		}
+		//所有得到的结果都是一样---单实例(单例模式)
+	}
