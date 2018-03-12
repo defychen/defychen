@@ -38,7 +38,7 @@
 
 **7)将本地commit后的添加到github仓库:**
 
-	git remote add origin https://github.com/defychen/defychen
+	git remote add origin git://github.com/defychen/defychen
 
 **8)push到远程仓库(github仓库):**
 
@@ -142,6 +142,29 @@
 	
 	解决办法:
 		将https://github.com/defychen/defychen.git的https换成git即可.
+
+## 1.9 github与远程通信的两种方式"SSH"和"HTTPS"的区别
+
+	1.远程地址的区别:
+	git@github.com:defychen/defychen.git--->对应的ssh协议的远程地址
+	https://github.com/defychen/defychen.git--->对应的是https的远程地址
+	2.推送的区别:
+	https协议每次进行代码提交到远程服务器都需要进行"账号和密码"的输入.
+	ssh协议只需要首次进行账号和密码的输入,之后push不再需要输入"账号和密码"
+
+	如果一直用的ssh协议进行代码的提交,突然进行了:
+		git clone https://github.com/defychen/defychen.git--->使用了https
+	在进行代码提交时会出现"unable to access 'https://github.com/defychen/defychen.git'...";
+	此时需要将https换成ssh:
+		git remote -v //查看远程的地址
+		git remote set-url origin git@github.com:defychen/defychen.git
+			//换成ssh通信
+		PS:
+		git remote set-url --add origin https://github.com/defychen/defychen.git
+			//增加一个origin
+		git remote set-url --delete origin https://github.com/defychen/defychen.git
+			//删掉一个origin
+
 
 ***
 
