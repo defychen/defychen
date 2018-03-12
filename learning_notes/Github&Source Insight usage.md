@@ -135,6 +135,14 @@
 
 	git --version		//得到git version 2.3.0
 
+## 1.8 执行git clone提示"fatal: unable to access "clone的地址""
+
+	执行git clone https://github.com/defychen/defychen.git时,出现"fatal: unable to
+	access 'https://github.com/defychen/defychen.git': Proxy CONNECT ..."
+	
+	解决办法:
+		将https://github.com/defychen/defychen.git的https换成git即可.
+
 ***
 
 # 2. Source Insight usage
@@ -192,6 +200,16 @@
 		选择Assign New Keys(添加一个快捷键).在弹出的"Press the key-comination...keys with the key
 		or mouse button. Press Esc to cancel."键入"Alt+Q",快捷键建立完毕.然后点击"OK"即可.
 		4.之后使用"Alt+Q"就可以打开文件所在目录.
+
+## 2.5 使souce insight支持python语言的方法
+
+	1.需要下载Python.CLF
+		目录tools/Python.CLF下已经有了下载好的Python.CLF文件
+	2.在source insight中进行如下设置
+		Options->Preferences->Languages->点击"Import"->选择下载好的Python.CLF文件
+		->在点击"Doc Types"->在弹出的"Document Options"点击"Add Type"->在弹出的"Add
+		New Document Type"中输入"Python"->在File filter中的输入"*.py"->在Parsing
+		Language中选择"Python Language"即可.
 
 ***
 
