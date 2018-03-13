@@ -1817,9 +1817,220 @@ socket:表示打开了一个网络连接.
 		print s.recv(1024)	//客户端接收数据使用"s.recv(1024)"
 	s.close()
 	
-## 15. Python中常用的函数
+***
 
-### 15.1 enumerate函数
+## 15 常用的第三方模块
+
+### 15.1 PIL模块
+
+pip:python中安装第三方模块的包管理工具,通过它,就能安装编程时常用的一些模块.
+
+PIL:Python Imaging Library.是Python平台的图像处理标准库.
+
+Pillow:基于PIL,处理Python 3.x的图形图像库.PIL只能处理到Python 2.x, Pillow模块能处理到Python 3.x.
+
+#### 15.1.1 Python、PIL、Pillow相关模块的安装
+
+**1.下载**
+
+Python下载地址[Python下载地址](https://www.python.org/downloads/)
+
+	版本介绍:
+	Download Windows x86 web-based installer --> (32位的网页版,需要联网)
+	Download Windows x86 executable installer --> (32位的本地安装版,可执行程序.一般选择这种)
+	Download Windows x86 embeddable zip file --> (32位的嵌入式版本,可以集成到其他应用中)
+	Download Windows x86-64 web-based installer --> (64位的网页版,需要联网)
+	Download Windows x86-64 executable installer --> (64位的本地安装版,可执行程序.一般选择这种)
+	Download Windows x86-64 embeddable zip file --> (64位的嵌入式版本,可以集成到其他应用中)
+	Download Windows help file --> (帮助文档)
+
+**2.安装**
+
+	安装Python时,需要注意:
+		1.在第一个向导页中勾选"Add Python 3.7 to PATH";
+			--->可以将路径添加到环境变量中
+		2.Customize Installation之后的在第二个向导页中勾选"pip(默认是勾选)"
+			--->安装包管理工具"pip"
+		3.安装pillow
+			在cmd中执行"pip install Pillow",就会自动安装Pillow.
+
+#### 15.1.2 PIL模块的使用
+
+**1.操作图像**
+
+1.图像缩放操作
+
+	#!/usr/bin/python
+	#-*- coding: utf-8 -*-
+	from PIL import Image
+	
+	#打开一个图像文件
+	im = Image.open('/users/defy/test.jpg') //绝对路径,尝试过相对路径会报错
+	#获得图像尺寸
+	w, h = im.size //得到图像的宽,高
+	im.thumbnail(w//2, h//2) //"//"在python 3.x中表示整除; "/":表示浮点除法
+		//Image.thumbnail:按照宽、高对图形进行缩略.在缩略时,保持图片的宽高比例.
+	#保存图片
+	im.save('/user/defy/thumbnai.jpg', 'jpeg')
+		//para1:文件名; para2:格式. 因为xxx.jpg就是jpeg格式,
+
+2.图像模糊效果
+
+	#!/usr/bin/python
+	#-*- coding: utf-8 -*-
+	from PIL import Image, ImageFilter
+	im2 = Image.open('/user/defy/test.jpg')
+	im2 = im.filter(ImageFilter.BLUR)
+	/*
+		im.filter():过滤.配合ImageFilter的滤波方法实现图像的滤波
+		常用的滤波方法:
+			ImageFilter.BLUR:模糊滤波
+			ImageFilter.CONTOUR:轮廓滤波
+			ImageFilter.DETAIL:细节滤波
+			ImageFilter.SMOOTH:平滑滤波
+	*/
+
+**2.绘制图像**
+
+1.生成字母验证码
+
+	#!/usr/bin/python
+	# -*- coding: utf-8 -*-
+
+	from PIL import Image, ImageDraw, ImageFont, ImageFilter
+	import random //随机数模块
+
+	#generate random character
+	def rndChar():
+		return chr(random.randint(65, 90)) //random.randint(a, b):生成a~b的随机数
+		//chr:数字转换字母函数.此处将ASCII码(65~90)转换为大写字母(A~Z)
+	
+	#generate random color1
+	def rndColor1():
+		return (random.randint(64, 255), random.randint(64, 255), random.randint(64, 255))
+		//验证码的底色
+	
+	#generate random color2
+	def rndColor2():
+		return (random.randint(32, 127), random.randint(32, 127), random.randint(32, 127))
+		//验证码字体的颜色
+
+	#240 * 60
+	width = 60 * 4 //验证码宽: 240
+	height = 60 //验证码高: 60
+
+	image = Image.new('RGB', (width, height), (255, 255, 255))
+		/*
+		para1:mode,此处表示为RGB模式;
+		para2:size
+		para3:color
+		*/
+
+	#create font objects
+	font = ImageFont.truetype('/usr/defychen/arial.ttf', 36)
+		/*
+		创建字体对象.
+		para1:应用字体的名字(绝对路径). arial.ttf字体可以通过windows路径(C:\Windows\Fonts)
+			下面拷贝到所需要的路径.
+		para2:字体大小.此处为36号
+		*/
+
+	#create Draw object
+	draw = ImageDraw.Draw(image) //相当于一个画笔.可以画点/写文字
+	#fill each pixel
+	for x in range(width):
+		for y in range(height):
+			draw.point((x, y), fill=rndcolor1())
+			/*
+			画单独的一个点(填充一个像素点):
+				para1:点坐标.(x, y):一个list
+				para2:fill=填充的颜色坐标(x, x, x)
+			*/
+
+	#print the text
+	for t in range(4):
+		draw.text((60 * t + 10, 10), rndChar(), fill=rndColor2(), font = font)
+		/*
+			画文字(输出文字):
+				para1:点坐标.表示从那里开始输出文字
+				para2:文字.此处为一个随机的字母
+				para3:填充颜色坐标.
+				para4:字体.
+		*/
+
+	#fuzzy processing(模糊处理)
+	image = image.filter(ImageFilter.BLUR)
+	image.save('/usr/defychen/code.jpg', 'jpeg')
+
+### 15.2 subprocess模块
+
+**1.subprocess模块的Popen类的实例介绍**
+
+subprocess用于创建一个新的进程执行另外的程序,并与其进行通信.获取标准的输入、标准输出、标准错误以及返回码等.
+
+subprocess模块中定义了一个Popen类,用于创建子进程.
+
+	res = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	/*
+		创建一个Popen类的对象->res
+		cmd:创建的子进程需要执行的命令/程序.(e.g.['ls -al'], ['ipconfig', '-all'], 
+			或者某个可执行程序)
+		subprocess.PIPE:表示透过PIPI与子进程通信(输入,输出或者标准错误输出)
+		subprocess.STDOUT:此处将标准错误直接通过标准输出流进行输出.
+	*/
+
+**2.Popen类的方法及属性**
+
+1.Popen.pid:获取创建的子进程的ID
+
+2.Popen.returncode:获取子进程的返回值.如果进行未结束,将返回None.
+
+3.Popen.communicate(input=None):获取output(output存在在一个tuple中),包括stdout和stderr.input为stdin,一般为None即可.
+
+	sout, serr = res.communicate()
+
+4.poll():检查子进程是否结束.
+
+5.wait():等待子进程结束.
+
+**3.实例---打开一个只有ip地址的文本文件,ping该ip地址,将ping写结果写入ping.txt文件**
+
+	#!/usr/bin/python
+	# -*- coding:utf-8 -*-
+
+	import subprocess
+	import os
+	class Shell(object):
+		def runCmd(self, cmd):
+			res = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, 
+				stderr=subporcess.STDOUT) //linux下shell=True必须有
+			sout, serr = res.communicate()
+			return res.returncode, sout, serr, res.pid
+
+	shell = Shell()
+	fp = open('/usr/defychen/ip.txt', 'r')
+	ipList = fp.readlines()
+	fp.close()
+
+	fp = open('/usr/defychen/ping.txt', 'a')
+	print ipList
+	for i in ipList:
+		i = i.strip() //提取
+		result = shell.runCmd('ping' + i) //ping某个ip地址
+		if result[0] == 0: //成功执行
+			w = i + ': 0'
+			fp.write(w + '\n')
+		else:
+			w = i + ': 1'
+			fp.write(w + '\n')
+
+	fp.close()
+
+***
+
+## 16. Python中常用的函数
+
+### 16.1 enumerate函数
 
 enumearte函数遍历序列中的元素以及他们的下标:
 
@@ -1861,7 +2072,7 @@ enumearte函数遍历序列中的元素以及他们的下标:
 
 *eval()函数返回值:成功返回0;失败返回非0*
 
-## Python类及实例的应用
+### Python类及实例的应用
 
 	class Test(object):		/*Test:类名; object:从"object"继承,所有类都可以从object继承*/
 		def __init__(self, name, root):	/*__init__函数,在创建实例对象时会调用*/
@@ -1874,3 +2085,39 @@ enumearte函数遍历序列中的元素以及他们的下标:
 	args.append(self.webRoot)	/*list末尾增加webRoot元素*/
 	return Test(*args)			/* "*args" 相当于一个list; "**args" 相当于一个dict*/
 		/*此时会将"name和webRoot"传递给Test类的"__init__"函数*/
+
+## Appendix 实例
+
+### 1. Analysis of wechat_jump mini program
+
+**auto_adb.py**
+
+	# -*- coding: utf-8 -*-
+	import os
+	import subprocess
+	import platform
+
+**wechat_jump_auto.py**
+
+	# -*- coding: utf-8 -*-
+
+	import math, re, random, sys, time
+	from PIL import Image //Python Image Library(python图像库)
+	from six.moves import input //
+
+	if sys.version_info.major != 3:
+		print('Please use python version 3.x')
+		exit(1) //退出
+	try:
+		from common import debug, config, screenshot, UnicodeStreamFilter
+		from common.auto_adb impot auto_adb
+	except Exception as ex: //捕获异常(Exception当作ex,用于输出)
+		print(ex)
+		print('Please run the script in the root directory')
+		print('Please check whether the common folder exists under the root directory')
+		exit(1)
+	adb = auto_adb()
+	VERSION = "1.1.4"
+
+	DEBUG_SWITCH = True //for debug
+	adb.test_device()

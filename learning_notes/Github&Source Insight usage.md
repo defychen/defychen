@@ -38,7 +38,8 @@
 
 **7)将本地commit后的添加到github仓库:**
 
-	git remote add origin git://github.com/defychen/defychen
+	git remote add origin git://github.com/defychen/defychen --->ssh协议通讯
+	git remote add origin https://github.com/defychen/defychen --->https协议通讯
 
 **8)push到远程仓库(github仓库):**
 
@@ -224,7 +225,25 @@
 		or mouse button. Press Esc to cancel."键入"Alt+Q",快捷键建立完毕.然后点击"OK"即可.
 		4.之后使用"Alt+Q"就可以打开文件所在目录.
 
-## 2.5 使souce insight支持python语言的方法
+## 2.5 针对中文在source insight显示为乱码的情况
+
+	在source insight 3.5版本中可以的处理方法:
+	方法 1->借助于linux下的iconv命令:
+		iconv -f utf-8 -t gb18030 file1.py -o file2.py
+		/*
+		将uft-8编码的file.py文件转换为gb18030编码的file2.py.
+		可以使用iconv --help/iconv --usage查看使用方法
+		*/
+
+	方法 2->借助于ultra edit完成转换:
+		使用UE打开文件->file->另存为(F12)->在"另存为"对话框中的"编码"选择(ANSI/ASCII)
+		(位于保存的右边)->点击保存即可.然后用source insight打开显示的即为正确的中文.
+
+	方法 3->借助于"记事本"完成转换:
+		使用"记事本"打开文件->文件->另存为->在"另存为"对话框中的"编码"选择(ANSI)(原本为UTF-8)
+		(位于保存的右边)->点击保存即可.然后用source insight打开显示的即为正确的中文.
+
+## 2.6 使souce insight支持python语言的方法
 
 	1.需要下载Python.CLF
 		目录tools/Python.CLF下已经有了下载好的Python.CLF文件

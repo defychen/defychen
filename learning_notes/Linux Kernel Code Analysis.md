@@ -75,4 +75,32 @@ Linux内核顶层的Makefile负责编译两类主要的目标:vmlinux和modules.
 	...
 	422260 c3745748 t __initcall_dsc_init6 //表示优先级为6
 	
-		
+## 3. Linux的BUG_ON的使用
+
+	/*linux内核的./include/asm-generic/bug.h对于BUG_ON的定义和说明: */
+
+	/*
+	 * Don't use BUG() or BUG_ON() unless there's really no way out; one
+	 * example might be detecting data structure corruption in the middle
+	 * of an operation that can't be backed out of. If the (sub)system
+	 * can somehow continue operating, perhaps with reduced functionality,
+	 * it's probably not BUG-worthy.
+	 *
+	 * If you're tempted to BUG(), think again: is completyly giving up
+	 * really the *only* solution? There are usually better options, where
+	 * users don't need to reboot ASAP and can mostly shut down cleanly.
+	 */
+	#ifndef HAVE_ARCH_BUG
+	#define BUG() do { \
+			printk("BUG: failure at %s:%d/%s()!\n", __FILE__, __LINE__, __func__); \
+			panic("BUG!"); \ //panic函数让系统进入panic
+	} while(0)
+	#endif
+	
+	#ifndef HAVE_ARCH_BUG_ON
+	#define BUG_ON(condition) do { if (unlikely(condition)) BUG(); } while (0)
+	#endif
+
+	/*BUG_ON函数最终是调用unlikely函数,kernel说明不要使用BUG_ON/BUG,因为会让系统陷入panic.
+	因此:更好的替代方法应该是使用"likely/unlikely(condition)".
+	*/
