@@ -70,9 +70,10 @@
 	tree -L 1/2/3 -d /*显示当前目录下的1/2/3级目录*/
 	tree -a /*显示所有文件和目录，对于文件和目录较少可以使用*/
 
-## 4.uname -r命令
+## 4.uname命令
 
-	uname -r /*查看内核版本信息*/
+	uname -r //显示操作系统的发型版本号(e.g.3.2.0-23-generic)
+	uname -s //显示系统名(e.g. Linux或者CYGWIN_NI-6.1-WOW64)
 
 ## 5.zip命令
 
@@ -205,15 +206,33 @@ GNU zip---gzip(gz)和bzip2(bz2)两种压缩格式，压缩比:gzip>bzip2
 
 ## 15. 重定向和管道
 
-	//重定向
+**重定向**
+
 	1)将标准输出和标准错误输出分别重定向到不同的文件中:
 		kill -HUP 1234 > killout.txt 2> killerr.txt	//将标准输入重定向到killout.txt;将标准错误输出重定向到killerr.txt
 	2)将标准输出和标准错误输出重定向到同一个文件:
 		kill -l 1234 > killouterr.txt 2>&1		//2--标准错误; >--冲定向; &1--和1(标准输出一样)
 
-	//管道
+**管道**
+
 	ls -l | head -n 5		//显示ls -l的前5行
 	grep linux . -nr | more		//按页显示查找到的字符串,没有grep linux . -nr好看
+
+**grep -i**
+
+针对单个字符不区分大小写
+
+	OS := $(shell uname -s) //uname -s:获得系统名
+	IS_LINUX := $(shell echo $(OS) | grep -i linux) //不区分大小写
+	IS_CYGWIN := $(shell echo $(OS) | grep -i cygwin)
+	
+	ifdef  IS_LINUX //找到linux字符会等于1
+	_LINUX_COM_ENV_ = 1
+	else
+	ifdef IS_CYGWIN 
+	_CYGWIN_COM_ENV_ = 1
+	endif
+	endif
 
 ## 16. which命令
 

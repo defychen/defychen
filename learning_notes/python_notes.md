@@ -101,7 +101,7 @@ e.g.2:浏览网页时,服务器把动态生成的Unicode内容转换为UTF-8再�
 
 ### 2.3 Python的字符串
 
-**字母转换数字函数:ord()和数字转换字母函数:chr()**
+字母转换数字函数:ord()和数字转换字母函数:chr()
 
 	>>>ord('A')
 	65			#将"A"转换为数字65
@@ -112,11 +112,11 @@ Unicode输出中文:
 	
 	print u'中文'	#将会输出"中文"
 
-**Unicode编码转换为UTF-8编码:**
+Unicode编码转换为UTF-8编码:
 
 	u'ABC'.encode('utf-8')	#Unicode编码的"ABC"转换为UTF-8编码的"ABC"
 
-**UTF-8编码转换为Unicode编码**
+UTF-8编码转换为Unicode编码
 
 	'abc'.decode('utf-8')	#将UTF-8编码的"abc"转换为Unicode编码的u'abc'.	#'abc':表示UTF-8编码
 
@@ -137,6 +137,15 @@ Unicode输出中文:
 	print '%.2f' % 3.1415926		#显示为"3.14"(小数点后2位)
 
 	输出形式:print '字符串 %s %d' %('字符串', 整型)
+
+**字符串的format函数**
+
+format函数用于格式化字符串.
+
+	test1 = '{0}, {1}'.format('aaa', 'bbb') //此时test1为"aaa, bbb"
+	test2 = '{0} {1}'.format('aaa', 'bbb') //此时test2为"aaa bbb"
+	test3 = '{} {}'.format('aaa', 'bbb') //此时test3为"aaa bbb"(会自动按着先后顺序排列)
+	test4 = '{1} {0}'.format('aaa', 'bbb') //此时test4为"bbb aaa"
 
 ### 2.4 Python中2进制、8进制、10进制、16进制相关转换
 
@@ -1371,7 +1380,7 @@ pdb.set_trace():设置一个断点
 	os.rename('test.txt', 'test.py')	//文件重命名
 	os.remove('test.py')				//删除文件
 
-**os.path模块**
+**os.path相关函数**
 
 	import os.path
 	os.path.abspath('.')	//列出当前目录的绝对路径
@@ -1394,6 +1403,13 @@ pdb.set_trace():设置一个断点
 	
 	[x for x in os.listdir('.') if os.path.isfile(x) and os.path.splitext(x)[1] == '.py']
 	//列出所有的.py文件---os.path.split(x)返回的为tuple,因此"os.path.splitext(x)[1]"相当于取后面的扩展名
+
+**os.popen函数**
+
+os.popen(cmd):为一个命令(cmd)执行结果打开一个管道.再调用.read()方法即可将内容独处.
+
+	b = os.popen('ls') //为ls命令执行结果打开一个管道,并返回给b
+	print b.read() //可以将"ls"命令执行结果从b这个管道中读出.
 
 ***
 
@@ -1975,7 +1991,7 @@ subprocess模块中定义了一个Popen类,用于创建子进程.
 		创建一个Popen类的对象->res
 		cmd:创建的子进程需要执行的命令/程序.(e.g.['ls -al'], ['ipconfig', '-all'], 
 			或者某个可执行程序)
-		subprocess.PIPE:表示透过PIPI与子进程通信(输入,输出或者标准错误输出)
+		subprocess.PIPE:表示透过PIPE与子进程通信(输入,输出或者标准错误输出)
 		subprocess.STDOUT:此处将标准错误直接通过标准输出流进行输出.
 	*/
 
@@ -2025,6 +2041,18 @@ subprocess模块中定义了一个Popen类,用于创建子进程.
 			fp.write(w + '\n')
 
 	fp.close()
+
+### 15.3 platform模块
+
+platform模块用来访问平台的相关属性
+
+	import platform
+	
+	platform.machine() //返回平台架构(e.g.'x86_64')
+	platform.node() //返回主机名(e.g.zhsa01)
+	platform.platform() //返回系统版本(e.g.Linux-3.2.0-23-generic-...)
+	platform.processor() //返回处理器名称
+	platform.system() //返回系统名称(e.g."Windows"/"Linux")
 
 ***
 
@@ -2096,6 +2124,45 @@ enumearte函数遍历序列中的元素以及他们的下标:
 	import os
 	import subprocess
 	import platform
+
+	class auto_adb():
+		def __init__(self):
+			try:
+				adb_path = 'adb'
+				subprocess.Popen([adb_path], stdout=subprocess.PIPE, 
+					stderr=subprocess.PIPE)
+				self.adb_path = adb_path
+			except OSError: //操作系统错误(e.g.[Errno 22] Invalid argument:...)
+				if platform.system() == 'Windows': //Windows平台
+					adb_path = os.path.join('Tools', 'adb', 'adb.exe')
+					//'Tools'为相对路径.合并后的路径为:'Tools\\adb\adb.exe'(从当前目录开始)
+					try:
+						subprocess.Popen([adb.path], stdout=subprocess.PIPE, 
+								stderr=subprocess.PIPE)
+						self.adb_path = adb_path
+					except OSError:
+						pass
+				else: //Linux平台
+					try:
+						subprocess.Popen([adb], stdout=subprocess.PIPE, 
+							stderr=subprocess.PIPE)
+					except OSError:
+						pass
+				print('Please install ADB driver and config the environ variable')
+				print('xxxx')
+				exit(1)
+
+		def get_screen(self):
+			process = os.popen(self.adb_path + 'shell wm size')
+				//相当于执行"adb shell wm size".执行后的结果会放到process中
+			output = process.read() //将执行的结果read出来
+			return output
+
+		def run(self, raw_command):
+			command = '{} {}'.format(self.adb_path, raw_command) //由adb path和command构成完整的命令
+			process = os.popen(command)
+			output = process.read() //将执行的结果read出来
+			return output
 
 **wechat_jump_auto.py**
 

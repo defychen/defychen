@@ -1,15 +1,20 @@
-## 第一章	概述
+# Makefile Usage
+
+## Chapter 1 概述
+
 ### 1.1 Make基本知识
-*通常，一个高级语言的源文件都对应一个目标文件，linux中默认的后缀为".o"*
+
+通常，一个高级语言的源文件都对应一个目标文件，linux中默认的后缀为".o"
 
 **链接:将多个.o文件，或者.o和库文件链接成可执行程序，<font size=4>"ld"</font>是GNU的链接器.**
 
 **静态库:文档文件(Archive File),多个.o的集合，后缀".a",使用"ar"工具维护和管理.**
 
 **共享库:多个.o的集合,.o文件由编译器按照一种特殊的方式生成，各模块地址均为相对地址.**
+
 ### 1.2 GNU make介绍
 
-*某个头文件在上一次执行make后被修改,所有包含该头文件的C源文件在本次执行make都会被重新编译*
+某个头文件在上一次执行make后被修改,所有包含该头文件的C源文件在本次执行make都会被重新编译
 	
 	makefile 规则
 	target(目标):prerequisites(依赖)
@@ -33,11 +38,14 @@
 		-rm edit $(objs)		//-:忽略rm的执行错误
 
 ***
-## 第二章	Makefile 总述
+
+## Chapter 2 Makefile总述
+
 ### 2.1 Makefile内容
+
 **注释:"#"字符后的内容是注释(shell也是如此)，若某行第一个非空字符为"#",该行为注释行，注释行结尾存在("\\"),下一行也是注释行.**
 
-*"\\#"表示使用字符"#",而非注释.*
+"\\#"表示使用字符"#",而非注释.
 
 *一个目录中比较重要的文件命名规则为首字母大写,e.g.:Makefile, README, Changelist*
 
@@ -58,8 +66,10 @@
 	:=	覆盖之前的值
 	?=	如果没有被赋值就等于后面的值
 	+=	添加后面的值
+
 ***
-## 第三章	Makefile的规则
+
+## Chapter 3 Makefile的规则
 
 	$#--->传递给脚本的参数个数
 	$0--->脚本本身的名字
@@ -821,8 +831,10 @@ N.s:是不需要预处理的汇编源文件;N.S:是需要预处理的汇编源�
 
 ***
 
-# Makefile碰到的问题
+## Chapter 12 Makefile碰到的问题
+
 ***
+
 ## 1.把目录当成文件来操作
 
 	make: execvp: /zhsa022/usrhome/defy.chen/repository/work_viaccess/buildroot: Permission denied
@@ -845,4 +857,22 @@ N.s:是不需要预处理的汇编源文件;N.S:是需要预处理的汇编源�
 			否则就是已定义的.
 	CC:一般是Makefile中的一个名字.
 
+# Shell Script Usage
 
+## 1.dirname的使用
+
+dirname得到某个文件的目录.
+
+	/*getpath.sh脚本内容如下*/
+	PATH_ROOT=$1
+	CUR_DIR=$(cd "$(dirname "$0")"; pwd)
+	cd $PATH_ROOT
+	ROOT_PATH=$(cd "$(dirname "$0")"; pwd)
+
+	/*
+	如果执行"./getpath.sh ../../.."
+	此时传进去的$0为"./getpath.sh"; $1为"../../../"
+	dirname "$0":取$0的目录(取的是相对路径),即为"."
+	执行cd "$(dirname "$0")"等价于"cd .",仍然在当前目录.
+	因此上述只要切换到某个目录,pwd就取到了该目录的路径.
+	*/
