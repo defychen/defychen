@@ -146,6 +146,8 @@ format函数用于格式化字符串.
 	test2 = '{0} {1}'.format('aaa', 'bbb') //此时test2为"aaa bbb"
 	test3 = '{} {}'.format('aaa', 'bbb') //此时test3为"aaa bbb"(会自动按着先后顺序排列)
 	test4 = '{1} {0}'.format('aaa', 'bbb') //此时test4为"bbb aaa"
+	test5 = '{height}x{width}'.format(height=1920, width=1080)
+		//此时test5为"1920x1080"
 
 ### 2.4 Python中2进制、8进制、10进制、16进制相关转换
 
@@ -1397,6 +1399,9 @@ pdb.set_trace():设置一个断点
 	os.path.splitext('/user/defy/testdir/file.txt')
 	/*得到('/user/defy/testdir/file', '.txt')---最后一级为扩展名*/
 
+	//测试指定文件是否存在
+	if os.path.exists('/user/defy/testdir/file.txt'): //文件存在为true,不存在为false.
+
 实例---列出当前目录下的所有目录或所有.py文件
 
 	[x for x in os.listdir('.') if os.path.isdir(x)]	//列出所有目录
@@ -1990,7 +1995,7 @@ subprocess模块中定义了一个Popen类,用于创建子进程.
 	/*
 		创建一个Popen类的对象->res
 		cmd:创建的子进程需要执行的命令/程序.(e.g.['ls -al'], ['ipconfig', '-all'], 
-			或者某个可执行程序)
+			或者某个可执行程序).可以为字符串或者字符列表(字符列表会组成一个命令).
 		subprocess.PIPE:表示透过PIPE与子进程通信(输入,输出或者标准错误输出)
 		subprocess.STDOUT:此处将标准错误直接通过标准输出流进行输出.
 	*/
@@ -2004,6 +2009,10 @@ subprocess模块中定义了一个Popen类,用于创建子进程.
 3.Popen.communicate(input=None):获取output(output存在在一个tuple中),包括stdout和stderr.input为stdin,一般为None即可.
 
 	sout, serr = res.communicate()
+	/*
+	sout:是一些标准输出的信息(一些string信息)
+	serr:是一些标准错误的信息(一些string信息)
+	*/
 
 4.poll():检查子进程是否结束.
 
@@ -2056,9 +2065,70 @@ platform模块用来访问平台的相关属性
 
 ***
 
-## 16. Python中常用的函数
+## 16. Python的正则表达式
 
-### 16.1 enumerate函数
+Python的re模块就是正则表达式(Regular Expressions).
+
+### 16.1 常用的字符含义
+
+	.		匹配任意除换行符"\n"之外的字符	a.c			abc(匹配可以为a,b...任意字符)
+	*		匹配前一个字符0次或者多次		abc*		ab;abccc(匹配"c"0次或多次)
+	+		匹配前一个字符1次或多次		abc+		abc;abccc(匹配"c"1次或多次)
+	?		匹配前一个字符0次或1次			abc?		ab;abc(匹配"c"1次或多次)
+	{m}		匹配前一个字符m次				ab{2}c		abbc(b为2次)
+	{m,n}	匹配前一个字符m到n次			ab{1,2}c	abc;abbc(b出现1次或者2次)
+	()		匹配括号中的表达式				(abc)		abc(匹配abc)
+
+	\d		数字(0-9)					a\dc		a1c(\d为一个数字)
+	\w		任何字符(A-Z,a-z,0-9,_)		a\wc		abc(\w为一个字符)	
+	\.		匹配"."这个字符				a\.txt		a.txt
+
+### 16.2 re模块的函数
+
+**re.findall(r'匹配格式', str)**
+
+查找字符串中所有(非重复)出现的正则表达式模式(匹配格式),返回一个匹配列表
+
+	text = 'JGod is a handsome boy, but he is a ider'
+	print re.findall(r'\w*o\w*', text) //查找含有"o"字符的单词
+	//结果为:['JGod', 'handsome', 'boy']
+
+**re.search(r'匹配格式', str)**
+
+在给定的字符串中寻找"第一个"匹配给定正则表达式的子字符串
+
+	a = re.search(r'(tina)(fei)haha\2', 'tinafeihahafei tinafeihahatina').group()
+	/*
+		group():会将查找的字符串分组(e.g.tina为1;fei为2;haha为3)
+		\2:表示字符串分组中的第二组,即fei
+	*/
+	//结果为:tinafeihahafei
+
+	/*如果为:
+	a = re.search(r'(\d+)x(\d+)', '1080x1920')
+		第一个\d会匹配到1080,如果要选取第一个的值:a.group(1)
+		第二个\d会匹配到1920,如果要选取第二个的值:a.group(2)
+	*/
+
+**re.match(r'匹配格式', str)**
+
+使用带有"可选"标记的正则表达式的模式来匹配字符串,匹配成功返回匹配对象,否则返回None.
+
+	m = re.match(r'(foo\w)(\w)', 'fooasdfooasd')
+	/*
+		匹配结果:
+			foo\w:匹配"foo"后面一个字符"a".结果为"fooa"
+			\w:紧接着的一个字符"s"
+	*/
+	if m is not None:
+		print(m.group(1)) //结果为"fooa"
+		print(m.groups()) //结果为"('fooa', 's')"
+
+***
+
+## 17. Python中常用的函数
+
+### 17.1 enumerate函数
 
 enumearte函数遍历序列中的元素以及他们的下标:
 
@@ -2125,7 +2195,15 @@ enumearte函数遍历序列中的元素以及他们的下标:
 	import subprocess
 	import platform
 
-	class auto_adb():
+	/*
+		Q:类名如果取名为auto_adb和文件名相同,后续的:
+		from common.auto_adb import auto_adb
+		adb = auto_adb() //此处容易产生歧义
+		M:改名为adb,后续就不会有这个问题
+		from common.auto_adb import auto_adb
+		adb = auto_adb.adb() //这样比较清晰
+	*/
+	class adb():
 		def __init__(self):
 			try:
 				adb_path = 'adb'
@@ -2164,6 +2242,97 @@ enumearte函数遍历序列中的元素以及他们的下标:
 			output = process.read() //将执行的结果read出来
 			return output
 
+		def test_device(self):
+			print('check device is connected or not...')
+			command_list = [self.path, 'devices']
+			process = subprocess.Popen(command_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			output = process.communicate() //output为一个tuple,里面包含stdout和stderr
+			if output.decode('utf8') == 'List of devices attached\n\n':
+				/*
+					正常显示应该类似下面这种:
+					List of devices attached //仅仅只有这一句是不正常的
+					cf264b8f    device
+					emulator-5554   device
+				*/
+				print('can not find devices')
+				print('adb output:')
+				for each in output:
+					print(each.decode('utft-8'))
+			print('device is connected...')
+			print('adb output:')
+			for each in output:
+				print(each.decode('utf-8'))
+
+		def test_density(self): //获得手机屏幕的密度
+			process = subprocess.Popen(self.adb_path + 'shell wm density')
+				//相当于执行"adb shell wm density".执行后的结果会放到process中
+			output = process.read() //将执行的结果read出来
+			return output
+	
+		def test_device_detail(self): //获得设备信息
+			process = subprocess.Popen(self.adb_path + 'shell getprop ro.product.device')
+			output = process.read()
+			return output
+
+		def test_device_os(self): //获得android系统版本
+			process = subprocess.Popen(self.adb_path + 'shell getprop ro.build.version.release')
+			output = process.read()
+			return output
+
+		def adb_path(self): //获得adb路径
+			return self.adb_path
+			
+**config.py**
+
+	# -*- coding:utf-8 -*-
+	'''
+	读取配置文件和屏幕分辨率
+	'''
+	import os, sys, json, re
+	from common.auto_adb import auto_adb
+	
+	adb = auto_adb.adb()
+
+	def open_accordant_config():
+		'''
+		调用配置文件
+		'''
+		screen_size = _get_screen_size()
+		#config_file = "{path}/config/{screen_size}/config.json".format(
+			//可以自动选择"screen_size(屏幕分辨率)"下的config文件
+		config_file = "{path}/config/huawei/honor9_config.json".format(
+			path=sys.path[0], //sys.path[0]:得到当前文件的路径.相当于pwd
+			screen_size=screen_size //对应的屏幕分辨率,用于选择配置文件
+		)
+
+		//从当前目录直接获取配置文件
+		here = sys.path[0] //当前路径(pwd)
+		for file in os.listdir(here): //listdir:列出当前路径下的所有文件(包括目录)
+			if re.match(r'(.+)\.json', file):	//匹配.json文件
+				file_name = os.path.join(here, file) //构成完成路径
+				with open(file_name, 'r') as f:	//打开文件
+					print("Load config file from {}".format(file_name))
+					return json.load(f) //json对象的load
+
+		//读取根据分辨率查找到的配置文件
+		if os.path.exists(config_file):
+			with open(config_file, 'r') as f:
+				print("Load config file from {}".format(config_file))
+				return json.load(f)
+		else:
+			with open('{}/config/default.json'.format(sys.path[0]), 'r') as f:
+				//使用默认的配置文件
+				print("Load default config")
+				return json.load(f)
+
+	def _get_screen_size():
+		size_str = abd.get_screen() //得到的字符结果为"Physical size: 1080x1920"
+		m = re.search(r'(\d+)x(\d+)', size_str) //匹配到"1080x1920"
+		if m:
+			return '{heigth}x{width}'.format(heigth=m.group(2), width=m.group(1))
+			//return为"1920x1080"
+		return '1920x1080'
+		
 **wechat_jump_auto.py**
 
 	# -*- coding: utf-8 -*-
@@ -2177,13 +2346,15 @@ enumearte函数遍历序列中的元素以及他们的下标:
 		exit(1) //退出
 	try:
 		from common import debug, config, screenshot, UnicodeStreamFilter
-		from common.auto_adb impot auto_adb
+		from common.auto_adb import auto_adb
 	except Exception as ex: //捕获异常(Exception当作ex,用于输出)
 		print(ex)
 		print('Please run the script in the root directory')
 		print('Please check whether the common folder exists under the root directory')
 		exit(1)
-	adb = auto_adb()
+	#adb = auto_adb() //此句改为:
+	adb = auto_adb.adb() //使用auto_adb.py中的adb()类
+	
 	VERSION = "1.1.4"
 
 	DEBUG_SWITCH = True //for debug

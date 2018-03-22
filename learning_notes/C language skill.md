@@ -1332,6 +1332,8 @@ unused属性用于函数和变量,表示该函数或变量可能不使用.
 
 	/*
 		uint8_t...等的定义位于"/usr/include/stdint.h"
+		所以应该包含头文件<stdint.h>
+			#include <stdint.h>
 	*/
 	/*unsigned*/
 	typedef unsigned char			uint8_t;	//1个字节;_t表示typedef
