@@ -370,4 +370,17 @@ type:用来显示指定命令的类型.
 	1.覆盖	echo "..." > filename
 	2.追加	echo "..." >> filename
 
+## 22.source命令
+
+**source filepath或. filepath(两个一样的功能)**
+
+使当前shell读入路径为filepath的shell文件并依次执行文件中的所有语句,通常用于重新执行刚修改的初始化文件,使之立即生效,而不必注销重新登录.后面的脚本(shell/Makefile等)就可以读取到刚修改过的初始化文件.
+
+	/*test.sh脚本*/
+	#!/bin/bash
+	A=1
+	chmod +x testh.sh
+	1)执行./test.sh或sh test.sh-->echo $A-->显示为空,因为A=1并未回传给当前的shell
+	2)执行source test.sh或. test.sh-->echo $A-->会显示为1,此时A=1的变量在当前的shell中.	
+
 ## 13. wget命令

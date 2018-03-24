@@ -149,6 +149,14 @@ format函数用于格式化字符串.
 	test5 = '{height}x{width}'.format(height=1920, width=1080)
 		//此时test5为"1920x1080"
 
+**字符串的replace函数**
+
+replace函数用于替换对应的字符串.
+
+	string1 = 'abc'
+	string2 = string1.replace('a', 'A')	/*将'a'代替为'A',不会改变原来的字符串"abc".因此string1
+		指向不变.replace之后相当于新创建了一个字符串"Abc"并赋值给string2.*/
+
 ### 2.4 Python中2进制、8进制、10进制、16进制相关转换
 
 	//只有转成10进制才能接收两个参数;转成其他进制的只能接收一个参数
@@ -1370,7 +1378,9 @@ pdb.set_trace():设置一个断点
 		f.write('Hello, world!')	//这种方法不用调用f.close(),系统自动调用.代码简洁
 ***
 
-## 10 os模块
+## 10 os及sys模块
+
+### 10.1 os模块
 
 **os模块**
 
@@ -1416,11 +1426,77 @@ os.popen(cmd):为一个命令(cmd)执行结果打开一个管道.再调用.read(
 	b = os.popen('ls') //为ls命令执行结果打开一个管道,并返回给b
 	print b.read() //可以将"ls"命令执行结果从b这个管道中读出.
 
+**os.getcwd函数**
+
+os.getcwd():获得当前的工作目录
+
+	os.getcwd()相当于linux的命令pwd.
+
+**os.chdir函数**
+
+os.chdir(path):change directory,切换目录到path.
+
+	//切换到"/usr/defy/test"目录
+	os.chdir('/usr/defy/test') //只能使用绝对路径
+
+### 10.2 sys模块
+
+**sys.platform**
+
+获取当前系统平台.
+
+	在linux命令行输入:python
+	>>> import sys
+	>>> sys.platform //结果为:linux2--->linux 2.x/3.x/4.x都显示为linux2
+
+**sys.version**
+
+获取当前python的版本信息
+
+	在linux命令行输入:python
+	>>> import sys
+	>>> sys.version //结果为:'2.7.5 (default, Feb 27 2017, 22:30:25) \n[GCC 4.9.4]'
+					//表示当前python版本为"2.7.5"
+
 ***
 
 ## 11 序列化及JSON
 
-**略**
+需要在不同的编程语言之间传递对象,必须将对象序列化为标准格式(e.g.XML,JSON).但是最好的方法是序列化为JSON.
+
+优点:
+
+1)JSON表示出来就是字符串(易读);
+
+2)可以被所有语言读取,也可以方便的存储到磁盘或者网络传输;
+
+3)速度比XML块,可以直接在Web页面中读取.JSON表示的对象就是标准的JavaScript语言的对象.
+
+### 11.1 JSON类型与Python类型对比
+
+		JSON		Python
+		{}			dict
+		[]			list
+		"string"	'str'或u'unicode'
+		1234.56		int/float
+		true/false	True/False
+		null		None
+
+### 11.2 Python与JSON格式的转换
+
+**json.dumps(Python对象)---Python对象转换为JSON格式(也叫序列化)**
+
+	import json
+	d = dict(name='Bob', age=20, score=88)
+	json.dumps(d)
+	//得到的结果为:{"age":20, "score":88, "name":"Bob"} //JSON的为双引号
+
+**json.loads(json格式)---JSON格式转换为Python(也叫反序列化)**
+
+	json_str = {"age":20, "score":88, "name":"Bob"}
+	json.loads(json_str)
+	//得到的结果为:{u'age':20, u'score':88, u'name':u'Bob'}
+	//反序列化得到的字符串对象默认都是unicode而不是str.
 
 ***
 
@@ -2333,6 +2409,53 @@ enumearte函数遍历序列中的元素以及他们的下标:
 			//return为"1920x1080"
 		return '1920x1080'
 		
+**debug.py**
+
+	# -*- coding: utf-8 -*-
+	import os, sys, shutil, math
+	from PIL import ImageDraw
+	import platform
+	if platform.system() == 'Windows':
+		os.chdir(os.getcwd().replace('\\common', '')) //将最后的common替换为空,相当于移动到上一层目录
+		path_split = "\\" //Windows以"\\"为分隔???
+	else:
+		os.chdir(os.getcwd().replace('/common', '')) //将最后的common替换为空,相当于移动到上一层目录
+		path_split = '/'
+
+	try:
+		from common.auto_adb import auto_adb
+	except Exception as ex: //捕获异常(Exception当作ex,用于输出)
+		print(ex)
+		print('Please run the script in the root directory')
+		print('Please check whether the common folder exists under the root directory')
+		exit(1)
+	screenshot_backup_dir = 'screenshot_backups'
+	adb = auto_adb.adb()
+
+	def dump_device_info():
+		'''
+		显示设备信息
+		'''
+		size_str = adb.get_screen() //1080x1920
+		device_str = adb.test_device_detail() //device信息
+		phone_os_str = adb.test_device_os() //os版本
+		density_str = adb.test_density() //dpi(每英寸的像素数)
+		print("""*******   
+		Screen: {size}
+		Density: {dpi}
+		Device: {device}
+		Phons OS: {phone_os}
+		Host OS: {host_os}
+		Python: {python}
+		*******""".format(
+			size = size_str.replace('\n', ''), //将换行符替换为空格
+			dpi = density_str.replace('\n', ''),
+			device = device_str.replace('\n', ''),
+			phone_os = phons_os_str.replace('\n', ''),
+			host_os = sys.platform, //获取当前系统版本(e.g.linux2(所有的linux版本都显示为linux2))
+			python = sys.version //获取当前python的版本
+		))
+
 **wechat_jump_auto.py**
 
 	# -*- coding: utf-8 -*-
@@ -2359,3 +2482,51 @@ enumearte函数遍历序列中的元素以及他们的下标:
 
 	DEBUG_SWITCH = True //for debug
 	adb.test_device()
+
+	config = config.open_accordant_config() //从config的json文件中取到配置信息
+	under_game_score_y = config['under_game_score_y']
+	// 长按的时间系数
+	press_coefficient = config['press_coefficient']
+	// 1/2的棋子底座的高度
+	piece_base_height_1_2 = config['piece_base_height_1_2']
+	// 棋子的宽度
+	piece_body_width = config['piece_body_width']
+	// 图形中圆球的直径.有说到可以用直线测量像素...
+	head_diameter = config.get['head_diameter']
+	if head_diameter == None:
+		density_str = adb.test_density() //获得dpi(每英寸的像素数)
+		matches =re.search(r'\d+', density_str) //提取到数字
+		density_val = int(matches.group(0)) //拿到第一个值
+		head_diameter = density_val / 8 //为什么是"/8"????
+
+	def yes_or_no():
+		'''
+		检查是否已经为启动程序做好准备
+		'''
+		while True: //死循环
+			yes_or_no = str(input('请确保手机打开了ADB并连接了电脑, '
+								'然后打开跳一跳并【开始游戏】后在使用本程序,确定开始? [y/n]:'))
+			if yes_or_no == 'y':
+				break;
+			elif yes_or_no == 'n':
+				print('谢谢使用', end='') //end='':表示末尾不换行,加一个空格.
+				exit(0) //exit(0):无错误退出程序. exit(1):有错误退出程序
+			else:
+				print('请重新输入')
+
+	def main():
+		'''
+		main函数
+		'''
+		print('程序版本号:{}'.format(VERSION))
+		print('激活窗口并按Ctrl+C组合键退出')
+		debug.dump_device_info()
+
+	if __name__ == '__main__':
+		try:
+			yes_or_no()
+			main()
+		except KeyboardInterrupt: //捕获"Ctrl+c"中断程序的异常
+			adb.run('kill-server') //执行adb kill-server:终止adb服务
+			print('\n谢谢使用', end='')
+			exit(0)

@@ -131,9 +131,59 @@ ADB:Andriod Debug Bridge,是连接Android手机与PC端的桥梁,可以让用户
 		temperature: 280
 		technology: Li-poly
 
+## 2. dpi、dip、分辨率、屏幕尺寸、px、density关系及换算
 
+### 2.1 概念
 
- 
+**dpi(dot per inch):每英寸的像素数(unit: px/inch),也叫屏幕密度.**
 
+dpi越大,屏幕越清晰(e.g.iPhone 5S的dpi是326; Samsung Note3的dpi是386).
 
+android默认的只有3个dpi:low(120 px/inch); medium(160 px/inch); high(240 px/inch).default值为160.但现在手机一般不会取这种标准值(比如上述的iPhone和Samsung).
+
+计算:
+
+	比如一部手机屏幕4 寸,分辨率:480 * 800, dpi?
+	1.对角线的像素个数: sqrt(480^2 + 800^2) = 933
+	2.对角线的dpi: 933 / 4 = 233 px/inch
+	3.density为: (233 px/inch) /  (160 px/inch) = 1.46
+	4.dip为: dip = density px = 1.46 px.
+
+**dip(Density independent pixels):设备无关像素.也有时候叫dp.**
+
+dip一般作为手机的布局单位(一般不直接选择1 px作为单位).
+
+	1.可以认为160 px/inch是一个标准的dpi(其他的以此作为参考);
+	2.标准的px的长度为: 1/160 (inch/px);
+	3.其他非标准的px的长度(e.g. dpi=320 px/inch).此时长度为: 1/320 (inch/px);
+	为了让显示的长度为标准值,选用dip作为单位.上述非标准的手机的dip:
+		dip = 2 px--->2 * 1/320 = 1/160(刚好为标准的px长度).
+
+dip = (dpi(px/inch) / 160(px/inch))px = density px
+
+	在实际应用中,相同尺寸的不同手机会存在不同的dpi(e.g.320 px/inch和160 px/inch),也就是对应的px大小不同.
+	1.如果在设计应用中选择px作为单位,同一款软件在相同尺寸的不同手机上显示的效果不一样(因为软件的长宽就会不一样).
+		(e.g.画2 px长度的Button,在高屏幕密度的手机里就会显示的比较小(因为px小)).
+	2.如果选择dip作为单位,两款手机的dip分别为:2 px和1 px(两款手机的px大小比例为1:2).
+		(e.g.此时画2 dip长读的Button,两款手机的显示大小会是一样的)
+
+**分辨率(Resolution)**
+
+分辨率是指屏幕上垂直方向和水平方向上的像素个数.(e.g. iPhone 5S的分辨率是1136x640; Samsung Note3的分辨率是1920x1080).
+
+**屏幕尺寸(screen size)**
+
+平常讲的手机屏幕大小,指的是屏幕的对角线长度(单位为inch(英寸)).(e.g. iPhone 5S的屏幕尺寸为4 inch;Samsung Note3的是5.7 inch).
+
+**像素(pixel)**
+
+描述图像的单位(有大小之分).
+
+**density**
+
+其值等于(dpi / (160 px/inch)).作为dip计算的值,后面再加上单位(px)即是dip.
+
+	比如dpi=320 px/inch:其density为: 320/160 = 2; dip = 2 px.
+
+density常用取值为:0.75, 1, 1.5, 2, 
 
