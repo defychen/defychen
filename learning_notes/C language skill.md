@@ -1,9 +1,12 @@
 # C Language Skill
+
 ***
 
-## 1、malloc函数
+## 1、malloc & memset函数
 
-void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *"
+### malloc函数
+
+	void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *"
 
 	tVA_DSCR_StbSession *pStbSession;
 	pStbSession = (tVA_DSCR_StbSession *)malloc(sizeof(tVA_DSCR_StbSession));
@@ -20,6 +23,24 @@ void *malloc(size_t size);	//申请一段size字节大小的buffer,返回"void *
 	tVA_DSCR_StbSession *pStbSession = (tVA_DSCR_StbSession *)malloc(sizeof(tVA_DSCR_StbSession));
 	free(pStbSession);	/*free第一次*/
 	free(pStbSession);	/*free第二次就会报这种错误*/
+
+### memset函数
+
+	1.对于局部结构体变量,由于会保存在内存的栈上(栈大小已经划分好,为一固定值).此时结构体变量的各个值不确定:
+		e.g. 
+			struct s_test {
+				unsigned char index;
+				int value_1;
+				unsigned char *p_value;
+				...
+			}; 
+		struct s_test val_test;
+		/*
+			声明一个结构体局部变量(保存在栈上).此时结构体中的成员值不定,指针可能不是为NULL(即0).
+			栈会沿用上一次同一位置的值.
+		*/
+	2.因此需要对局部结构体变量进行memset--->这一步很重要,一定需要.
+		memset(val_test, 0x0, sizeof(struct s_test));
 
 ## 2、指针赋值
 
@@ -1414,6 +1435,8 @@ unused属性用于函数和变量,表示该函数或变量可能不使用.
 
 ## 51. 计算CRC32的源码
 
+网址可见:[正确的计算CRC32的源码](http://blog.sina.com.cn/s/blog_6f7a12790100n1vs.html)
+
 	#define CRC32_DEFAULT_V		(0xEDB88320)
 	static uint32_t crc32_table_flag = 0; //表示CRC32 table初始化了与否
 	static uint32_t crc32_table[256] = {0};
@@ -1461,4 +1484,51 @@ unused属性用于函数和变量,表示该函数或变量可能不使用.
 		return naccum ^ 0xffffffff;
 	}
 
-网址可见:[正确的计算CRC32的源码](http://blog.sina.com.cn/s/blog_6f7a12790100n1vs.html)
+## 52. 原码、反码、补码
+
+**原码**
+
+将一个整数,转换成二进制,就是其原码.
+
+	1.整数原码
+		单字节5的原码: 0000 0101
+	2.负数原码--->最高位为符号位
+		单字节-5的原码: 1000 0101--->最高位为符号位
+
+**反码**
+
+正数的反码就是其原码;负数的反码是将原码除符号位取反.
+
+	1.正数的反码
+		单字节5的原码: 0000 0101
+		反码就是原码,因此是: 0000 0101
+	2.负数的反码
+		单字节-5的原码: 1000 0101--->最高位为符号位
+		反码是将原码除符号位取反: 1111 1010
+
+**补码**
+
+正数的补码就是其原码;负数的补码是将反码+1.
+
+	1.正数的补码
+		单字节5的原码: 0000 0101
+		补码就是其原码,因此是: 0000 0101
+	2.负数的补码
+		单字节-5的原码: 1000 0101--->最高位为符号位
+		反码是将原码除符号位取反: 1111 1010
+		补码是在反码的基础上+1: 1111 1011
+
+一般计算机中都用补码表示:
+
+	e.g.如果返回值为-7,在4字节中表示为:
+		原码: 0x8000 0007 --->最高位为符号位(最低字节:0000 0111)
+		反码: 0xffff fff8 --->(0000 0111取反后: 1111 1000)
+		补码: 0xffff fff9 --->(1111 1000 +1后为: 1111 1001)
+
+	因此如果返回值打出来为: 0xffff fff9(为补码形式),其真正的值为:
+	1.减1操作
+		0xffff fff9 - 1 = 0xffff fff8
+	2.取反(符号位不动)
+		0xffff fff8--->取反: 0x8000 0007
+	3.读出该值:
+		为-7.

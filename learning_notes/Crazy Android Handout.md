@@ -131,6 +131,14 @@ ADB:Andriod Debug Bridge,是连接Android手机与PC端的桥梁,可以让用户
 		temperature: 280
 		technology: Li-poly
 
+**adb shell screencap -p**
+
+Andriod手机的截图命令
+
+	adb shell screencap -p /sdcard/screen.png //截图并保存为手机中的"/sdcard/screen.png"
+	adb pull /sdcard/screen.png . //将手机中的图片拷贝到电脑的"."当前目录
+	adb shell rm /sdcard/screen.png //删除手机中的图片
+
 ## 2. dpi、dip、分辨率、屏幕尺寸、px、density关系及换算
 
 ### 2.1 概念

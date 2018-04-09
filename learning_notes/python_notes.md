@@ -62,6 +62,12 @@ Python用"True、Flase"表示布尔值,也用"and/or/not"做与、或、非运�
 	True or True
 	not False
 
+	1.连续的判断用"and, or, not";
+	2.大于谋值而小于另一个值(e.g. 50 < a < 60).
+	if (50 < a < 60) and (53 < b < 63) \
+		and (95 < c < 110):
+		...
+
 **None(空值)**
 
 None(空值)在Python是一个特殊的值.None不是0(0是有意义的),而是一个特殊的值.
@@ -288,6 +294,8 @@ tuple和字符串也可以使用切片
 		print name		#依次打印names中的每一个元素
 
 	range(101)	#生成0-100的整型序列
+	range(1, 11) //从1开始到11(不包括11).即为: 1,2,3,4,5,6,7,8,9,10
+	range(0, 30, 5) //从0开始到30(不包括),步长为5.即为:0,5,15,20,25.
 
 2)while循环
 
@@ -824,6 +832,7 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 		//此处省略了para,正常的为"return lambda x, y: x * x + y * y"
 
 python对匿名函数的支持有限
+
 ***
 
 ## 6. 模块
@@ -892,6 +901,8 @@ python对匿名函数的支持有限
 
 ### 6.3 作用域
 
+**1.public/private函数和变量**
+
 	abc, x123, PI	//公开的(public)变量或者函数名,可以直接引用
 	__xxx__		//特殊变量(e.g.__author__, __name__等).自己的变量一般不这么定义
 	_xxx或__xxx	//非公开的(private)的函数或变量(e.g._abc, __abc).不应该引用private函数或变量
@@ -907,7 +918,46 @@ python对匿名函数的支持有限
 		else:
 			return _private_2(name)
 
-**模块搜索路径**
+**2.global的用法**
+
+在Python中,函数中定义的变量为本地作用域;而模块中的定义的变量为全局作用域.
+
+函数中定义变量加上"global"可以变为全局作用域;或者使用函数中使用全局变量应该加上"global"修饰符
+
+	1.全局变量且函数内无同名变量
+		hehe = 6
+		def f():
+			print(hehe) //打印出全局变量
+		f()
+		print(hehe)
+		//运行正常输出6和6
+	2.全局变量但函数内有同名变量(且先使用后定义)-->会报错
+		hehe = 6
+		def f():
+			print(hehe) //在函数内因为后面定义局部变量.此时会出现引用错误.
+			hehe = 2 //Python定义和赋值在一起,此时相当于定义一个局部变量
+		f()
+		print(hehe)
+		//会抛出错误:UnboundLocalError: local variable 'hehe' referenced before assignment
+	3.全局变量但函数内有同名变量(且先定义后使用)
+		hehe = 6
+		def f():
+			hehe = 2 //定义了一个局部变量
+			print(hehe) //输出局部变量2
+		f()
+		print(hehe) //输出全局变量
+		//运行正常输出2和6
+	4.全局变量和函数中使用global修饰
+		hehe = 6
+		def f():
+			global hehe //使用模块内的全局变量
+			print(hehe) //输出6
+			hehe = 3 //全局变量赋值为3
+		f()
+		print(hehe) //输出3
+		//运行正常输出6和3
+
+**3.模块搜索路径**
 
 	//搜索路径在sys模块的path变量中
 	>>>import sys
@@ -917,6 +967,7 @@ python对匿名函数的支持有限
 	>>>sys.path.append('pathname')    //运行时修改,结束后失效
 	//method 2
 	设置环境变量PYTHONPATH---不是很清楚
+
 ***
 
 ## 7、 面向对象编程
@@ -1117,6 +1168,7 @@ python对匿名函数的支持有限
 **metaclass---用于创建类.一般不会用**
 
 创建类实例的流程是:先定义metaclass,然后创建类,最后通过类创建实例.
+
 ***
 
 ## 8、错误、调试和测试
@@ -1376,9 +1428,42 @@ pdb.set_trace():设置一个断点
 
 	with open('./defy/test.txt', 'w') as f:
 		f.write('Hello, world!')	//这种方法不用调用f.close(),系统自动调用.代码简洁
+
+### 9.3 StringIO和BytesIO
+
+读写数据时,有时不必要在文件中操作.可以直接在内存中进行读写.StringIO就可以在内存中读写str.
+
+**实例1**
+
+	from io import StringIO //导入StringIO
+	1.创建一个StringIO
+	f = StringIO()
+	2.向StringIO中写入数据
+	f.write('hello') //往StringIO中写入hello.retval:返回写入的字节数(此次返回5)
+	f.write(' ') //此次返回1
+	f.write('world!') //此次返回6
+	3.获取写入的数据
+	print(f.getvalue()) //返回"hello world!"
+
+**实例2**
+
+	from io import StringIO //导入StringIO
+	f = StringIO('Hello!\nHi!\nGoodbye!') //可以直接用一个str初始化StringIO.之后可以向读文件一样的读取
+	while True:
+		s = f.readline() //读取一行的内容
+		if s == '': //读到空(没有内容了)
+			break
+		print(s.strip())
+
+	/*结果为:
+		Hello!
+		Hi!
+		Goodbye!
+	*/
+
 ***
 
-## 10 os及sys模块
+## 10 Python内置模块
 
 ### 10.1 os模块
 
@@ -1401,6 +1486,8 @@ pdb.set_trace():设置一个断点
 	//先将新目录的完整路径表示出来.第一个通常为绝对路径(也可以用相对路径).两个路径会合成为一个
 	2)os.mkdir('/user/defy/testdir')			//创建一个目录
 	os.rmdir('/user/defy/testdir')				//删除一个目录
+	3)os.path.isfile('/user/defy/test.txt') 
+	//判断"user/defy/test.txt"是否是一个存在的文件,如果是返回True,否则返回False.
 
 	//拆分路径
 	os.path.split('/user/defy/testdir/file.txt')
@@ -1457,6 +1544,31 @@ os.chdir(path):change directory,切换目录到path.
 	>>> import sys
 	>>> sys.version //结果为:'2.7.5 (default, Feb 27 2017, 22:30:25) \n[GCC 4.9.4]'
 					//表示当前python版本为"2.7.5"
+
+### 10.3 random模块
+
+	#!/usr/bin/python
+	# -*- coding:utf-8 -*-
+
+	import random
+
+	print(random.random()) 		//随机产生[0, 1)之间的数(e.g. 0.189xxx)
+	print(random.randint(1, 6)) //随机产生[1,6]之间的整数(e.g. 2)
+	print(random.randrange(1, 3)) //随机产生[1, 3)之间的整数(e.g. 1)
+	print(random.randrange(0, 101, 2)) //随机产生[0, 101)步长为2的数(e.g. 74)
+	print(random.choice("hello")) //从指定字符串中随机取出一个字符(e.g."e")
+	print(random.choice([1, 2, 3, 4])) //从列表中随机取出一个元素(e.g.2)
+	print(random.choice(("abc", "123", "liu"))) //从tuple中随机取出一个元素(e.g."liu")
+	print(random.sample("hello", 3)) //从列表中随机取出3个元素(e.g.'l', 'h', 'o')
+	print(random.uniform(1, 10)) //随机产生指定区域的浮点数(e.g.1.2919)
+
+	/*
+		random.shuffle(list):将列表中的所有元素随机排序
+	*/
+	items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+	print("洗牌前:", items) //洗牌前: [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+	random.shuffle(items)
+	print("洗牌后:", items) //洗牌后: [6, 9, 2, 7, 1, 3, 8, 5, 4, 0]
 
 ***
 
@@ -1963,8 +2075,17 @@ Python下载地址[Python下载地址](https://www.python.org/downloads/)
 	
 	#打开一个图像文件
 	im = Image.open('/users/defy/test.jpg') //绝对路径,尝试过相对路径会报错
+	pix = im.load() 
+	//load()方法可以得到整个的像素信息.pix内部为由width和height确定的像素点.
+	//每个像素点都是由R,G,B构成
 	#获得图像尺寸
-	w, h = im.size //得到图像的宽,高
+	w, h = im.size //得到图像的宽,高-->size后面没有"()"
+	#输出像素信息
+	for x in range(w):
+		for y in range(h):
+			print pix[x, y] //输出每个像素点构成的R,G,B值
+			r, g, b = pix[x, y] //也可以这样得到r,g,b的值
+	#缩略
 	im.thumbnail(w//2, h//2) //"//"在python 3.x中表示整除; "/":表示浮点除法
 		//Image.thumbnail:按照宽、高对图形进行缩略.在缩略时,保持图片的宽高比例.
 	#保存图片
@@ -2086,9 +2207,18 @@ subprocess模块中定义了一个Popen类,用于创建子进程.
 
 	sout, serr = res.communicate()
 	/*
-	sout:是一些标准输出的信息(一些string信息)
+	sout:是一些标准输出的信息,是个文件对象.要读取需要"obj.stdout.read()"
 	serr:是一些标准错误的信息(一些string信息)
 	*/
+
+	#!/usr/bin/python
+	# -*- coding:utf-8 -*-
+	import subprocess
+	import os
+	p = Popen('/home/app', stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+	p.stdin.write('3 \n') //从标准输入写入信息
+	p.stdin.write('4 \n')
+	print p.stdout.read() //读出标准输出
 
 4.poll():检查子进程是否结束.
 
@@ -2237,14 +2367,53 @@ enumearte函数遍历序列中的元素以及他们的下标:
 		2 
 
 
-**eval()函数**
+### 17.2 eval()函数
 
 	params = ['open_keys_test', 'check_set_format', 'check_kl_algo']
 	for param in params:	#从list中提取出每一个元素
 		if eval('%s(obj, devices)' % param):	#提取出来的param替换s,构成调用函数
 			# e.g. open_keys_test(obj, devices)
+		
+eval()函数返回值:成功返回0;失败返回非0
 
-*eval()函数返回值:成功返回0;失败返回非0*
+### 17.3 max(list)函数
+
+max(list)函数返回给定参数的最大值(按照ASCII码表进行比较).
+
+	1.字符串
+		a = '1, 2, 3, 4' //类型为字符串
+		max(a) //返回'4',最大的字符串
+	2.数字列表
+		a = [1, 2, 3, 4]
+		max(a) //返回4
+	3.由tuple构成的list.先比较tuple中的第一个元素,相同再比较第二个元素
+		a = [(1, 2), (2, 3), (3, 1)]
+		max(a) //返回(3, 1)
+	4.tuple中第一个元素相同,比较第二个元素
+		a = [(1, 3), (2, 2), (3, 1), (3, 2)]
+		max(a) //返回(3, 2)
+	5.字符与数字比较
+		a = [(1, 3), (2, 2), (3, 1), (3, 'b'), ('a', 1)]
+		max(a) //返回('a', 1)->字母的ASCII码值比数字大
+
+### 17.4 sum()函数
+
+sum(list, num)对list进行求和后再加上num(num可省略)
+
+	sum([0, 1, 2]) //结果为3
+	sum((2, 3, 4), 1) //tuple计算总和后再加1.结果为:10
+	sum([0, 1, 2, 3, 4], 2) //list计算总和后再加2.结果为:12
+	
+### 17.5 len()函数
+
+len(list)返回字符、list、tuple等的长度或元素个数.
+
+	1.字符串
+	str = "runoob"
+	len(str) //字符串长度(也即字符串个数)为:6
+	2.元素个数
+	l = [1, 2, 3, 4, 5]
+	len(l) //list元素个数为: 5
 
 ### Python类及实例的应用
 
@@ -2456,6 +2625,75 @@ enumearte函数遍历序列中的元素以及他们的下标:
 			python = sys.version //获取当前python的版本
 		))
 
+**screenshot.py---截图代码**
+
+	# -*- coding:utf-8 -*-
+	'''
+	手机屏幕截图代码
+	'''
+	import subprocess
+	import os, sys
+	from PIL import Image
+	from io import StringIO
+
+	try:
+		from common.auto_adb import auto_adb
+	except Exception as ex:
+		print(ex)
+		print('Please run the script in the root directory')
+		print('Please check whether the common folder exists under the root direcotry')
+		exit(1)
+	adb = auto_adb.adb() //使用auto_adb.py中的adb()类
+	SCREENSHOT_WAY = 3 //截图方法(总共0-3 四种)
+
+	def pull_screenshot():
+		'''
+		获取屏幕截图,0 1 2 3 四种方法
+		'''
+		global SCREENSHOT_WAY //使用全局变量"SCREENSHOT_WAY"
+		if 1 <= SCREENSHOT_WAY <= 3:
+			process = subprocess.Popen(adb.adb_path + 'shell creencap -p', 
+				shell = True, stdout = subprocess.PIPE) 
+				//adb shell screencap -p:Android程序中的截图命令
+			binary_screenshot = process.stdout.read()
+				//obj.stdout具有文件属性,可以直接read.保存到binary_screenshot中
+			if SCREENSHOT_WAY == 2:
+				binary_screenshot = binary_screenshot.replace(b'\r\n', b'\n')
+				//将文件中的'\n'替换为'\r\n'
+			elif SCREENSHOT_WAY == 1:
+				binary_screenshot = binary_screenshot.replace(b'\r\r\b', b'\n')
+			return Image.open(StringIO(binary_screenshot))
+				//StringIO将位于内存中的str转变成类似一个文件,可以进行open,read,write等操作
+		elif SCREENSHOT_WAY == 0:
+			adb.run('shell screencap -p /sdcard/autojump.png')
+				//将截图保存到"/sdcard/autojump.png"
+			adb.run('pull /sdcard/autojump.png .')
+				//将图片"/sdcard/autojump.png"拷贝到电脑"."当前目录
+			return Image.open('./autojump.png') //打开图片
+			
+	def check_screenshot():
+		'''
+		检查获取截图的方式
+		'''
+		global SCREENSHOT_WAY
+		if os.path.isfile('autojump.png'): //检查文件是否存在,存在返回True;不存在返回False
+			try:
+				os.remove('autojump.png') //删除autojump.png文件
+			except Exception:
+				pass
+		if SCREENSHOT_WAY < 0:
+			print('Don't support such device')
+			sys.exit()
+			//sys.exit()退出会引发SystemExit异常,可以捕获该异常做清理工作.比较优雅
+		try:
+			im = pull_screenshot()
+			im.load() //得到像素信息(e.g. pix = im.load() )
+			im.close() //关闭
+			print('采用方式 { } 获取截图'.format(SCREENSHOT_WAY))
+		except Exception:
+			SCREENSHOT_WAY -= 1
+			check_screenshot()
+
 **wechat_jump_auto.py**
 
 	# -*- coding: utf-8 -*-
@@ -2499,6 +2737,87 @@ enumearte函数遍历序列中的元素以及他们的下标:
 		density_val = int(matches.group(0)) //拿到第一个值
 		head_diameter = density_val / 8 //为什么是"/8"????
 
+	def find_piece_and_board(im):
+		'''
+		找到关键坐标
+		'''
+		w, h = im.size //得到图像的宽,高
+		points = [] //所有满足像素的点集合
+		piece_y_max = 0
+		board_x = 0
+		board_y = 0
+		scan_x_border = int(w/8) //扫描棋子时的左边界
+		scan_start_y = 0 //扫描时的起始y坐标
+		im_pixel = im.load() //得到所有像素点信息
+		
+		//在高度方向的中间1/3,以50 px为步长,寻找scan_start_y
+		for i in range(int(h / 3), int(h * 2 / 3), 50):
+			last_pixel = im_pixel[0, i] //保存起始像素点,用于比较
+			for j in range(1, w):
+				pixel = im_pixel[j, i] //当前像素点
+				//像素点不同,找到scan_start_y
+				if pixel != last_pixel
+					scan_start_y = i - 50
+					break
+			if scan_start_y: //该值不为0,跳出循环
+				break
+		print('start can Y axis: {}'.format(scan_start_y))
+
+		//从scan_start_y开始扫描,棋子位于屏幕的上半部分(1/3~2/3)
+		for i in range(scan_star_y, int(h * 2 / 3)):
+			for j in range(scan_x_border, w - scan_x_border): 
+				//扫描x从左边的1/8 width到距离右边1/8 width的范围.
+				pixel = im_pixel[j, i] //保存像素点,用于判断
+				if (50 < pixel[0] < 60) \
+					and (53 < pixel[1] < 63) \
+					and (95 < pixel[2] < 110):
+				//像素点的G,R,B值分别为上述值.该值表示一个偏黑的灰色
+				points.append((j, i)) //增加满足要求的一个像素点
+				piece_y_max = max(i, piece_y_max) //找到最大的y值
+		
+		bottom_x = [x for x, y in points if y == piece_y_max] //最低那条线的点的横坐标
+		if not bottom_x: //判断list是否为空
+			return 0, 0, 0, 0, 0
+
+		piece_x = int(sum(bottom_x) / len(bottom_x)) //求x值的中间值
+		piece_y = piece_y_max - piece_base_height_1_2 //上移棋子底盘高度的一半
+		
+		if piece_x < w /2: //棋子在屏幕的左边
+			board_x_start = piece_x //以棋子的中心作为棋盘扫描的起点
+			board_x_end = w //终点是屏幕的宽度
+		else: //棋子在屏幕的右边
+			board_x_start = 0 //从屏幕的最左边(0)作为棋盘扫描的起点
+			board_x_end = board_x //终点为棋子的中心
+
+		for i in range(int(h / 3), int(h * 2 / 3)): //高度的1/3~2/3
+			last_pixel = im_pixel[0, i] //保存像素点,用于判断
+			if board_x or board_y:
+				break
+			board_x_sum = 0
+			board_x_c = 0
+
+			for j in range(int(board_start), int(board_x_end)): //扫描x坐标
+				pixel = im_pixel[j, i]
+				if abs(j - piece_x) < piece_body_width: //宽度差小于棋子的宽度,重新增加
+					continue
+
+				/*
+				1.检查当前像素与背景像素有差别;
+				2.检查y轴下面的5个像素,防止干扰*/
+				ver_pixel = im_pixel[j, i + 5]
+				if abs(pixel[0] - last_pixel[0]) \
+						+ abs(pixel[1] - last_pixel[1]) \
+						+ abs(pixel[2] - last_pixel[2]) > 10 \
+						and abs(ver_pixel[0] - last_pixel[0]) \
+						+ abs(ver_pixel[1] - last_pixel[1]) \
+						+ abs(ver_pixel[2] - last_pixel[2]) > 10:
+					board_x_sum += j
+					board_x_c += 1
+			if board_x_sum:
+				board_x = board_x_sum / board_x_c //求的棋盘宽度方向上的中点
+		
+		last_pixel = im_pixel[board_x, i]
+
 	def yes_or_no():
 		'''
 		检查是否已经为启动程序做好准备
@@ -2521,6 +2840,16 @@ enumearte函数遍历序列中的元素以及他们的下标:
 		print('程序版本号:{}'.format(VERSION))
 		print('激活窗口并按Ctrl+C组合键退出')
 		debug.dump_device_info()
+		screenshot.check_screenshot()
+
+		i, next_rest, next_rest_time = (0, random.randrange(3, 10),
+										random.randrange(5, 10))
+
+		while True:
+			im = screenshot.pull_screenshot() //抓到截图
+			//从截取的图片中获取棋子和board的位置
+			piece_x, piece_y, board_x, board_y, delta_piece_y = find_piece_and_board(im)
+			
 
 	if __name__ == '__main__':
 		try:

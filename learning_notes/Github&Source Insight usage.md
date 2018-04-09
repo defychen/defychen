@@ -166,6 +166,18 @@
 		git remote set-url --delete origin https://github.com/defychen/defychen.git
 			//删掉一个origin
 
+## 1.10 git创建一个新的branch
+
+	1.本地创建分支
+		git branch branch_name(自己创建的分支名)
+	2.切换到创建的新分支(可以先查看下现在处于什么分支:git branch)
+		git checkout branch_name(自己创建的分支名)
+	3.添加需要提交到该分支的代码,然后进行提交的相关动作
+		git add .
+		git commit -m "Create a new branch"
+		git push origin branch_name(自己创建的分支名)
+	4.查看一下远程仓库有几个分支
+		git branch -a	//会显示新创建的分支
 
 ***
 
