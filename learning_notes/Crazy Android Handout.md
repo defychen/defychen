@@ -1,10 +1,70 @@
-# Crazy Android Handout(疯狂Android讲义)
+# Part 1. Crazy Android Handout(疯狂Android讲义)
 
 ## Chapter 1 Android应用与开发环境
 
+### 1.1 Android的发展和历史
+
+Android是由Andy Rubin创立的一个手机操作系统,后来被Google收购.
+
+Android系统的底层是建立在Linux系统之上.Android平台由操作系统、中间件、用户界面和应用软件4层组成,采用被称为软件叠层(Software Stack)的方式进行构建.Software Stack结构使得层与层之间相互分离,保证层与层之间的低耦合性.
+
+**Android的体系结构(由5部分构成)---由上到下划分**
+
+1.应用程序层
+
+包括一些Android的核心应用程序(e.g.电子邮件客户端、SMS程序、日历、地图、浏览器、联系人等).应用程序都是用Java编写.
+
+2.应用程序框架
+
+应用程序框架位于应用程序层之下,它提供大量的API供开发者调用来开发应用程序.
+
+3.函数库
+
+函数库位于应用程序框架之下,由应用程序框架来调用,应用程序不能直接调用函数库.
+
+	一些重要的函数库:
+	1.系统C库:即libc库,从BSF系统派生出来的标准C系统库.
+	2.媒体库:基于PacketVideo的OpenCORE.用于支持播放和录制音视频格式以及查看静态图片
+		.包括:MPEG4, H.264, MP3, AAC, AMR, JPG, PNG等多媒体格式.
+	3.Surface Manager:管理对显示子系统的访问,并提供对多个应用程序的2D和3D图层机提供无缝整合.
+	4.LibWebCore:一个全新的Web浏览器引擎.该引擎为Android浏览器提供支持,也为WebView提供支持.
+	5.SGL:底层的2D图形引擎.
+	6.3D libraries:基于OpenGL ES 1.0 API实现的3D系统,这套3D库既可以使用硬件加速(硬件系统支持),
+		也可以使用高度优化的软件3D加速.
+	7.FreeType:位图和向量字体显示.
+	8.SQLite:供所有应用程序使用的、功能强大的轻量级关系数据库.
+
+4.Android运行时
+
+Android运行时包括两部分:Android核心库集和Dalvik虚拟机.核心库集提供Jave语言核心库所有使用的大部分功能,Dalvik虚拟机则负责运行Android应用程序.
+
+	每个Android应用程序都运行在单独的Dalvik虚拟机内(即每个Android应用程序对应一条Dalvik进程).
+	Dalvik专门针对同时高效运行多个虚拟机进行了优化,方便对应用程序实现隔离.
+
+Java JRV和Android运行时区别:
+
+	1.Java中的JRE(Jave运行时)包括JVM(Java虚拟机)和其他功能函数库
+		JVM虚拟机运行的是Jave字节码(.class文件).JVM直接从.class文件或JAR包中加载字节码然后运行.
+	2.Android运行时包括Dalvik虚拟机和核心库集.
+		Dalvik虚拟机运行的是专有的dex文件(Dalvik Executable文件).Dalvik需要通过DX工具将应用程序的所有
+		.class文件编译成.dex文件,最终运行该.dex文件.
+
+Dalvik虚拟机的特点:
+
+	1.适合在移动终端上使用,不需要很快的CPU计算速度和大量的内存空间;
+	2.运行专有的.dex文件.dex文件会减少.class文件中的冗余信息,而且会把所有的.class文件整合到一个文件中,
+		从而提供运行性能;而且DX工具还会对.dex文件进行一定的性能优化.
+	3.基于寄存器实现.大多数虚拟机(JVM)都是基于栈的,而Dalvik虚拟机基于寄存器实现.基于寄存器实现的虚拟具有更好的
+		性能表现,但是硬件通用性较差.
+	4.Dalvik虚拟机依赖于linux内核提供的核心功能(e.g.线程和底层内存管理)
+
+5.Linux内核
+
+Android系统建立在Linux 2.6之上.
+
 ***
 
-# Andriod Practical Skills
+# Part 2. Andriod Practical Skills
 
 ## 1. ADB命令详解
 
