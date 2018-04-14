@@ -139,6 +139,15 @@ Andriod手机的截图命令
 	adb pull /sdcard/screen.png . //将手机中的图片拷贝到电脑的"."当前目录
 	adb shell rm /sdcard/screen.png //删除手机中的图片
 
+**adb shell input swipe src_x src_y tgt_x tgt_y m_time**
+
+滑动手势解锁:起点(src_x, src_y);终点(tgt_x, tgt_y);滑动时间(m_time(ms))
+
+	//滑动
+	adb shell input swipe 100 100 200 200 300 //从(100, 100)经过300ms滑动到(200, 200)
+	//长按
+	adb shell input swipe 100 100 100 100 1000 //在(100, 100)的位置长按1000ms
+
 ## 2. dpi、dip、分辨率、屏幕尺寸、px、density关系及换算
 
 ### 2.1 概念

@@ -1532,3 +1532,82 @@ unused属性用于函数和变量,表示该函数或变量可能不使用.
 		0xffff fff8--->取反: 0x8000 0007
 	3.读出该值:
 		为-7.
+
+## 53. 全局变量不能定义在被多个.c文件包含的头文件中
+
+**1.未加static将全局变量定义在头文件中**
+
+未加static,所有的定义预设为外部链接,此时头文件被.c文件包含以后,等于有两个或更多同等定义的全局变量存在于不同的翻译单元.编译器可以正常编译通过,但是链接器在解析交叉引用时会报告"符号被多重定义"的错误.
+
+	1.defineGlobal.h
+		int global; //定义global全局变量的头文件
+	
+	2.test1.c
+	#include "defineGlobal.h" //包含定义global全局变量的头文件
+
+	3.test2.c
+	#include "defineGlobal.h" //包含定义global全局变量的头文件
+
+	/*
+	编译:
+		g++ -std=c++11 DefineGlobal.h GlobalTest1.c GlobalTest2.c //正常通过
+	链接:
+		C:\Users\\AppData\Local\Temp\ccseJhV1.o:GlobalTest2.c:(.bss+0x0): multiple definition of `global'
+			//报global被多重定义的错误.
+		C:\Users\\AppData\Local\Temp\cccqfbA0.o:GlobalTest1.c:(.bss+0x0): first defined here
+	*/
+
+**2.加static将全局变量定义在头文件中**
+
+加static,此时使定义的变量变为内部链接.头文件被.c文件包含以后,等于有多个同名的但不同等的定义的全局变量(相当于在每个.c都有自己单独的static全局变量).每个翻译单元中的全局变量维持自己的内存区域,此时链接器不会报任何错误.但是此时是错误的,因为多个文件不共享同一个全局变量,失去全局变量的意义.
+
+	1.defineGlobal.h
+	#ifndef __DEFINE_GLOBAL_H__
+	#define __DEFINE_GLOBAL_H__
+	
+	static int global; //static全局变量
+
+	#endif
+
+	2.test1.c
+	#include <stdio.h>
+	#include "defineGlobal.h"
+	
+	void print1()
+	{
+		global = 1; //此时test1.c有自己单独的global全局变量
+		printf("print1: %d\n", global); //输出值为1
+	}
+
+	3.test2.c
+	#include <stdio.h>
+	#include "defineGlobal.h"
+
+	void print2()
+	{
+		printf("print2: %d\n", global); //test2.c单独有自己的global全局变量.此时输出值为0
+		global = 2;
+		printf("print2: %d\n", global); //输出值为2
+	}
+
+	4.main.c
+	extern void print1();
+	extern void print2();
+
+	int main()
+	{
+		print1();
+		print2();
+		return 0;
+	}
+
+	/*
+		输出结果为:
+		print1: 1
+		print2: 0
+		print2: 2
+	*/
+
+**3.结论**
+
+全局变量不能定义在被多个.c文件包含的头文件中.

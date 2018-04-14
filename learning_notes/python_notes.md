@@ -36,6 +36,7 @@ raw_input()读取的内容永远是以字符串的形式返回,如果需要整�
 	>>> print 'hello, world' /*输出"hello,world"*/
 	>>> print 'The quick brown fox', 'jumps over', 'the lazy dog'
 	# 其输出为The quick brown fox jumps over the lazy dog(","会输出空格,但是会忽略","后面的空格)
+
 ***
 
 ## 2、Python基础
@@ -204,6 +205,24 @@ replace函数用于替换对应的字符串.
 	//k[6:8]:表示取k字符串的第6、第7两个字符,即78; "+"表示将所取的字符串连接起来变成一个长字符串
 	//int('xxx', 16)---表示将16进制数转成10进制
 	print 'v value: 0x%x' % v	//将v以16进制输出
+
+### 2.6 Python中的del的使用
+
+python中变量都是引用,del语句作用在变量/对象上,是删除变量对某数据的引用
+
+	1.对普通变量/对象使用del
+		a = 1 //对象1被变量a引用.对象1的引用计数器为1
+		b = a //对象1被变量b引用.对象1的引用计数器加1
+		c = a //对象1被变量c引用.对象1的引用计数器加1
+		del a //删除变量a,解除a对1的引用
+		del b //删除变量b,解除b对1的引用
+		print c //最终变量c仍然引用1
+	2.对list元素使用del
+		li = [1, 2, 3, 4, 5] //列表本身不包含数据1, 2, 3, 4, 5;而是包含变量: li[0], li[1],...,li[4]
+		first = li[0] //first变量引用li[0]变量指定的数据,即1
+		del li[0] //删除变量li[0],解除li[0]对1的引用
+		print(li) //li[0]变量被删除.因此结果为[2, 3, 4, 5]
+		print(first) //输出1
 
 ***
 
@@ -1526,9 +1545,23 @@ os.chdir(path):change directory,切换目录到path.
 	//切换到"/usr/defy/test"目录
 	os.chdir('/usr/defy/test') //只能使用绝对路径
 
+**os.path.isdir函数**
+
+os.path.isdir(pathname):如果pathname是一个存在的目录,返回True;否则返回False.
+
+**os.mkdir函数**
+
+os.mkdir(pathname, mode):以权限mode创建一个名叫pathname的目录(如果没有指定mode,则为0777).
+
+	import os
+	path = "/usr/defychen/test"
+	
+	os.mkdir(path, 0755)	//创建path目录
+	os.mkdir(path) //创建path目录,权限为0777
+
 ### 10.2 sys模块
 
-**sys.platform**
+**1.sys.platform**
 
 获取当前系统平台.
 
@@ -1536,7 +1569,7 @@ os.chdir(path):change directory,切换目录到path.
 	>>> import sys
 	>>> sys.platform //结果为:linux2--->linux 2.x/3.x/4.x都显示为linux2
 
-**sys.version**
+**2.sys.version**
 
 获取当前python的版本信息
 
@@ -1544,6 +1577,14 @@ os.chdir(path):change directory,切换目录到path.
 	>>> import sys
 	>>> sys.version //结果为:'2.7.5 (default, Feb 27 2017, 22:30:25) \n[GCC 4.9.4]'
 					//表示当前python版本为"2.7.5"
+
+**3.sys.stdout.write**
+
+往标准输出(一般为屏幕)写入字符串,一般配合sys.stdout.flush将字符串从标准输出打出来
+
+	import sys
+	sys.stdout.write('xxxx....')
+	sys.stdout.flush()
 
 ### 10.3 random模块
 
@@ -1569,6 +1610,139 @@ os.chdir(path):change directory,切换目录到path.
 	print("洗牌前:", items) //洗牌前: [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
 	random.shuffle(items)
 	print("洗牌后:", items) //洗牌后: [6, 9, 2, 7, 1, 3, 8, 5, 4, 0]
+
+### 10.4 shutil模块
+
+shutil:High level file operations(高级的文件操作模块).
+
+os模块提供了对目录/文件的新建、删除、查看文件属性,还提供了对文件以及目录的路径操作.但是os模块没有提供对文件/目录的移动、复制、打包、压缩、解压缩等的操作.shutil就是对os模块这方面的补充.
+
+**1.shutil.copyfileobj(fsrc, fdst, length=16*1024)---需要先打开文件**
+
+从fsrc copy文件内容到fdst,可以指定copy的大小(默认为16*1024字节).但fsrc,fdst必须是已经打开的文件.
+
+	import shutil
+	f1 = open('fsrc_pathname', 'r')
+	f2 = open('fdst_pathname', 'w+') //以可写方式打开
+	shutil.copyfileobj(f1, f2, length=1*1024) //copy 1*1024(即1K)
+	shutil.copyfileobj(f1, f2) //copy 16*1024(即16K)
+
+**2.shutil.copyfile(src, dst)---直接指定文件名即可(不需要打开文件)**
+
+从文件名src copy内容到文件名dst,不需要打开文件.
+
+	import shutil
+	shutil.copyfile('fsrc_pathname', 'fdst_pathname')
+
+**3.shutil.copymode(src, dst)---仅copy文件的权限.其他都不copy.**
+
+copy src的文件权限到dst.
+
+	1.copy前两个文件的权限: ls -l
+		-rw-r--r--. 1 root root 79 May 14 05:17 test1
+		-rwxr-xr-x. 1 root root  0 May 14 19:10 test2
+	2.实现copy动作
+		import shutil
+		shutil.copymode('test1', 'test2')
+	3.copy后两个文件的权限: ls -l
+		-rw-r--r--. 1 root root 79 May 14 05:17 test1
+		-rw-r--r--. 1 root root  0 May 14 19:10 test2 //test2的文件权限和test1一样
+	PS:如果目标文件为一个不存在的文件会报错
+
+**4.shutil.copystat(src, dst)---copy所有的状态信息(包括:权限,组,用户,时间等)**
+
+copy src的文件状态信息到dst.
+
+	import shutil
+	shutil.copystat('fsrc_pathname', 'fdst_pathname')
+
+**5.shutil.copy(src, dst)---copy文件的内容及权限,即先copyfile后copymode**
+
+	import shutil
+	shutil.copy('fsrc_pathname', 'fdst_pathname')
+
+**6.shutil.copy2(src, dst)---copy文件的内容及文件的所有状态信息,即先copyfile后copystat**
+
+类似于linux下的cp命令.
+
+	import shutil
+	shutil.copy2('fsrc_pathname', 'fdst_pathname')
+
+**7.shutil.copytree(src, dst, symlinks=False, ignore=None)---递归的复制文件内容及状态信息**
+
+类似于linux下的cp -r命令(递归复制).
+
+	1.tree copytree_test/ //目录树
+		copytree_test/
+		└── test
+		    ├── test1
+		    ├── test2
+		    └── hahaha
+	2.shutil.copytree('copytree_test', 'copytree_copy') //得到一个copytree_copy
+	3.查看: tree copytree_copy/
+		copytree_copy/
+		└── test
+		    ├── hahaha
+		    ├── test1
+		    └── test2
+
+**8.shutil.rmtree(path, ignore_errors=False, noerror=None)---递归的删除文件**
+
+类似于linux下的rm -rf命令.
+
+	import shutil
+	shutil.rmtree('pathname')
+
+**9.shutil.move(src, dst)---递归的移动文件**
+
+类似于linux下的mv命令(重命名).
+
+	shutil.move('pathname1', 'pathname2')
+
+**10.shutil.make_archive(base_name, format, root_dir=None...)**
+
+base_name:压缩后的文件名或路径名.
+
+format:压缩或打包的格式(e.g.zip, tar, bztar, gztar等)
+
+root_dir:需要打包的源文件/目录.
+
+	import shutil
+	shutil.make_archive('mytar', 'gztar', root_dir='copytree_test')
+
+	ls -l
+	-rw-r--r--. 1 root   root      0 May 14 21:12 mytar.tar.gz
+
+**11.压缩及解压缩更常用的处理是调用zipfile和tarfile两个模块来处理**
+
+	1.zipfile的使用
+		import zipfile
+		
+		//压缩
+		z = zipfile.ZipFile('myzip.zip', 'w') //创建压缩包
+		z.write('a.log') //将a.log文件放到压缩包中
+		z.write('data.data') //将data.data文件放到压缩包中
+		z.close() //关闭创建的压缩包
+	
+		//解压
+		z = zipfile.ZipFile('myzip.zip', 'r')
+		z.extractall() //将所有文件解压出来
+		z.close()
+	2.tarfile的使用
+		import tarfile
+		
+		//压缩
+		tar = tarfile.open('mytar.tar', 'w')
+		tar.add('/usr/defy/test1.log', arcname='test1.log')
+		//将'/usr/defy/test1.log'文件以test1.log名字放到压缩包中
+		tar.add('/usr/defy/test2.log', arcname='test2.log')
+		//将'/usr/defy/test2.log'文件以test2.log名字放到压缩包中
+		tar.close() //关闭创建的压缩包
+
+		//解压
+		tar = tarfile.open('mytar.tar', 'r')
+		tar.extractall() //可设置解压的地址
+		tar.close()
 
 ***
 
@@ -2030,13 +2204,17 @@ socket:表示打开了一个网络连接.
 
 ## 15 常用的第三方模块
 
-### 15.1 PIL模块
+### 15.1 PIL库
 
 pip:python中安装第三方模块的包管理工具,通过它,就能安装编程时常用的一些模块.
 
 PIL:Python Imaging Library.是Python平台的图像处理标准库.
 
 Pillow:基于PIL,处理Python 3.x的图形图像库.PIL只能处理到Python 2.x, Pillow模块能处理到Python 3.x.
+
+**图像的坐标表示**
+
+图像中左上角是坐标原点(0, 0),X轴是从左到右增长.Y轴是从上到下增长.
 
 #### 15.1.1 Python、PIL、Pillow相关模块的安装
 
@@ -2063,7 +2241,7 @@ Python下载地址[Python下载地址](https://www.python.org/downloads/)
 		3.安装pillow
 			在cmd中执行"pip install Pillow",就会自动安装Pillow.
 
-#### 15.1.2 PIL模块的使用
+#### 15.1.2 PIL库的使用简介
 
 **1.操作图像**
 
@@ -2179,6 +2357,71 @@ Python下载地址[Python下载地址](https://www.python.org/downloads/)
 	#fuzzy processing(模糊处理)
 	image = image.filter(ImageFilter.BLUR)
 	image.save('/usr/defychen/code.jpg', 'jpeg')
+
+#### 15.1.4 PIL库中Image模块的使用
+
+**1.新建一个空白图片文件**
+
+	#!/usr/bin/python
+	# -*- coding: utf-8 -*-
+
+	width = 60 * 4 //宽度
+	heigth = 60 //高度
+	from PIL import Image
+	im = Image.new('RGB', (widht, height), "white")
+		/*
+		para1:mode,此处表示为RGB模式;
+		para2:size
+		para3:color.此处使用"white"字符串表示白色.也可以使用(255, 255, 255),RGB这种模式.
+		*/
+
+**2.保存图片文件**
+
+	im.save('/user/defy/thumbnai.jpg', 'jpeg')
+	//para1:文件名; para2:格式. xxx.jpg就是jpeg格式,
+
+#### 15.1.5 PIL库中ImageDraw模块的使用
+
+ImageDraw模块主要用于对image进行相关的操作.
+
+**1.ImageDraw.Draw(image)**
+
+ImageDraw.Draw(image):创建一个用来对image进行操作的对象.后续的所有操作都必须先创建这个对象.
+
+	drawObject = ImageDraw.Draw(im)
+
+**2.drawObject.line([x1, y1, x2, y2], options)**
+
+以(x1, y1)为起点,(x2, y2)为终点画一条线.options包含fill选项指定线条的颜色(e.g.fill=2->表示颜色;width=3->表示线条的宽度).
+
+[x1, y1, x2, y2]也可以写成:(x1, y1, x2, y2); [(x1, y1), (x2, y2)]; ((x1, y1) + (x2, y2))等.
+
+	#!/usr/bin/python
+	# -*- coding: utf-8 -*-
+
+	from PIL import Image, ImageDraw
+
+	width = 60 * 4
+	height = 60
+	
+	im = Image.new('RGB', (width, height), (255, 255, 255))
+	
+	drawObject = ImageDraw.Draw(image) //创建ImageDraw对象
+	drawObject.line((60, 20, 60, 40), fill = 2, width = 3) //画一条竖线
+	drawObject.line([60, 20, 180, 20], fill = 128) //画一条横线
+	drawObject.line((180, 20), (180, 40), "black") //画一条竖线.颜色为黑色
+	drawObject.line((60, 40) + (180, 40), fill = "yellow") //画一条横线.颜色为黄色
+
+	im.save('/usr/defychen/code.jpg', 'jpeg')
+
+**3.drawObject.ellipse([x1, y1, x2, y2], options)**
+
+以(x1,y1)和(x2, y2)为坐标画圆/椭圆. options中的fill指定填充圆/椭圆的颜色; outline指定圆的颜色(圆的外轮廓)
+
+	drawObject.ellipse((60, 20) + (180, 40), fill = 'blue')
+	//以蓝色填充以(60, 20)和(180, 40)构成的椭圆.
+
+#### 15.1.6 PIL库中ImageFont模块的使用
 
 ### 15.2 subprocess模块
 
@@ -2415,6 +2658,88 @@ len(list)返回字符、list、tuple等的长度或元素个数.
 	l = [1, 2, 3, 4, 5]
 	len(l) //list元素个数为: 5
 
+### 17.6 round()函数
+
+round(x, n)返回浮点数x的四舍五入值, n表示保留几位小数(如果没有默认保留1位小数).
+
+	round(2.234) //结果为2.0(默认保留1位小数)
+	round(2.235, 2) //结果为2.23,保留2位小数(但是5也会舍去,只有大于5才会进1)
+	round(2.236, 2) //结果为2.24.
+
+### 17.7 any()/all()函数
+
+**any**
+
+any(list/tuple):list/tuple中的元素全部为0或''或False返回False;其他返回True.
+
+PS:any([])空列表返回False; any(())空tuple返回False.
+
+	1.list
+	any(['a', 'b', 'c', 'd']) //返回True
+	any(['a', 'b', '', 'd']) //返回True.存在一个空的元素
+	any([0, '', False]) //返回False.全部元素为0或''或False
+	2.tuple
+	any(('a', 'b', 'c', 'd')) //返回True
+	any(('a', 'b', '', 'd')) //返回True.存在一个空的元素
+	any((0, '', False)) //返回False.全部元素为0或''或False
+	3.空list或空tuple
+	any([]) //空列表返回False
+	any(()) //空tuple返回False
+
+**all**
+
+all(list/tuple):list/tuple全部元素都不是0,'',False返回True;否则返回False.
+
+PS:all([])空列表返回True; all(())空tuple返回True.
+
+	1.list
+	all(['a', 'b', 'c', 'd']) //返回True.全部元素都不是0,'',False
+	all(['a', 'b', '', 'd']) //返回False.存在一个空的元素
+	any([0, '', False]) //返回False.全部元素为0或''或False
+	2.tuple
+	all(('a', 'b', 'c', 'd')) //返回True.全部元素都不是0,'',False
+	all(('a', 'b', '', 'd')) //返回False.存在一个空的元素
+	all((0, '', False)) //返回False.全部元素为0或''或False
+	3.空list或空tuple
+	all([]) //空列表返回True
+	all(()) //空tuple返回True
+
+### 17.8 time相关函数
+
+time.time():返回当前时间的时间戳(从1970纪元后经过的浮点秒数).
+
+	import time
+	
+	print "time.time(): %f " % time.time() //结果为:1523498680.14(经过的秒数)
+	print time.localtime(time.time) //返回本地时间,但是不好阅读
+		/*time.struct_time(tm_year=2018, tm_mon=4, tm_mday=12, tm_hour=10, tm_min=4, 
+		tm_sec=57, tm_wday=3, tm_yday=102, tm_isdst=0) */
+	print time.asctime(time.localtime(time.time())) //返回本地时间,便于阅读
+		//Thu Apr 12 10:05:22 2018
+
+### 17.9 sqrt()函数
+
+sqrt(x):返回x的平方根.
+
+	import math
+	print "math.sqrt(100): ", math.sqrt(100) //返回100
+
+**相关的特殊算术运算符**
+
+	1.**:幂
+		x ** y:返回x的y次幂
+		2 ** 5 //结果为32
+		3 ** 3 //结果为27
+	2./:除以(整数是整除)
+		9 / 2 //结果为4
+		9.0 / 2 //结果为4.5(有小数就是除法)
+	3.%:取模(取余数)
+		20 % 10 //结果为0
+		20.1 % 10 //结果为0.100000...
+	4.//取整数(取商的整数部分)
+		9 // 2 //结果为4
+		9.0 // 2.0 //结果为也为4
+
 ### Python类及实例的应用
 
 	class Test(object):		/*Test:类名; object:从"object"继承,所有类都可以从object继承*/
@@ -2601,6 +2926,35 @@ len(list)返回字符、list、tuple等的长度或元素个数.
 	screenshot_backup_dir = 'screenshot_backups'
 	adb = auto_adb.adb()
 
+	def make_debug_dir(screenshot_backup_dir):
+		if not os.path.isdir(screenshot_backup_dir):
+			os.mkdir(screenshot_backup_dir) //创建目录,权限为0777
+
+	def backup_screenshot(ts):
+		make_debug_dir(screenshot_backup_dir)
+		shutil.copy('{}{}autojump.png'.format(os.getcwd(), path_split),
+				os.path.join(os.getcwd(), screenshot_backup_dir, 
+								str(ts), '.png'))
+
+	def save_debug_screenshot(ts, im, piece_x, piece_y, board_x, board_y):
+		'''
+		对debug图片加上注释
+		'''
+		make_debug_dir(screenshot_back_dir)
+		draw = ImageDraw.Draw(im)
+		draw.line((piece_x, piece_y) + (board_x, board_y), fill = 2, width = 3)
+		draw.line((piece_x, 0, piece_x, im.size[1]), fill = (255, 0, 0))
+		draw.line((0, piece_y, im.size[0], piece_y), fill = (255, 0, 0))
+		draw.line((board_x, 0, board_x, im.size[1]), fill = (0, 0, 255))
+		draw.line((0, board_y, im.size[0], board_y), fill = (0, 0, 255))
+		draw.ellipse((piece_x - 10, piece_y - 10, piece_x + 10, piece_y + 10), 
+			fill = (255, 0, 0)) //画椭圆
+		draw.ellipse((board_x - 10, board_y - 10, board_x + 10, board_y + 10),
+			fill = (0, 0, 255))
+		del draw
+		im.save(os.path.join(os.getcwd(), screenshot_backup_dir, 
+						'#' + str(ts) + '.png'))
+
 	def dump_device_info():
 		'''
 		显示设备信息
@@ -2737,6 +3091,46 @@ len(list)返回字符、list、tuple等的长度或元素个数.
 		density_val = int(matches.group(0)) //拿到第一个值
 		head_diameter = density_val / 8 //为什么是"/8"????
 
+	def set_button_position(im):
+		'''
+		设置滑动的起始和终点坐标
+		'''
+		global swipe_x1, swipe_y2, swipe_x2, swipe_y2
+		w, h = im.size
+		left = int(w / 2)
+		top = int(1584 * (h / 1920.0))
+		left = int(random.uniform(left - 200, left + 200)) 
+		//random.uniform在left-200, left+200之间随机取出一个浮点值.然后再取整
+		top = int(random.uniform(top - 200, top + 200))
+		after_otp = int(random.uniform(top - 200, top + 200))
+		after_left = int(random.uniform(left - 200, left + 200))
+		swipe_x1, swipe_y1, swipe_x2, swipe_y2 = left, top, after_left, after_top
+
+	def jump(distance, delta_piece_y):
+		'''
+		根据得到的距离计算出按压的时间(不知道是如何计算得到的)
+		'''
+		//将程序计算的长度转换为截图上图片的实际距离
+		scale = 0.945 * 2 / head_diameter
+		actural_distance = distance * scale * (math.sqrt(6) / 2)
+		//根据图片实际距离转换为按压时间
+		press_time = (-945 + math.sqrt(945 ** 2 + 4 * 105 *
+						36 * actual_distance)) / (2 * 105) * 1000
+		press_time *= press_coefficient
+		press_time = max(press_time, 200) //200ms为最小的按压时间
+		press_time = int(press_time)
+
+		cmd = 'shell input swipe {x1} {y1} {x2} {y2} {duration}'.format(
+				x1 = swipe_x1,
+				y1 = swipe_y1,
+				x2 = swipe_x2,
+				y2 = swipe_y2,
+				duration = press_time + delta_piece_y
+		)
+		print(cmd)
+		adb.run(cmd) //执行滑动操作(其中有滑动时间,即为按压时间)
+		return press_time
+
 	def find_piece_and_board(im):
 		'''
 		找到关键坐标
@@ -2818,6 +3212,26 @@ len(list)返回字符、list、tuple等的长度或元素个数.
 		
 		last_pixel = im_pixel[board_x, i]
 
+		center_x = w / 2 + (24 / 1080) * w //游戏的对称中心计算方法
+		center_y = h / 2 + (17 / 1920) * h //游戏的对称中心计算方法
+		if piece_x > center_x: //棋子在游戏对称中心的右边
+			board_y = round((25.5 / 43.5) * (board_x - center_x) + center_y)
+			/*
+			25.5/43.5--->等于tan(30).
+			由游戏的对称中心点做一条30度的辅助线,与x=board_x的交点即为棋盘的中心位置.
+			*/
+			delta_piece_y = piece_y - round((25.5 / 43.5) * (piece_x - center_x) + center_y)
+			/*
+			微调值计算
+			*/
+		else:
+			board_y = round(-(25.5 / 43.5) * (board_x - center_x) + center_y)
+			delta_piece_y = piece_y - round(-(25.5 / 43.5) * (piece_x - center_x) + center_y)
+
+		if not all((board_x, board_y)):
+			return 0, 0, 0, 0, 0
+		return piece_x, piece_y, board_x, board_y, delta_piece_y
+
 	def yes_or_no():
 		'''
 		检查是否已经为启动程序做好准备
@@ -2849,7 +3263,29 @@ len(list)返回字符、list、tuple等的长度或元素个数.
 			im = screenshot.pull_screenshot() //抓到截图
 			//从截取的图片中获取棋子和board的位置
 			piece_x, piece_y, board_x, board_y, delta_piece_y = find_piece_and_board(im)
-			
+			ts = int(time.time()) //得到当前时间(1970到现在经过的秒数)
+			print(ts, piece_x, piece_y, board_x, board_y)
+			//设置点击的位置
+			set_button_position(im)
+			//准备开始跳跃
+			jump(math.sqrt((board_x - piece_x) ** 2 + (board_y - piece_y) ** 2), delta_piece_y)
+			if DEBUG_SWITH: //debug开关打开
+				debug.save_debug_screenshot(ts, im, piece_x, piece_y, board_x, board_y)
+
+				debug.backup_screenshot(ts)
+			im.close()
+			i += 1
+			if i == next_rest: //休息
+				print('已经连续打了 {} 下,休息 {} 秒'.format(i, next_rest_time))
+				for j in range(next_rest_time):
+					sys.stdout.write('\r程序将在 {} 秒后继续'.format(next_rest_time - j))
+					sys.stdout.flush()
+					time.sleep(1)
+				print('\n继续')
+				i, next_rest, next_rest_time = (0, random.randrange(30, 100),
+											random.randrange(10, 16))
+			//为了保证截图的稳定性,多延迟一会
+			time.sleep(random.uniform(1.2, 1.4)) //取1.2~1.4之间的随机浮点数
 
 	if __name__ == '__main__':
 		try:
