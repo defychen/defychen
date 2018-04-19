@@ -1,6 +1,6 @@
-# Part 1. Crazy Android Handout(疯狂Android讲义)
+# Part 1. The first Android Code(第一行Android代码)
 
-## Chapter 1 Android应用与开发环境
+## Chapter 1 开始启程,第一行Android代码
 
 ### 1.1 Android的发展和历史
 
@@ -61,6 +61,47 @@ Dalvik虚拟机的特点:
 5.Linux内核
 
 Android系统建立在Linux 2.6之上.
+
+### 1.2 Android的开发环境搭建
+
+#### 1.2.1 Android开发所需软件介绍
+
+**1. Andorid SDK**
+
+Android SDK是Google提供的Android开发工具包,其中包括Android相关的API.在开发Android程序时,需要引入该工具包.
+
+**2. Eclipse**
+
+Eclipse是开发Android程序的IDE.Google官方也推出了Android Studio,是专门开发Android程序定制的IDE.
+
+**3. ADT**
+
+ADT(Android Development Tools):是Google提供的一个Eclipse插件,用于在Eclipse中提供一个Android开发环境.
+
+安装了ADT,可以联机调试Android程序,模拟手机事件、分析程序性能等等.因为是插件,在Eclipse中在线安装即可.
+
+#### 1.2.2 搭建开发环境
+
+Google提供了一种简便方式,将Android SDK、Eclipse、ADT插件集成到一个SDK工具包.该工具包可在官网下载.
+
+[SDK工具包下载地址](http://developer.android.com/sdk/)
+
+下载好的SDK工具包包括:
+
+	eclipse:包括Eclipse程序(且已经安装好了ADT插件).
+	sdk:经过SDK Manager.exe下载好的内容会放在sdk这个目录(包括文档、原码、实例等).
+	SDK Manager.exe:Android SDK管理器.双击可下载所需的Android SDK版本,然后进行安装.
+
+Android模拟器的使用(用于模拟Android手机的行为)
+
+	启动Android模拟器->弹出的"Android Virtual Device Manager"窗口选择"New"->
+	在Create new Android Virtual Device(AVD)窗口中设置:
+		AVD Name: 4.0(创建的虚拟设备的名字)
+		Device: 选择3.2"xxx(3.2英寸的屏幕的手机)
+		Target: Android 4.0xxx(Android 4.0版本)
+		Memory Options: RAM:512(分配512 M的memory)
+		SD Card: size:256 MiB(分配256 M的SD Card)
+	->然后选择OK->点击"Start"->点击"Launch"就可以启动模拟器了.
 
 ***
 

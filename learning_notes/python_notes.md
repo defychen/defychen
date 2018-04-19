@@ -2740,6 +2740,108 @@ sqrt(x):返回x的平方根.
 		9 // 2 //结果为4
 		9.0 // 2.0 //结果为也为4
 
+***
+
+## 18. Python对象的文档字符串(DocString):__doc__的写法及输出
+
+文档字符串(DocString)作用:
+
+1.可以用于说明某个Python程序或者函数的使用方法;
+
+2.配合docopt分析命令行参数,并进行DocString中定义的字符匹配.
+
+**1.说明Python程序/函数的使用方法**
+
+	1.说明程序的使用方法
+	""" //开始指示符:表示的是DocString.也可以用'''(单引号).一般使用3个双引号.
+	Usage:
+		tickets [-gdtkz] <from> <to> <date>
+	
+	Options:
+		-h, --help		Display Help Menu
+		-g				High Speed Train
+		-d				Middle Speed Train
+		-t				Special Speed Train
+		-k				Speed Train
+		-z				Directly to the Destination
+
+	Example:
+		tickets Beijing Shanghai 2018-04-19
+		tickets -dg Chengdu Nanjing 2018-04-19
+	""" //结束指示符.两个中间的即为DocString
+
+	print (__doc__) //直接使用"__doc__",是得到整个程序的DocString,即在"""..."""的内容
+	/*可以直接打印出:
+	Usage:
+        tickets [-gdtkz] <from> <to> <date>
+
+	Options:
+	        -h, --help      Display Help Menu
+	        -g                      High Speed Railway
+	        -d                      Middle Speed Railway
+	        -t                      Specail Speed Railway
+	        -k                      Speed Railway
+	        -z                      Directly to the Destination
+	
+	Example
+	        tickets Beijing Shanghai 2018-04-19
+	        tickets -dg Chengdu Nanjing 2018-04-19
+
+	*/
+
+	2.在函数中的说明信息
+	def inputxy():
+		"""
+			This is the test doc.
+		"""
+		print("Hello world")
+	inputxy() //调用函数
+	print(inputxy.__doc__) //打印函数的说明信息(e.g.函数名.__doc__)
+
+	/*会得到:
+		Hello world
+		This is the test doc.
+	*/
+
+**2.配合docopt分析命令行参数**
+
+docopt:Python 3的命令行参数解析工具.
+
+	""" //开始指示符:表示的是DocString.也可以用'''(单引号).一般使用3个双引号.
+	Usage:
+		tickets [-gdtkz] <from> <to> <date>
+	/*
+	Usage:作为使用方法的说明.其后的信息可以作为命令行参数的匹配.
+		[-abc]:每个元素在dict中形成一个Bool值.
+			如果命令行参数包含其中的元素,则会在dict中得到一个True的值;否则为False.
+			(e.g.命令行输入了:-a.则在字典中有: {'-a':True, ...})
+		<xxx>:形成dict中的元素值.
+			(e.g.命令行输入:成都.则在字典中有:{'<from>':'成都', ...})
+	*/
+
+	Options:
+		-h, --help		Display Help Menu
+		-g				High Speed Train
+		-d				Middle Speed Train
+		-t				Special Speed Train
+		-k				Speed Train
+		-z				Directly to the Destination
+
+	Example:
+		tickets Beijing Shanghai 2018-04-19
+		tickets -dg Chengdu Nanjing 2018-04-19
+	""" //结束指示符.两个中间的即为DocString
+
+	from docopt from docopt //导入docopt(命令行解析工具)
+	
+	def cli():
+		"""command-line interface"""
+		arguments = docopt(__doc__)
+		print(arguments)
+
+	if __name__ == '__main__':
+		cli()
+
 ### Python类及实例的应用
 
 	class Test(object):		/*Test:类名; object:从"object"继承,所有类都可以从object继承*/
@@ -3295,3 +3397,8 @@ sqrt(x):返回x的平方根.
 			adb.run('kill-server') //执行adb kill-server:终止adb服务
 			print('\n谢谢使用', end='')
 			exit(0)
+
+### 2. Train Tickets Query Tool
+
+
+
