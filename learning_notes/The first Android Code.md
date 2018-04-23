@@ -103,6 +103,172 @@ Android模拟器的使用(用于模拟Android手机的行为)
 		SD Card: size:256 MiB(分配256 M的SD Card)
 	->然后选择OK->点击"Start"->点击"Launch"就可以启动模拟器了.
 
+### 1.3 第一个Android项目
+
+#### 1.3.1 创建HelloWorld项目
+
+	Eclipse的导航栏中->File->New->Android Application Project,弹出New Android Application对话框:
+		Application Name(应用名称):Hello World --->该名称是应用在手机上显示的名称
+		Project Name(项目名称):HelloWorld --->该名称是显示在Eclipse中(项目名通常不带空格)
+		Package Name(包名):com.test.helloworld --->Android系统通过包名区分不同程序,因此报名必须唯一
+		Minumum Required SDK:API 14:... --->程序最低兼容的版本
+		Target SDK:API 19:... --->最高版本
+		Comiple with:API 14:... --->指定程序使用哪个版本的SDK进行编译
+		Theme: None --->程序UI所使用的主题(一般选择None即可)
+	->Next->保持默认配置,点击Next->启动图标对话框,保持默认,点击Next->Create Activity对话框
+		创建活动界面:选择Blank Activity(空活动类型)
+	->点击Next->Blanck Activity对话框填写:
+		Activity Name(活动名):HelloWorldActivity
+		Layout Name(布局名):hello_world_layout
+		Navigation Type(导航类型):None
+	->Finish,即可创建成功.
+
+#### 1.3.2 运行HelloWorld
+
+**1.检查模拟器是否还在线**
+
+	Eclipse导航栏->Window->Open Perspective->DDMS,进入到DDMS视图.查看Devices窗口是否存在Online设备
+		1)Devices窗口有一个设备显示是Online,模拟器是在线的;
+		2)如果窗口中没有设备,重新启动模拟器即可.
+		3)如果窗口中有设备,但是显示为Offline(模拟器掉线了),选中设备右击->Reset adb即可.
+
+**2.运行项目**
+
+	点击Eclipse工具栏右侧Java选项回到之前视图->右击HelloWorld项目->Run As->Android Application
+	->等待几秒钟,运行就会运行起来->在模拟器中也会存在一个"Hello World"的应用.
+
+#### 1.3.3 分析Hello World程序
+
+**Android目录结构:**
+
+1.src:放置Java代码.刚才创建的HelloWorldActivity文件就在这里.
+
+	HelloWorldActivity活动有如下代码:
+		public class HelloWorldActivity extends Activity {
+			//继承自Activity(extends),所有活动都继承自Activity
+			
+			@override
+			protected void onCreate(Bundle savedInstanceState) { //活动被创建时一定调用的方法
+				super.onCreate(savedInstanceState);
+				setContentView(R.layout.hello_world_layout);
+				//给当前活动引入一个hello_world_layout布局
+			}
+
+			@override
+			public boolean onCreateOptionsMenu(Menu menu) { //用于创建菜单
+				//Inflate the menu; this adds items to the action bar if it is present.
+				getMenuInflater().inflate(R.menu.hello_world, menu);
+				return true;
+			}
+			
+		}
+
+2.gen:自动生成.不需要修改.
+
+3.assets:存放一些随程序打包的文件,程序运行时会动态读取这些文件.用的很少.
+
+4.bin:编译时自动产生的文件.其中会有"*.apk"文件,为安装到手机上的应用程序.
+
+5.libs:存放第三方的Jar包,在这个目录下的Jar包会自动添加到构建路径中去.
+
+6.res:存放资源.子目录:drawable(存放图片)、layout(存放布局)、values(存放字符串)、menu(存放菜单文件).
+
+	1.在res/layout目录下,有hello_world_layout.xml文件,有如下代码:
+		<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+			xmlns:tools="http://schemas.android.com/tools"
+			android:layout_width="match_parent"
+			android:layout_heigth="match_parent"
+			android:paddingBottom="@dimen/activity_vertical_margin"
+			android:paddingLeft="@dimen/activity_horizontal_margin"
+			android:paddingRight="@dimen/activity_horizontal_margin"
+			android:paddingTop="@dimen/activity_vertical_margin"
+			tools:context=".HelloWorldActivity" >
+
+			<TextView //布局控件,用于在布局中显示文字
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="@string/hello_world" />
+				//引用values/strings.xml中的字符串定义.
+
+		</RelativeLayout>
+	2.字符串定义在res/values/strings.xml中:
+		<resources>
+			<string name="app_name">Hello World</string>
+			//应用程序的名字.key:app_name;value:Hello World
+			<string name="action_settings">Settings</string>
+			<string name="hello_world">Hello world!</string>
+			//键-值对应模式.hello_world为key;Hello world!为value
+		</resources>
+	
+	3.引用方法
+		1.在代码中通过"R.string.hello_world"来获得字符串
+		2.在XML中通过"@string/hello_world"来获得字符串
+		e.g.在HelloWorld项目中的图标引用.
+		在AndroidManifest.xml中,通过android:icon="@drawable/ic_launcher"来获得.
+			
+
+7.AndroidManifest.xml:存放Android项目的配置文件,包括Activity活动注册.
+
+	在AndroidManifest.xml有如下代码:
+		<activity
+			android:name="com.test.helloworld.HelloWorldActivity"
+			android:label="@string/app_name" >
+			<intent-filter>
+				<action android:name="android.intent.action.MAIN" />
+					//表示HelloWorldActivity是这个项目的主活动
+				<category android:name="android.intent.category.LAUNCHER" />
+					//表示点击应用图标,启动的就是这个活动
+			</intent-filter>
+		</activity>
+
+	
+
+8.project.properties:通过一行代码指定编译程序时所使用的SDK版本.
+
+### 1.4 Android日志工具的使用
+
+#### 1.4.1 添加LogCat到Eclipse
+
+	Eclipse导航栏的Window->Show View->Other->弹出Show View对话框->展开Android目录
+	->选中LogCat子项->点击OK即可.
+
+#### 1.4.2 日志工具Log的使用
+
+1.Log.v():打印级别为verbose(冗长的,累赘的)的信息.Android日志级别最低的一种.
+
+2.Log.d():打印级别为debug.打印一些调试信息.
+
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.hello_world_layout);
+		Log.d("HelloWorldActivity", "onCreate execute");
+		/*
+			para1:tag,一般传入当前的类名即可,主要用于对打印信息进行过滤.
+			para2:msg,想要打印的具体信息内容.
+		*/	
+	}
+
+	添加之后重新运行项目.在LogCat中可以看到打印信息.
+
+3.Log.i():打印级别为info.打印一些重要的数据信息.
+
+4.Log.w():打印级别为warn.打印一些警告信息.
+
+5.Log.e():打印级别为error.打印一些错误信息.
+
+#### 1.4.3 Log的过滤器及级别的使用
+
+**1.过滤器**
+
+在LogCat窗口左边有"Saved Filters"可以设置过滤信息:
+
+	添加一个过滤器"+"->设置过滤器相关信息:
+		Filter Name:data	by Log Tag:data(此时只有Tag名字为data的才会打印出来)
+
+**2.日志级别控制**
+
+在LogCat窗口右边有个"日志级别控制"下拉列表.
+
 ***
 
 # Part 2. Andriod Practical Skills
