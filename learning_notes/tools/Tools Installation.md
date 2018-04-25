@@ -122,3 +122,22 @@ Preferences->Key Bindings,输入一下内容保存即可:
 ## 1.2 Linux下环境搭建
 
 略.
+
+***
+
+# 2. Python 3安装BeautifulSoup和requests第三方模块
+
+BeautifulSoup是Python的一个库,主要的功能是从网页中抓取数据.
+
+## 2.1 Windows下BeautifulSoup安装
+
+### 2.1.1 BeautifulSoup下载
+
+[BeautifulSoup官网](https://www.crummy.com/software/BeautifulSoup/)
+
+	在官网上,有"Download Beautiful Soup":
+		选择其中的"Beautiful Soup 4.6.0(May 7, 2017)"-->最新版是Beautiful Soup 4.6.
+	会直接跳转到"https://www.crummy.com/software/BeautifulSoup/bs4/download/"去下载.
+
+### 2.1.2 安装BeautifulSoup
+
