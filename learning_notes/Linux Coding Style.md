@@ -75,3 +75,7 @@ scripts/checkpatch.pl是一个用来检查代码是否符合内核编码规范�
 	}	
 
 参考了:[谈谈Linux内核驱动的coding style](http://www.cnblogs.com/wwang/archive/2011/02/24/1960283.html)
+
+## 1.3 Linux Coding Style中的空格和Tab的说明
+
+Linux Coding Style不用空格来缩进,统一用Tab键来缩进.

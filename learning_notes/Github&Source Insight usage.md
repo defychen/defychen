@@ -265,6 +265,25 @@
 		New Document Type"中输入"Python"->在File filter中的输入"*.py"->在Parsing
 		Language中选择"Python Language"即可.
 
+## 2.7 source insight恢复Ctrl+a的全选功能
+
+默认source insight的Ctrl+a的功能是全部保存(Save all).需要修改Ctrl+a为全选功能
+
+	Options->Key Assignments->弹出"Key Assignments"窗口:
+		1.Command中搜索"Save all",得到"File: Save all",选中可以看到"Keystrokes"中的值为"Ctrl+A";
+		2.点击"Assign New Key",弹出"Press the key-comination...keys with the key
+		or mouse button. Press Esc to cancel."键入"Ctrl+shift+a",修改"Save all"为快捷键"Ctrl+Shift+A".
+		3.在Command中搜索"Select All",得到"Navigation: Select All",此时没有快捷键.
+		4.点击"Assign New Key",弹出"Press the key-comination...keys with the key
+		or mouse button. Press Esc to cancel."键入"Ctrl+a",修改"Select All"为快捷键"Ctrl+Shift+A".
+
+## 2.8 source insight将文件的Tab转换为空格/将空格转换为Tab
+
+	1.空格转换为Tab键:
+	全选文件->Edit->Special Edit->Spaces To Tabs
+	2.Tab键转换为空格:
+	全选文件->Edit->Special Edit->Tabs To Spaces
+
 ***
 
 # 3. Beyond Compare的使用

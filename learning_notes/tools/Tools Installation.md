@@ -138,6 +138,68 @@ BeautifulSoup是Python的一个库,主要的功能是从网页中抓取数据.
 	在官网上,有"Download Beautiful Soup":
 		选择其中的"Beautiful Soup 4.6.0(May 7, 2017)"-->最新版是Beautiful Soup 4.6.
 	会直接跳转到"https://www.crummy.com/software/BeautifulSoup/bs4/download/"去下载.
+	
+	PS:下载完了需要解压到自己定义的一个目录.
 
 ### 2.1.2 安装BeautifulSoup
+
+**1.格式转换**
+
+BeautifulSoup默认使用的是Python2格式,因此需要将BeautifulSoup由Python2格式转换为Python3格式.使用Python自带的工具"2to3.py".
+
+	1.工具位置:Python\Tools\Scripts
+	2.进入工具位置:
+		cd C:\Python34\Tools\Scripts
+	3.格式转换:
+		./2to3.py -w C:\Python34\beautifulsoup4-4.4.1 //后面的为BeautifulSoup解压的路径.
+
+**2.安装**
+
+进入到BeautifulSoup解压缩的目录,执行下面的命令:
+
+	cd C:\Python34\beautifulsoup4-4.4.1 //进入到BeautifulSoup目录
+	python setup.py build //执行setup.py脚本,传入参数为"build"
+	python setup.py install //执行setup.py脚本,传入参数为"install"
+
+**3.测试**
+
+	在"cmd.exe"窗口中输入: python //启动python
+	输入:from bs4 import BeautifulSoup //没有出现错误则表示安装成功.
+
+## 2.2 Linux下BeautifulSoup安装
+
+**略**
+
+## 2.3 Windows下requests安装
+
+requests是Python实现的简单易用的HTTP库,使用起来比urlib简洁.编写爬虫和测试服务器响应数据时经常会用到.
+
+### 2.3.1 requests下载
+
+[requests官网](http://docs.python-requests.org/en/master/)
+
+	在官网上,顶部有"Release v2.18.4. (Installation)":
+		选择其中的"Installation)"会直接跳转到"http://docs.python-requests.org/en/master/user/install
+		/#install".在"Get the Source Code"中有"Or, download the tarball:"."tarball"是超链接,可以下载
+		"Windows"压缩版本.
+
+		PS:下载完了需要解压到自己定义的一个目录.
+
+	PS:如果英文查不到,在官网主页的左边有"Translations"->选择Chinese,页面就会翻译为中文.
+
+### 2.3.2 安装requests
+
+	1.进入到requests解压的目录
+		cd C:\Python34\kennethreitz-requests-cbb0830
+	2.安装
+		python setup.py install
+	3.测试
+		在"cmd.exe"窗口中输入: python //启动python
+		输入:import requests //没有出现错误则表示安装成功.
+
+## 2.4 Linux下requests安装
+
+**略**
+
+参考文章[Python-Windows下安装BeautifulSoup和requests第三方模块](https://blog.csdn.net/yannanxiu/article/details/50432498)
 
