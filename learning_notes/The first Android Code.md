@@ -147,14 +147,14 @@ Android模拟器的使用(用于模拟Android手机的行为)
 		public class HelloWorldActivity extends Activity {
 			//继承自Activity(extends),所有活动都继承自Activity
 			
-			@override
+			@Override
 			protected void onCreate(Bundle savedInstanceState) { //活动被创建时一定调用的方法
 				super.onCreate(savedInstanceState);
 				setContentView(R.layout.hello_world_layout);
 				//给当前活动引入一个hello_world_layout布局
 			}
 
-			@override
+			@Override
 			public boolean onCreateOptionsMenu(Menu menu) { //用于创建菜单
 				//Inflate the menu; this adds items to the action bar if it is present.
 				getMenuInflater().inflate(R.menu.hello_world, menu);
@@ -268,6 +268,228 @@ Android模拟器的使用(用于模拟Android手机的行为)
 **2.日志级别控制**
 
 在LogCat窗口右边有个"日志级别控制"下拉列表.
+
+***
+
+## Chapter 2 活动(Activity)探究
+
+### 2.1 活动介绍
+
+活动(Activity):是一种可以包含用户界面的组件,主要用于和用户进行交互.一个应用程序可以包含1个/多个活动.
+
+### 2.2 活动的基本用法
+
+新建一个Android项目:
+
+	项目名:ActivityTest
+	报名:使用默认值"com.example.activitytest"
+	Create Activity中:不勾选Create Activity,准备手动创建活动.
+
+PS:关掉不相干的项目:右击HelloWorld项目->Close Project.
+
+#### 2.2.1 手动创建活动
+
+**1.src目录添加一个包**
+
+此时ActivityTest项目的src目录为空,需要先添加一个包.
+
+	Eclipse导航栏->File->New->Package->在弹出的窗口中填入默认包名"com.example.activitytest"
+		->Finish.
+
+**2.为包添加类**
+
+	右击"com.example.activitytest"包->New->Class->弹出新建类的对话框:
+		类名:FirstActivity	继承:Activity
+		->Finish.
+
+**3.在FirstActivity类中重写onCreate()方法**
+
+	public class FirstActivity extends Activity {
+		
+		@Override
+		protected void onCreate(Bundle savedInstanceState) {
+			super.onCreate(savedInstanceState); //调用父类的onCreate()方法
+		}
+	}
+
+#### 2.2.2 创建和加载布局
+
+Android程序的设计讲究逻辑和视图分离,一个活动对应一个布局(布局是用来显示界面内容的).
+
+**1.创建布局文件**
+
+	右击res/layout目录->New->Android XML File->弹出创建布局文件的窗口(New Android XML File窗口)
+		File:first_layout ->布局文件命名
+		Root Element:选择LinearLayout ->根元素
+
+创建完成后会出现一个"可视化布局编辑器"窗口,在左下方有两个切换卡.
+
+	左边是:Graphical Layout
+		当前的可视化布局编辑器,可以预览当前的布局,还可以通过拖曳方式编辑布局.
+	右边是:first_layout.xml
+		通过XML文件的方式来编辑布局.点击后具有如下代码:
+		<LinearLayout xmlnx:android="http://schemas.android.com/apk/res/android"
+			android:layout_width="match_parent"
+			android:layout_heigth="match_parent"
+			andorid:orientation="vertical" >
+		</LinearLayout> //布局文件中已经有了LinearLayout元素
+
+		添加按钮元素:
+		<LinearLayout xmlnx:android="http://schemas.android.com/apk/res/android"
+			android:layout_width="match_parent"
+			android:layout_heigth="match_parent"
+			andorid:orientation="vertical" >
+
+			<Button
+				android:id="@+id/button_1" //android:id是给当前元素定义一个唯一的标识符
+				/*
+					@id/button_1:是在XML中引用资源的语法.该句为引用id.
+					@+id/button_1:是在XML中定义一个id.
+				*/
+				android:layout_width="match_parent"
+				/*
+					android:layout_width:指定当前元素的宽度.
+					android:layout_width="match_parent":让当前元素和父元素一样宽.
+				*/
+				android:layout_height="wrap_content"
+				/*
+					android:layout_height:指定当前元素的高度.
+					android:layout_height="wrap_content":表示当前元素的高度只要能刚好包含里面的内容就行.
+				*/
+				android:text="Button 1"
+				/*
+					android:text:指定元素中显示的文字内容.
+				*/
+				/>
+		</LinearLayout> //布局文件中已经有了LinearLayout元素
+
+**2.在活动中加载布局**
+
+	public class FirstActivity extends Activity {
+		
+		@Override
+		protected void onCreate(Bundle savedInstanceState) {
+			super.onCreate(savedInstanceState); //调用父类的onCreate()方法
+			setContentView(R.layout.first_layout);
+			/*
+				setContentView():参数一般为一个布局文件的id.
+				项目中添加的任何资源都会在R文件中生成一个相应的资源id.
+					引用该资源id的方法:R.layout.first_layout
+			*/
+		}
+	}
+
+#### 2.2.3 在AndroidManifest文件中注册
+
+注册代码:
+
+	<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+		package="com.example.activitytest"
+		android:versionCode="1"
+		android:versionName="1.0" >
+		<uses-sdk
+			android:minSdkVersion="14"
+			android:targetSdkVersion="19" />
+		<application
+			android:allowBackup="true"
+			android:icon="@drawable/ic_launcher"
+			android:label="@string/app_name"
+			android:theme="@style/AppTheme" >
+			<activity //活动的注册要放在application标签内
+				android:name=".FirstActivity"
+				/*
+					android:name:指定具体注册哪一个活动.
+					此处的".FirstActivity":是"com.example.activitytest.FirstActivity"的缩写,
+					前面的package属性执行了程序的包名"com.example.activitytest",注册活动时这部
+					分可以省略.
+				*/
+				android:label="This is FirstActivity" >
+				/*
+					android:label:指定活动中标题栏的内容(标题栏显示在界面的最顶部).
+					label也会成为启动器(Launcher)中应用程序显示的名称.
+				*/
+				<intent-filter>
+					<action android:name="android.intent.action.MAIN" />
+					<category android:name="android.intent.category.LAUNCHER" />
+				/*
+					固定写法,让FirstActivity成为这个程序的主活动.
+				*/
+				</intent-filter>
+			</activity>
+		</application>
+	</manifest>
+
+#### 2.2.4 隐藏标题栏
+
+标题栏在屏幕最顶部,会占用屏幕空间,使得内容区域变小.一般会将其隐藏.
+
+	public class FirstActivity extends Activity {
+		
+		@Override
+		protected void onCreate(Bundle savedInstanceState) {
+			super.onCreate(savedInstanceState); //调用父类的onCreate()方法
+			requestWindowFeature(Window.FEATURE_NO_TITLE);
+			/*
+				在活动中不显示标题栏.必须在setContentView之前.
+			*/
+			setContentView(R.layout.first_layout);
+			/*
+				setContentView():参数一般为一个布局文件的id.
+				项目中添加的任何资源都会在R文件中生成一个相应的资源id.
+					引用该资源id的方法:R.layout.first_layout
+			*/
+		}
+	}
+
+#### 2.2.5 在活动中使用Toast
+
+Toast是Android系统的一种提醒方式,在程序中可以使用它将一个短小的消息通知给用户,这些消息在一段时间后会自动消失,并且不会占用屏幕空间.
+
+点击按钮后弹出一个Toast(Toast需要一个触发点):
+
+	public class FirstActivity extends Activity {
+		
+		@Override
+		protected void onCreate(Bundle savedInstanceState) {
+			super.onCreate(savedInstanceState); //调用父类的onCreate()方法
+			requestWindowFeature(Window.FEATURE_NO_TITLE);
+			/*
+				在活动中不显示标题栏.必须在setContentView之前.
+			*/
+			setContentView(R.layout.first_layout);
+			/*
+				setContentView():参数一般为一个布局文件的id.
+				项目中添加的任何资源都会在R文件中生成一个相应的资源id.
+					引用该资源id的方法:R.layout.first_layout
+			*/
+			Button button1 = (Button)findViewById(R.id.button_1);
+			/*
+				findViewById():通过资源id获取在布局文件中定义的元素.
+				findViewById()返回的是一个View对象,要转成Button对象.
+			*/
+			button1.setOnClickListener(new OnClickListener() {
+				/*
+				button1.setOnClickListener():注册一个监听器.
+				new OnclickListener() {xxx}:表示实例化一个监听器.内部的代码重写了
+					监听器的onClick()方法.点击按钮时就会执行onClick()方法.
+				*/
+				@Override
+				public void onClick(View v) {
+					Toast.makeText(FirstActivity.this, "You clicked Button 1",
+						Toast.LENGTH_SHORT).show();
+					/*
+						Toast.makeText():Toast的静态方法.通过静态方法创建一个Toast对象.
+						para1:Toast的上下文(Context),由于活动对象本身就是一个Context对象,
+							此处传入FirstActivity.this即可;
+						para2:Toast显示的文本内容;
+						para3:Toast显示的时长.
+							Toast.LENGTH_SHORT ->短时长;
+							Toast.LENGTH_LONG  ->长时长.
+					*/
+				}
+			});
+		}
+	}
 
 ***
 

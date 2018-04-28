@@ -86,15 +86,30 @@
 
 ## 1.3 git pull更新时的问题
 
-	Your local changes to the following files would be overwritten by merge
-	error: Your local changes to the following files would be overwritten by merge:
-		...	/*xxx file*/
-	Please, commit your changes or stash them before you can merge.
-
-	Solution method (1)
-	使用代码库中的文件完全覆盖本地工作版本
-	git reset --hard
-	git pull
+	1.git pull之后出现:
+		There is no tracking information for the current branch.
+		Please specify which branch you want to merge with.
+		See git-pull(1) for details
+		    git pull <remote> <branch>
+		If you wish to set tracking information for this branch you can do so with:
+		    git branch --set-upstream-to=origin/<branch> SC2.0
+		意思是需要指定当前工作目录、工作分支和远程的仓库、分支之间的关系.
+		--->解决:
+		git branch --set-upstream-to=origin/SC2.0
+	2.git pull之后出现:
+		Your local changes to the following files would be overwritten by merge
+		error: Your local changes to the following files would be overwritten by merge:
+			/*
+			一系列的文件...	
+			*/
+		Please, commit your changes or stash them before you can merge.
+		Aborting
+		意思是本地的文件和远程的不一致,需要merge或者放弃本地修改.
+		--->解决:
+		1.放弃本地修改,直接覆盖:
+			git reset --hard
+			git pull
+		2.stash
 
 ## 1.4 github提交错误
 
