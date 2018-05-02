@@ -1,5 +1,7 @@
 # Makefile Usage
 
+# 1. Makefile Introduction
+
 ## Chapter 1 概述
 
 ### 1.1 Make基本知识
@@ -857,7 +859,58 @@ N.s:是不需要预处理的汇编源文件;N.S:是需要预处理的汇编源�
 			否则就是已定义的.
 	CC:一般是Makefile中的一个名字.
 
-# Shell Script Usage
+***
+
+# 2. Makefile Example
+
+## 2.1 编写应用的Makefile实例
+
+	1.在顶层目录建立一个mk.rule的文件,用于存放cross compile和cflags:
+		LINUX_DIR := /*linux的路径*/
+		CROSS_COMPILE = /*交叉编译工具的路径*/
+		CC := $(CROSS_COMPILE)gcc //选择交叉编译工具中的gcc
+		CFLAGS := -O2 -I$(LINUX_DIR)/... /*一些头文件路径*/
+		CFLAGS += $(WARNINGS) $(OPTIMIZE) $(DEFS) //加上一个编译选项
+	2.新建一个存放应用代码的文件(e.g.test1),在该文件下建立如下文件/文件夹:
+		1.src 	/*存放应用程序的源代码*/
+		2.obj	/*存放编译后产生的.o文件*/
+		3.Makefile /*编译规则,其内容如下:*/
+			CUR_DIR = $(shell pwd)
+			TOP_DIR = $(CUR_DIR)/..
+			DIR_SRC = $(CUR_DIR)/src
+			DIR_OBJ = $(CUR_DIR)/obj
+			DIR_BIN = $(CUR_DIR)/bin
+
+			include $(TOP_DIR)/mk.rule
+
+			TARGET := test
+
+			$(shell if [ ! -d $(DIR_OBJ) ]; then mkdir $(DIR_OBJ); fi ;)
+			$(shell if [ ! -d $(DIR_BIN) ]; then mkdir $(DIR_BIN); fi ;)
+			
+			SRC = $(wildcard $(DIR_SRC)/*.c)
+			OBJ = $(patsubst %.c, $(DIR_OBJ)/%.o, $(notdir $(SRC)))
+
+			TARGET_BIN = $(DIR_BIN)/$(TARGET)
+
+			$(TARGET_BIN):$(OBJ)
+				$(CC) $(OBJ) -o $@
+
+			$(DIR_OBJ)/%.o:$(DIR_SRC)/%.c
+				$(CC) $(CFLAGS) -c $< -o $@
+
+			.PHONY: clean all
+
+			clean:
+				find $(DIR_OBJ) -name *.o -exec rm -rf {} \;
+				rm -rf $(DIR_BIN)
+			
+			all:$(TARGET_BIN)
+	3.最终产生的应用位于"bin/"下.
+
+***
+
+# 3. Shell Script Usage
 
 ## 1.dirname的使用
 

@@ -38,7 +38,12 @@
 			个inode节点.因此最终在probe建立的连接就是:
 			1.inode->i_cdev会由cdev的地址填充.即:inode->i_cdev=&dev->cdev;
 				因此:inode->i_cdev即为cdev的首地址
-			2.inode->i_fop会由cdev的file_operation填充.因此透过inode才能找到对应的driver中的函数.
+			2.inode->i_fop会由cdev的file_operations填充.因此透过inode才能找到对应的driver中的函数.
+				cdev与file_operations建立联系的函数:
+				struct file_operations xxx_file_ops = {
+						xxxx
+				};
+				cdev_init(&dev->cdev, &xxx_file_ops); //初始化cdev信息.
 		para2:设备结构体类型;
 		para3:设备结构体中的成员(此处为字符设备成员cdev)*/
 	
@@ -53,6 +58,17 @@
 			2.私有数据
 				1)私有数据结构体肯定会包括设备结构体的指针成员,用来使私有数据与设备关联.并且在open的时候
 					会将设备结构体赋值给私有数据对应的设备结构体指针;
+					struct test_priv {
+						/* some private member*/
+						struct test_dev *test; //设备结构体成员
+					};
+
+					struct test_dev *test = container_of(inode->i_cdev,
+						struct test_dev, cdev);
+					struct test_priv *priv = NULL;
+					priv = devm_kzalloc(test->dev, sizeof(struct test_priv), GFP_KERNEL);
+					...
+					priv->test = test;
 				2)私有数据一般在设备的open函数中申请,用来保证每次打开设备时得到的私有数据不一样;
 				3)私有数据结构体会在open的时候赋值给file->private_data;
 					file->private_data = (void *)s;
@@ -73,7 +89,7 @@
 	{
 		/*__user:为一个宏,linux中定义的.表明后面的指针指向用户空间.*/
 		
-		/*通过filp(fd)获得设备结构体*/
+		/*通过filp(fd)获得设备结构体或私有数据结构*/
 		struct light_cdev *dev = filp->private_data;
 		/*使用dev进行相关的读操作*/
 		
@@ -93,7 +109,7 @@
 	{
 		/*__user:为一个宏,linux中定义的.表明后面的指针指向用户空间.*/
 		
-		/*通过filp(fd)获得设备结构体*/
+		/*通过filp(fd)获得设备结构体或私有数据结构*/
 		struct light_cdev *dev = filp->private_data;
 		/*使用dev进行相关的写操作*/
 
@@ -110,13 +126,13 @@
 	/*ioctl function*/
 	int xxx_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	{
-		/*通过filp(fd)获得设备结构体*/
+		/*通过filp(fd)获得设备结构体或私有数据结构*/
 		struct light_cdev *dev = filp->private_data;
 		/*根据cmd，使用dev进行相关操作*/
 		switch(cmd) {
 		case...
 		default:
-			-ENOTTY;	/*(25)Not a typewriter*/
+			-ENOTTY;	/*(25)Inappropriate ioctl for device*/
 		}
 		...
 	}
@@ -125,9 +141,9 @@
 	loff_t xxx_llseek(struct file *filp, loff_t offset, int orig)
 	{
 		/*该函数被用户调用后更新文件的当前位置,并返回新位置.*/
-		/*文件位置指针:表示当前在文件中的哪个位置去读/写数据
+		/*文件起始位置(orig):表示当前在文件中的哪个位置去读/写数据
 			(e.g.文件头SEEK_SET;文件尾SEEK_END;当前位置:SEEK_CUR等.)
-		文件读写指针:指示当前的读写位置(是一个变量)
+		文件读写位置:指示当前的读写位置(是一个变量)
 		*/
 		loff_t ret = 0;
 		switch(orig) {
@@ -141,7 +157,7 @@
 				ret = -EINVAL;
 				break;
 			}
-			filp->f_pos = (unsigned int)offset;	/*更新文件当前位置*/
+			filp->f_pos = (unsigned int)offset;	/*更新文件位置*/
 			ret = filp->f_pos;	//返回当前位置
 			break;
 		case 1: /*SEEK_CUR:当前位置*/
@@ -193,21 +209,22 @@
 		kmalloc使用kfree释放,kfree("kmalloc返回的结构体实例e.g. light_devp")
 		ENOMEM(12):Out of memory.
 		一般分配了内存都会调用memset()进行初始化.
+		kmalloc分配的内存在物理上是连续的.
 		*/
 
 		/*字符设备初始化*/
-		cdev_init(&dev->cdev, &light_fops);	
+		cdev_init(&light_devp->cdev, &light_fops);	
 		/*
-			para1:设备结构体下的字符设备结构体;
+			para1:设备结构体下的字符设备结构体变量;
 			para2:文件操作结构体
 		*/
-		dev->cdev.owner = THIS_MODULE;
-		dev->cdev.ops = &light_fops;
+		light_devp->cdev.owner = THIS_MODULE; //这一句应该是可有可无
+		light_devp->cdev.ops = &light_fops; //这一句应该是可有可无
 		
-		/*字符设备与设备号链接*/
-		cdev_add(&dev->cdev, devno, 1);
+		/*字符设备添加到cdev链表中*/
+		cdev_add(&light_devp->cdev, devno, 1);
 		/*
-			para1:设备结构体下的字符设备结构体;
+			para1:设备结构体下的字符设备结构体变量;
 			para2:申请的设备号;
 			para2:次设备号的数目(一般为1)
 		*/
@@ -218,7 +235,7 @@
 	/*Module exit function*/
 	void __exit xxx_exit(void)
 	{
-		/*删除字符设备结构体*/
+		/*从cdev链表中删除cdev节点*/
 		cdev_del(&light_devp->cdev);
 		/*注销字符设备*/
 		unregister_chrdev_region(MKDEV(light_major, 0), 1);	
@@ -227,6 +244,8 @@
 			para2:count(次设备号的数目,一般为1)
 			PS:para1设备号(devno)需要生成.e.g.MKDEV(light_major, 0)->para1:主设备号;para2:次设备号.
 		*/
+		/*释放申请的字符设备结构体内存*/
+		kfree(light_devp);
 	}
 
 	module_init(xxx_init);
