@@ -276,7 +276,7 @@
  
 ROM:EEPROM完全可以用软件来擦写.
 
-NOR Flash(或非):类SRAM接口,可芯片内执行(execute in place, XIP).
+NOR Flash(或非):类DRAM接口,可芯片内执行(execute in place, XIP).
 
 NAND Flash(与非):以块方式访问,不支持芯片内执行.
 
@@ -350,7 +350,8 @@ linux内核主要由:进程调度(SCHED)、内存管理(MM)、虚拟文件系统
 
 	1)进程调度:处于系统的中心位置,内核中使用task_struct(位于./include/linux/sched.h定义)描述进程.
 	2)内存管理:控制多个进程安全地共享主内存区域.
-	3)虚拟文件系统:隐藏各种硬件的具体细节,为应用程序操作具体设备提供统一的接口.而且独立于各个具体的文件系统,对各种文件系统(ext2、FAT等)进行抽象.
+	3)虚拟文件系统:隐藏各种硬件的具体细节,为应用程序操作具体设备提供统一的接口.而且独立于各个具体的文件系统,
+	对各种文件系统(ext2、FAT等)进行抽象.
 	4)网络接口:包括网络协议(负责实现网络传输协议)和网络驱动程序(负责与网络硬件设备通信).上层应用程序统一使用套接字接口.
 	5)进程间通信:信号量、共享内存、消息队列(System V IPC)、管道、UNIX域套接字等.
 
@@ -406,7 +407,7 @@ Kconfig(配置文件):提供界面中的配置选项.
 **菜单结构:**
 
 	menu "Network device support"	/*menu和endmenu之间的都会成为"Network device support"下的子菜单*/
-		depends on NET	/*且会继承依赖关系(menu一般仅仅是一个菜单,没有对应真实的配置选项)*/
+		depends on NET	/*且会继承依赖关系(menu一般仅仅是一个菜单名,没有对应真实的配置选项)*/
 	config NETDEVICES	/*子菜单*/
 		...
 	endmenu
@@ -435,14 +436,14 @@ Kconfig在某个目录下编辑好后,需要在./arch/arm/Kconfig中添加:
 	
 	source "drivers/alidrivers/modules/Kconfig" 
 	/*在"./drivers/Kconfig"中添加,包括了modules下面的Kconfig*/
-	/*(drivers/alidrivers/modules/Kconfig)中描述alidsc的菜单信息*/
+	/*(drivers/alidrivers/modules/Kconfig)中描述alixxx的菜单信息*/
 
 	/*S3922目录结构*/
 	source "drivers/Kconfig"	/*在"./arch/arm/Kconfig中添加,包括了drivers下面的Kconfig"*/
 	source "drivers/alidrivers/modules/Kconfig" /*在"./drivers/Kconfig"中添加,包括了modules下面的Kconfig*/
 	source "drivers/alidrivers/modules/alirpc/Kconfig"	
 		/*在"drivers/alidrivers/modules/Kconfig"中添加,包括了alirpc下面的Kconfig*/
-	/*(drivers/alidrivers/modules/aliprc/Kconfig)中描述alidsc的菜单信息*/---因为这些都会依赖rpc模块
+	/*(drivers/alidrivers/modules/aliprc/Kconfig)中描述alixxx的菜单信息*/---因为这些都会依赖rpc模块
 	
 
 2)Makefile
@@ -466,7 +467,7 @@ SoC内嵌bootrom,一上电bootrom即运行,其他CPU进入WFI状态等待CPU0唤
 
 	#define PI 3.1415926
 	int min_value, max_value;	/*变量名下划线分割*/
-	void send_data(void);	/*函数下划线分割*/
+	void send_data(void);	/*函数名下划线分割*/
 
 2)"{}"使用:
 	
@@ -483,7 +484,7 @@ linux用的C编译器为GNU C编译器.
 **(1)可变参数宏(宏可接受可变数目的参数)**
 
 	#define pr_debug(fmt, arg...) \
-				printk(fmt, ##arg)	/*"##"为了处理arg不代表任何参数的情况,GNU C与预处理器会丢弃前面的逗号*/
+				printk(fmt, ##arg)	/*"##"为了处理arg不代表任何参数的情况,GNU C预处理器会丢弃前面的逗号*/
 
 **(2)结构体初始化**
 
@@ -580,7 +581,7 @@ ARM linux工具链解析:
 
 modprobe/modprobe -r filename:加载/卸载模块时会同时加载/卸载其依赖模块,比insmod/rmmod功能更强大.
 
-"modinfo 模块名.ko:获得模块信息(author、description、depends等等).应该在linux服务器上(也就是编译的地方),板子端是查看不到的."
+"modinfo 模块名.ko:获得编译之后的模块信息(author、description、depends等等).应该在linux服务器上(也就是编译的地方),板子端是查看不到的."
 
 **内核模块许可证(licnese)包括"GPL"、"GPL v2"、"GPL and addtional rights"、"Dual BSD/GPL"、"Dual MPL/GPL",常用的为"GPL v2".**
 
@@ -612,10 +613,10 @@ linux errno位置:
 	#include <linux/module.h>
 	
 	static char *book_name = "dissecting Linux Device Driver";
-	module_param(book_name, charp, S_IRUGO);	//定义book_name为模块参数.为一个全局变量
+	module_param(book_name, charp, S_IRUGO);	//定义book_name为模块参数.为一个全局静态变量
 
 	static int book_num = 4000;
-	module_param(book_num, int, S_IRUGO);	//定义book_num为模块参数.为一个全局变量
+	module_param(book_num, int, S_IRUGO);	//定义book_num为模块参数.为一个全局静态变量
 
 	static int __init book_init(void)
 	{
@@ -684,7 +685,8 @@ linux errno位置:
 
 3)读写
 
-	int read(int fd, void *buf, size_t length); /*从fd读length(以字节(size_t)为单位)个字节读到buf缓冲区,返回实际读取的字节数*/
+	int read(int fd, void *buf, size_t length); /*从fd读length(以字节(size_t)为单位)个字节读到buf缓冲区,
+		返回实际读取的字节数*/
 	int write(int fd, const void *buf, size_t length); /*将length字节数据从buf写到fd,返回实际写入的字节数*/	
 
 4)定位
@@ -697,6 +699,7 @@ linux errno位置:
 	/*取得文件的长度:file_length = lseek(fd, 0, SEEK_END);*/
 
 5)关闭
+
 	close(fd);
 
 **实例:Linux文件操作用户空间编程(使用系统调用)**
@@ -716,7 +719,7 @@ linux errno位置:
 		fd = open("hello.txt", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 		/*
 		创建并打开文件,用户可读、可写.
-		PS:创建文件:open("test", O_CREATE, 10705);
+		PS:创建文件:open("test", O_CREAT, 10705);
 			10705:
 				第一个位用户ID(=1表示设置用户ID);
 				第二位组ID(=0不设置组ID);
@@ -739,13 +742,73 @@ linux errno位置:
 
 **C库函数操作**
 
-...省略了
+C库函数的文件操作独立于具体的操作系统平台,即在DOS, Windows, Linux或VxWorks都是一样的函数.
+
+1.创建和打开
+
+	FILE *fopen(const char *path, const char *mode);
+	/*
+		para1:需要打开的文件名;
+		para2:打开的模式
+			r, rb:只读方式打开;
+			w, wb:只写方式打开,不存在会创建;
+			a, ab:追加方式打开,不存在会创建;
+			w+, w+b:以读写方式打开.不存在会创建.
+		retval:返回FILE的指针.后续可以进行如下的判断:
+			if (fd) //表示打开成功
+	*/
+	PS:linux不区分二进制文件和文本文件.因此"rb/wb"和"r/w"在linux是一样的功能.
+
+2.读写
+
+	int fgetc(FILE *stream); //从stream中读取一个字符并将字符返回
+	int fputc(int c, FILE *stream); //向stream中写入一个字符c
+	char *fgets(char *s, int n, FILE *stream); //从stream中读取n个字符,并存放到s这个字符串中.
+	int fputs(const char *s, FILE *stream); //将s所指向的字符串写入到stream中
+	size_t fread(void *ptr, size_t size, size_t n, FILE *stream);
+		//从stream中读取n个字段(每个字段大小为size)到ptr所指向的数组中.返回实际已读取的字段数
+	size_t fwrite(const void *ptr, size_t size, size_t n, FILE *stream);
+		//从ptr所指向的数组中将n个字段(每个字段大小为size)写入到stream中.返回实际写入的字段数.
+
+3.定位
+
+	int fgetpos(FILE *stream, fpos_t *pos); //获取文件的位置.
+	int fsetpos(FILE *stream, const fpos_t *pos); //设置文件的位置
+	int fseek(FILE *stream, long offset, int whence); //对文件进行相关的定位操作.
+
+4.关闭
+
+	int fclose(FILE *stream);
+
+**C库函数实例**
+
+	#include <stdio.h>
+	#define LENGTH 100
+
+	int main()
+	{
+		FILE *fd;
+		char str[LENGTH];
+
+		fd = fopen("hello.txt", "w+"); //读写方式打开文件,不存在会创建
+		if (fd) { //打开成功
+			fputs("Hello World", fd);
+			fclose(fd);
+		}
+
+		fd = fopen("hello.txt", "r"); //只读打开
+		fgets(str, LENGTH, fd);
+		printf("%s\n", str);
+		fclose();
+
+		return 0;
+	}
 
 ### 5.2 Linux文件系统
 
 **Linux文件系统目录结构**
 
-/dev:该目录为系统中包含的设备文件(即设备节点),应用程序通过对该目录下的文件进行读写、控制以访问实际的设备.
+/dev:该目录为系统中包含的设备文件(即设备节点),应用程序通过对该目录下的文件进行读写、控制、访问实际的设备.
 
 /proc:进程、内核信息(CPU、硬盘分区、内存信息等)放置在该目录.proc目录为伪文件系统proc(不是真正的文件系统)的挂载目录,proc文件系统存在于内存中.而其他的文件系统放置在Flash上,会挂载在根目录"/".
 
@@ -794,13 +857,13 @@ linux使用struct bus_type、struct device_driver、struct device来描述总线
 	//使用的时候:
 	#include <linux/device.h>
 
-结构体device_driver和device依附于struct bus_type,都包含有struct bus_type指针.struct bus_type中的match()函数将两者捆绑在一起.一旦绑定之后,xxx_driver的probe()函数就会执行(xxx:总线名.e.g.platform、pci、i2c、spi、usb、see).
+struct device_driver和struct device依附于struct bus_type,都包含有struct bus_type指针.struct bus_type中的match()函数将两者进行匹配.一旦匹配上之后,xxx_driver的probe()函数就会执行(xxx:总线名.e.g.platform、pci、i2c、spi、usb、see).
 
 **udev**
 
 udev是一种工具(运行在用户空间),根据系统中的硬件设备状况更新设备文件(即/dev下的设备文件),e.g.动态建立/删除设备文件.
 
-udev有自己的规则更新/dev下的设备文件(e.g.windows连接usb转串口设备时,udev在设备管理器中显示为:usb-serial,可以认为是udev规则作用的结果..
+udev有自己的规则去更新/dev下的设备文件(e.g.windows连接usb转串口设备时,udev在设备管理器中显示为:usb-serial,可以认为是udev规则作用的结果..)
 
 udev需要sysfs、tmpfs的支持,sysfs为udev提供设备入口和uevent通道,tmpfs为udev提供存放设备文件(/dev)的空间.
 
@@ -824,6 +887,7 @@ cdev结构体用于描述一个字符设备:
 	};
 
 dev_t dev用于描述设备号(32 bit)
+
 	MAJOR(dev_t dev);	/*获得主设备号(12bit)*/
 	MINOR(dev_t dev);	/*获得次设备号(20bit)*/
 	MKDEV(int major, int minor);	/*利用主设备号和次设备号生成dev_t(设备号)*/
@@ -836,7 +900,7 @@ cdev_init():初始化cdev成员,并建立cdev和file_operations之间的联系
 		para2:struct file_operations结构体指针.
 	*/
 
-cdev_alloc():动态申请cdev内存(无论什么内存申请,单位都是字节)
+cdev_alloc():动态申请cdev内存(无论什么内存申请,单位都是字节)--->一般不用.
 
 	struct cdev *cdev_alloc(void);	
 	/*其源代码中使用到了
@@ -844,7 +908,7 @@ cdev_alloc():动态申请cdev内存(无论什么内存申请,单位都是字节)
 	kzalloc返回(void *)的指针--指向分配的内存(单位为字节)
 	*/
 
-cdev_add():添加一个cdev设备,也就是将字符设备注册进去.
+cdev_add():添加一个cdev设备,也就是将cdev设备添加到一个链表中.
 
 	int cdev_add(struct cdev *, dev_t, unsigned);
 	/*
@@ -900,7 +964,8 @@ cdev_del():删除一个cdev设备,在注销时调用
 		para2:父设备;
 		para3:设备号;
 		para4:设备的数据(为自定义设备结构体);
-		para5:在/dev下显示的设备节点名字;
+		para5:在/dev下显示的设备节点名字(e.g.para5为dsc0)
+			--->只是在/dev下显示的名字,"/dev"不会作为para5参数的一部分.
 		retval:struct device *设备结构体指针.
 	*/
 	
@@ -910,15 +975,15 @@ cdev_del():删除一个cdev设备,在注销时调用
 		para1:设备类;
 		para2:设备号;
 	*/
-	2.删除字符设备:cdev_dev(struct cdev *cdev);
+	2.删除字符设备:cdev_del(struct cdev *cdev);
 	3.释放设备号:unregister_chrdev_region(dev_t from, unsigned count);
 	4.删除设备类:class_destroy(struct class *class);
 
 **file_operations结构体**
 
-1) unlocked_ioctl():一般使用".unlocked_ioctl() = xxx_ioctl(),"赋值.提供设备相关控制cmd(命令)的实现.成功返回非负值.
+1)unlocked_ioctl():一般使用".unlocked_ioctl = xxx_ioctl,"赋值.提供设备相关控制cmd(命令)的实现.成功返回非负值.
 
-2) mmap():建立内核空间到用户空间(即进程)的虚拟地址空间的映射(即内核内存到用户内存的映射).映射成功后,用户对这段内存的操作直接反应到内核空间(内核内存),同样内核空间对这段内存的操作也直接反应到用户空间.应用程序访问这段内存无需进行内存拷贝,针对需要大量数据传输的操作效率非常高.
+2)mmap():将设备内存(内核空间)映射到进程的虚拟地址空间(用户空间).建立内核空间到用户空间(即进程)的虚拟地址空间的映射(即设备内存到用户内存的映射).映射成功后,用户对这段内存的操作直接反应到内核空间(设备内存),同样内核空间对这段内存的操作也直接反应到用户空间.应用程序访问这段内存无需进行内存拷贝,针对需要大量数据传输的操作效率非常高.
 
 进程在mmap映射过程中的文件内容的改变不会立即写回到磁盘文件中,写回操作是在调用munmap()后才执行,可以通过调用msync()来实现同步.-----一般用的较少.
 
@@ -928,11 +993,16 @@ cdev_del():删除一个cdev设备,在注销时调用
 	/*各参数说明:
 	para1:起始地址,一般为NULL(即为0),表示由内核来指定该内存地址
 	para2:要映射内存区域的大小
-	para3:内存保护标志(PROT_EXEC(页内容可以被执行)、PROT_READ(页内容可以读取)、PROT_WRITE()页可以被写入、
+	para3:内存保护标志(PROT_EXEC(页内容可以被执行)、PROT_READ(页内容可以被读取)、PROT_WRITE()页可以被写入、
 		PROT_NONE(页不可以被访问))
 	para4:指定映射对象的类型,映射选项和映射页是否可以共享.使用"MAP_SHARED"居多,允许其他映射该文件的进程共享.
-	para5:文件描述符号(open的返回)
-	para6:偏移,通常为0.该值为PAGE_SIZE的整数倍.
+	para5:文件描述符号(open的返回),即具体调用哪一个设备的mmap.
+	para6:偏移,该值必须为PAGE_SIZE的整数倍(不能应用于page不对齐的情况).
+		1.当应用mmap实现进程间通信(通过映射一个普通文件实现共享内存通信),此时para6为0;
+		2.当应用mmap实现将物理地址映射到用户空间的虚拟地址实现对设备寄存器等的操作,需要
+			1)para6为真实的物理地址(需要addr & (PAGE_SIZE-1),即page对齐);
+			2)fd为打开的"/dev/mem"返回的fd./dev/mem含有所有物理地址的全映像(即:0-0xffff_ffff).
+			一般将/dev/mem映射好,通过在进程空间中读写映射后的虚拟地址,可实现在用户空间读写物理寄存器地址.
 	retval:成功时返回被映射区的指针,失败时,返回MAP_FAILED(其值为(void *)-1)
 	*/
 
@@ -942,6 +1012,143 @@ cdev_del():删除一个cdev设备,在注销时调用
 		para2:mmap映射的大小;
 		retval:成功返回0,失败返回-1.
 	*/
+
+	/*********进程中通过mmap实现进程间通信**********/
+	1.write.c程序:
+	/*write.c*/
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <fcntl.h>
+	#include <unistd.h>
+	#include <sys/types.h>
+	#include <sys/stat.h>
+	#include <sys/mman.h>
+	/*映射内存大小*/
+	#define MAPLEN 0x100
+	/*定义一个学生信息结构体*/
+	struct STU
+	{
+	    int id;
+	    char name[20];
+	    char sex;
+	};
+	/*出错信息统一处理函数*/
+	void sys_err(char *str, int exitno)
+	{
+	    perror(str);
+	    exit(exitno);
+	}
+	
+	int main(int argc, char*argv[])
+	{
+	    struct STU *pm;//STU结构体指针
+	    int fd, i = 0;
+	    if(argc < 2){
+	        printf("args error\n");
+	        exit(1);
+	    }
+	
+	    fd = open(argv[1], O_RDWR | O_CREAT, 0777); //打开一文件
+	    if(fd < 0){
+	        sys_err("open", 1);
+	    }
+	
+	    if(lseek(fd, MAPLEN - 1, SEEK_SET) < 0){//文件偏移至分配的内存地址末端
+	        sys_err("lseek", 3);
+	    }
+	
+	    if(write(fd, "\0", 1) < 0){  //末端赋值为'\0'
+	        sys_err("write", 4);
+	    }
+	    /*将文件映射至进程的地址空间*/
+	    pm = mmap(NULL, MAPLEN, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	    if(pm == MAP_FAILED){
+	        sys_err("mmap", 2);
+	    }
+	    /*关闭文件描述符*/
+	    close(fd);
+	    /*对文件进行写入操作*/
+	    while(1){
+	        pm->id = i;
+	        sprintf(pm->name, "yu-%d", i);
+	        if(i % 2 == 0){
+	            pm->sex = 'm';
+	        }else{
+	            pm->sex = 'w';
+	        }
+	        i++;
+	        sleep(1);
+	    }
+	    munmap(pm, MAPLEN);
+	
+	    return 0;
+	}
+	2.read.c程序:
+	/*read.c*/
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <fcntl.h>
+	#include <unistd.h>
+	#include <sys/types.h>
+	#include <sys/stat.h>
+	#include <sys/mman.h>
+	
+	#define MAPLEN 0x1000
+	
+	struct STU
+	{
+	    int id;
+	    char name[20];
+	    char sex;
+	};
+	
+	void sys_err(char *str, int exitno)
+	{
+	    perror(str);
+	    exit(exitno);
+	}
+	
+	int main(int argc, char *argv[])
+	{
+	    struct STU *pm;
+	    int fd, i = 0;
+	    if (argc < 2) {
+	        printf("args error\n");
+	        exit(1);
+	    }
+	
+	    fd = open(argv[1], O_RDWR);
+	    if (fd < 0){
+	        sys_err("open", 1); 
+	    }
+	
+	    pm = mmap(NULL, MAPLEN, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	    if(pm == MAP_FAILED){
+	        sys_err("mmap", 2);
+	    }
+	    /*关闭文件*/
+	    close(fd);
+	    /*删除文件*/
+	    unlink(argv[1]);
+	    /*在内存中读数据*/
+	    while(1){
+	        printf("%d\n", pm->id);
+	        printf("%s\n", pm->name);
+	        printf("%c\n", pm->sex);
+	        sleep(1);
+	    }
+	    munmap(pm, MAPLEN);
+	
+	    return 0;
+	}
+
+	编译:
+		gcc write.c -o write
+		gcc read.c -o read
+	执行:
+		./write myfile
+		./read myfile
+		/*read的进程会打印出:yu-2 m; yu-3 w...*/
 
 内核驱动中的mmap使用:
 	
@@ -958,16 +1165,16 @@ cdev_del():删除一个cdev设备,在注销时调用
 		/*remap_pfn_range:
 		para1:struct vma_area_struct *vma(vma结构体指针)
 		para2:虚拟地址起始地址
-		para3:物理地址(page>>PAGE_SHIFT---内核中定义的宏)
+		para3:物理地址(page>>PAGE_SHIFT---内核中定义的宏.PAGE_SHIFT为12.即4k对齐.)
 		para4:映射空间大小,单位为字节
 		para5:给vma要求的"protection".一般直接使用vma->vm_page_prot.如果要求用户空间读数据时不经过cache可以:
 		vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);再传入vma->vm_page_prot.
 		*/
 	}
 
-I/O内存(内核内存)被映射到用户内存时需要是nocache的,因此需要设置nocache标志.
+I/O内存(内核内存)被映射到用户空间时需要是nocached的,因此需要设置nocached标志.
 
-	/*给vma的vma_page_prot设置nocache标志*/
+	/*给vma的vma_page_prot设置nocached标志*/
 	vma->vma_page_prot = pgprot_nocached(vma->vma_page_prot);	/*pgprot_nocached是一个宏*/
 	...
 
@@ -990,12 +1197,12 @@ select(用户空间):监控多个文件,如果没有一个文件满足(读/写)�
 	para5:超时时间(NULL表示无限等待)
 	*/
 
-select中任何一个文件满足要求都将返回,正常返回满足要求的文件描述符个数;如果没有满足要求的将会阻塞(进程睡眠)直到超时返回0；中断或出错返回-1.
+select中任何一个文件满足要求都将返回,正常返回满足要求的文件描述符个数;如果没有满足要求的将会阻塞(进程睡眠)直到超时返回0、中断或出错返回-1.
 
 fd_set的构造:
 
 	fd_set rds/wds/eds;
-	void FD_ZERO(fd_set *fdset); /*清空文件描述集*/	e.g.FD_ERO(&rds);
+	void FD_ZERO(fd_set *fdset); /*清空文件描述集*/	e.g.FD_ZERO(&rds);
 	void FD_SET(int fd, fd_set *fdset); /*添加fd到fdset中*/	e.g.FD_SET(fd, &rds);
 	void FD_ISSET(int fd, fd_set *fdset);	/*在调用select后使用它来检测fdset是否发生了变化(置位)*/	FD_ISSET(fd, &rds);
 	void FD_CLR(int fd, fd_set *fdset); /*从fdset中清除掉fd*/
@@ -1021,20 +1228,20 @@ poll函数实现了调用select而阻塞的进程可以被等待队列头部唤�
 
 **ioctl函数**
 
-对于不支持的命令(cmd),ioctl()函数应该返回"-EINVAL";
+对于不支持的命令(cmd),linux下ioctl()函数应该返回"-ENOIOCTLCMD",如果这个返回值就没有返回"-EPERM".
 
 ioctl()命令生成:
 
-	#define CA_DSC_BASE	0xc1	/设备类型字段,也叫*幻数("type"),8 bit(0-0xff),
+	#define XXX_BASE	0xc1	/设备类型字段,也叫*幻数("type"),8 bit(0-0xff),
 	根据./Documentation/ioctl/ioctl_num.txt选择,避免与已经使用的冲突*/
-	#define CA_SET_FORMAT	_IOW(CA_DSC_BASE, 1, int/*format*/)		/*命令CA_SET_FORMAT*/
-	/* _IOW:表示写(从应用程序角度看);CA_DSC_BASE:type;1:序列号-8 bit(0-0xff);int:size(数据类型字段)
+	#define xxx_FORMAT	_IOW(xxx_BASE, 1, int/*format*/)		/*命令xxx_FORMAT*/
+	/* _IOW:表示写(从应用程序角度看);xxx_BASE:type;1:序列号-8 bit(0-0xff);int:数据类型字段
 	_IO(type, 序列号)
 	_IOR(type, 序列号, 数据类型字段):表示读
 	_IOW(type, 序列号, 数据类型字段):表示写--->常用
 	_IOWR(type, 序列号, 数据类型字段):表示可读可写.
 	*/
-	#define CA_CREATE_KL_KEY	_IOW(CA_DSC_BASE, 2, struct ca_create_kl_key)
+	#define xxx_KL_KEY	_IOW(xxx_BASE, 2, struct xxx_kl_key)
 
 **设备节点创建**
 
@@ -1045,18 +1252,19 @@ ioctl()命令生成:
 	/*class_create可在./driver/class.c中找到原型; device_create可在./driver/core.c中找到原型*/
 	
 	static struct class *xxx_class;	/*全局变量,xxx_class是一个类,由class_create赋值*/
-	static struct device *xxx_device; /*全局变量,xxx_device是由device_create赋值,进行判断device(设备节点)创建成功与否*/
+	static struct device *xxx_device; /*全局变量,xxx_device是由device_create赋值,
+										进行判断device(设备节点)创建成功与否*/
 	#define DEVICE_NAME "xxx_device_name" /*xxx_device_name是在/dev目录下显示的设备节点*/
 	#define XXX_CLASS_NAME	"xxx_class_name"	/*xxx_class_name是/sys/class目录下的一个类名*/
 
 	xxx_class = class_create(THIS_MODULE, XXX_CLASS_NAME);	/*创建/sys/class目录下"XXX_CLASS_NAME"类名*/ 
 	...
-	xxx_device = device_create(xxx_class, NULL, devno, NULL, DEVICE_NAME) /*创建设备(节点DEVICE_NAME)*/
+	xxx_device = device_create(xxx_class, NULL, devno, NULL, DEVICE_NAME) /*创建设备节点DEVICE_NAME*/
 	/*
 	para1:设备类(struct class *class)
 	para2:父设备(struct device *parent),一般为NULL
 	para3:设备号(dev_t devt)
-	para4:数据(void *drvdata),一般为NULL
+	para4:数据(void *drvdata),可以为NULL
 	para5:在/dev下显示的设备文件名(节点)(const char *fmt)
 	*/
 	if(xxx_device == NULL){
@@ -1064,13 +1272,14 @@ ioctl()命令生成:
 	}
 	
 	/*注销device*/
-	device_destroy(xxx_class, devno);
+	device_destroy(xxx_device, devno);
 	/*注销class*/
 	class_destroy(xxx_class);
 	
 手动创建设备节点
 
-	mknod /dev/globalmem c 230 0	/*mknod:创建命令;/dev/globalmem:节点名;c:字符设备;230:主设备号;0:次设备号*/
+	mknod /dev/globalmem c 230 0	
+	/*mknod:创建设备节点命令;/dev/globalmem:节点名;c:字符设备;230:主设备号;0:次设备号*/
 
 ***
 

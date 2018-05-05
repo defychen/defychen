@@ -4789,14 +4789,14 @@ busybox中实现了devmem这一个应用,用来直接读、写物理内存,也�
 		/*map one page*/ //将内核空间映射到用户空间,映射大小为1 page=4k
 		map_base = mmap(0, MAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, target & ~MAP_MASK);
 		/*
-			para1:预对应的内存起始地址,通常设为NULL或0.让系统自动选择地址,对应成功后该地址会返回
+			para1:预对应的内存起始地址,通常设为NULL或0.让系统自动选择地址,映射成功后该地址会返回
 			para2:映射的大小
 			para3:映射区域的保护方式:
 				PROT_EXEC:映射区域可被执行;
 				PROT_READ:映射区域可被读取;
 				PROT_WRITE:映射区域可被写入;
 				PROT_NONE:映射区域不能存取.
-			para4:影响映射区域的特定:
+			para4:影响映射区域的特点:
 				MAP_SHARED:对映射区域写入数据会复制回文件内,而且允许其他映射该文件的进程共享
 				MAP_PRIVATE:对该区域的任何修改都不会写回到原来的文件中---一般用于只读打开文件
 			para5:fd,open返回的文件描述符
