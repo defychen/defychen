@@ -243,13 +243,23 @@ GNU zip---gzip(gz)和bzip2(bz2)两种压缩格式，压缩比:gzip>bzip2
 
 ## 17. ln命令
 
-	//ln为建立某个文件的链接文件
+	1.建立文件的软链接
 	ln -s test.sh test	//-s为建立一个软连接.test.sh:链接的目标的文件, test:新建的链接文件
 	ls -l
 	/*得到:
 	lrwxrwxrwx 1 defy.chen defy.chen    7 Sep  4 20:27 test -> test.sh*
 	-rwxrwxr-x 1 defy.chen defy.chen  328 Sep  4 20:04 test.sh*	//目标文件
 	*/
+	2.建立一个目录的软链接
+	source directory:target_file --->需要连接的目标目录
+	software link: link_file --->软链接目录(相当于windows下的快捷方式).
+	ln -s target_file link_file		
+	/*
+	注意点:
+		1.link(创建的软链接)一定不能提前创建,只需要在"ln -s"指定一个需要的名字即可.
+		2.target_file和link_file后面绝对不能有"/"
+	*/
+	PS:这种方式可以很方便的用于source insight,当更新代码不需要重新更新整个文件夹.
 
 ## 18. 查看linux IPC相关的限制
 

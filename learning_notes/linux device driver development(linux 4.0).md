@@ -1307,13 +1307,13 @@ ioctl()命令生成:
 
 解决:加上编译屏障
 
-	#define barrier() __asm__ __volatile__("":::"memory")	/*汇编时的编译屏障*/
-	//可以改成:#define barrier() {asm volatile("":::"memory")}
+	#define barrier() __asm__ volatile("":::"memory")	/*汇编时的编译屏障*/
+	//也可以写成:#define barrier() {asm volatile("":::"memory")}
 	/*
 	memory强制gcc编译器假设RAM所有内存单元均被汇编指令修改,这样CPU中的registers和cache中已缓存的内存单元中
 	的数据将被作废.CPU在需要的时候必须重新读取内存中的数据.这就阻止了CPU将registers或cache中的数据用于去优化
 	指令,而不去访问内存.
-	"":::表示空指令.barrier操作不用在此插入一条串行化的汇编指令.
+	"":::表示空指令.barrier操作不能在此插入一条串行化的汇编指令.
 	*/
 
 	1)e = d[4095];
@@ -1332,7 +1332,7 @@ volatile一般用于修饰register,因为register容易被其他的操作更改�
 
 	#define GET_CHIP_DWORD (*(volatile unsigned int *)0x18000000)
 	
-	unsinged int get_soc_chip_id(void)
+	unsigned int get_soc_chip_id(void)
 	{
 		unsigned int chip_dw = GET_CHIP_DWORD;
 		unsigned int chip_id = ((chip_dw & 0xffff0000)>>16);	//取高16bit
@@ -1341,12 +1341,12 @@ volatile一般用于修饰register,因为register容易被其他的操作更改�
 
 	/*
 		如果有多个地方调用get_soc_chip_id.因为都会使用GET_CHIP_DWORD去获得chip_dw,没有volatile
-		会导致第一次调用之后所有操作都使用第一次的保留的.有可能会出错.因此使用volatile.
+		会导致第一次调用之后所有其他操作都使用第一次取得的值.有可能会出错.因此使用volatile.
 	*/
 
 **执行乱序---常见于多个CPU**
 
-即使编译后的指令顺序正确,但是有CPU是"乱序执行(Out-of-Order-Execution)"策略,CPU本质决定的.
+即使编译后的指令顺序正确,但是由于CPU是"乱序执行(Out-of-Order-Execution)"策略,CPU本质决定的.
 
 	//CPU0上执行:
 	while (f == 0);
@@ -1358,7 +1358,7 @@ volatile一般用于修饰register,因为register容易被其他的操作更改�
 
 	/*
 		疑问:CPU0上打印的x不一定是42.
-		解释:因此CPU1即使"f=1"编译在"x=42"后面,执行时仍然可能先于"x=42"完成.所以这时候CPU0上的
+		解释:因为CPU1即使"f=1"编译在"x=42"后面,执行时仍然可能先于"x=42"完成.所以这时候CPU0上的
 		打印不一定是42.
 	*/
 	因此,处理器为了处理多核间一个核的内存行为对另一个核可见的问题,引入了内存屏障指令.
@@ -1404,7 +1404,7 @@ local_irq_disable()和local_irq_enable()只能禁止和使能本CPU内的中断.
 
 local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外,还保存CPU的中断位信息.
 
-**禁止/使能中断低半部:local_bh_disable()/local_bh_enalbe()--->用的比较少.**
+**禁止/使能中断底半部:local_bh_disable()/local_bh_enalbe()--->用的比较少.**
 
 ### 7.4 原子操作
 
@@ -1464,7 +1464,7 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 	void atomic_inc(atomic_t *v);			/*原子变量v自增1*/
 	void atomic_dec(atomic_t *v);			/*原子变量v自减1*/
 
-4)先测试返回原来的值,在进行inc/dec操作:
+4)操作并测试:
 	
 	int atomic_inc_and_test(atomic_t *v);	
 		/*原子变量先执行自增1操作,然后测试是否与0相等.相等返回true,否则返回false*/
@@ -1535,7 +1535,7 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 		return 0;
 	}
 
-*使用技巧:*
+使用技巧:
 
 自旋锁主要针对SMP或单CPU但内核可抢占的情况,对于单CPU和内核不支持抢占的情况,自旋锁没用(退化为空操作).对于支持抢占的系统,单核会直接将整个核的抢占调度禁止;多核SMP的情况会禁止本核的抢占调度,但其他核继续正常的抢占调度.
 
@@ -1546,7 +1546,7 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 	spin_lock_irqsave() = spin_lock() + local_irq_save()	/*获得锁的同时关中断并保存状态字*/
 	spin_unlock_irqrestore() = spin_unlock() + local_irq_restore()	/*释放锁的同时开中断并恢复状态字*/
 	spin_lock_bh() = spin_lock() + local_bh_disable()	/*获得锁的同时关中断底半部*/
-	spin_unlock_bh() = spin_unlock() + bh_irq_enable()	/*释放锁的同时开中断底半部*/
+	spin_unlock_bh() = spin_unlock() + local_bh_enable()	/*释放锁的同时开中断底半部*/
 
 **一般使用的是:进程上下文中"spin_lock_irqsave()/spin_unlock_irqrestore()",中断上下文中(中断服务程序中)"spin_lock()/spin_unlock()"**
 
@@ -1559,12 +1559,12 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 	rwlock_t rwlock;			/*定义读写自旋锁rwlock*/
 	rwlock_init(&rwlock);		/*初始化rwlock*/
 
-	//下面获得读的锁函数,多个进程都可以调用.
+	//下面是获得读的锁函数,多个进程都可以调用.
 	read_lock(&rwlock);		/*读时获取锁,正常每个需要读取临界资源的操作都应该调用读锁定函数*/
 	...						/*读临界资源*/
 	read_unlock(&rwlock);		/*释放*/
 
-	//下面获得写的锁函数,只能有一个进程可以调用.
+	//下面是获得写的锁函数,只能有一个进程可以调用.
 	write_lock(&rwlock);		/*写时获取锁,只能有一个进程可获得*/
 	...						/*操作临界资源*/
 	write_unlock(&rwlock);
@@ -1607,7 +1607,7 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 			}
 
 			//down_interruptible的使用
-			if (down_interruptible(&xxx_sem))	//没有获取成功睡眠,但是可以被其他信号打断,此时返回非0
+			if (down_interruptible(&xxx_sem))	//没有获取成功就睡眠,但是可以被其他信号打断,此时返回非0
 			{
 				return -EINTR;
 			}
@@ -1635,7 +1635,7 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 
 **互斥体与自旋锁的区别:**
 
-1)临界区较小,宜用自旋锁(会关抢占调度,因此必须小);临界区很大,应该使用互斥体(可以睡眠,发生进程上下文切换,因此适合临界区的场合).
+1)临界区较小,宜用自旋锁(会关抢占调度,因此必须小);临界区很大,应该使用互斥体(可以睡眠,发生进程上下文切换,因此适合临界区较大的场合).
 
 2)互斥体保护的临界区可以包含阻塞代码(可以睡眠);自旋锁由于自旋效应,不能用于阻塞的场合(会关抢占调度).
 
@@ -1724,24 +1724,26 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 
 **实例:**
 
+	wait_queue_head_t xxx_wait; //定义等待队列xxx_wait
+
 	ssizt_t xxx_write(struct file *filp, const char __user *buf, size_t count, loff_t *f_pos)
 	{
 		...
-		DECLARE_WAITQUEUE(wait, current);	/*定义一个等待队列元素,并与当前进程绑定*/
+		DECLARE_WAITQUEUE(wait, current);	/*定义一个等待队列元素wait,并与当前进程绑定*/
 		add_wait_queue(&xxx_wait, &wait);	/*添加wait到等待队列头部xxx_wait*/
 
 		/*等待设备缓冲可写*/
 		do {
 			avail = device_writable(...);	/*是否可写*/
-			if(availe < 0) {	/*不可写*/
-				if(filp->f_flags & O_NONBLOCK) { /*判断是否为非阻塞*/
+			if(avail < 0) {	/*不可写*/
+				if(filp->f_flags & O_NONBLOCK) { /*非阻塞情况*/
 					ret = -EAGAIN;
 					goto out;
 				}
 				__set_current_state(TASK_INTERRUPTIBLE);	/*改变进程状态:TASK_INTERRUPTIBLE*/
 				schedule();			/*调度其他进程执行*/ /*当队列被唤醒时,可以调度到该进程*/
 				if(signal_pending(current)) { 
-				/*signal_pending:检测当前队列的唤醒是否为信号唤醒,如果是返回非0.否则返回0.*/
+				/*signal_pending:检测当前睡眠进程是否是正常被唤醒,正常唤醒返回0;被中断打断返回非0*/
 					ret = -ERESTARTSYS;	/*重启系统*/
 					goto out;
 				}
@@ -1815,7 +1817,7 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 	{
 		int ret;
 		struct globalfifo_dev *dev = filp->private_data;
-		DECLARE_WAITQUEUE(wait, current);  //声明一个等待队列元素,并与当前的读进程绑定
+		DECLARE_WAITQUEUE(wait, current);  //声明一个等待队列元素wait,并与当前的读进程绑定
 		
 		mutex_lock(&dev->mutex);	  //拿到锁
 		add_wait_queue(&dev->r_wait, &wait);  //将等待队列元素加入到读等待队列头部
@@ -1830,7 +1832,7 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 			__set_current_state(TASK_INTERRUPTIBLE);  //改变当前进程的状态为TASK_INTERRUPTIBLE
 			mutex_unlock(&dev->mutex);  //释放mutex
 			schedule();  //切换进程,当前进程会进入睡眠状态
-			if (signal_pending(current))  //判断当前睡眠进程是否是被信号打断
+			if (signal_pending(current))  //检测当前睡眠进程是否是正常被唤醒,正常唤醒返回0;被中断打断返回非0
 			{
 				ret = -ERESTARTSYS;
 				goto out2;
@@ -1850,12 +1852,12 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 			pr_info("read %d bytes, current_len: %d\n", count, dev->current_len);
 		}
 		
-		wake_up_interruptible(&dev->w_wait);  //唤醒写进程
+		wake_up_interruptible(&dev->w_wait);  //唤醒写进程(写进程是处于TASK_INTERRUPTIBLE)
 		ret = count;
 	out:
 		mutex_unlock(&dev->mutex);
 	out2;
-		remova_wait_queue(&dev->r_wait, &wait);
+		remove_wait_queue(&dev->r_wait, &wait);
 		set_current_state(TASK_RUNNING);
 		return ret;
 	}
@@ -1866,7 +1868,7 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 	{
 		int ret;
 		struct globalfifo_dev *dev = filp->private_data;
-		DECLARE_WAITQUEUE(wait, current);  //声明一个等待队列元素,并与当前的读进程绑定
+		DECLARE_WAITQUEUE(wait, current);  //声明一个等待队列元素wait,并与当前的写进程绑定
 		
 		mutex_lock(&dev->mutex);	  //拿到锁
 		add_wait_queue(&dev->w_wait, &wait);  //将等待队列元素加入到写等待队列头部
@@ -1881,7 +1883,7 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 			__set_current_state(TASK_INTERRUPTIBLE);  //改变当前进程的状态为TASK_INTERRUPTIBLE
 			mutex_unlock(&dev->mutex);  //释放mutex
 			schedule();  //切换进程,当前进程会进入睡眠状态
-			if (signal_pending(current))  //判断当前睡眠进程是否是被信号打断
+			if (signal_pending(current))  //检测当前睡眠进程是否是正常被唤醒,正常唤醒返回0;被中断打断返回非0
 			{
 				ret = -ERESTARTSYS;
 				goto out2;
@@ -1889,7 +1891,7 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 			mutex_lock(&dev->mutex);
 		}
 
-		if (count > GLOBALFIFO_SIZE - dev->current_len) //如果需要读取的长度比fifo中剩下的空间大
+		if (count > GLOBALFIFO_SIZE - dev->current_len) //如果需要写的长度比fifo中剩下的空间大
 			count = GLOBALFIFO_SIZE - dev->current_len;
 
 		if (copy_from_user(dev->mem + dev->current_len, buf, count)) {
@@ -1900,12 +1902,12 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 			pr_info("written %d bytes, current_len: %d\n", count, dev->current_len);
 		}
 		
-		wake_up_interruptible(&dev->r_wait);  //唤醒读进程
+		wake_up_interruptible(&dev->r_wait);  //唤醒读进程(读进程是处于TASK_INTERRUPTIBLE)
 		ret = count;
 	out:
 		mutex_unlock(&dev->mutex);
 	out2;
-		remova_wait_queue(&dev->w_wait, &wait);
+		remove_wait_queue(&dev->w_wait, &wait);
 		set_current_state(TASK_RUNNING);
 		return ret;
 	}

@@ -631,19 +631,30 @@ origin函数查询变量"VARIABLE"从哪里来.返回值分别为:underfined(没
 	contents := $(shell cat foo)	//contents被赋值为文件"foo"的内容
 	files := $(shell echo *.c)	//变量files被赋值为当前目录下所有.c的文件列表
 
-### 7.9 error和warning函数
+### 7.9 info、warning、error函数
 
-**$(error text...)**
+info, warning, error函数常用语Makefile中的调试,属于不同的打印级别.
 
-产生致命错误,并提示"text..."信息给用户,并退出make的执行.
+**$(info string)**
 
-	$(if $(BASE_DIR), , $(error output directory "$(O)" dose not exist))
-	//判断BASE_DIR如果为空,产生致命错误,并输出"output directory "$(O)"(的值) does not exit".
-	//并退出make的执行.
+级别最低,执行到该位置时,会将string输出,方便定位make执行到哪个位置.
 
-**$(warning text...)**
+	$(info Make execute to there)
+	//执行到该处时会打印出"Make execute to there"
 
-类似于error函数.但是不会导致致命错误(make不退出).只是提示"text...",make执行过程继续.
+**$(warning string)**
+
+级别medium,执行到该位置时,会将string输出,方便定位make执行到哪个位置--->常用.
+
+	$(warning Make execute to there)
+	//执行到该处时会打印出"Make execute to there"
+
+**$(error string)**
+
+级别highest,会产生致命错误,执行到该位置时,会停止当前Makefile的执行.
+
+	$(error Make stop in there)
+	//执行到该处时会打印出"Make stop in there",并且直接退出当前的Makefile.
 
 ***
 
@@ -742,7 +753,7 @@ N.s:是不需要预处理的汇编源文件;N.S:是需要预处理的汇编源�
 
 **make V=1:查看详细的编译信息.**
 
-*其他命令可以使用"ls --help"查看支持的命令行选项.*
+其他命令可以使用"ls --help"查看支持的命令行选项.
 
 **使用工具"automake"可以帮助我们创建一个遵循GNU make约定的Makefile.**
 
@@ -831,6 +842,15 @@ N.s:是不需要预处理的汇编源文件;N.S:是需要预处理的汇编源�
 	PS:如上的问题3.
 	modprobe也是通过rmmod进行删除.
 
+### 5.在Makefile中使用echo增加调试信息
+
+在Makefile中使用echo增加调试信息时,echo只能在"target:"后面的语句中使用,其前面必须是tab键.
+
+	test: a b
+		@echo "xxxxx" //echo必须是在"target:"后面的语句,且以tab键开头.
+
+	PS:如果echo在其他地方,就会报"Makefile: x:*** missing separator. Stop."的错误.
+
 ***
 
 ## Chapter 12 Makefile碰到的问题
@@ -849,7 +869,7 @@ N.s:是不需要预处理的汇编源文件;N.S:是需要预处理的汇编源�
 
 	make alisee-source		//将alisee的源码拉下来
 
-## 3. cc、gcc、g++、CC的区别
+## 3.cc、gcc、g++、CC的区别
 
 	cc:是Unix系统的C Compiler,为商业软件.在linux下一般是一个符号链接,指向gcc.目前cc使用的很少了.
 	gcc:GNU Compiler Collection,GNU编译器套装,包含很多编译器(c、c++、Objective-c、Fortran、Java).一般使用gcc
@@ -858,6 +878,26 @@ N.s:是不需要预处理的汇编源文件;N.S:是需要预处理的汇编源�
 		2)对于宏"__cplusplus"---指示编译器将代码按C还是C++语言来解释.如果后缀为.c,并且采用gcc编译器,则该宏是未定义的.
 			否则就是已定义的.
 	CC:一般是Makefile中的一个名字.
+
+## 4.make的时候出现"empty variable name"
+
+是因为在执行"make"的时候,某个参数在赋值时"="左边出现了空格
+
+	make -C $(LINUX_SRC) SUBDIRS = $(shell pwd) modules
+	/*
+	因为SUBDIRS赋值时,等号左边有空格,因此会报"empty variable name"的错误.
+
+	如果右边有空格,会报:
+		*** Error during update of the kernel configuration.
+		
+		make[3]: *** [silentoldconfig] Error 1
+		make[2]: *** [silentoldconfig] Error 2
+		make[1]: Nothing to be done for `hello_module'.
+		make[1]: *** No rule to make target `include/config/auto.conf', needed xxx'.
+		Stop.
+		make[1]: Leaving directory `/usr/src/linux-headers-2.6.35-22-generic'
+		make: *** [all] Error 2
+	*/
 
 ***
 
