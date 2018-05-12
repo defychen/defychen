@@ -1951,7 +1951,7 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 	FD_ZERO(fd_set *set);	//清除一个文件描述符集set
 	FD_SET(int fd, fd_set *set);	//将一个文件描述符fd加入到文件描述符集set中
 	FD_CLR(int fd, fd_set *set);	//将一个文件描述符fd从文件描述符集set中清除
-	FD_ISSET(int fd, fd_set *set);	//判断文件描述符fd是否被置位
+	FD_ISSET(int fd, fd_set *set);	//判断文件描述符fd是否被置位(变为可读写)
 
 **2.应用程序中poll的使用**
 
@@ -2009,7 +2009,7 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 
 1.poll函数原型
 
-	unsigned int (*poll)(struct file *filp, struct poll_table *wait);
+	unsigned int (*poll)(struct file *filp, poll_table *wait);
 	/*
 		para1:file结构体指针;
 		para2:轮询表指针.
@@ -2026,11 +2026,11 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 	/*
 		para1:file结构体指针;
 		para2:需要加入到poll_table中的等待队列头部;
-		para3:struct poll_table结构体.
+		para3:poll_table结构体.
 		该函数作用:
 				把当前进程添加到wait参数指定的等待列表(poll_table)中,由于该poll_table
 				还包括等待队列头部,因此可以唤醒queue的信息也可以唤醒因select而睡眠的进程.
-		PS:该函数不会阻塞的等待某个时间的发生,实际的阻塞是在select处.
+		PS:该函数不会阻塞的等待某个事件的发生,实际的阻塞是在select处.
 	*/
 
 #### 8.2.3 轮询操作的实例
@@ -2101,6 +2101,7 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 	void main(void)
 	{
 		int fd;
+		int epfd;
 		int ret;
 
 		fd = open("/dev/globalfifo", O_RDONLY | O_NONBLOCK);
@@ -2165,13 +2166,13 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 
 ### 9.2 异步编程
 
-进程间通信(IPC)就是一种利用信号来通信的机制(e.g. 在输入一串字符后,标准输入设备会释放出SIGIO信号,可由其他进程捕获并进程读取).
+进程间通信(IPC)就是一种利用信号来通信的机制(e.g. 在输入一串字符后,标准输入设备会释放出SIGIO信号,可由其他进程捕获并进行读取).
 
 **信号接收**
 
 linux有众多信号(SIGIO、SIGINT(Ctrl+c)、SIGTERM(kill进程))
 
-	void input_handle(int num)	/*num为信号值(此处为SIGIO)---一旦执行该程序过程中,有输入将会释放SIGIO信号,
+	void input_handle(int num)	/*num为信号值(此处为SIGIO)---执行该程序,用户输入后就会释放SIGIO信号,
 								该程序立马会捕捉到,并进行相应的处理*/
 	{
 		char data[MAX_LEN];

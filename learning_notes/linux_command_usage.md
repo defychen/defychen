@@ -101,9 +101,12 @@ GNU zip---gzip(gz)和bzip2(bz2)两种压缩格式，压缩比:gzip>bzip2
 	make 1> ../../../normal_output.txt 2> ../../../warning.txt
 	make > ../../../see.txt 2>&1	/*">"等同于"1>",将标准输出和错误输出都输出到see.txt*/
 
-## 7.cp复制文件夹
+## 7.cp命令
 
+	1.cp复制文件夹
 	cp -r source_file dest_file 
+	2.cp同时复制".c和.h"文件
+	cp -f dir/*.[ch] tgt_dir/	//*.[ch]:匹配.c和.h文件
 
 ## 8.linux版本控制
 
@@ -395,7 +398,7 @@ type:用来显示指定命令的类型.
 	1)执行./test.sh或sh test.sh-->echo $A-->显示为空,因为A=1并未回传给当前的shell
 	2)执行source test.sh或. test.sh-->echo $A-->会显示为1,此时A=1的变量在当前的shell中.	
 
-## 23. ar命令
+## 23.ar命令
 
 ar(archive)命令,归档.通常用于将多个目标文件.o进行归档,形成静态库.a文件.静态库.a文件其实就是多个目标文件的集合.
 
@@ -405,5 +408,58 @@ ar(archive)命令,归档.通常用于将多个目标文件.o进行归档,形成�
 	ar -vt test.a //显示test.a库中包含的目标文件
 	3.将静态库中的目标文件取(解压出来),放在当前目录下
 	ar -x test.a //解压静态库
+
+## 24.mips-sde-elf-gcc编译器的编译选项
+
+	linux下使用"gcc -v --help"得到mips的部分的帮助信息(某些没有)
+	-EL		Generate little-endian code(采用小端格式). --->一般mips会采用"-EL",mips为小端格式.
+	-EB		Generate big-endian code(采用大端格式).
+	-mips32r2	Equivalent to -march=mips32r2(等同于"-march=mips32r2"). --->mips的编译器会有这个选项.
+			-march=mips32r2:表示mips采用的架构(MIPS ISA:mips的指令集架构).目前的mips的ISA有:
+			mips1, mips2, mips3, mips4, mips32, mips32r2, mips64.
+	-mdsp	Use revision 1 of the MIPS DSP ASE(使用MIPS DSP ASE第一个修订版本).
+	-msoft-float  Do not use floating-point coprocessor instructions. Implement floating-point
+			calculations using library calls instead.
+			--->不使用浮点协处理器指令,而是通过调用库函数来实现浮点.
+	-g		Generate debug information in default format. --->在编译的时候,产生调试信息.
+	-O0/O1/O2/O3		Set optimization level to <number>. --->一般设置为"-O1"
+					--->设置优化选项级别.-O0表示没有优化; -O1表示缺省值; -O3优先级别最高.
+	-Wall	Enable most warning messages. --->显示所有警告信息
+	-Wstrict-prototypes		Warn about unprototyped function declarations. --->非函数原型出现警告
+			int test(); //函数声明不是一个原型.
+			//应该声明为: int test(void);
+	-fsigned-char	Make "char" signed by default. --->将char类型设置为signed char
+	-fno-builtin-printf		Don't recognize built-in functions that do not begin
+			with _builtin_ as prefix. --->printf不会称为built-in函数.避免下断点或调用时出问题.
+	-fstack-protector	Use propolice as a stack protection method. --->栈保护,防止栈溢出
+	-fstack-protector-all	Use a atack protection method for every function
+			--->对所有的函数进行栈保护,防止栈溢出.
+	-D		produce assembler debugging messages. --->产生汇编调试信息
+	-D<macro>[=<val>]	Define a <macro> with <val> as its value. If just <macro> is given,
+			<val> is taken to be 1.
+			--->定义一个宏并取后面的val作为宏的值.如果仅仅只是定义宏,该宏取值为1.
+	-I<dir>	Add <dir> to the end of the main include path. --->增加头文件的目录<dir>
+	-MD		Generate make dependencies and compile.
+			--->生成文件的依赖关系文件(存放编译依赖信息.e.g.test.o: test.c test.h).
+				依赖文件名为"-o"指定的文件,并添加".d"后缀.若没有指定,则输入的文件作为依赖文件名,
+				并添加".d"后缀,同时继续进行后续的编译.
+	-MP		Generate phony targets for all headers.
+			--->依赖规则中的所有.h依赖项都会生成一个伪目标,该伪目标不依赖其他任何依赖项.该伪目标
+			规则可以避免删除了对应的头文件而没有更新"Makefile"匹配新的依赖关系而导致make出错的情况.
+	-MMD	Like -MD but ignore system header files.
+			--->类似"-MD",忽略系统头文件.
+
+## 25.mips-sde-elf-ld链接器的链接选项
+
+	-s, --strip-all		Strip all symbols. --->去掉所有的符号表(strip:剥夺).一般在链接中使用
+	-n, --nmagic			Do not page align data. --->不做页面对齐数据.一般在链接中使用
+	-LDIRECTORY, --libraray-path DIRECTORY		Add DIRECTORY to libraray search path.
+			--->增加库搜索的目录.
+	-l LIBNAME, --libraray LIBNAME	Search for libraray LIBNAME. --->搜索某个lib库
+		-lm	--->搜索libm,即数序库
+		-lc --->是libc,即C库.
+		-lpthread --->是libpthread,即线程库
+		-lgcc --->是libgcc,即gcc库.
+		PS:linux的库命名为"libxxx.so","libxxx.a"或"libxxx.la".链接时用"-lxxx",去掉lib和后面的".so".
 
 ## 13. wget命令

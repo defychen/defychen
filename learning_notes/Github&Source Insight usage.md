@@ -194,6 +194,14 @@
 	4.查看一下远程仓库有几个分支
 		git branch -a	//会显示新创建的分支
 
+## 1.11 git clone指定分支拉代码
+
+	1.不指定分支--->默认是从master branch拉下来
+	git clone git@github.com:defychen/defychen.git
+	2.指定分支--->从指定分支拉下来
+	git clone -b branch_name git@github.com:defychen/defychen.git
+	//通过"-b branch_name"来指定分支名.
+
 ***
 
 # 2. Source Insight usage
