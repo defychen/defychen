@@ -48,28 +48,13 @@
 
 ### e.g.
 
- 	static int dsc_fetch_streamId(struct ca_dsc_session *s)
+ 	static int xxx_fetch_streamId(struct xxx_session *s)
  	{
-		int ret = (-EIO);
-	
-		/*Get free stream ID*/
-		s->stream_id = ali_dsc_get_free_stream_id(s->dsc, s->dma_mode);
-		if (s->stream_id == ALI_INVALID_CRYPTO_STREAM_ID) {
-			dev_dbg(s->dsc->dev, "Get free stream ID error!\n");
-			goto LOCAL_CLEAR;
-		}
-	
-		dev_dbg(s->dsc->dev, "stream_id[%x]\n", s->stream_id);
-	
-		return 0;
-	
-		 LOCAL_CLEAR:
-		dsc_free_streamid(s);
-		return ret;
+		xxx
  	}
 
 ## 8 分割线，三个"*"号
 
-### e.g.
+## 9 更改字体大小
 
-***
+显示我为4号字体<font size=4>我</font>

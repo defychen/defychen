@@ -6,38 +6,82 @@
 
 ### 1.1 Make基本知识
 
-通常，一个高级语言的源文件都对应一个目标文件，linux中默认的后缀为".o"
+通常,一个高级语言的源文件都对应一个目标文件,linux中默认的后缀为".o".
 
-**链接:将多个.o文件，或者.o和库文件链接成可执行程序，<font size=4>"ld"</font>是GNU的链接器.**
-
-**静态库:文档文件(Archive File),多个.o的集合，后缀".a",使用"ar"工具维护和管理.**
-
-**共享库:多个.o的集合,.o文件由编译器按照一种特殊的方式生成，各模块地址均为相对地址.**
+	链接:将多个.o文件,或者.o和库文件链接成可执行程序.linux下的可执行文件的格式为"ELF"格式.
+		链接器不会检查函数所在的源文件,只检查所有".o"文件中定义的符号.将".o"文件中使用的函数和其他".o"
+		或库文件中相关符号进行合并,对文件中所有的符号进行重排,并链接系统相关文件(e.g.程序启动文件等),最
+		终生可执行程序.<font size=4>"ld"</font>是GNU的链接器.
+	静态库:文档文件(Archive File),多个.o的集合,后缀".a",使用"ar"工具维护和管理.
+	共享库:多个.o的集合,这些".o"文件由编译器按照一种特殊的方式生成共享库.共享库的文件格式为"ELF",
+		因此具备可执行条件.共享库中各个成员的地址(变量引用和函数调用)均为相对地址.
 
 ### 1.2 GNU make介绍
 
-某个头文件在上一次执行make后被修改,所有包含该头文件的C源文件在本次执行make都会被重新编译
-	
-	makefile 规则
-	target(目标):prerequisites(依赖)
-	(tab)cmd(命令)
-**cmd:一个规则可以有多个cmd,每个cmd占一行,以[tab]字符开始**
+make通过比较对应文件(规则的目标和依赖)的最后修改时间,来决定哪些文件需要更新.在make读取Makefile以后会建立一个编译过程的描述数据库,该数据库记录了所有各个文件之间的相互关系以及他们的关系描述.对于需要更新的文件make就执行数据库中所记录的相应命令来重建它,不需要更新的make什么也不做.
 
-*一个目标可以没有依赖只有动作(指定的命令),也叫<font size=4>伪目标(phony targets)</font>，e.g.clean*
+#### 1.2.1 Makefile规则
 
-**Makefile中书写时，使用反斜线(<font size=4>"\\"后面不能有空格</font>)分解多行**
+Makefile规则描述如下:
 
-**一般使用变量"obj,objs,ojects等来表示终极目标中的依赖列表"**
-	
-	objs = main.o kbd.o command.o display.o \(无空格)for
+	target...:prerequisites...
+		command
+	target:规则的目标.可以是.o文件,也可以是最后的可执行程序文件.
+		对于只有动作而没有依赖的目标称之为"伪目标"phony targets(e.g.clean).
+	prerequistites:规则的依赖.生成规则目标所需要的文件名列表.
+	comman:规则的命令行.
+			1.一个规则可以有多个命令行,每一条命令占一行;
+			2.每一个命令行必须以"Tab"键开始."Tab"键告诉make此行是一个命令行.
+
+#### 1.2.2 简单示例
+
+	$sample Makefile
+	edit : main.o kbd.o command.o display.o \	//对于较长行使用反斜线(\)分解为多行.且反斜线之后不能有空格.
+			insert.o search.o files.o
+		cc -o edit main.o kbd.o ... file.o
+	main.o : main.c defs.h
+		cc -c main.c
+	kbd.o : kbd.c defs.h command.h
+		cc -c kbd.c
+	...
+	PS:某个头文件在上一次执行make后被修改,所有包含该头文件的C源文件在本次执行make都会被重新编译.
+
+#### 1.2.3 指定变量
+
+一般使用变量"obj/objs/ojects"等来表示目标中的依赖列表
+
+	objs = main.o kbd.o command.o display.o \		//反斜线(\)之后无空格
 		insert.o search.o files.o util.o
-	后面使用"$(objs)"引用这些变量
-
-**清除工作目录过程文件**
-	
-	.PHONY:clean	//通过.PHONY将clean声明为伪目标,防止当存在一个"clean"文件时，clean规则无法执行
+	edit : $(objs) //使用objs变量来表示依赖列表
+		cc -o edit $(objs)	////使用objs变量来表示依赖列表
+		...
 	clean:
-		-rm edit $(objs)		//-:忽略rm的执行错误
+		rm edit $(objs)
+
+#### 1.2.4 自动推导规则
+
+在使用make编译.c源文件时,make本身存在一个默认的规则(使用"cc -c"来编译.c源文件),自动完成对.c文件的编译生成.o文件.
+
+	#sample Makefile
+	objs = main.o kbd.o command.o display.o \
+		insert.o search.o files.o
+	edit : $(objs) //使用objs变量来表示依赖列表
+		cc -o edit $(objs)
+	main.o : defs.h //make默认规则包含main.c的依赖,因此此处省略"main.c"的依赖
+	kbd.o : defs.h command.h //此处省略"kbd.c"的依赖
+	command.o : defs.h command.h //此处省略"command.c"的依赖
+	...
+	.PHONY : clean
+	clean:
+		rm edit $(objs)
+
+#### 1.2.4 清除工作目录过程文件
+
+清除编译过程中产生的临时文件的方法
+
+	.PHONY : clean //通过".PHONY"将clean声明为伪目标.避免当存在一个"clean"文件时,clean规则的命令无法执行.
+	clean:
+		-rm edit $(objs)		//命令行之前使用"-",忽略"rm"的执行错误
 
 ***
 
@@ -353,17 +397,51 @@ define定义变量的语法:define开始,endef结束,之间为所定义的变量
 ### 5.4 模式指定变量
 
 	%.o : CFLAGS += -O //指定为所有的.o文件的编译选项包含"-O"选项,不改变对其他文件类型的编译选项.
+
 ***
+
 ## 第六章	Makefile的条件执行
 
-*条件表达式:以"ifeq ($(CC), gcc)"开始,"ifeq"和()之间有空格;else;以endif结束.*
+Makefile的条件判断实例
 
-### 6.1条件判断语法
+	...
+	libs_for_gcc = -lgnu //libgnu.so或libgnu.a库
+		//-l:表示链接lib;gnu:表示libgnu.so/libgnu.a库.链接时使用"-lgnu",去掉"lib"和".so/.a".
+	normal_libs = 	//表示库为空
+	...
+	foo:$(objects)
+	ifeq ($(CC), gcc) //条件表达式,判断$(CC)变量与gcc是否相等.--->"ifeq"与后面的"("之间有空格.
+		$(CC) -o foo $(objects) $(libs_for_gcc)
+	else
+		$(CC) -o foo $(objects) $(normal_libs)
+	endif
+	...
 
-**ifeq (arg1, arg2)/"arg1" "arg2"/'arg1' 'arg2':arg1,arg2可以用()/" "/' '包裹,判断两个参数是否相等.**
+	//改进的方法:
+	libs_for_gcc = -lgnu
+	normal_libs =
+	
+	ifeq ($(CC), gcc)
+	libs=$(libs_for_gcc)	//ifeq...else...end后面的语句可以定格或有空格,但是不能是tab键.
+	else
+	libs=$(normal_libs)
+	endif
+	
+	foo:$(objects)
+		$(CC) -o $(objects) $(libs)
 
-	ifeq ($(strip $(foo)),)
-		text-if-empty
+### 6.1 ifeq
+
+用于判断两个参数是否相等,格式如下几种:
+
+	ifeq (arg1, arge2) --->常用
+	ifeq 'arg1' 'arg2'
+	ifeq "arg1" "arg2"
+
+ifeq常用语判断一个变量是否为空(不是任何字符).由于变量的展开时可能包含空字符(空格等),一般使用strip函数去掉变量中的空字符.
+
+	ifeq ($(strip $(foo)),) //"$(strip $(foo)):去掉$(foo)中存在的前导和结尾空格.
+	...
 	endif
 
 strip函数:去掉前导和结尾空格,将字符串之间的多个空格变成一个空格.
@@ -373,12 +451,50 @@ strip函数:去掉前导和结尾空格,将字符串之间的多个空格变成�
 	data =    a   b  c
 	$(strip $(data))  //其值为"a b c",会去掉前导空格，同时将字符串之间的多个空格变为一个空格.
 
-**ifneq判断两个参数是否不相等(用法和ifeq相同).**
+### 6.2 ifneq
 
-**ifdef VARIABLE:判断一个变量是否定义.只是测试一个变量是否有值,不会对变量进行扩展来判断.**
+用于判断两个参数是否不相等,格式如下几种:
 
-*除了"VARIABLE = ",其他方式定义均会判断为真,即使引用其他变量后最终VARIABLE的值为空也不会影响其判断为真.因此，如果判断为空使用"ifeq/ifneq."*
+	ifneq (arg1, arge2) --->常用
+	ifneq 'arg1' 'arg2'
+	ifneq "arg1" "arg2"
+
+ifneq用于与ifeq相同.
+
+### 6.3 ifdef
+
+用于判断一个变量是否被定义.
+
+	ifdef $(variable)	//判断variable变量是否被定义
+
+ifdef只是测试一个变量是否有值,不会对变量进行替换展开来判断变量的值是否为空.除非主动定义"variable="为空,否则赋值或其他操作都会使ifdef返回true.
+
+	1.赋值为空的情况,ifdef返回true
+		bar = 
+		foo = $(bar)
+		ifdef foo
+		frobozz = yes
+		else
+		frobozz = no
+		endif
+		//此时的frobozz值为yes.
+	2.主动定义为空,ifdef返回false
+		foo =
+		ifdef foo
+		frobozz = yes
+		else
+		frobozz = no
+		endif
+		//此时的frobozz值为no.
+
+### 6.4 ifndef
+
+与ifdef相反,使用一样.
+
+**判断变量为空一般使用"ifeq/ifneq.**
+
 ***
+
 ## 第七章	make的内嵌函数
 
 **函数调用语法: $(FUNCTION ARGUMENTS)**

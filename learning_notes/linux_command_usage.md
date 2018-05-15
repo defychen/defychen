@@ -449,6 +449,14 @@ ar(archive)命令,归档.通常用于将多个目标文件.o进行归档,形成�
 	-MMD	Like -MD but ignore system header files.
 			--->类似"-MD",忽略系统头文件.
 
+**查看对应gcc的版本**
+
+	./mips-sde-elf-gcc -v/--version
+	/*显示结果如下:
+	xxx
+	gcc version 4.3.3 (Sourcery G++ Lite 4.3-221) //版本为4.3.3
+	*/
+
 ## 25.mips-sde-elf-ld链接器的链接选项
 
 	-s, --strip-all		Strip all symbols. --->去掉所有的符号表(strip:剥夺).一般在链接中使用
@@ -461,5 +469,23 @@ ar(archive)命令,归档.通常用于将多个目标文件.o进行归档,形成�
 		-lpthread --->是libpthread,即线程库
 		-lgcc --->是libgcc,即gcc库.
 		PS:linux的库命名为"libxxx.so","libxxx.a"或"libxxx.la".链接时用"-lxxx",去掉lib和后面的".so".
+
+## 26.mips-sde-elf-objdump反汇编工具的使用
+
+	-D, --disassemble-all	Display assembler contents of all sections
+			--->显示整个文件的汇编结果
+	-d, --disassemble		Display assembler contents of executable sections
+			--->显示可执行部分的汇编结果
+	-h						Display the contents of the section headers
+			--->显示头文件部分的结果
+	-a, --archive-headers	Display archive header information
+			--->显示库头文件信息
+	-b, --target=BFDNAME	Specify the target object format as BFDNAME
+			--->指定等待反汇编文件的格式(e.g. -b binary ->指定反汇编文件的格式为binary)
+	-m, --architecture=MACHINE	Specify the target as MACHINE
+			--->执行等待反汇编文件的架构(e.g. -m mips或者--architecture=mips)
+	//用于:
+		dir/mips-sde-elf-objdump -D -b binary --architecture=mips source.abs > target.dis
+		//将source.abs文件反汇编成target.dis.此处为反汇编二进制,默认的.out文件不需要--architecture参数.
 
 ## 13. wget命令

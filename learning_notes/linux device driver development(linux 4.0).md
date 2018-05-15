@@ -2178,7 +2178,7 @@ linux有众多信号(SIGIO、SIGINT(Ctrl+c)、SIGTERM(kill进程))
 		char data[MAX_LEN];
 		int len;
 
-		/*读取并输出STDIN_FILENO(是一个文件句柄)上的输入*/
+		/*读取STDIN_FILENO(是一个文件句柄)上的输入并输出*/
 		len = read(STDIN_FILENO, data, MAX_LEN);
 		data[len] = 0;
 		printf("input available:%s\n", data);
@@ -2223,7 +2223,7 @@ linux有众多信号(SIGIO、SIGINT(Ctrl+c)、SIGTERM(kill进程))
 		/*发出异步信号*/
 		if(dev->async_queue)
 			kill_fasync(&dev->async_queue, SIGIO, POLL_IN);	/*发出信号函数*/
-			/*para1:异步结构体指针; para2:信号; para3:可读*/
+			/*para1:异步结构体指针的指针; para2:信号; para3:可读*/
 		...
 	}
 
@@ -2246,7 +2246,7 @@ e.g. 一个程序中同时对两个文件进行读/写操作,使用异步I/O时,
 
 异步I/O是借用了多线程模型,用开启新的线程以同步的方法做I/O.
 
-	/*异步读aio_read*/
+	/*异步读:aio_read*/
 	#include <aio.h>	/*aio的头文件*/
 	
 	#define BUFFER_SIZE		1024
@@ -2261,7 +2261,7 @@ e.g. 一个程序中同时对两个文件进行读/写操作,使用异步I/O时,
 			...
 		
 		bzero(&my_aiocb, sizeof(struct aiocb));	/*将aiocb结构体清零*/
-		my_aiocb.aio_buf = malloc(BUFFER_SIZE + 1);	/*给aiocb分配数据缓冲区*/
+		my_aiocb.aio_buf = malloc(BUFFER_SIZE + 1);	/*给aiocb分配buf*/
 		if(!my_aiocb.aio_buf)
 			...
 		
@@ -2342,6 +2342,7 @@ linux将中断分为顶半部和底半部:
 	struct tsio_dev *tsio;
 	irq[0] = platform_get_resource(pdev, IORESOURCE_IRQ, 0);	/*struct platform_device *pdev*/
 	ret = devm_request_irq(dev, irq[0]->start, tsio_dmq_irq, IRQF_TRIGGER_HIGH, irq[0]->name, tsio);
+
 使用dev_request_irq申请顶半部中断不需要显示释放,kernel自动进行资源的回收.
 
 **使能和屏蔽中断**
