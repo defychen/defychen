@@ -488,4 +488,18 @@ ar(archive)命令,归档.通常用于将多个目标文件.o进行归档,形成�
 		dir/mips-sde-elf-objdump -D -b binary --architecture=mips source.abs > target.dis
 		//将source.abs文件反汇编成target.dis.此处为反汇编二进制,默认的.out文件不需要--architecture参数.
 
+## 27.ls命令选项
+
+	-i, --node	print the index number of each file. --->得到每个文件的索引数
+		建立的软链接可以使用"ls -il"来查看链接的目标
+
+## 28.rm命令选项
+
+	-f, --force		ignore nonexistent files, never prompt. --->忽略不存在的文件,强制删除
+	-r, -R, --recursive	remove directories and their contents recursively.
+					--->递归的删除目录和文件
+	//删除软链接
+	rm -rf soft_link		//没有"/",这个是删除软链接
+	rm -rf soft_link/	//加了个"/",这个是删除文件夹
+
 ## 13. wget命令

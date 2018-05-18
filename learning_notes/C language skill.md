@@ -751,8 +751,8 @@
 	MODULE_VERSION("1.0.0");
 
 	/*
-	在M3527上insmod时,出现"insmod: can't insert 'mylist.ko': Operation not permitted"
-	但是在S3922上是可行的.这是什么原因？
+	在M35xx上insmod时,出现"insmod: can't insert 'mylist.ko': Operation not permitted"
+	但是在S39xx上是可行的.这是什么原因？
 	*/
 
 **一种device的链表:**

@@ -89,33 +89,114 @@ Makefile规则描述如下:
 
 ### 2.1 Makefile内容
 
-**注释:"#"字符后的内容是注释(shell也是如此)，若某行第一个非空字符为"#",该行为注释行，注释行结尾存在("\\"),下一行也是注释行.**
+**注释"#"**
 
-"\\#"表示使用字符"#",而非注释.
+	1.Makefile中"#"字符后的内容是注释(shell脚本也是这样);
+	2.某行第一个非空字符为"#",则该行为注释行;
+	3.注释行的结尾如果存在反斜线(\),则下一行也是注释行;
+	4.Makefile中如果需要使用字符"#",应该使用"\#"将"#"转义.
 
-*一个目录中比较重要的文件命名规则为首字母大写,e.g.:Makefile, README, Changelist*
+**推荐使用Makefile命名**
+
+	一个目录中比较重要的文件命名规则为首字母大写,e.g.:Makefile, README, Changelist
+
+**make -f filename**
+
+	make会自动搜索当前目录下的"GNU make/makefile/Makefile"等makefile文件.如果不存在,可以使用
+	"make -f filename" --->将filename作为执行make时需要读取的makefile.
 
 ### 2.2 包含其他Makefile文件
 
-**使用“include”包含其他文件,include会告诉make暂停读取当前的Makefile,转去读取include指定的文件，完成后在读取当前的Makefile,include应该书写为独立的一行.**
+**include**
 
-*PS:include以空格开始(不要以[tab]开始--会当作命令)*
+	使用"include"包含其他文件,include会告诉make暂停读取当前的Makefile,转去读取include指定的文件,
+	完成后再读取当前的Makefile,include应该书写为独立的一行.
+		include filenames...	//finames可以使用通配符
+	PS:
+		1.include所在行可以使用一个或多个空格开始,但是不要使用tab键开始.
+			tab开始的make会将此行作为一个命令行来处理.
+		2.include和文件名之间,多个文件名之间使用空格/tab键隔开.行尾的空白字符会被忽略.
+
+**include实例**
+
+	当前目录存在3个.mk文件a.mk, b.mk, c.mk, $(bar)会被扩展为"bish bash"
+	include foo *.mk $(bar) //"*.mk"使用了通配符,表示包含当前目录下所有.mk文件
 	
-	include  foo *.mk &(bar)	//bar=bish bash
-	等价于:include foo a.mk b.mk c.mk bish bash
-**使用“-include”代替“include”--忽略包含文件不存在或无法创建时的错误提示,也可以使用“sininclude”代替"-include".**
-*默认变量MAKEFILE_LIST包含在make时读取的文件名*
+	会被展开为:
+	include foo a.mk b.mk c.mk bish bash
 
-**Makefile变量取值**
+**-include和sinclude**
+
+	1."-include"表示忽略由于包含文件不存在或无法创建时的错误提示.("-"忽略错误,继续执行)
+		Makefile一般用"-include"来代替"include"
+	2."sinclude"功能和"-include"一样,但是"sinclude"兼容性更好(GNU支持的方式),因此有时也用
+		sinclude代替"-include".
+
+### 2.3 变量MAKEFILE_LIST
+
+	变量MAKEFILE_LIST包含了在make时需要读取的文件名.
+
+### 2.4 变量取值
 	
 	= 	最基本的赋值
 	:=	覆盖之前的值
 	?=	如果没有被赋值就等于后面的值
 	+=	添加后面的值
 
+**实例**
+
+	//编写一个测试的Makefile
+	ifdef DEFINE_VRE
+		VRE = "Hello World!"
+	endif
+
+	ifeq ($(OPT), define)
+		VRE ?= "Hello World! First"
+	endif
+
+	ifeq ($(OPT), add)
+		VRE += "Kelly"
+	endif
+
+	ifeq ($(OPT), recover)
+		VRE := "Hello World! Again!"
+	endif
+
+	all:
+		@echo $(VRE)
+
+	//测试:
+	make DEFINE_VRE=true OPT=define	//输出: Hello World!
+		?= 因为已经被定义了,变量值不会有改变
+	make DEFINE_VRE=true OPT=add	//输出: Hello World! Kelly!
+		+= 添加后面的值,因此变量被改变了
+	make DEFINE_VRE=true OPT=recover	//输出: Hello World! Again!
+		:= 直接会覆盖前面的变量的值
+	make DEFINE_VRE= OPT=define		//输出: Hello World! First!
+		?= 因为之前没有定义,会赋值为"?="后面的值.
+	make DEFINE_VRE= OPT=add		//输出: Kelly!
+		+= 添加后面的值,之前变量的值为空
+	make DEFINE_VRE= OPT=recover	//输出: Hello World! Again!
+		:= 直接会覆盖前面的变量的值
+
+**=和:=的区别**
+
+	1."=":make会将整个Makefile展开后,再决定变量的值.变量的值会是整个Makefile中最后被指定的值.
+		x = foo
+		y = $(x)bar
+		x = xyz
+		y的值为"xyz bar",x的值为"xyz"
+	2.":=":变量的值决定于变量在Makefile中的位置.
+		x := foo
+		y := $(x) bar
+		x := xyz
+		y的值为"foo bar",x的值为"xyz"
+
 ***
 
 ## Chapter 3 Makefile的规则
+
+shell的使用:
 
 	$#--->传递给脚本的参数个数
 	$0--->脚本本身的名字
@@ -151,87 +232,176 @@ Makefile规则描述如下:
 
 ### 3.1 依赖的类型
 
-**常规依赖:更新后目标会更新.**
+常规依赖:
+	
+	依赖更新后目标就会更新.
 
-**order-only依赖:只会在终极目标不存在是参与规则执行,目标存在后无论order-only依赖文件更新与否都不会更新目标(以"|"分割常规依赖和order-only依赖).**
+order-only依赖:
+
+	1.终极目标不存在,order-only依赖会参与编译;
+	2.终极目标存在,order-only依赖无论更新与否,对终极目标的更新不影响.
+		此时终极目标的更新仅受常规依赖更新的影响.
+
+常规依赖和order-only依赖通过管道符号"|"分割.
+
+	targets : normal-prerequisites | order-only-prerequisites
+
+实例:
 
 	LIBS = libtest.a
-	foo : foo.c | $(LIBS)	// 常规依赖 | order-only依赖
+	foo : foo.c | $(LIBS)	//常规依赖 | order-only依赖
 		$(CC) $(CFLAGS) $< -o $@ $(LIBS)
-	// 如果foo存在，更新foo.c会导致foo更新，但是更新$(LIBS)不会更新foo
+	/*
+	1.foo不存在,foo.c和$(LIBS)都会参与编译.最后生成foo
+	2.foo存在，foo.c的更新会导致foo更新;但$(LIBS)(作为order-only依赖)的更新不会导致foo的更新.
+	*/
+
 ### 3.2 通配符
-**变量定义中的通配符不会被展开.**
-	
-	objs = *.o	//该变量定义为:objs的值是*.o,非所有的.o文件列表
-	改成：objs = $(wildcard *.o)
 
-**函数wildcard**
+Makefile中通配符(e.g.*.c:所有以".c"结尾的文件)只能出现在以下两种场合:
 
-**$(wildcard *.c):获取当前工作目录下的所有.c文件**
+	1.用在规则的目标、依赖中,通配符会进行展开匹配;
+		print:*.c //用在规则的依赖中.
+			lpr -p $? //$?:此处表示依赖文件中被改变过的所有文件
+			touch print
+		//此处执行make print的结果是打印当前工作目录下所有的在上一次打印以后被修改过的".c"文件.
+	2.用在规则的命令中,规则的命令是在shell中执行的;
+		clean:
+			rm -rf *.o //用在命令中
+	3.其他的Makefile上下文是不可以使用通配符的.	
+		objs = *.o	//该变量定义为:objs的值是*.o,非所有的.o文件列表.
+		可以改成：objs = $(wildcard *.o) --->表示当前目录下所有的.o文件.
 
-**$(patsubst %.c, %.o, $(wildcard *.c)): 1)获取所有.c文件；2)所有.c文件后缀替换为.o.**
-	
-	objs := $(patsubst %.c, %.o, $(wildcard *.c))	//%匹配一个或者多个字符(也是模式字符)
+**函数$(wildcard pattern)**
+
+$(wildcard *.c):获取当前工作目录下的所有.c文件,展开是以空格分开.
+
+**$(patsubst %.c, %.o, $(wildcard *.c))分为两步**
+
+1.获取当前工作目录下所有.c文件;
+
+2.将所有.c文件后缀替换为.o.其中的"%"表示匹配一个或者多个字符(也是模式字符).
+
+实例:
+
+	#sample Makefile
+	objs := $(patsubst %.c, %.o, $(wildcard *.c))
 	foo : $(objs)
 		$(CC) -o foo $(objs)
 
 ### 3.3 目录搜索
 
-e.g.存在目录prom, prom有子目录src(含有文件sum.c memcp.c),其Makefile如下：
+**1.VPATH**
+
+VPATH:作为Makefile的内置变量,指定依赖文件的搜索路径.
+
+实例
+
+	//存在目录prom,prom有子目录src(含有文件sum.c memcp.c),其Makefile如下：
 
 	LIBS = libtest.a
-	VPATH = src		//VPATH为Makefile内置变量
-	libtest.a : sum.o memcp.o
+	VPATH = src		//VPATH:指定依赖文件的搜索路径为"src"
+	libtest.a : sum.o memcp.o //依赖文件位于prom/src/sum.c; prom/src/memcp.c.
 	$(AR) $(ARFLAGS) $@ @^
 
-如果prom和src目录都不存在libtest.a,在会在当前目录创建目标libtest.a.如果src目录已经存在目标libtest.a,则会有下面两种情况：
+VPATH会存在下面的问题:
 
-	1.如果依赖sum.c和memcp.c没有被更新,不会重建目标，目标目录不会变化
-	2.如果更新了sum.c或memcp.c，执行make，sum.o memcp.o和libtest.a会在当前目录创建,因此在src和当前目录(prom)存在两份终极
-		目标libtest.a，只有prom目录下是最新的.
+	1.如果prom、src等目录都不存在libtest.a,则会在当前目录(即prom下)创建目标libtest.a;
+	2.如果src目录下已经存在libtest.a,则会有下面的问题:
+		1.如果依赖文件sum.c和memcp.c都没有被更新,目标不会重建,目标目录不会发生变化;
+		2.如果更新了sum.c/memcp.c,此时目标会被重建(在prom目录).此时在src和当前目录(prom)会
+			存在两份目标libtest.a.但是只有prom目录下才是最新的.
 
-如果需要保持一致，可使用下面的方法:
+**2.GPATH**
+
+相当于global的PATH,也是Makefile的内置变量.可以避免VPATH存在的上面的在两个目录都存在目标的问题.
 
 	LIBS = libtest.a
-	GPATH = src		//GPATH指定目录，也是Makefile内置变量
+	GPATH = src		//GPATH:指定依赖文件的搜索路径"src",为global的.
 	VPATH = src
+	//上述的问题2.2会变成--->重建会在src目录下完成(而不是prom目录下).
 
-**自动化变量**
+**3.自动化变量**
 
 	$^:所有的依赖文件
 	$@:目标文件
-	$<:依赖文件列表的第一个依赖文件(依赖列表中每一个都有第一个依赖文件)
+	$<:依赖文件列表的第一个依赖文件
 
-**库文件**
+实例:
+
+	main.out:main.o line1.o line2.o
+		$(CC) -o $@ $^
+		/*等价于:
+		$(CC) -o main.out main.o line1.o line2.o
+			$@:表示main.out
+			$^:表示所有的依赖文件(main.o line1.o line2.o)
+		*/
+	main.o:main.c line1.h line2.h
+		$(CC) -c $<
+		/*等价于:
+		$(CC) -c main.c
+			$<:表示第一个依赖文件(main.c)
+		*/
+	line1.o:line1.c line1.h
+		$(CC) -c $<
+		/*等价于:
+		$(CC) -c line1.c
+			$<:表示第一个依赖文件(line1.c)
+		*/
+	line2.o:line2.c line2.h
+		$(CC) -c $<
+		/*等价于:
+		$(CC) -c line2.c
+			$<:表示第一个依赖文件(line2.c)
+		*/
+
+**4.库文件**
 	
-	foo : foo.c -lcurses		//会去搜索目录去寻找libcureses.so，如果没有会去找libcureses.a
+	foo:foo.c -lcurses	//优先会去搜索目录去寻找libcureses.so,如果没有才会去找libcureses.a
 		$(CC) $^ -o $@
 
 ### 3.4 Makefile伪目标
 
-*如果当前目录中有clean这一个文件，输入make clean时，clean由于没有依赖被认为是最新，因此不会执行clean之后的命令.为了避免这个问题,明确将clean声明为伪目标，将它作为特殊目标.PHONY的依赖，如下：*
+伪目标:是为了执行一些命令而定义的一个目标.make 伪目标:其命令是肯定会被执行的.
 
-	.PHONY : clean
+清除一个中间文件的方法:
+
 	clean:
 		rm -rf *.o temp
 
-**伪目标可以有自己的依赖**
+但是如果在该目录下存在一个clean文件,此时输入"make clean".由于clean没有依赖被认为始终为最新的,因此不会执行clean之后的命令.因此需要显示声明"clean"为伪目标.
 
-	all : prog1 prog2 prog3		//all一般作为伪目标的终极目标
-	.PHONY : all
-	prog1 : prog1.o util.o
+	.PHONY:clean //作为".PHONY"的依赖的都是伪目标.
+	clean:
+		rm -rf *.o temp
+	//执行"make clean"时,其后的命令是肯定会被执行的.无论是否存在"clean"这个文件.
+
+**伪目标特殊的应用---可以有自己的依赖**
+
+	all:prog1 prog2 prog3		//all:伪目标.用于完成对依赖的更新.
+	.PHONY:all
+	prog1:prog1.o util.o
 		$(CC) -o prog1 prog1.o util.o
-	prog2 : prog2.o
+	prog2:prog2.o
 		$(CC) -o prog2 prog2.o
-	prog3 : prog3.o sort.o util.o
+	prog3:prog3.o sort.o util.o
 		$(CC) -o prog3 prog3.o sort.o util.o
 
-*在上述中，可以执行:make，make prog1, make prog2...*
+在上述中,执行:
+
+make--->默认会以第一个目标(all)作为终极目标.完成对所有依赖的编译.
+
+make prog1,make prog2...--->完成对单个目标的编译.
+
+**rm -f和-rf的比较**
 
 	clean:
-		rm -f(--force)		//防止缺啥删除文件时出错而退出，使make clean过程失败
-		-rm					//也可以防止出错，但是使用前面一种较好
-**make中内嵌一个隐含变量"RM",被定义为：RM = rm -f;使用方法"$(RM)".**
+		rm -f(--force)		//防止缺少删除文件时报错而退出,使make clean过程失败
+		-rm					//也可以防止出错,但是使用前面一种较好
+
+**RM**
+
+	make中内嵌一个隐含变量"RM",RM即为"rm -f".使用方法为"$(RM)".
 
 ### 3.5 强制目标(没有命令或者依赖的目标)
 
@@ -466,6 +636,8 @@ ifneq用于与ifeq相同.
 用于判断一个变量是否被定义.
 
 	ifdef $(variable)	//判断variable变量是否被定义
+	...
+	endif
 
 ifdef只是测试一个变量是否有值,不会对变量进行替换展开来判断变量的值是否为空.除非主动定义"variable="为空,否则赋值或其他操作都会使ifdef返回true.
 
