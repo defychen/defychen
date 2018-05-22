@@ -405,168 +405,323 @@ make prog1,make prog2...--->完成对单个目标的编译.
 
 ### 3.5 强制目标(没有命令或者依赖的目标)
 
-*这种方式一般用于非GNU版本的make中.*
+一个规则没有命令或者依赖,且它的目标不是一个存在的文件名.在执行时,该目标始终会被认为是最新的,因此叫做强制目标.而依赖强制目标的目标也总是会被更新.
 
-	clean : FORCE		//make会认为FORCE依赖被更新过，因此后面的cmd总会被执行
+这种方式一般用于非GNU版本的make中.
+
+	clean:FORCE	//make会认为FORCE依赖被更新过,因此后面的cmd总会被执行
 		$(RM) $(objs)
-	FORCE :		//强制目标，无依赖也无命令
+	FORCE:		//强制目标->无依赖也无命令,该目标也不是一个存在的文件名.
 
 ### 3.6 Makefile的特殊目标
 
-*伪目标:当make指定某伪目标时(e.g.make clean)，该目标所定义的命令都会无条件执行.*
+**.PHONY--->常用**
 
-**.PHONY:**
+目标".PHONY"的所有依赖都被是伪目标.
 
-**目标".PHONY"的所有依赖都被作为伪目标**
+伪目标:当使用make命令行指定某伪目标时(e.g.make clean),该目标所定义的命令都会被无条件执行.
 
-**.SUFFIXES:**
+**.SUFFIXES--->用的比较少**
 
-**目标".SUFFIXED"的所有依赖指出了一系列在后缀规则中需要检查的后缀名(当前的make需要处理的后缀).**
+目标".SUFFIXES"的所有依赖指出了一系列在后缀规则中需要检查的后缀名(当前的make需要处理的后缀).
 
-*.DEFAULT:*
+**.DEFAULT--->用的比较少**
 
-*一个文件作为某个规则的依赖,却不是另一个规则的目标时，Make无法重建此文件，就会执行".DEFAULT"所指定的cmd.*
+一个文件作为某个规则的依赖,却不是另一个规则的目标时,Make无法重建此文件,就会执行".DEFAULT"所指定的cmd.
 
-*.PRECIOUS:*
+**.PRECIOUS--->用的比较少**
 
-*其依赖文件在命令的执行中被中断时，make不会删除它们.e.g.:原子不可被中断过程;目标文件仅仅是为了记录重建时间;防止其他麻烦.*
+其依赖文件在命令的执行过程中被中断时,make不会删除它们.e.g. 原子操作过程不可被中断;目标文件仅仅是为了记录重建时间;防止其他麻烦.
 
-**.SILENT:**
+**.SILENT--->现在被"make xxx -s/--silent"替换了**
 
-**目标".SLIENT"的依赖文件列表在创建时，不会打印创建这些文件所执行的一些cmd信息.（该目标无cmd）**
+目标".SLIENT"的依赖文件列表在创建时,不会打印创建这些文件所执行的一些cmd信息.(该目标无cmd)
 	
-	.SILENT : 	//没有依赖也没有命令(属于强制目标),在make的执行过程中不会打印任何cmd执行的信息.
-	//执行时可以使用:make clean -s/--silent或者make --silent代替上述方式.
+	.SILENT: 	//没有依赖也没有命令(属于强制目标),在make的执行过程中不会打印任何cmd执行的信息.
+	//执行时可以使用:make clean -s/--silent或者make --silent代替上述方式(不打印任何命令的执行信息).
 
 ### 3.7 模式规则
 
 	files = foo.elc bar.o lose.o
-	$(filter %.o, $(files)) : %.o : %.c	//filter过滤出.o文件 %.o:%.c:某个.o依赖于对应的.c文件
+	$(filter %.o, $(files)):%.o:%.c	//filter过滤出.o文件--->%.o:%.c:某个.o依赖于对应的.c文件
 		$(CC) -c $(CFLAGS) $< -o $@
-	$(filter %.elc, $(files)) : %.elc : %.el	//最终为foo.elc : foo.el(当有较多的相似依赖比较有用)
+	$(filter %.elc, $(files)):%.elc:%.el	//最终为foo.elc:foo.el(当有较多的相似依赖比较有用)
 		cmd
+
+### 3.8 自动产生依赖
+
+	# activate debug with V=1
+	ifeq ($(V), 1)
+	Q = 
+	else
+	Q = @	//如果Q没有定义为1,Q=@:表示不打印任何的编译信息
+	endif
+
+	# to generate dependancies between source code and compiled objects
+	flags += -MD -MP
+
+	/*
+	-MD		Generate make dependencies and compile.
+		--->生成文件的依赖关系文件(存放编译依赖信息.e.g.test.o: test.c test.h).
+		依赖文件名为"-o"指定的文件,并添加".d"后缀.若没有指定,则输入的文件作为依赖文件名,
+		并添加".d"后缀,同时继续进行后续的编译.此处为"test.d"
+	-MP		Generate phony targets for all headers.
+		--->依赖规则中的所有.h依赖项都会生成一个伪目标,该伪目标不依赖其他任何依赖项.该伪目标
+		规则可以避免删除了对应的头文件而没有更新"Makefile"匹配新的依赖关系而导致make出错的情况.
+	*/
+	-include $(wildcard *.d)
+
+	%.o: %.c
+		@echo "Compiling $@" //前面的"@":表示不输出这一条信息"echo xxx"
+		$(Q)$(CC) -c $(flags) $(cflags-y) -o $@ $<
+		/*
+			执行上述命令时,会产生得到自动依赖文件"*.d".
+		*/
+
 ***
-## 第四章	规则的命令
+
+## Chapter 4 规则的命令
+
+空行与空命令行:
+
+	空行:不包含任何字符的一行.在执行规则时,空行将被忽略.
+	空命令行:以"Tab"键开始而其后没有任何命令的行.
 
 ### 4.1 命令回显
 
-**命令行以"@"开始会取消回显，否则会回显.make -s/--silent或者目标".SILENT"取消所有回显**
+	比如某规则中的命令为:
+		target : prerequisites
+			echo Start to compile xxxx
+	在执行时会得到:
+		echo Start to compile xxx //会将命令输出一遍,再执行命令.称为"回显".
+			Start to compile xxx
 
-**make的命令行参数"-n"或者"--just-print"会显示所要执行的命令，不会去真正执行这些命令，通常用于调试Makefile.**
+命令行以"@"开始会取消回显.
+
+	比如某规则中的命令为:
+		target : prerequisites
+			@echo Start to compile xxxx
+	在执行时会得到:
+			Start to compile xxx
+	//不会将命令重新输出一遍,直接执行命令.
+
+make -s/--silent或者目标为".SILENT":都将会取消所有回显.一般使用"@"来控制回显.
+
+make -n/--just-print:
+
+	make的命令行参数"-n/--just-print":
+		显示所要执行的命令,不会去真正执行这些命令.常用语调试Makefile.
 
 ### 4.2 命令的执行
 
-**Makefile中同一行的多个命令属于一个shell命令行；在一个独立行的命令是一个shell命令行.不同的shell命令行互不影响.**
-	
-	foo : bar/lose
-		cd bar; gobble lose > ../foo		//";"实现多个命令属于同一个shell命令行;也可以使用"\"连接不同的行形成同一个shell命令行
-	//上述的cd到bar这个目录，不会对后面的命令行产生影响，还是处于当前目录.
+	1.Makefile中的同一行的多个命令属于一个shell命令行;
+		多个命令之前用分号";"分隔.如果需要在不同行连接则";"之后再加上反斜线"\".
+	2.书写在独立行的一条命令是一个独立的shell命令行,不同的行互不影响;
+	3.cd改变目录只会对当前行产生影响,其后的命令行的工作目录仍然是当前目录(不会受之前的cd影响).
+		1.错误的情况
+		foo: bar/lose
+			cd bar //进入到bar目录,仅在该行有效
+			gobble lose > ../foo //想要承接上面的cd命令.但是实际是在当前目录执行.
+		2.修改
+		foo: bar/lose
+			cd bar; gobble lose > ../foo //同一行命令之间使用";"分隔
+		3.优化---最佳方案
+		foo: bar/lose
+			cd bar; \ //使用"; \":便于查看.
+			gobble lose > ../foo
 
-### 4.3 并行执行命令
+### 4.3 make选项
 
-*make的help方法: "info make"*
+make的help方法:info make/make --help.
 
-**make的命令行参数"-j n"或者"--jobs n"告诉make同一时刻可以执行n条命令**
+make -j/--jobs n:告诉make同一时刻可以有n条命令被执行(并行执行).多条命令同时执行容易出现问题.
 
-### 4.4 命令执行的错误
+make -k/--keep-going:忽略某些错误继续执行.
 
-**有些命令执行失败不一定是执行错误(e.g.mkdir当存在某目录时会失败，但不是错误),可以使用"-mkdir"忽略该失败;也可以使用"make -i/--ignore-errors"忽略.**
+	可以检查文件中哪些文件可以被正确编译,哪些出错.常用语调试Makefile或查找哪些源文件有编译错误.
 
-**"make -k/--keep-going"可以检查修改文件中哪些文件可以被正确编译，哪些失败(主要用于调试Makefile或者查找源文件错误).**
+make -l 2.5/--max-load=2.5:指定make执行时所占用的最大系统负荷.
 
-*如果make失败了,修改错误之后正确的编译方法是:make clean再make.*
+make -i/--ignore-errors:忽略所有的命令执行错误.--->命令之前的"-"更灵活,因此"-i"一般不用.
 
-### 4.5 中断make的执行
+	如果make失败了,修改错误之后正确的编译方法是:先make clean再make.
 
-**make在执行命令时如果收到致命信号(ctrl+c),make会删除已经重建的目标文件(e.g.一些".o"文件),确保下一次make时目标文件能够被正确重建.**
+make -w/--print-direcotry:开始编译一个目录之前或和完成此目录的编译之后给出提示信息.方便追踪make的执行过程.
 
-### 4.6 make的递归执行
+	e.g.
+		make: Entering directory...
+		make: Leaving directory...
+		默认自动打开该选项,取消方法(make -s/--no-print-directory)
 
+### 4.4 中断make的执行
+
+make在执行命令时如果收到致命信号(ctrl+c),make会删除已经重建的目标文件(e.g.一些".o"文件),确保下一次make时目标文件能够被正确重建.
+
+### 4.5 make的递归执行
+
+	方法1:
 	subsystem:
-		cd subdir && $(MAKE)	//进入subdir目录后执行make
-	等价于:$(MAKE) -C subdir		//make的-C选项，也是先进入subdir目录再执行make
+		cd subdir && $(MAKE)	//1.先进入subdir目录; 2.在执行make命令.
+	方法2:--->常用
+	subsystem:
+		$(MAKE) -c subdir	//make的-C选项,也是先进入subdir目录. 再执行make.
 
-**变量"MAKE"是"make"程序的文件名.因此如果多个目录下存在Makefile，使用"$(MAKE)"可以执行这些目录下的Makefile.**
+**1.变量MAKE**
 
-**一个变量使用"export"声明后，该变量和变量的值会被加入到当前工作的环境变量中(即在子目录中也可以使用这些变量).**
+	1.变量"MAKE"代表make这个应用程序(e.g./usr/bin/make--->使用which make可查找.)
+	2.如果多个目录下都存在Makefile,使用$(MAKE) -C可以执行这些目录下的Makefile.
 
-*unexport取消变量的导出.*
+**2.命令行选项的传递**
 
-**"make -w/--print-directory"在编译一个目录之前和编译之后给出一些提示信息(e.g.make: Entering directory... & make: Leaving directory...).默认自动打开该选项，取消方法(make -s/--no-print-directory).**
+	主目录的命令行选项在$(MAKE) -c时,会自动通过一个"MAKEFLAGS"变量传递给子目录下的make程序.
+
+**3.export**
+
+	一个变量使用"export"声明后,该变量和变量的值会被加入到当前工作的环境变量中(此时在子目录中也可以使用这些变量).
+		1.export某个变量
+			export VARIABLE = value
+			等价于:
+			VARIABLE = value
+			export VARIABLE	//export VARIABLE这个变量.
+		2.export不带参数
+			export	//表示export所有变量.不好控制--->一般不用
+
+**4.unexport**
+
+	unexport VARIABLE	//取消变量导出.常在子目录的Makefile中使用.
+
+### 4.6 定义命令包
+
+命令包包含一组命令,类似于C语言的函数.在需要使用的地方直接调用即可.
+
+	1.定义命令包
+	define frobnicate	//define(打头) 包名.
+		@echo "frobnicating target $@"	//一些命令(以Tab键打头)
+		frob-step-1 $< -o $@-step-1
+		frob-step-2 $@-step-1 -o $@
+	endef	//endef(结尾)
+	2.调用命令包
+	frob.out: frob.in
+		@$(frobnicate) //$(包名).前面的@(取消回显)会作用到包中的所有的命令.
 
 ### 4.7 空命令
 
-*只有目标文件(可以存在依赖文件),但没有命令行.*
+只有目标文件(可以存在依赖文件),但没有命令行.
 
-	target : ;(cmd空)		//不使用重启一行+[tab]的方式,因为[tab]那一行看起来和空行没区别.
+	target: ;	//直接";"表示空命令行.不使用重启一行+[tab]的方式,因为[tab]那一行看起来和空行没区别.
 
-*空命令目的:防止make在重建target时查找隐含命令,空命令使用较少.*
+空命令目的:防止make在重建target时查找隐含命令,空命令使用较少.
+
 ***
+
 ## 第五章	Makefile中的变量
 
-*推荐变量名全部采用大写方式(e.g. OBJS, CFLAGS),变量的引用使用"$(VAR)"方式.*
+变量名是大小写敏感的(即大小写不一样).推荐的命令风格为:
+
+	1.内部定义的一般变量采用小写方式(e.g.表示目标文件列表的变量:objects);
+	2.参数列表采用大写方式(e.g.表示编译选项的变量:CFLAGS);
+	3.有时候不一定要完全按照上述风格,关键是需要命名风格保持工程的一致性.
+
+变量的引用:
+
+	Makefile中的引用:$(VAR)/${VAR}
+	shell中的引用:${VAR}/$VAR
 
 ### 5.1 变量的定义
 
-**递归展开式变量:通过"="或者define定义的变量，这种变量会在最后使用时才展开，嵌套使用容易死循环.**
+**1.递归展开式变量(=)**
 
-	foo = $(bar)	//不会展开，因此可以引用之后定义的bar
-	bar = $(ugh)	//不会展开，因此可以引用之后定义的ugh
+通过"="或者define定义的变量,这种变量会在最后使用时才展开.嵌套使用容易死循环.
+
+	foo = $(bar)	//不会展开,因此可以引用之后定义的bar
+	bar = $(ugh)	//不会展开,因此可以引用之后定义的ugh
 	ugh = Huh?
-	all : ; echo $(foo)		//引用才展开，最后打印:Huh?
+	all: ; echo $(foo)		//引用才展开,最后打印"Huh?"
 
-**直接展开式变量:使用":="来定义变量,在定义的地方会直接展开(推荐使用这种方式).**
+**2.直接展开式变量(:=)**
+
+使用":="来定义变量,在定义的地方会直接展开(推荐使用这种方式).
 
 	x := foo	
 	y := $(x) bar	//y为foo bar
 	x := later		//x重新赋值为later
 
-变量值尾到同行的注释"#"之间的空格是不会被忽略的，因此不能随便使用这种方式注释.
+**3.注释(#)**
 
-	dir := /foo/bar		#directory...(这种方式注释是不正确的，因为当中的空格是不会被忽略的)
+变量值尾到同行的注释"#"之间的空格是不会被忽略的,因此不能随便使用这种方式注释.
+
+	dir := /foo/bar		#directory...(这种方式注释是不正确的,因为当中的空格是不会被忽略的)
 
 注释内容推荐书写在独立的一行或者多行,可以防止意外情况的发生.
 
-**条件赋值:"?="没有被赋值才会给予赋值，否则不赋值.**
+**4.条件赋值(?=)**
 
-**追加变量值:"+="实现对一个变量的追加操作.**
+变量值为空才会赋值,否则不赋值(即不改变原有的值).
+
+	FOO ?= bar	//当$(FOO)为空时赋值为bar;如果$(FOO)有值直接略过,不改变原有的值.
+	--->等价于:
+	ifeq ($(origin FOO), undefined)
+	FOO = bar
+	endif
+
+**5.变量追加(+=)**
+
+实现对一个变量的追加操作.
+
+	FOO = bar
+	FOO += foo	//此时$(FOO)值为"bar foo"
 
 ### 5.2 变量的高级用法
 
-**变量的替换引用**
+变量的替换引用
 	
 	foo := a.o b.o c.o
-	bar := $(foo:%.o=%.c)	//将.o结尾的文件用.c来代替(%--模式匹配字符)
+	bar := $(foo:$.o=$.c)	//将.o结尾的文件用.c来代替(%---模式匹配字符)
+		//此时$(bar)的值为"a.c b.c c.c"
 
-*引用一个没有定义的变量,make默认它的值为空.*
+引用一个没有定义的变量,默认其值为空.
 
 ### 5.3 override指示符
 
-**override:防止make命令行变量的值代替Makefile中变量定义的值，一般用于必须需要某个变量时.**
+**override**
 
-	override CFLAGS += -g	//必须打开调试开关"-g"，此时命令行变量不能取代Makefile变量定义的值.
+防止执行make时通过命令行指定的变量的值代替Makefile中变量定义的值.
+
+	override CFLAGS += -g	//必须打开调试开关"-g".此时命令行如果指定变量CFLAGS,
+							//不会取代Makefile中CFLAGS变量定义的值.
 
 	ifeq ("$(O)", "output")
-	override O:=output_upg	//表示O变量不能被命令行传进来的值代替
+	override O:=output_upg	//表示变量O不能被命令行传进来的值代替
 	CONFIG_DIR:=$(TOPDIR)/$(O)
 	EXTRAMAKEARGS += O=$(O)
 	NEED_WRAPPER=y
 	endif
 
-define定义变量的语法:define开始,endef结束,之间为所定义的变量值
+**define定义变量**
+
+以define开始,endef结束,之间命令为所定义的变量值.
 
 	define two_lines	//two_line为变量名
 	echo foo
 	echo $(bar)
 	endef
 
-**设置一个"CFLAGS"的环境变量,用来指定一个默认的编译选项.**
+**环境变量SHELL**
 
-*环境变量"SHELL"默认是"/bin/sh":作为命令行的解释程序.可以使用:echo "shell is $(SHELL)"来打印出:shell is /bin/sh.*
+	命令行的解释程序使用的是环境变量SHELL,该变量$(SHELL)的值为"/bin/sh".
+	--->可以使用:echo "shell is $(SHELL)"打印出该环境变量SHELL的值.
 
 ### 5.4 模式指定变量
 
-	%.o : CFLAGS += -O //指定为所有的.o文件的编译选项包含"-O"选项,不改变对其他文件类型的编译选项.
+模式指定变量的目的:将一个变量的值指定到所有符合某个模式的目标上.对其他文件不会有影响.
+
+	%.o : CFLAGS += -O
+	/*
+		%.o--->需要增加某个变量值的目标.此处的模式为"所有以.o结尾的目标文件".
+		:--->语法要求
+		CFLAGS += -O--->某个变量.
+	此处的目的是:指定为所有的.o文件的编译选项增加"-O"选项,不改变对其他文件类型的编译选项.
+	*/
 
 ***
 
