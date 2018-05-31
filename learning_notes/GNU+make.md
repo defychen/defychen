@@ -614,7 +614,7 @@ make在执行命令时如果收到致命信号(ctrl+c),make会删除已经重建
 
 ***
 
-## 第五章	Makefile中的变量
+## Chapter 5 Makefile中的变量
 
 变量名是大小写敏感的(即大小写不一样).推荐的命令风格为:
 
@@ -725,7 +725,7 @@ make在执行命令时如果收到致命信号(ctrl+c),make会删除已经重建
 
 ***
 
-## 第六章	Makefile的条件执行
+## Chapter 6 Makefile的条件执行
 
 Makefile的条件判断实例
 
@@ -822,199 +822,258 @@ ifdef只是测试一个变量是否有值,不会对变量进行替换展开来�
 
 ***
 
-## 第七章	make的内嵌函数
+## Chapter 7 make的内嵌函数
 
-**函数调用语法: $(FUNCTION ARGUMENTS)**
+**函数调用语法:**
 
-1)FUNCTION:调用的函数名.前面以"$"引用,都使用"()".
+	$(FUNCTION ARGUMENTS) --->常用
+	或${FUNCTION ARGUMENTS} --->用的比较少
+	
+	1.FUNCTION:调用的函数名.一般使用"()","{}"用的比较少.
+	2.ARGUMENTS:函数参数.FUNCTION和ARGUMENTS之间使用一个"空格"分割,多个ARGUMENTS使用","分割.
 
-2)ARGUMENTS:函数参数.FUNCTION和ARGUMENTS之间使用一个"空格"分割,多个ARGUMENTS使用","分割.
+实例---将变量中的空格替换为逗号
+
+	comma:= ,	//comma:表示逗号
+	empty:= 
+	space:= $(empty) $(empty)
+	foo:= a b c
+	bar:= $(subst $(space), $(comma), $(foo)) //结果bar的值为a,b,c(会忽略前导和结尾的空格).
 
 ### 7.1 文本处理函数
 
-**$(subst FROM, TO, TEXT)**
+**1.$(subst FROM, TO, TEXT)**
 
-把"TEXT"中的"FROM"字符替换为"TO",返回替换后的新字符串.
+把"TEXT"中的"FROM"字符替换为"TO",返回替换后的新字符串.TEXT中是以空格作为分隔符.
 
 	$(subst ee, EE, feet on the street)	//返回值为:fEEt on the strEEt
 
-**$(patsubst PATTERN, REPLACEMENT, TEXT)**
+**2.$(patsubst PATTERN, REPLACEMENT, TEXT)**
 
-将"TEXT"中符合模式"PATTERN"替换为"REPLACEMENT".一般会使用"%"模式通配符,返回替换后的新字符串.
+将"TEXT"中符合模式"PATTERN"替换为"REPLACEMENT".一般会使用"%"模式通配符,返回替换后的新字符串.TEXT中是以空格作为分隔符.
 
 	$(patsubst %.c, %.o, x.c.c bar.c)	//返回值为:x.c.o bar.o
 
-**$(strip STRINT)**
+	SRC := $(wildcard $(DIR_SRC)/%.c) //SRC表示源目录下的.c文件
+	OBJ := $(patsubst %.c, $(DIR_OBJ)/%.o, $(notdir $(SRC))) //OBJ表示所有的.c对应的.o文件.
 
-去掉"STRINT"前导和结尾空格,将字符串之间的多个空格变成一个空格.
+**3.$(strip TEXT)**
+
+去掉"TEXT"中前导和结尾空格,将字符串之间的多个空格合并成一个空格.
 
 	data = "  a  b  c"
-	$(strip $(data))  //其值为" a b c",因为""包括的整个都被视为字符串,因此去掉字符串之间的多个空格变为一个空格.
+	$(strip $(data))  //其值为" a b c".因为""包括的整个都被视为字符串,因此合并字符串之间的多个空格为一个空格.
 	data =    a   b  c
-	$(strip $(data))  //其值为"a b c",会去掉前导空格，同时将字符串之间的多个空格变为一个空格.
+	$(strip $(data))  //其值为"a b c".去掉前导空格,同时将字符串之间的多个空格合并为一个空格.
 
-**$(findstring FIND, IN)**
+**4.$(findstring FIND, IN)**
 
-搜索"IN",查找"FIND".找到返回"FIND";没找到返回空.
+在"IN"中查找"FIND"字符.找到返回"FIND",否则返回空.
 
-	$(findstring a, a b c)	//返回:a
-	$(findstring a, b c)	//返回:空
+	$(findstring a, a b c)	//找到,返回:a
+	$(findstring a, b c)	//没找到,返回:空
 
-**$(filter PATTERN..., TEXT)**
+**5.$(filter PATTERN..., TEXT)**
 
-*过滤"TEXT"中所有不符合模式"PATTERN"的单词,保留符合此模式"PATTERN"的单词.一般会使用"%"模式通配符.*
+过滤"TEXT"中所有不符合模式"PATTERN"的单词,保留符合模式"PATTERN"的单词.一般会使用"%"模式通配符.多个PATTERN用空格分开.
 	
 	sources := foo.c bar.c baz.s ugh.h
-	foo := $(sources)
+	foo:= $(sources)
 		$(CC) $(filter %.c %.s, $(sources)) -o foo	//返回值为:foo.c bar.c baz.s(过滤掉了ugh.h)
+		//多个PATTERN用空格分开.(e.g.此处的"%.c %s")
 
-**$(filter-out PATTERN..., TEXT)**
+**6.$(filter-out PATTERN..., TEXT)**
 
-*反过滤,和filter实现的功能相反.*
+过滤"TEXT"中所有符合模式"PATTERN"的单词,保留不符合模式"PATTERN"的单词.一般会使用"%"模式匹配符.多个PATTERN用空格分开.
 
-**$(sort LIST)**
+	objects = main1.o foo.o main2.o bar.o
+	mains = main1.o main2.o
+	$(filter-out $(mains), $(objects)) //去除变量"objects"中"mains"定义的字串.返回值为"foo.o bar.o"
 
-*给"LIST"中的单词以首字母排序(升序),并去掉重复的单词.返回排序并且没有重复的字符串.*
+**7.$(sort TEXT)**
+
+给"TEXT"中的单词以首字母排序(升序),并去掉重复的单词.返回排序并且没有重复的字符串.
 
 	$(sort foo bar lost foo)	//返回值为:bar foo lost
 
-**$(word N, TEXT)**
+**8.$(word N, TEXT)**
 
-*取"TEXT"中的第"N"个单词,返回该单词.如果N大于"TEXT"中的单词数目，返回空;如果N为0,出错.*
+取"TEXT"中的第"N"个单词(单词计数从1开始,因此N也从1开始),返回该单词.如果N大于"TEXT"中的单词数目,返回空;如果N为0,出错.
 
-	$(word 2, foo bar baz)	//返回值为:bar
+	$(word 3, foo bar baz)	//返回值为:baz.从1开始计数.
 
-**$(wordlist S, E, TEXT)**
+**9.$(wordlist S, E, TEXT)**
 
-*取"TEXT"中从S到E的单词.S/E均从1开始.*
+取"TEXT"中从S到E的单词,S/E均从1开始.
 
 	$(wordlist 2, 3, foo bar baz)	//返回值为:bar baz
 
-**$(words TEXT)**
+**10.$(words TEXT)**
 
-*计算"TEXT"中单词的数目.*
+计算"TEXT"中单词的数目.
 
 	$(words foo bar)	//返回值为:2.如果取TEXT中的最后一个单词为:$(word $(words TEXT), TEXT).
 
-**$(firstword NAMES...)**
+**11.$(firstword TEXT)**
 
-*取"NAMES"中的第一个单词.*
+取"TEXT"中的第一个单词.
 
 	$(firstword foo bar)	//返回值为:foo
 
 ### 7.2 文件名处理函数
 
-**$(dir NAMES...)**
+**1.$(dir NAMES...)**
 
-从文件名序列"NAMES..."中取出各个文件的目录部分(目录部分:文件名最后一个斜线"/"(包括斜线)之前的部分);如果没有斜线就是当前目录(./).
+从文件名序列"NAMES..."中取出各个文件的目录部分.
+
+目录部分:文件名最后一个斜线"/"(包括斜线)之前的部分;如果没有斜线就是当前目录(./).
 
 	$(dir src/foo.c hacks)	//返回值为:src/ ./
 
-**$(notdir NAMES...)**
+**2.$(notdir NAMES...)**
 
-从文件名序列"NAMES..."中取出各个文件的非目录部分(即为文件的具体名字).
+从文件名序列"NAMES..."中取出各个文件的非目录部分(也就是取出文件的文件名).
 
 	$(notdir src/foo.c hacks)	//返回值为:foo.c hacks
 
-**$(suffix NAMES...)**
+**3.$(suffix NAMES...)**
 
-从文件名序列"NAMES..."取出各个文件名的后缀(后缀:最后一个以"."开始(包括点号)的部分),如果文件名不包含一个点号(".")则为空.
+从文件名序列"NAMES..."取出各个文件名的后缀.
 
-	$(suffix src/foo.c src-1.0/bar.c hacks)	//返回值:.c .c(hacks的返回为空)
+后缀:文件名中最后一个以"."开始(包括点号)的部分,如果文件名中不包含一个点号(".")则为空.
 
-**$(basename NAMES...)**
+	$(suffix src/foo.c src-1.0/bar.c hacks) //返回值为:".c .c"(hacks的返回值为空)
 
-从文件名序列"NAMES..."取出文件名最后一个点号"."之前的部分(前缀部分),如果没有前缀，返回空.
+**4.$(basename NAMES...)**
 
-	$(basename src/foo.c src-1.0/bar.c /home/jack/.font.cache-1 hacks)	//返回值为:src/foo src-1.0/bar /home/
-	jack/.font hacks
+从文件名序列"NAMES..."取出文件名最后一个点号"."之前的部分(也叫前缀部分),前缀会包含目录部分一直到最后一个点号.如果某个文件没有点号,则整个文件都作为前缀返回.
 
-**$(addsuffix SUFFIX, NAMES...)**
+	$(basename src/foo.c src-1.0/bar.c /home/jack/.font.cache-1 hacks)
+		//返回值为"src/foo src-1.0/bar /home/jack/.font hacks"
+
+**5.$(addsuffix SUFFIX, NAMES...)**
 
 为文件名序列"NAMES..."中各个文件名添加后缀"SUFFIX".
 
-	$(addsuffix .c, foo bar)	//返回值为:foo.c bar.c
+	$(addsuffix .c, foo bar)	//返回值为"foo.c bar.c"
 
-**$(addprefix PREFIX, NAMES...)**
+**6.$(addprefix PREFIX, NAMES...)**
 
 为文件名序列"NAMES..."中各个文件名添加前缀"PREFIX".
 
-	$(addprefix src/, foo bar)	//返回值为:src/foo src/bar
-	//例子
+	$(addprefix src/, foo bar)	//返回值为"src/foo src/bar"	
 	$(addprefix $(OBJS_TMP)/,$(OBJS))	//增加前缀后,其值为$(OBJ_TMP)/$(OBJS)
 
-**$(join LIST1, LIST2)**
+**7.$(join LIST1, LIST2)**
 
-将字符串"LIST1"和字符串"LIST2"各个单词一一对应连接(LIST2添加到LIST1之后).不一致的直接返回.
+将字符串"LIST1"和字符串"LIST2"各个单词一一对应连接(LIST2添加到LIST1之后).单词数目不一致的多出的直接返回.
 
-	$(join a b, .c .o)	//返回值为:a.c b.o
-	$(join a b c, .c .o)	//f返回值为:a.c b.o c(c属于没有对应,直接返回)
+	$(join a b, .c .o)		//返回值为"a.c b.o"
+	$(join a b c, .c .o)	//返回值为"a.c b.o c"--->c属于没有对应,直接返回
 
-**$(wildcard PATTERN)**
+**8.$(wildcard PATTERN)**
 
-列出当前目录下所有符合模式"PATTERN"格式的文件名,<font size=2>"PATTERN"只能使用shell可识别的通配符"?"(单字符)、"*"(任意字符),不能使用"%".</font>
+列出当前目录下所有符合模式"PATTERN"格式的文件名,"PATTERN"只能使用shell可识别的通配符"?"(单字符)、"*"(任意字符),不能使用"%".
 
-	$(wildcard *c)	//返回值为:当前目录下所有.c的源文件列表
+	$(wildcard *.c)	//返回值为:当前目录下所有.c的源文件列表
 
 ### 7.3 foreach函数
 
 **$(foreach VAR, LIST, TEXT)**
 
-将"LIST"中的单词依次取出赋给"VAR"，然后执行"TEXT"表达式."TEXT"中的变量属于递归展开式,只有执行时才会展开.
+将"LIST"中的单词依次取出赋给"VAR",然后执行"TEXT"表达式."TEXT"中的变量属于递归展开式,只有执行时才会展开.
 
 	dirs := a b c d
-	files := $(foreach dir, $(dirs), $(wildcard $(dir)/*))	//等价于:files := $(wildcard a/* b/* c/* d/*)
+	files := $(foreach dir, $(dirs), $(wildcard $(dir)/*)) //等价于"files := $(wildcard a/* b/* c/* d/*)"
 	/*下面是在buildroot顶层Makefile中(line:1024)*/
-	$(foreach b, $(sort $(nodir $(wildcard $(TOPDIR)/configs/*_defconfig))), \
+	$(foreach b, $(sort $(notdir $(wildcard $(TOPDIR)/configs/*_defconfig))), \
 		printf  " %-35s - Build for %s \\n" $(b) $(b:defconfig=);)
+	//说明:wildcard后有可能会带上目录名,因此使用notdir去掉目录.
+
 ### 7.4 if函数
 
 **$(if CONDITION, THEN-PART, ELSE-PART)**
 
-	SUBDIR += $(if $(SRC_DIR), $(SRC_DIR), /home/src)	//如果"SRC_DIR"变量值不为空，
-	则将"SRC_DIR"目录作为一个子目录;否则将"/home/src"作为一个子目录.
+如果CONDITION条件成立,则将THEN-PART作为函数的计算表达式并返回;如果CONDITION结果为空,则将ELSE-PART作为函数的计算表达式并返回.
+
+	SUBDIR += $(if $(SRC_DIR), $(SRC_DIR), /home/src)
+	//如果"SRC_DIR"变量值不为空,则将"SRC_DIR"目录作为一个子目录;否则将"/home/src"作为一个子目录.
 
 ### 7.5 call函数
 
-**$(call VARIABLE, PARAM，PARAM,...)**
+call函数实现对自定义函数的引用.
 
-将参数"PARAM"依次赋值给临时变量$(1),$(2),...(这些变量定义在VARIABLE变量值中).其中$(0)是"VARIABLE"变量本身.
+**$(call VARIABLE, PARAM, PARAM,...)**
 
-	/*实例1*/
-	reverse	= $(2) $(1)
-	foo = $(call reverse, a, b)		#返回值为:ba
-	/*实例2*/
+	VARIABLE:该变量表示自定义函数的函数名/
+	PARAM...:依次赋值给变量$(1),$(2),...这些变量会当作自定义函数的参数.
+		其中$(0)表示函数名本身.$@表示$(1),第一个参数.($(1)和$1是一样的).
+
+实例1:
+
+	reverse = $(2) $(1)
+	foo = $(call reverse, a, b)
+	/*
+		reverse:函数名(此处为一个变量名).
+		a, b参数会作为$(1)和$(2)给传进去.因此在reverse中可以通过$(1),$(2)引用.
+		foo的值为"ba"--->会去掉空格.
+	*/
+
+实例2:
+
 	define target
-		echo $@		#通过call函数传过来的参数被当作$@(目标对象)
+		echo $@		//此处的$@相当于$1
 		echo $@
-	endef			#define...endef规则
+	endef
 	all:
-		$(call target, all/$@)		#传进去参数all/$@(也表示all).是第一个参数$1
+		$(call target, all) //传进去的参数all,是第一个参数$1.
+		/*也可以写成:$(call target)--->此时会把all给传进去.*/
+
+	clean:
+		$(call target, clean) //传进去的参数clean,是第一个参数$1.
+		/*也可以写成:$(call target)--->此时会把clean给传进去.*/
+
+	.PHONY: all clean
+	/*
+		1.执行make/make all的结果为:
+			echo all
+			all
+			echo all
+			all
+		2.执行make clean的结果为:
+			echo clean
+			clean
+			echo clean
+			clean
+	*/
 
 ### 7.6 value函数
 
 **$(value VARIABLE)**
 
-不对变量"VARIABLE"进行任何展开操作,直接返回"VARIABLE"代表的值.
+不对变量"VARIABLE"进行任何展开操作,直接返回"VARIABLE"代表的文本值(按整体来计算值)->直接展开式变量除外,直接展开式变量会在定义的时候被直接展开.
 
 	FOO = $PATH
-	all :
-		@echo $(FOO)	//返回值为:ATH ($P为空)
-		@echo $(value FOO)	//返回值为:$PATH的值即系统环境变量"PATH"的值(因为变量FOO的值为$PATH) 
+	all:
+		@echo $(FOO)	//$(FOO)展开为$PATH,因为$P为空.因此打印的值为"ATH"
+		@echo $(value FOO)	//不对变量FOO进行展开,返回FOO这个变量所代表的文本值
+							//此处为计算$PATH这个整体值,即环境变量的值.
 
 ### 7.7 origin函数
 
 **$(origin VARIABLE)**
 
-origin函数查询变量"VARIABLE"从哪里来.返回值分别为:underfined(没定义)/default(内嵌变量)/environment & environment override(系统环境变量)/override(使用override指示符定义)/automatic(自动化变量)
+origin函数查询变量"VARIABLE"从哪里来.返回值分别为:underfined(没定义)/default(内嵌变量)/environment & environment override(系统环境变量)/override(使用override指示符定义)/automatic(自动化变量)/command line(命令行中定义).
 
-	/********************实例********************/
+实例:
+
 	//一个Makefile文件内容如下:
 	ifdef O
 	ifeq ("$(origin O)", "command line")	//“ifeq ("两者之间必须有空格.查询变量O是从哪里来的
 		BUILD_DIR := $(O)
 	endif
 	endif
+
 	all :
 		@echo $(origin O)	//输出变量O的出处
 		@echo $(BUILD_DIR)	//输出变量BUILD_DIR的值
@@ -1022,8 +1081,8 @@ origin函数查询变量"VARIABLE"从哪里来.返回值分别为:underfined(没
 	/*运行1*/
 	make
 	/*
-		因为O没有,因此第一句会输出"undefined".即出处没有被定义
-		BUILD_DIR没有定义,所以BUILD_DIR为空.会直接输出一个空行
+		因为O没有被定义,因此第一句会输出"undefined".即没有被定义
+		BUILD_DIR没有被定义,所以BUILD_DIR为空.会直接输出一个空行
 	*/
 	/*运行2*/
 	make O=/home
@@ -1033,7 +1092,7 @@ origin函数查询变量"VARIABLE"从哪里来.返回值分别为:underfined(没
 	*/
 	/*运行3*/
 	/*
-		如果在Make文件中已经写了"O = /home".此时$(origin O)会得到"file"的返回值
+		如果在Makefile文件中已经写了"O = /home".此时$(origin O)会得到"file"的返回值
 	*/
 	/*其他的还有:
 		1.environment--->export O=/home	//导出了环境变量
@@ -1042,7 +1101,8 @@ origin函数查询变量"VARIABLE"从哪里来.返回值分别为:underfined(没
 		4.automatic--->略
 	*/
 
-	/*顶层Makefile中的实例*/
+实例---buildroot顶层Makefile
+
 	# To put more focus on warnings, be less verbose as default
 	# Use 'make V=1' to see the full commands
 	ifdef V
@@ -1050,6 +1110,7 @@ origin函数查询变量"VARIABLE"从哪里来.返回值分别为:underfined(没
 			KBUILD_VERBOSE=$(V)
 		endif
 	endif
+
 	ifndef KBUILD_VERBOSE
 		KBUILD_VERBOSE=0
 	endif
@@ -1069,10 +1130,10 @@ origin函数查询变量"VARIABLE"从哪里来.返回值分别为:underfined(没
 
 **$(shell param)**
 
-函数返回为参数"param"在shell中的执行结果.
+实现在Makefile中调用shell命令.函数返回为参数"param"(一般为shell命令)在shell中的执行结果.
 
 	contents := $(shell cat foo)	//contents被赋值为文件"foo"的内容
-	files := $(shell echo *.c)	//变量files被赋值为当前目录下所有.c的文件列表
+	files := $(shell echo *.c)		//files被赋值为当前目录下所有的.c文件列表.
 
 ### 7.9 info、warning、error函数
 
@@ -1101,39 +1162,50 @@ info, warning, error函数常用语Makefile中的调试,属于不同的打印级
 
 ***
 
-## 第八章	执行make
+## Chapter 8 执行make
 
-**部分标准的目标,伪目标,空目标命名：**
+### 8.1 make的目标	
 
-all:终极目标;
+部分标准的目标,伪目标,空目标命名:
+
+all:终极目标,一般也是伪目标.
 
 clean:伪目标,删除所有由make创建的文件.
 
-mostlyclean:与clean相似,但不会全部删除.
+mostlyclean:与clean相似,但不会全部删除(e.g.不删除某些库文件).
 
-disclean/realclean/clobber:与clean相似,但删除的更彻底(e.g.编译之前一些系统配置文件,链接文件等).
+distclean/realclean/clobber:与clean相似,但删除的更彻底(e.g.删除编译之前一些系统配置文件,链接文件等).
 
 install:将make成功创建的可执行文件拷贝到shell环境变量"PATH"指定的目录(e.g.应用可执行文件拷贝到"/usr/local/bin",库文件拷贝到"/usr/local/lib").
 
 print:打印出所有被更改的源文件列表.
-	
+
 check/test:对Makefile最后生成的文件进行检查.
 
-### 8.1 make替代命令的执行
+### 8.2 make的命令行选项
 
-**make命令行参数为以下时可达到的目的:**
-
--n/--just-print/--dry-run/recon:只打印过期的目标的重建命令,但不对目标进行重建.
-
--t/--touch:对过期的目标文件,只更新时间戳,但不对目标文件内容进行更新.
+	-C DIR, --directory=DIR Change to DIRECTORY before doing anything.
+		切换到"DIR"目录之后执行make.
+	-d	Print lots of debugging information.
+		打印出所有的调试信息.
+	-j [N], --jobs=[N]	Allow N jobs at once; infinite jobs with no arg.
+		指定可同时执行的命令数目(N).没有指定时是不限的命令数目(由编译器自行优化).
+	-n, --just-print	Don't actually run any commands; just print them.
+		只打印出所要执行的命令,但不执行命令.
+	-s, --silent		Don't echo commands.
+		取消命令执行过程的打印.
+	-v, --version		Print the version number of make and exit.
+		查看make的版本信息.
+	-h, --help	Print this message and exit.
+		打印出帮助信息.
 
 ***
 
-## 第九章	make的隐含规则
+## Chapter 9 make的隐含规则
 
 ### 9.1 隐含规则的使用
 
-隐含规则提供的依赖文件只是一个最基本的("EXENAME.o"对应"EXENAME.c").如果需要增加某个目标的依赖文件时,要在Makefile中使用<font size=4>"没有命令行"的规则来明确说明</font>.
+隐含规则提供的依赖文件只是一个最基本的("EXENAME.o"对应"EXENAME.c").如果需要增加某个目标的依赖文件时,要在Makefile中使用"没有命令行"的规则来明确说明.
 
 **如果需要给目标指定明确的重建规则时(即不使用隐含规则),规则描述中就不能省略命令行.**
 
