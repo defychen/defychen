@@ -3,23 +3,24 @@
 ## Q1:driver中的dev_dbg信息的打印：
 	
 	dev_dbg(s->dsc->dev, "%s\n", __func__);	//打印函数名
+
 **step1: linux端打开dynamic debug:**
 	
 	buildroot/make linux-menuconfig/kernel hacking/prink and dmesg options/Enable dynamic printk() support
 
 **step2: 板子端:**
 
-*1)启动之后清除dmesg:*
+1)启动之后清除dmesg:
 
 	dmesg -c > /dev/null		//清除其他的dmesg，便于查看
 
-*2)如果文件系统不为read-only，可:*
+2)如果文件系统不为read-only，可:
 	
 	mkdir /dev/debugfs -p	//建立一个用于存放debug文件的地方
 
-*否则直接使用"/sys/kernel/debug"目录.*
+否则直接使用"/sys/kernel/debug"目录.
 
-**3)挂载:**
+**step3)挂载:**
 
 	mount -t debugfs none /dev/debugfs
 	或:mount -t debugfs none /sys/kernel/debug
@@ -31,6 +32,7 @@
 	或:echo -n "func dsc_fetch_subdevice +p" > /sys/kernel/debug/dynamic_debug/control	//func为具体的某个函数
 	echo -n "module alikl +p" > /dev/debugfs/dynamic_debug/control
 	//PS:模块好像有点打印不出来(e.g.aliteeclient没有打印出来过)
+
 **5)dmesg显示调试信息.**
 
 **dev_xxx函数:---用法都是一样的.**

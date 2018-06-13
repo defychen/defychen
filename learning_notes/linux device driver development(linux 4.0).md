@@ -2146,7 +2146,7 @@ local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外
 
 ***
 
-## 第九章 Linux设备驱动中的异步通知和同步I/O
+## Chapter 9 Linux设备驱动中的异步通知和同步I/O
 
 ### 9.1 异步通知
 
@@ -2291,7 +2291,7 @@ e.g. 一个程序中同时对两个文件进行读/写操作,使用异步I/O时,
 
 ***
 
-## 第十章 中断与时钟
+## Chapter 10 中断与时钟
 
 ### 10.1 中断与定时器
 
@@ -2433,7 +2433,7 @@ tasklet底半部机制执行上下文为"软中断",运行与软中断上下文,
 **...未看...**
 
 ***
-## 第十一章 内存与I/O访问
+## Chapter 11 内存与I/O访问
 
 ### 11.1 CPU与内存、I/O
 
@@ -2487,7 +2487,7 @@ linux系统进程的4GB内存空间(虚拟地址空间)被分为两个部分---�
 
 	FIXADDR_TOP~4GB
 
-*如果物理内存超过4GB,需要使用CPU的扩展分页(PAE)提供64位页目录项存取4GB物理内存.有36位物理地址空间,最大配置64GB物理内存*
+如果物理内存超过4GB,需要使用CPU的扩展分页(PAE)提供64位页目录项存取4GB物理内存.有36位物理地址空间,最大配置64GB物理内存
 
 **ARM结构CPU的linux物理地址映射**
 
@@ -2682,9 +2682,373 @@ DMA:无需CPU参与,让外设与内存直接进行双向数据传输的硬件机
 2)CPU数据到外设:CPU处理的数据结果存放到cache，此时cache中的数据还没写回到DRAM;DMA从DRAM中取数据送到外设取到的为错误的数据.
 
 	解决:DMA处理之前先进行cache_flush(刷新数据到DRAM),保证DMA取到的数据为最新的数据.
+
 ***
 
-## 第十五章 Linux I2C核心、总线与设备驱动
+## Chapter 12 Linux设备驱动的软件架构思想
+
+软件工程基本原则--->高内聚,低耦合.
+
+### 12.1 platform设备驱动
+
+**1.platform总线、设备和驱动**
+
+总线实现将设备和驱动绑定.在注册设备时,总线会寻找与该设备匹配的驱动;注册驱动时,总线会寻找与该驱动匹配的设备.
+
+常用的总线有:
+
+	1.PCI, USB, I2C, SPI等:像此类的总线是有设备会依附于该总线;
+	2.platform总线:Linux中的一种虚拟总线.像在SoC内部集成的独立外设控制器(e.g.I2C,RTC,LCD,看门狗等)以及
+		挂接在SoC内存空间的外设等都会依附于platform总线.
+
+**2.struct platform_device--->在./include/linux/platform_device.h定义**
+
+platform的设备称为platform_device(e.g.I2C,RTC,LCD,看门狗等SoC内部集成的控制器)
+
+	struct platform_device {
+		const char *name;
+		int id;
+		bool id_auto;
+		struct device dev;
+		u32 num_resources;
+		struct resources *resource;
+		
+		const struct platform_device_id *id_entry;
+		char *driver_override; /*Driver name to force a match */
+
+		/* MFD cell pointer */
+		struct mfd_cell *mfd_cell;
+
+		/* arch specific additions */
+		struct pdev_archdata archdata;
+	};
+
+**3.struct platform_driver--->在./include/linux/platform_device.h定义**
+
+platform的驱动称为platform_driver
+
+	struct platform_driver {
+		int (*probe)(struct platform_device *);
+		int (*remove)(struct platform_device *);
+		void (*shutdown)(struct platform_device *);
+		int (*suspend)(struct platform_device *, pm_message_t state);
+		int (*resume)(struct platform_device *);
+		struct device_driver driver;
+		const struct platform_device_id *id_table;
+		boo prevent_deferred_probe;
+	};
+
+**4.struct device_driver和struct dev_pm_ops**
+
+struct device_driver--->位于./include/linux/device.h.
+
+struct dev_pm_ops--->位于./include/linux/pm.h.
+
+platform_driver中的电源回调函数:suspend,resume已经过时,很少使用了.
+
+电源回调函数suspend,resume现在一般使用:struct platform_driver--->struct device_driver--->const struct dev_pm_ops下的suspend和resume函数.
+
+	1.struct device_driver:
+	struct device_driver {
+		const char *name;
+		struct bus_type *bus;
+		struct module *owner;
+		const char *mod_name; /* used for build-in modules */
+		bool suppress_bind_attrs; /* disables bind/unbind via sysfs */
+		enum probe_type probe_type;
+
+		const struct of_device_id *of_match_table;
+		const struct acpi_device_id *acpi_match_table;
+
+		int (*probe) (struct device *dev);
+		int (*remove) (struct device *dev);
+		void (*shutdown) (struct device *dev);
+		int (*suspend) (struct device *dev, pm_message_t state);
+		int (*resume) (struct device *dev);
+		const struct attribute_group **groups;
+
+		const struct dev_pm_ops *pm;
+
+		struct driver_private *p;
+	};
+
+	2.struct dev_pm_ops--->电源回调函数suspend,resume等
+	struct dev_pm_ops {
+		int (*prepare)(struct device *dev);
+		void (*complete)(struct device *dev);
+		int (*suspend)(struct device *dev);
+		int (*resume)(struct device *dev); //电源回调函数
+		int (*freeze)(struct device *dev); //电源回调函数
+		int (*thaw)(struct device *dev);
+		int (*poweroff)(struct device *dev);
+		int (*restore)(struct device *dev);
+		int (*suspend_late)(struct device *dev);
+		int (*resume_early)(struct device *dev);
+		int (*freeze_late)(struct device *dev);
+		int (*thaw_early)(struct device *dev);
+		int (*poweroff_late)(struct device *dev);
+		int (*restore_early)(struct device *dev);
+		int (*suspend_noirq)(struct device *dev);
+		int (*resume_noirq)(struct device *dev);
+		int (*freeze_noirq)(struct device *dev);
+		int (*thaw_noirq)(struct device *dev);
+		int (*poweroff_noirq)(struct device *dev);
+		int (*restore_noirq)(struct device *dev);
+		int (*runtime_suspend)(struct device *dev);
+		int (*runtime_resume)(struct device *dev);
+		int (*runtime_idle)(struct device *dev);
+	};
+
+**5.platform_device和platform_driver的匹配**
+
+1.struct bus_type用于定义匹配函数,即match函数.platform的bus_type定义位于./drivers/base/platform.c中
+
+	struct bus_type platform_bus_type = {
+		.name		= "platform",
+		.dev_groups = platform_dev_groups,
+		.match		= platform_match,
+		.uevent		= platform_uevent,
+		.pm			= &platform_dev_pm_ops, 
+	};
+	EXPORT_SYMBOL_GPL(platform_bus_type);
+
+2.platform_match函数
+
+	static int platform_match(struct device *dev, struct device_driver *drv)
+	{
+		struct platform_device *pdev = to_platform_device(dev);
+		struct platform_driver *pdrv = to_platform_driver(drv);
+
+		/* When driver override is set, only bind to the matching driver */
+		if (pdev->driver_override)
+			return !strcmp(pdev->driver_override, drv->name);
+
+		/* 总共有4中匹配方法: */
+		/* Attempt an OF style match first--->1.基于设备树的风格匹配 */
+		if (of_driver_match_device(dev, drv))
+			return 1;
+
+		/* Then try ACPI style match--->2.基于ACPI风格匹配 */
+		if (acpi_driver_match_device(dev, drv))
+			return 1;
+
+		/* Then try to match against the id table--->3.基于ID表匹配 */
+		if (pdrv->id_table)
+			return platform_match_id(pdrv->id_table, pdev) != NULL;
+
+		/* fall-back to driver name match--->4.匹配platform_device的设备名和驱动名 */
+		return (strcmp(pdev->name, drv->name) == 0);
+	}
+
+	/*
+		Linux 3.x之后的,一般使用设备树来匹配.
+	*/
+
+### 12.2 platform设备驱动加载编写方法及dts写法
+
+**第1种:**
+
+1.设备的device信息在dts中描述
+
+	/ {
+		xxx_bus@0 {
+			TEST@2 { //父节点信息,其下有多个子节点
+				compatible = "defy, test";
+				reg = <2>;
+				... //其他信息
+
+				test_0 {
+					... //第一个子节点信息
+				};
+				test_1 {
+					... //第二个子节点信息
+				};
+				...
+			};
+		};
+	};
+
+2.driver信息的描述
+
+	1.platform_driver的注册和注销
+		module_platform_driver(test_drv); //其描述信息在./include/linux/platform_device.h
+		/*
+		module_platform_driver内部会调用platform_driver_register/platform_driver_unregister
+		来注册和注销platform_driver.内部有自动调用module_init/exit
+		*/
+	2.platform_driver的描述
+		static struct platform_driver test_drv = {
+			.probe	= test_probe,
+			.remove	= test_remove,
+			.driver = {
+				.name = "TEST", //此时在板子终端有目录:"/sys/bus/platform/drivers/TEST"
+				.of_match_table = test_matchtbl, //该驱动与dts device信息进行匹配.
+								//test_matchtbl为struct of_device_id的指针.
+				.pm = &test_drv_pm_ops, //指定电源管理毁掉函数等
+								//test_drv_pm_ops为struct dev_pm_ops的指针.
+			},
+		};
+	3.struct of_device_id的描述--->device dts在driver中的描述.位于./include/linux/mod_devicetable.h
+		/*
+		 * Struct used for matching a device
+		 */
+		struct of_device_id {
+			char name[32]; //设备名
+			char type[32];
+			char compatible[128]; //与dts中的compatible匹配
+			const void *data;
+		};
+
+		//例子
+		static const struct of_device_id test_matchtbl[] = { //一个of_device_id数组
+			{ .compatible = "defy, test" }, //与dts中的compatible一样.name可省略.
+			{}
+		};
+	4.struct dev_pm_ops的描述--->电源管理的回调函数suspend,resume等.
+		static const struct dev_pm_ops test_drv_pm_ops = {
+			.suspend = test_suspend,
+			.resume = test_resume,
+		};
+
+**第2种:**
+
+1.设备的device信息在dts中描述
+
+	/ {
+		xxx_bus@0 {
+			TEST1@2 { //节点信息,其下没有其他子节点
+				compatible = "defy, test1";
+				reg = <0>;
+				... //其他信息
+			};
+		};
+	};
+
+2.driver信息的描述
+
+	1.driver的加载与卸载
+		module_init(test1_init);
+		module_exit(test1_exit);
+		
+		//加载与卸载实现
+		static int __init test1_init(void)
+		{
+			g_test1_class = class_create(THIS_MODULE, TEST1_DRVNAME); //创建一个全局的class
+			if (IS_ERR(g_test1_class))
+				return PTR_ERR(g_test1_class);
+			
+			return platform_driver_register(&test1_drv); //platform_driver的注册
+		}
+
+		static void __exit test1_exit(void)
+		{
+			platform_driver_unregister(&test1_drv);
+			class_destroy(g_test1_class);
+		}
+	2.platform_driver的描述
+		static struct platform_driver test1_drv = {
+			.probe	= test1_probe,
+			.remove	= test1_remove,
+			.driver = {
+				.name = "TEST1", //此时在板子终端有目录:"/sys/bus/platform/drivers/TEST1"
+				.of_match_table = test1_matchtbl, //该驱动与dts device信息进行匹配.
+								//test1_matchtbl为struct of_device_id的指针.
+				.pm = &test1_drv_pm_ops, //指定电源管理毁掉函数等
+								//test1_drv_pm_ops为struct dev_pm_ops的指针.
+			},
+		};
+	3.struct of_device_id的描述--->device dts在driver中的描述.位于./include/linux/mod_devicetable.h
+		/*
+		 * Struct used for matching a device
+		 */
+		struct of_device_id {
+			char name[32]; //设备名
+			char type[32];
+			char compatible[128]; //与dts中的compatible匹配
+			const void *data;
+		};
+
+		//例子
+		static const struct of_device_id test1_matchtbl[] = { //一个of_device_id数组
+			{ .compatible = "defy, test1" }, //与dts中的compatible一样.name可省略.
+			{}
+		};
+	4.struct dev_pm_ops的描述--->电源管理的回调函数suspend,resume等.
+		static const struct dev_pm_ops test1_drv_pm_ops = {
+			.suspend = test1_suspend,
+			.resume = test1_resume,
+		};
+
+### 12.3 platform设备驱动的probe和remove方法编写
+
+1.probe函数的编写
+
+	static int test_probe(struct platform_device *pdev)
+	{
+		struct device_node *dn = pdev->dev.of_node; //设备节点
+		u32 dev_index = 0;
+		struct test_dev *test;
+		struct resource *mem[2], irq[2]; //存放mem和irq信息
+		...
+		if (of_have_populated_dt()) {//判断dts的根节点是否为空,有dts就不会为空
+			ret = of_property_read_u32(dn, (const char *)"dev-index",
+				dev_index); //读dts中匹配"dev-index"信息,结果填写到"dev_index"这个变量中
+		}
+
+		test = devm_kzalloc(&pdev->dev, sizeof(struct test_dev), GFP_KERNEL);
+			//申请内存
+		...
+		mem[0] = platform_get_resource(pdev, IORESOUCE_MEM, 0); //拿到dts中的memory信息
+		//情况1:将物理地址映射到nocache的虚拟地址.		
+		test->base_addr = devm_ioremap_nocache(&pdev->dev, mem[0]->start, resource_size(mem[0]));
+		//情况2:将物理地址映射成虚拟地址(具体地址自由分配).
+		test->base_addr = devm_ioremap_resource(&pdev->dev, mem[0]);
+		...
+		irq[0] = platform_get_resource(pdev, IORESOUCE_IRQ, 0); //拿到dts中的irq信息
+		...
+		platform_set_drvdata(pdev, test); //将driver data设置到platform上.
+	}
+	/*
+		1.所有的of_xxx(e.g.of_have_populated_dt())函数都在./include/linux/of.h中
+		2.platform_get_resource位于./drivers/base/platform.c
+			struct resource *platform_get_resource(struct platform_device *dev,
+				unsigned int type, unsigned int num);
+			/*
+				para1:struct platform_device的指针;
+				para2:资源的类型
+					IORESOURCE_IO--->IO资源
+					IORESOURCE_MEM--->MEM资源
+					IORESOURCE_IRQ-->IRQ资源(中断资源)
+					IORESOURCE_DMA--->DMA资源
+				para3:取dts中相同资源的第几个索引值
+			*/
+
+			1.struct resource结构体--->位于./include/linux/ioport.h
+				struct resource {
+					resource_size_t start;	//存放内存或中断号的起始值
+					resource_size_t end;	//存放内存或中断号的结束值
+					const char *name;
+					unsigned long flags;
+					struct resource *parent, *sibling, *child;
+				};
+			2.dts中mem/irq信息的描述:
+				test {
+					compatible = "alitech, test";
+					reg = <0x18050000 0x1000>; //描述mem信息(para1:base_addr; para2:size)
+					/*多个reg时:
+						reg = <0x18050000 0x1000>,
+								<0x18080000 0x300>;
+					*/
+
+					interrupts = <114 141>; //描述irq信息
+				};
+			3.devm_ioremap_nocache--->将物理地址映射到nocache的虚拟地址.位于./include/linux/io.h
+			  devm_ioremap_resource--->将物理地址映射到虚拟地址(自由分配).位于./include/linux/device.h
+	*/
+
+***
+
+## Chapter 15 Linux I2C核心、总线与设备驱动
 
 I2C总线使用SCL、SDA两根信号线实现设备之间的数据交互,极大的简化了对硬件资源和PCB板布线空间的占用.
 
@@ -2693,7 +3057,7 @@ I2C总线主要应用于EEPROM、实时时钟、小型LCD等设备与CPU的接�
 	在linux系统中,I2C驱动的体系结构:I2C核心、I2C总线驱动和I2C设备驱动.
 
 ***
-## 第十八章 ARM linux设备树
+## Chapter 18 ARM linux设备树
 
 ### 18.1 ARM设备树起源
 
@@ -2891,7 +3255,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 ***
 
 
-## 第二十二章 driver开发实践
+## Chapter 22 driver开发实践
 
 ### 1. 头文件介绍
 
