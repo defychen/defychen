@@ -3257,6 +3257,8 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 
 ## Chapter 22 driver开发实践
 
+## 1. Test driver development
+
 ### 1. 头文件介绍
 
 	#include <linux/module.h>	//用于MODULE_LICENSE/AUTHOR/DESCRIPTION/VERSION等
@@ -3873,4 +3875,187 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 			(其位置可以查看./alisee.../see/src/see/m36f/modules_see.c中查找hld_sec_feature_callee在g_remote_callee
 			的位置.该位置)
 			添加HLD_SEC_FEATURE_MODULE(注意大写,和其他模块保持和一致),此刻完成了ree这边rpc的注册.		
-	
+
+## 2. GPIO driver development
+
+### 2.1 linux的GPIO子系统
+
+linux的gpio子系统帮助我们管理整个系统gpio的使用情况,同时通过sysfs系统文件导出了调试信息和应用层控制接口.各个板卡实现自己的gpio_chip控制模块(e.g.request,free,input,output...等).然后linux系统会将控制模块注册到内核中,这时会改变全局的gpio数组(gpio_desc[]).当用户请求gpio时,就会到该数组中匹配,匹配成功会调用gpio_chip的相关的处理函数.
+
+**1.struct gpio_desc---不知道位于哪里,没找到.**
+
+	struct gpio_desc {
+		struct gpio_chip *chip; //struct gpio_chip的结构体
+		unsigned long flags;
+			...
+	};
+
+**2.struct gpio_chip---位于./include/linux/gpio/driver.h**
+
+	struct gpio_chip {
+		const char *label;
+		struct device *dev;
+		struct device *cdev;
+		struct module *owner;
+		struct list_head list;
+
+		int (*request)(struct gpio_chip *chip, unsigned offset);
+			//请求gpio
+		void (*free)(struct gpio_chip *chip, unsigned offset);
+			//释放gpio
+		int (*get_direction)(struct gpio_chip *chip, unsigned offset);
+		int (*direction_input)(struct gpio_chip *chip, unsigned offset);
+			//配置gpio为输入,返回当前gpio状态.
+		int (*direction_output)(struct gpio_chip *chip, unsigned offset, int value);
+			//配置gpio为输出,并设置输出值为value.
+		int (*get)(struct gpio_chip *chip, unsigned offset);
+			//获取gpio的状态
+		void (*set)(struct gpio_chip *chip, unsigned offset, int value);
+			//设置gpio为value值
+		void (*set_multiple)(struct gpio_chip *chip, unsigned long *mask, unsigned long *bits);
+		int (*set_debounce)(struct gpio_chip *chip, unsigned offset, unsigned debounce);
+			//设置消除抖动的时间,一般在gpio按键时有用.
+		int (*to_irq)(struct gpio_chip *chip, unsigned offset);
+			//将gpio号转换为中断号.
+		void (*dbg_show)(struct seq_file *s, struct gpio_chip *chip);
+		int base; //这个gpio控制器的开始编号
+		u16 ngpio; //这个gpio控制器控制的gpio数
+		struct gpio_desc *desc;
+		const char *const *names;
+		bool can_sleep;
+		...
+	};
+
+**3.实例**
+
+	#include <linux/kernel.h>
+	#include <linux/module.h>
+	#include <linux/platform_device.h>
+	#include <linux/gpio.h>
+	#include <linux/slab.h>
+	#include <linux/irq.h>
+	#include <linux/irqdomain.h>
+	#include <linux/interrupt.h>
+	#include <linux/io.h>
+	#include <linux/of.h>
+	#include <linux/of_platform.h>
+	#include <linux/of_gpio.h>
+	#include <linux/spinlock.h>
+	#include <linux/bitops.h>
+	#include <linux/pinctrl.h/consumer.h>
+	#include <linux/version.h>
+
+	static test_gpio {
+		void __iomem *base; //表示io空间ioremap后的虚拟地址
+		int irq;
+		struct gpio_chip gc;
+		char label[16];
+	};
+
+	static inline struct test_gpio *to_test_gpio(struct gpio_chip *chip)
+	{
+		return container_of(chip, struct test_gpio, gc);
+		/*
+			通过struct test_gpio中的gc成员的首地址找到struct test_gpio的首地址
+		*/
+	}
+
+	static test_gpio_direction_in(struct gpio_chip *chip, unsigned offset)
+	{
+		struct test_gpio *test_gpio = to_test_gpio(chip);
+		/*
+			其他操作,设置gpio为输入.
+		*/
+	}
+
+	static int test_probe(struct platform_device *pdev)
+	{
+		struct test_gpio *test_gpio;
+		struct resource *mem;
+		struct device_node *dn = pdev->dev.of_node; //设备节点
+		int ret;
+		u32 ngpio = 0;
+		u32 gpio_base = 0;
+
+		if (!dn)
+			return -EINVAL;
+		pr_info("Enter %s\n", __func__); //如果dts中含有多个匹配信息,probe函数会调用多次
+		
+		if (of_property_read_u32(dn, "ngpio", &ngpio)) {
+			...
+		}
+
+		if (of_property_read_u32(dn, "gpio-base", &gpio_base)) {
+			...
+		}
+
+		test_gpio = devm_kzalloc(&pdev->dev, sizeof(struct test_gpio), GFP_KERNEL);
+
+		mem = platform_get_resource(pdev, IORESOURCE, 0); //透过platform拿到dts中属于reg的信息
+		/*
+			一般dts中描述为:
+				gpio_xxx:gpio@1808D000 {
+					compatible = "test, test-gpio";
+					reg = <0x1808D000 0x20>; //<base size>
+				};
+		*/
+		test_gpio->base = devm_ioremap_resource(&pdev->dev, mem);
+			//将物理地址影射成kernel space的虚拟地址
+		
+		...
+
+		/*以下是一些struct gpio_chip的操作函数*/
+		test_gpio->gc.label = of_node_full_name(dn); //内核函数,不需要自己实现
+		test_gpio->gc.dev = &pdev->dev;
+		test_gpio->gc.owner = THIS_MODULE;
+		test_gpio->gc.direction_input = test_gpio_direction_in;
+		test_gpio->gc.get = test_gpio_get;
+		test_gpio->gc.direction_output = test_gpio_direction_out;
+		test_gpio->gc.set = test_gpio_set;
+		test_gpio->gc.request = test_gpio_request;
+		test_gpio->gc.free = test_gpio_free;
+		test_gpio->gc.base = gpio_base; //此处填物理地址
+		test_gpio->gc.ngpio = ngpio;
+		test_gpio->gc.can_sleep = false;
+
+		ret = gpiochip_add(&test_gpio->gc); //将gpio注册进系统
+			...
+		platform_set_drvdata(pdev, test_gpio);
+			...
+	}
+
+	static int __exit test_gpio_remove(struct platform_device *pdev)
+	{
+		struct test_gpio *test_gpio = platform_get_drvdata(pdev);
+
+		return gpiochip_remove(&test_gpio->gc);
+	}
+
+	static const struct of_device_id ali_gpio_dt_ids[] = {
+		{.compatible = "test, test-gpio"},
+			//在dts中parse该信息,匹配对应的字符串(即硬件信息)就会调用probe函数.
+			//如果多个匹配,probe函数会调用多次
+		{}
+	};
+
+	MODULE_DEVICE_TABLE(of, test_gpio_dt_ids);
+
+	static struct platform_driver test_gpio_driver = {
+		.probe = test_gpio_probe,
+		.remove = test_gpio_remove,
+		.driver = {
+			.name = "test-gpio",
+			.of_match_table = test_gpio_dt_ids, //匹配dts信息,相当于匹配硬件信息
+		}
+	};
+
+	static int __init test_gpio_init(void)
+	{
+		return platform_driver_register(&test_gpio_driver);
+	}
+
+	arch_initcall(test_gpio_init); //不需要exit
+	MODULE_AUTHOR("defy");
+	MODULE_LICENSE("GPL");
+	MODULE_DESCRIPTION("Test GPIO Driver");
+	MODULE_VERSION("0.1");
