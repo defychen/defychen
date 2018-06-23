@@ -134,7 +134,7 @@
 
 ***
 
-## Chapter 2 Programming practice in C language
+## Chapter 2 Programming practice in C language(C语言编程实践)
 
 ### 2.1 位运算
 
@@ -420,3 +420,374 @@ int const * const a:
 **指针数组**
 
 	int *p[n]; //指针数组.p内部有n个指针类型的数组元素.执行p+1时,指向下一个数组元素.
+
+***
+
+## Chapter 3 Summary of data structure and algorithm(数据结构与算法概述)
+
+### 3.1 数据结构
+
+#### 3.1.1 基本概念和术语
+
+**1.数据(Data)**
+
+数据(Data):是对信息的一种符号表示.是指所有能输入到计算机中并被计算机程序处理的符号的总称.(e.g.文本,表格,图像等)
+
+	举例:一个图书管理程序所要处理的数据可能是一张表格(表格中包含所有的图书信息).
+
+**2.数据元素(Data Element)**
+
+数据元素(Data Element):是数据的基本单位.在计算机程序中通常作为一个整体来进行考虑和处理.
+
+	数据元素通常由若干个数据项组成.
+
+**3.数据项**
+
+数据项是数据不可分割的最小单位.
+
+	多个数据项构成数据元素;多个数据元素构成数据.
+
+#### 3.1.2 数据结构
+
+数据结构是研究数据元素(Data Element)之间抽象化的相互关系(逻辑结构)和这种关系在计算机中的存储表示(物理结构,也叫存储结构),并对这种结构定义相适应的运算,设计相应的算法.
+
+**1.逻辑结构**
+
+数据之间的相互关系成为逻辑结构.通常有以下4种基本结构:
+
+	1.集合:数据元素除了属于同一种类型外,无其他关系.
+		e.g. int a; int b; //a,b都属于int型,但是a,b之间无关系.
+	2.线性结构:数据元素之间存在一对一的关系.除了第一个和最后一个数据元素之外,
+	其他每个数据元素只有一个前驱元素和后继元素.
+		e.g.int a[5]; //类似数组这种形式.
+	3.树形结构:数据元素之间存在一对多的关系.除第一个外,每个元素只存在一个前驱
+	元素,但可能存在多个后继元素.
+		e.g. linux的目录结构:
+					root(存在多个后继)
+			bin		lib		user	etc...(只有一个前驱root)
+	4.图状结构或网状结构:数据元素之间存在多对多的关系.每个元素都可能存在多个
+	前驱元素或多个后继元素.
+		e.g.
+			1.学习计算机导论(C1)--->之后才可以学习数据结构,汇编语言,C程序设计
+			2.学习数据结构(C2)--->之后才可以学习计算机图形学,数据库原理,操作系统
+			3.学习汇编语言(C3)--->之后才可以学习计算机图形学,接口技术
+			4.学习C程序设计(C4)--->之后才可以学习计算机图形学,编译原理
+			5.学习计算机图形学(C5)
+			6.学习接口技术(C6)
+			7.学习数据库原理(C7)
+			8.学习编译原理(C8)
+			9.学些操作系统(C9)--->之后才可以学习数据库原理.
+
+逻辑结构示意图:
+
+![](images/Logic_structure.png)
+
+**2.存储结构**
+
+数据结构在计算机中的存储表示称为数据的存储结构.通常有以下4种存储结构:
+
+1.顺序存储结构
+
+把逻辑上相邻的结点存储在物理上相邻的存储单元里(通常是一片内存).结点之间的逻辑关系由存储单元位置的邻接关系来体现.
+
+	优点:存储空间占用较少;
+	缺点:只能使用一整片存储单元,可能产生较多的碎片现象.
+	顺序存储结构通常使用数组来描述.主要应用于线性的数据结构.
+
+2.链式存储结构
+
+结点所占存储单元分为两部分,一部分存放结点本身的信息,另一部分存放结点的后继结点地址(即指针).结点间的逻辑关系由附加的指针字段表示.
+
+	优点:不会产生碎片现象,能充分利用所有的存储单元;
+	缺点:每个结点占用较多的存储空间.
+	链式存储结构通常使用指针类型来描述.
+
+3.索引存储方式
+
+利用结点的索引号来确定结点的存储地址.
+
+	优点:检索速度快;
+	缺点:增加了附加的索引表,占用较多的存储空间.同时在增加和删除元素时需要更新索引表花费时间.
+	索引存储在存储结点信息的同时,需要建立附加的索引表.
+
+4.散列存储方式
+
+根据结点的关键字值计算出该结点的存储地址.通过散列函数把结点间的逻辑关系对应到不同的物理地址空间.
+
+	优点:检索,增加和删除结点的操作很快;
+	缺点:当采用不好的散列函数时可能出现结点存储单元的冲突,为解决冲突需要附加时间和空间的开销.
+
+### 3.2 算法描述
+
+**1.算法(algorithm)概述**
+
+解决特定问题的方法.是对问题求解过程的一种描述.
+
+**2.算法的特点**
+
+算法是执行特定计算的有穷过程,具有以下特点:
+
+	1.动态有穷;
+	2.确定性;
+	3.输入:具有0个或多个由外界提供的输入;
+	4.输出:产生1个或多个结果;
+	5.可行性.
+
+算法的描述通常使用	伪代码来描述.
+
+**3.算法设计的要求**
+
+	1.正确性(correctness):算法的执行结果应当满足预先规定的功能和性能要求;
+	2.可读性(readability):算法应当思路清晰、层次分明、简单明了、易读易懂.
+	3.健壮性(robustness):算法应具有容错处理.当输入非法数据时,算法应对其作出处理,
+		不至引起严重后果.
+	4.高效性和存储量需求:算法应具有执行时间短(效率高),同时所占的存储空间尽量小.
+
+### 3.3 算法效率的度量
+
+**1.时间复杂度(Time complexity)**
+
+时间复杂度是指算法运行从开始到结束所需要的时间.
+
+**2.空间复杂度(Space complexity)**
+
+空间复杂度是指算法执行过程中所需的最大存储空间.
+
+***
+
+## Chapter 4 Linked List(链表)
+
+### 4.1 单链表
+
+链表特点:
+
+	1.动态进行存储分配的一种结构;
+	2.在内存中不连续存放;
+	3.头节点指向链表中的第一个元素.节点是一个结构体,包含两部分(实际数据和下一个节点的地址)
+		struct Student {
+			char cName[20];
+			int iNumber;
+			struct Student *pNext; //下一个节点地址
+		};
+
+**单链表操作实例1**
+
+	#include <stdio.h>
+	#include <string.h>
+	#include <stdlib.h>
+
+	struct Student {
+		char cName[20];
+		int iNumber;
+		struct Student *pNext;
+	};
+
+	int iCount; //表示链表长度
+
+	/* 创建一个链表,返回链表头指针 */
+	struct Student *Create_List()
+	{
+		struct Student *pHead = NULL; //头节点
+		struct Student *pEnd, *pNew; //尾节点和新节点
+
+		iCount = 0; //初始化链表长度
+
+		pEnd = pNew = (struct Student *)malloc(sizeof(struct Student));
+		memset(pNew, 0, sizeof(struct Student));
+
+		/* 提示输入姓名和学号 */
+		printf("Please input the name, then the number\n");
+		scanf("%s", &pNew->cName); //scanf("格式", &变量);--->一定需要地址
+		scanf("%d", &pNew->iNumber);
+
+		/* 学号不为0,就添加到链表中 */
+		while (pNew->iNumber != 0) {
+			iCount++; //统计+1
+			if (iCount == 1) {
+				pHead = pNew; //头节点指向第一个节点
+				pNew->pNext = NULL;
+				pEnd = pNew; //尾节点往后移动
+			} else {
+				pEnd->pNext = pNew;
+				pNew->pNext = NULL;
+				pEnd = pNew; //尾节点往后移动
+			}
+			/* 继续分配空间并接受新的输入 */
+			pNew = (struct Student *)malloc(sizeof(struct Student));
+			printf("Please input the name, then the number\n");
+			scanf("%s", &pNew->cName);
+			scanf("%d", &pNew->iNumber);
+		}
+
+		free(pNew); //因为当学号为0时也申请了内存,此时不会添加到链表.因此需要free掉
+		return pHead; //返回头节点
+	}
+
+	/* 输出链表 */
+	void Print(struct Student *pHead)
+	{
+		struct Student *pTemp; //临时节点
+		int iIndex = 0; //链表索引
+
+		printf("the list has %d element\n", iCount);
+		printf("|iIndex|	name	|iNumber|\n");
+		pTemp = pHead;
+		while (pTemp != NULL) {
+			iIndex++;
+			printf("%6d", iIndex);
+			printf("%10s", pTemp->cName);
+			printf("%7d\n", pTemp->iNumber);
+			pTemp = pTemp->pNext;
+		}
+		printf("==========================================\n");
+	}
+
+	/* 往头节点插入元素,返回头指针 */
+	struct Student *Insert(struct Student *pHead)
+	{
+		struct Student *pNew;
+		pNew = (struct Student *)malloc(sizeof(struct Student));
+		memset(pNew, 0, sizeof(struct Student));
+		printf("Please input the name, then the number\n");
+		scanf("%s", &pNew->cName);
+		scanf("%d", &pNew->iNumber);
+		pNew->pNext = pHead;
+		pHead = pNew;
+		iCount++;
+		return pHead;
+	}
+
+	/* 删除第iIndex个元素 */
+	void Delete(struct Student *pHead, int iIndex)
+	{
+		struct Student *pPre, *pTemp;
+		int i;
+
+		pPre = pTemp = pHead;
+		for (i=0; i<iIndex; i++) {
+			pPre = pTemp;
+			pTemp = pTemp->pNext; //往后挪
+		}
+		pPre->pNext = pTemp->pNext; //删除某节点
+		free(pTemp); //释放删除结点的内存
+		iCount--;
+	}
+
+	/* 写入文件 */
+	void Save(struct Student *pHead)
+	{
+		FILE *fp;
+		struct Student *pTemp;
+		fp = fopen("data.txt", "a+");
+		if (!fp) {
+			printf("open file fail\n");
+			return;
+		}
+		pTemp = pHead;
+		while (pTemp != NULL) {
+			fprintf(fp, "%15s", pTemp->cName);
+			fprintf(fp, "%10d", pTemp->iNumber);
+			fputs("\n", fp);
+			pTemp = pTemp->pNext;
+		}
+		fclose(fp);
+	}
+
+	int main()
+	{
+		struct Student *pHead;
+		pHead = Create_List();
+		pHead = Insert(pHead);
+		Delete(pHead, 2); //删除第二个元素
+		Save(pHead);
+		Print(pHead);
+		return 0;
+	}
+
+**单链表操作实例2**
+
+实现链表的转置:
+
+![](images/Single_list_reverse.png)
+
+	void reverse(struct linkList *pHead)
+	{
+		struct linkList *p, *q;
+		p = pHead->next; //头节点不包含节点数据.因此p指向第一个节点
+		pHead->next = NULL; //清空原链表
+		while (p) {
+			q = p; //保存原节点信息
+			p = p->next;
+			q->next = pHead->next; //插入到头节点的后面
+			pHead->next = q; //挪动头节点
+		}
+	}
+
+**单链表操作实例3**
+
+删除链表中的重复节点
+
+![](images/delete_repeat_node.png)
+
+	void delte_repeat_node(struct linkList *pHead)
+	{
+		struct linkList *p, *q, *r;
+		p = pHead->next; //头节点不包含节点数据.因此p指向第一个节点
+		if (p==NULL)
+			return;
+		while (p->next) {
+			q = p;
+			while (q->next) {
+				if (q->next->data == p->data) {
+					//出现重复
+					r = q->next; //保存要删除的节点信息
+					q->next = r->next;
+					free(r); //释放删除的节点的内存
+				} else {
+					q = q->next;
+				}
+			}
+			p = p->next;
+		}
+	}
+
+### 4.2 循环链表
+
+**单循环链表**
+
+特点:
+
+	1.循环链表可以从任意结点开始遍历整个链表.
+	2.一般不用头指针而用一个指向尾节点的指针R来标识.
+
+带头节点的单循环链表:
+
+![](images/Single_loop_list.png)
+
+两个单循环链表的链接操作示意图:
+
+![](images/two_list_joint.png)
+
+	p = R1->next; //保存R1的头节点指针
+	R1->next = R2->next->next; //链接R1的尾和R2的头的下一个节点
+	free(R2->next); //释放R2的头节点
+	R2->next = p; //R2的尾链接R1的头
+
+### 4.3 双向链表
+
+特点:
+
+	1.数据域
+	2.一个指向前驱的指针
+	3.一个指向后继的指针
+
+定义:
+
+	struct dnode {
+		datatype data;
+		struct dnode *pre, *next;
+	}
+
+***
+
+## Chapter 5 Linked List(链表)

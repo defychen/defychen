@@ -2,7 +2,7 @@
 
 ***
 
-## 1、malloc & memset函数
+## 1、malloc, calloc & memset函数
 
 ### malloc函数
 
@@ -23,6 +23,10 @@
 	tVA_DSCR_StbSession *pStbSession = (tVA_DSCR_StbSession *)malloc(sizeof(tVA_DSCR_StbSession));
 	free(pStbSession);	/*free第一次*/
 	free(pStbSession);	/*free第二次就会报这种错误*/
+
+### calloc函数
+
+	void *calloc(unsigned n, unsigned size); //分配"n*size"字节大小的buffer
 
 ### memset函数
 
