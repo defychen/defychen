@@ -1709,3 +1709,20 @@ unused属性用于函数和变量,表示该函数或变量可能不使用.
 	}
 
 	/*得到的结果是一样的.*/
+
+## 55. 结构体指针的加减
+
+	struct test_node {
+		char *input;
+		char *output;
+		int length;
+	};
+
+	int i = 0;
+	struct test_node test[1024] = {0};
+	struct test_node *test_defy = NULL;
+
+	for (i=0; i<1024; i++) {
+		test_defy = test + i; //依次取得test数组中的第0~1024个元素.绝对不能是
+							 //test_defy = test + (i * struct test_node); --->这样计算是错的.
+	}

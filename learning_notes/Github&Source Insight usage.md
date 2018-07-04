@@ -254,7 +254,7 @@
 
 	Options->Custom Commands.在这个界面里设置:
 		1.点击Add->在New command name:输入"see current file".之后会显示在"Command"里面;
-		2.在"Run"中输入"exporer/select,%f"--->此处相当于运行的命令;
+		2.在"Run"中输入"ShellExecute open explorer /select,%f"--->此处相当于运行的命令;
 		3.点击"Keys",在Key Assignments中选中"Custom cmd:see current file"(默认点击keys之后就会选中).
 		选择Assign New Keys(添加一个快捷键).在弹出的"Press the key-comination...keys with the key
 		or mouse button. Press Esc to cancel."键入"Alt+Q",快捷键建立完毕.然后点击"OK"即可.
@@ -284,7 +284,7 @@
 		目录tools/Python.CLF下已经有了下载好的Python.CLF文件
 	2.在source insight中进行如下设置
 		Options->Preferences->Languages->点击"Import"->选择下载好的Python.CLF文件
-		->在点击"Doc Types"->在弹出的"Document Options"点击"Add Type"->在弹出的"Add
+		->再点击"Doc Types"->在弹出的"Document Options"点击"Add Type"->在弹出的"Add
 		New Document Type"中输入"Python"->在File filter中的输入"*.py"->在Parsing
 		Language中选择"Python Language"即可.
 
@@ -298,7 +298,7 @@
 		or mouse button. Press Esc to cancel."键入"Ctrl+shift+a",修改"Save all"为快捷键"Ctrl+Shift+A".
 		3.在Command中搜索"Select All",得到"Navigation: Select All",此时没有快捷键.
 		4.点击"Assign New Key",弹出"Press the key-comination...keys with the key
-		or mouse button. Press Esc to cancel."键入"Ctrl+a",修改"Select All"为快捷键"Ctrl+Shift+A".
+		or mouse button. Press Esc to cancel."键入"Ctrl+a",修改"Select All"为快捷键"Ctrl+A".
 
 ## 2.8 source insight将文件的Tab转换为空格/将空格转换为Tab
 
@@ -306,6 +306,54 @@
 	全选文件->Edit->Special Edit->Spaces To Tabs
 	2.Tab键转换为空格:
 	全选文件->Edit->Special Edit->Tabs To Spaces
+
+## 2.9 AStyle代码格式工具在source insight中的使用
+
+AStyle代码格式工具可用于将source insight中的代码风格全部改为符合linux的风格.相关的配置情况如下:
+
+### 1.AStyle下载
+
+[AStyle的下载路径:](https://sourceforge.net/projects/astyle/)
+
+下载之后需要解压到一个指定位置(e.g.D:\AStyle_3.1_windows\AStyle\bin\AStyle.exe).
+
+### 2.在Source Insight中安装AStyle工具
+
+1.打开source insight工程,选择"Options->Custom Conmmands".
+
+2.在Custom Commands窗口中:
+
+	1.点击Add,在New command name中输入:AStyle_C
+	2.在Run中输入命令:D:\AStyle_3.1_windows\AStyle\bin\AStyle.exe -n -t --style=linux %f
+	3.添加Menu菜单,点击Menu后:
+		1.在Command中选择"Custom Cmd: AStyle_C"
+		2.在Menu中选择View
+		3.然后点击Insert,如果出现Insert不能选择,可以点中Menu Contents中的任何一个,再点击Menu中的View.
+		Insert就能选择了.
+	4.添加快捷键:
+		1.选择"Keys",出现Key Assignments.选中"Custom Cmd: AStyle_C".
+		2.选择Assign New Key.在弹出的窗口中输入快捷键"Ctrl+Alt+C".
+
+### 3.使用
+
+正常在View下面有AStyle_C这个菜单,也可以使用Ctrl+Alt+C快捷键使用.
+
+先查看更改代码之后执行菜单是否有效果,可能出现3中情况:
+
+	1.立马产生效果--->我的好像不行
+	2.执行之后等一会会出现"xxx.c has been changed outside of the editor. Do you want to reload the file?"
+		点击"Yes to All",就会产生变量. --->我的就是这样.
+	3.执行之后需要将文件关闭重新打开才会产生变化,不知道是哪里出现了问题.
+
+## 2.10 source insight还原默认配置
+
+1.关闭source insight
+
+2.打开我的文档,找到source insight文件夹(一般在路径:C:\用户(Users)\defy\我的文档(My Documents)\Source Insight)
+
+3.打开Source Insight文件后打开"Settings"文件夹.
+
+4.文件"GLOBAL.CF3"保存即为配置信息.如果需要删除该文件即可恢复到默认配置.
 
 ***
 
