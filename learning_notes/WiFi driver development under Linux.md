@@ -299,3 +299,5 @@ SDIO的每次操作都是由Host在CMD信号线上发起一个CMD,有的CMD Devi
 		3.当写传送完毕后,Host会再发送一个命令,通知Device操作完毕,Device会返回一个响应.
 
 ### 3.2 SDIO接口驱动
+
+Linux下wifi驱动开发(三)[SDIO接口WiFi驱动浅析](https://blog.csdn.net/zqixiao_09/article/details/51105877)
