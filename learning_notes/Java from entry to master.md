@@ -22,7 +22,39 @@ JDK:Jave Development Kit,Jave开发套件.
 
 ### 1.2 安装及配置JDK
 
-略
+**1.JDK下载---Oracle官网下载**
+
+Oracle[官网](https://www.oracle.com/index.html)
+
+	Menu->Developers->Downloades->往下拉到"Java"->选择"Java(JDK) for Developers"
+	->选择"Java Platform (JDK) 10"进行下载
+	PS:如果官网下载不下来,可以百度搜索进行下载.
+
+**2.JDK安装**
+
+	1.将JDK安装到"D:\Program Files\Java\jdk-10.0.1";
+	2.安装JDK过程中会自动要求安装JRE.JRE安装到"D:\Program Files\Java\jre-10.0.1".
+
+**3.配置JDK**
+
+	右击Computer->Properties->Advanced System settings->Environment Variables
+	->在System variables中New一个变量:
+			Variable name:"JAVE_HOME";
+			Variable value:JDK路径(此处为"D:\Program Files\Java\jdk-10.0.1").
+	  在System variables中Edit Path变量:
+			在Path变量最后添加JAVE变量"C:\...;%JAVA_HOME%\bin;
+	PS:在Windows系统中,环境变量使用英文的分号";"进行分隔;Linux系统中以英文的冒号":"分隔.
+
+**4.测试JDK安装情况**
+
+	在cmd窗口中输入:javac -version
+	返回:javac 10.0.1--->表示安装成功.
+
+**Eclipse启动时报"Error Could not create java virtual machine"的错误**
+
+删除"C:\Windows\System 32\"目录下的"java.exe, javaw.exe, javaws.exe"三个文件.
+
+具体查看[Error Could not create java virtual machine](https://blog.csdn.net/mpegfour/article/details/78622946)
 
 ### 1.3 简单的Java程序
 
@@ -45,7 +77,7 @@ JDK:Jave Development Kit,Jave开发套件.
 		javac MyApp.java	//编译MyApp.java.编译时需要带扩展名"java"
 		"dir"查看d盘目录会发现多了一个"MyApp.class"文件---即为编译后产生的文件
 	3)运行class文件
-		java MyApp		//java运行class文件.运行时不需要带扩展名,会自动寻找".class"文件
+		java MyApp		//java运行class文件.运行时不能带扩展名,会自动寻找".class"文件
 	//最终在DOS控制输出"I can study Java well!"
 
 ***
@@ -55,8 +87,15 @@ JDK:Jave Development Kit,Jave开发套件.
 ### 2.1 熟悉Eclipse
 
 Eclipse是IBM公司开发的IDE集成开发工具,是Java集成开发工具之一.
-	
-**本机安装的是MyEclipse 10.**
+
+**Eclipse下载及安装**
+
+下载网址[Eclipse](https://www.eclipse.org/downloads/)
+
+	点击Download 64 bit下面的Download Packages->选择"Eclipse IDE for Java Developers"
+	点击Windows 64 bit->Select Another Mirror
+	->选择China - University of Science and Technology of China
+	这种方式是下载了一个压缩包,解压就可以直接使用(不需要安装).
 
 ### 2.2 使用Eclipse
 
@@ -64,9 +103,15 @@ Eclipse是IBM公司开发的IDE集成开发工具,是Java集成开发工具之�
 
 1)显示行号:
 
-	Java编辑区右键->Preferences->General->Editors->点上Text Editors->选中Show line numbers(显示行号)
+	Java编辑器左侧(靠近行号的地方)右击->Show Line Numbers
 
-2)执行程序:
+2)设置自动补全
+
+	菜单->Window->Preferences->Java->Editor->Content Assist
+	->Auto activation triggers for Java:
+	默认只有".",在点后后面加上".abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".
+
+3)执行程序:
 
 	左侧Package Explorer选中源文件(e.g.HelloJava.java)->右键->选择Run as->1 Java Application
 
@@ -105,7 +150,8 @@ Eclipse是IBM公司开发的IDE集成开发工具,是Java集成开发工具之�
 
 	package Mr;	//定义类所在的包"Mr",包的关键字"package".
 	public class Example{	
-		//创建类使用"public class Xxx"---此处类名Example(类名首字母大写).一般类和方法才加上"public"权限
+		//创建类使用"public class Xxx"---此处类名Example(类名首字母大写).一般类和方法才加上
+		//"public"权限
 		static int ONE = 1;	//定义类的成员变量
 		public static void main(String[] args){	//定义主方法,字符串数组args
 			String var = "Hello";	//String:字符串类.创建字符串对象.String---首字母大写,为一个类
@@ -114,6 +160,7 @@ Eclipse是IBM公司开发的IDE集成开发工具,是Java集成开发工具之�
 			System.out.println(var);  //控制台输出
 		}
 	}
+	PS:类名必须和文件名相同(e.g.新建的java文件名为Hello1,则类名必须为Hello1),否则会报错.
 
 ### 3.2 基本数据类型
 
@@ -273,6 +320,7 @@ java中系统内存划分:系统区(OS)、程序区(Program)、数据区(Data).�
 			B = B ^ A;	//等价于A ^ B ^ B--->得到A
 			A = A ^ B;	//等价于A ^ B ^ A(因为此时的B中已经是A)--->得到B
 			System.out.println("A = " + A + "\tB = " + B);
+			scan.close(); //需要将scan关闭掉.
 		}
 	}
 
@@ -286,6 +334,7 @@ java中系统内存划分:系统区(OS)、程序区(Program)、数据区(Data).�
 			long number = scan.nextLong();
 			String check = (number % 2 == 0) ? "It's a EVEN value!" : "It's a ODD value";
 			System.out.println(check);
+			scan.close();
 		}
 	}
 
@@ -328,6 +377,7 @@ java中系统内存划分:系统区(OS)、程序区(Program)、数据区(Data).�
 			}else{
 				System.out.println(year + "is not a leap year!");
 			}
+			scan.close();
 		}
 	}
 
@@ -345,6 +395,7 @@ java中系统内存划分:系统区(OS)、程序区(Program)、数据区(Data).�
 			double volume = 4.0/3.0 * PI * r * r * r;
 			System.out.println("The radius of Sphere is: " + r);
 			System.out.println("The volume of Sphere is: " + volume);
+			scan.close();
 		}
 	}
 
@@ -384,7 +435,7 @@ java中系统内存划分:系统区(OS)、程序区(Program)、数据区(Data).�
 			System.out.println("Please input login password:");
 			String password = scan.nextLine();
 			if(!username.equals("mr")){
-				//String.equals("xxx")方法,判断变量存储的字符是否为"xxx",是返回true,否返回false
+				//String类的equals("xxx")方法,判断变量存储的字符是否为"xxx",是返回true,否返回false
 				//此处用于验证,因此取反
 				System.out.println("Invalid login name.");
 			} else if(!password.equals("mrsoft")){
@@ -405,7 +456,7 @@ java中系统内存划分:系统区(OS)、程序区(Program)、数据区(Data).�
 			String name = scan.nextLine();
 			System.out.println("Please input the Program language of the employee:");
 			String language = scan.nextLine();
-			switch(language.hashCode()){ //计算字符串的hash值,调用String.hashCode()方法即可
+			switch(language.hashCode()){ //计算字符串的hash值,调用String的hashCode()方法即可
 				case 3254818:	//java的哈希值
 				case 2301506:	//Java的哈希值
 				case 2269730:	//JAVA的哈希值
@@ -429,23 +480,24 @@ java中系统内存划分:系统区(OS)、程序区(Program)、数据区(Data).�
 
 ### 4.3 循环语句
 
-foreach语句:是for语句的简化版本,主要用于遍历数组.在Java 5之后增加的语法.所有的foreach语句都可以改写为for语句形式.
+foreach语法:是for语句的简化版本,主要用于遍历数组.在Java 5之后增加的语法.所有的foreach语句都可以改写为for语句形式.
 
 语法格式:
 
-	for(元素变量x : 遍历对象obj) {	//相当于将对象obj(一般为数组名即可)进行遍历,遍历得到的每个值都存放到x中.
+	for(元素变量x : 遍历对象obj) {	//相当于将对象obj(一般为数组名即可)进行遍历,
+	//遍历得到的每个值都存放到x中.注意:仍然是以for开头.不是"foreach"
 		//因此,x不用进行初始化.
 		使用x的Java语句;
 	}
 
-foreach语句的使用---遍历一个一维数组.
+foreach语法的使用---遍历一个一维数组.
 
 	public class Repetition{
 		public static void main(String[] args){
 			int arr[] = {7, 10, 1};	//定义一个一维数组
 			System.out.println("The element in the array is:");
-			foreach(int x : arr){
-				System.out.println(x+"\t");
+			for(int x : arr){ //以for开头,一个一个遍历数组
+				System.out.print(x+"\t"); //不换行
 			}
 		}
 	}
@@ -457,19 +509,19 @@ foreach语句的使用---遍历一个一维数组.
 			String[] aves = new String[] {"白鹭","丹顶鹤","黄鹂","鹦鹉","乌鸦","喜鹊","布谷鸟",
 				"灰纹鸟","百灵鸟"};
 			/*
-			创建一个数组并初始化方法:
-				xxx(类型)[] 变量名 = new xxx(类型)[]{"初始化信息"};
+			创建一个数组并初始化的方法:
+				类型[] 变量名 = new 类型[]{"初始化信息"};
 			*/
 			int index = 0;
 			System.out.println("我的花园有很多鸟,种类包括: ");
-			while(index < aves.length){ //String.length是可以得到数组的长度(即元素个数)
+			while(index < aves.length){ //String的length变量是可以得到字符串数组的长度(即元素个数)
 				System.out.print(aves[index++]+" ");
 				/*
 				System.out.print()不换行
 				System.out.println()换行.
 				*/
 			}
-		}
+		}	
 	}
 
 **实例2---使用for循环输出九九乘法表**
@@ -531,7 +583,7 @@ continue语句只会跳过自己所在的那一层后面的语句,进行下一�
 			String[] array=new String[]{"白鹭","丹顶鹤","黄鹂","鹦鹉","乌鸦","喜鹊","老鹰",
 			"布谷鸟","老鹰","灰纹鸟","老鹰","百灵鸟"};
 			System.out.println("在你发现第一只老鹰之前,告诉我都有什么鸟.");
-			foreach(String bird : array){
+			for(String bird : array){
 				if (bird.equals("老鹰"))
 					break;
 				System.out.print("有: " + bird + " ");
@@ -541,11 +593,11 @@ continue语句只会跳过自己所在的那一层后面的语句,进行下一�
 			int[][] myScores=new int[][]{{67,78,63,22,66},
 				{55,68,78,95,44},{95,97,92,93,81}}; //二维数组的声明int[][] myScores...
 			System.out.println("这次考试成绩:\n 数学 \t语文 \t英语 \t美术 \t历史");
-			No1:foreach(int[] first : myScores){ //No1:类似标号,标识这一层循环
-				foreach(int second : first){
-					System.out.print(i + "\t");
-					if (i < 60){
-						System.out.println("\n等等, "+i+"分的是什么?这个为什么不及格?");
+			No1:for(int[] first : myScores){ //No1:类似标号,标识这一层循环
+				for(int second : first){
+					System.out.print(second + "\t");
+					if (second < 60){
+						System.out.println("\n等等, "+second+"分的是什么?这个为什么不及格?");
 						break No1;	//标识跳出No1这一层循环,即为最外层循环
 					}
 				}
@@ -624,9 +676,9 @@ continue语句只会跳过自己所在的那一层后面的语句,进行下一�
 			System.out.println("The sum of array: ");
 			for(int i=0; i<10; i++){
 				if(i==9){
-					System.out.println(num[i] + "="); //输出一个"="
+					System.out.print(num[i] + "="); //输出一个"="
 				}else{
-					System.out.println(num[i] + "+"); //输出一个"+"
+					System.out.print(num[i] + "+"); //输出一个"+"
 				}
 				sum = sum + num[i];
 			}
@@ -748,7 +800,7 @@ continue语句只会跳过自己所在的那一层后面的语句,进行下一�
 		public static void main(String[] args){
 			int arr[] = {{3, 4, 3}, {1, 2}};
 			System.out.println("二维数组元素是: ");
-			for(int x[] : arr){	//foreach语句遍历数组
+			for(int x[] : arr){	//foreach方法遍历数组
 				for(int e : x){
 					System.out.print(e + " ");
 				}
@@ -767,7 +819,7 @@ a:需要进行替换的数组名; value:替换到数组的值. retval:填充后�
 	public class Swap{
 		public static void main(String[] args){
 			int arr[] = new int[5];
-			Array.fill(arr, 8);	//全部填充为8
+			Arrays.fill(arr, 8);	//全部填充为8
 			for(int i=0; i<arr.length; i++){
 				System.out.print("第"+(i+1)+"个元素是:"+arr[i]);
 			}
@@ -815,9 +867,9 @@ sort对任意数组进行升序排序; obj:进行升序排序的数组名称. re
 
 **1.copyOf(arr, int newlength)**
 
-复制数组到长度为newlength的数组.
+复制数组arr到长度为newlength的数组.返回一个复制后的新数组.
 
-arr:要进行复制的数组; newlength:新数组的长度.如果新数组长度大于arr的长度,则用0填充;如果小于就会截取. retval:复制后的数组.
+arr:要进行复制的数组; newlength:新数组的长度.如果新数组长度大于arr的长度,则用0填充;如果小于就会截取. retval:复制后的新数组.
 
 	import java.util.Arrays;
 	public class Cope{
@@ -839,7 +891,7 @@ arr:要进行复制的数组; newlength:新数组的长度.如果新数组长度
 
 复制数组arr[fromIndex]到下标为toIndex的数组值到新数组,toIndex可以超出原数组的长度,超出的会填充为0.
 
-arr:原数组; fromIndex:起始复制下标; toIndex:终止下标/超出(视为指定长度). retval:新数组.
+arr:原数组; fromIndex:起始复制下标; toIndex:终止下标/超出(视为指定长度),不包括toIndex这个元素. retval:新数组.
 
 	import java.util.Arrays;
 	public class Repeat{
@@ -870,7 +922,7 @@ arr:原数组; fromIndex:起始复制下标; toIndex:终止下标/超出(视为�
 			}
 			//计算内存总数(以MB为单位)
 			long memory1 = Runtime.getRuntime().totalMemory()/1024/1024;
-			System.out.println("一维数组占用内存为: " + memory1); //为15MB
+			System.out.println("一维数组占用内存为: " + memory1); //为15MB.实际情况好像不是这样
 			int num2 = 1024*1024;
 			int[][] arr2 = new int[num2][2];
 			for(int i=0; i<num2; i++){
@@ -879,7 +931,7 @@ arr:原数组; fromIndex:起始复制下标; toIndex:终止下标/超出(视为�
 			}
 			//计算内存总数(以MB为单位)
 			long memory2 = Runtime.getRumtime().totalMemory()/1024/1024;
-			System.out.println("二维数组占用内存为: " + memory2); //为30MB
+			System.out.println("二维数组占用内存为: " + memory2); //为30MB.实际情况好像不是这样
 		}
 	}
 
@@ -895,6 +947,7 @@ arr:原数组; fromIndex:起始复制下标; toIndex:终止下标/超出(视为�
 			int tmp;
 			int j;
 			for(int i=1; i<array.length; i++){
+				tmp = array[i];
 				for(j=i-1; j>=0 && array[j]>tmp; j--){
 					array[j+1]=array[j]; //数据往后移动.以便找到位置
 				}
@@ -1015,7 +1068,8 @@ StringTokenizer(String str, String delim);
 				sb.append(st.nextToken()); //取从当前的Token到下一个Token之间的字符串进行追加
 			}
 			System.out.println("去掉字符串中的空格之后的字符串是: ");
-			System.out.println(sb.toString()); //将StringBuffer转成字符串(sb.toString()).结果为"Wearestudents"
+			System.out.println(sb.toString()); //将StringBuffer转成字符串(sb.toString()).
+											//结果为"Wearestudents"
 		}
 	}	
 
