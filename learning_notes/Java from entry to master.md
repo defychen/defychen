@@ -978,7 +978,7 @@ arr:原数组; fromIndex:起始复制下标; toIndex:终止下标/超出(视为�
 **3.String(char a[], int offset, int length):提取一个字符数组a(从offset开始,提取length长)创建一个字符串**
 
 	char a[] = {'s', 't', 'u', 'd', 'e', 'n', 't'};
-	String s = new String(a, 2, 4); //等价于String s = new String("udent");
+	String s = new String(a, 2, 4); //等价于String s = new String("uden");
 
 ### 6.2 字符串操作
 
@@ -1005,7 +1005,7 @@ arr:原数组; fromIndex:起始复制下标; toIndex:终止下标/超出(视为�
 
 #### 6.2.2 获取字符串信息
 
-**1.获取字符串长度---String.length()**
+**1.获取字符串长度---String的length()方法**
 
 	String s = "We are students";
 	System.out.println("字符串的长度是: " + s.length()); //结果为15
@@ -1026,17 +1026,17 @@ arr:原数组; fromIndex:起始复制下标; toIndex:终止下标/超出(视为�
 
 	String s = "We are students";
 	System.out.println("字符s在字符串中最后出现的位置是: " + s.lastIndexOf("s"));
-	//字符s最后出现的位置在14.所以从0开始.
+	//字符s最后出现的位置在14.索引从0开始.
 	PS:如果lastIndexOf(" ");如果参数为空字符串" ",则返回字符串的长度(和length方法相同)
 
-**3.获取指定索引位置的字符---String.charAt(int index)**
+**3.获取指定索引位置的字符---String的charAt(int index)方法**
 
 	String s = "hello world";
 	char mychar = s.charAt(6); //得到索引位置为6的字符.该字符为"w"
 
 #### 6.2.3 去除字符串中的空格
 
-**1.去除字符串的前导、尾部空格String.trim()**
+**1.去除字符串的前导、尾部空格String的trim()方法**
 
 	public class Blank{
 		public static void main(String[] args){
@@ -1049,13 +1049,13 @@ arr:原数组; fromIndex:起始复制下标; toIndex:终止下标/超出(视为�
 
 **2.去除字符串中的所有空格**
 
-1.StringTokenizer()方法:使用分割和追加实现去除空格.
+1.StringTokenizer()方法:使用某个字符(e.g.空格)来分割字符串.
 
-StringTokenizer(String str, String delim); 
+StringTokenizer(String str, String delim);
 
-说明: str:要去除空格的字符串; delim:需要去掉的字符(此处为空格);  retval: StringTokenizer
+说明: str:待分割的字符串; delim:分割字符(此处为空格);  retval: StringTokenizer(有分割标记的字符串)
 
-	import jave.util.StringTokenizer;	//包声明
+	import java.util.StringTokenizer;	//包声明
 	public class StringTo{
 		public static void main(String[] args){
 			String text = "  We are students  ";
@@ -1080,7 +1080,7 @@ str.replaceAll(String regex, String replacement)
 str:要处理的字符串; regex:str中想要被替换的字符串; replacement:新字符串,用于替换regex.
 
 	String s = " J a v a 编 程 词 典 ";
-	s = s.replacement(" ", ""); //将空格用没有空格替换,即去掉空格
+	s = s.replaceAll(" ", ""); //将空格用非空格替换,即去掉空格
 	System.out.println("去掉空格后的字符串: " + s); //得到"Java编程词典"
 
 #### 6.2.4 字符串替换(严格区分大小写)
@@ -1089,7 +1089,7 @@ str:要处理的字符串; regex:str中想要被替换的字符串; replacement:
 
 str.replace(String regex, String replacement);
 
-regex:要被替换的字符串; replacement:新字符串,用来替换regex. retval:返回替换后的字符串.
+regex:想要被替换的字符串; replacement:新字符串,用来替换regex. retval:返回替换后的字符串.
 
 	String s = "bad bad study";
 	String news = s.replace("bad", "good"); //此时news为"good good study"(全部替换了)
@@ -1130,10 +1130,10 @@ str:参与比较的一个字符串对象; otherstr:参与比较的另一个字�
 
 			boolean b1 = (s1 == s2); //"=="比较的是两个的内存位置,因为s1,s2内存位置不相同因此为"false"
 			boolean b2 = (s1 == s4); //相同的位置,因此为"true"
-			boolean b3 = s1.equals(s2); //大小写都相同,因此为"true"
-			boolean b4 = s1.equals(s3); //大小写不同,因此为"false"
-			boolean b5 = s1.equalsIgnoreCase(s2); //忽略大小写,为"true"
-			boolean b6 = s1.equalsIgnoreCase(s3); //忽略大小写,为"true"
+			boolean b3 = s1.equals(s2); //比较的是内容,大小写都相同,因此为"true"
+			boolean b4 = s1.equals(s3); //比较的是内容,大小写不同,因此为"false"
+			boolean b5 = s1.equalsIgnoreCase(s2); //比较的是内容,忽略大小写,为"true"
+			boolean b6 = s1.equalsIgnoreCase(s3); //比较的是内容,忽略大小写,为"true"
 			
 			System.out.println("s1 == s2: " + b1);
 			System.out.println("s1 == s4: " + b2);
@@ -1196,7 +1196,7 @@ str:要进行转换的字符串; retval:转成大写后的字符串.
 		public static void main(String[] args){
 			String s = new String("abc DEF");
 			String news1 = s.toLowerCase(); //此时news1为"abc def"
-			String new2 = s.toUpperCase(); //此时news2为"ABC DEF"
+			String news2 = s.toUpperCase(); //此时news2为"ABC DEF"
 			...
 		}
 	}
@@ -1209,7 +1209,7 @@ str:要进行转换的字符串; retval:转成大写后的字符串.
 
 str.split(String sign);
 
-sign:分割字符串用的分割符; retval:分割后的字符串,应该存放在一个字符数组中.
+sign:分割字符串用的分割符; retval:分割后的字符串,应该存放在一个字符串数组中.
 
 实例---对字符串进行分割
 
@@ -1232,11 +1232,11 @@ sign:分割字符串用的分割符; retval:分割后的字符串,应该存放�
 
 **2.split(String sign, int limit)方法**
 
-用指定的分割符对字符串进行分割,并限定分割的份数.
+用指定的分割符(sign)对字符串进行分割,并限定分割的份数.
 
 str.split(String sign, int limit);
 
-sign:分割字符串用的分割符; limit:限制的分割份数. retval:分割后的字符串,应该存放在一个字符数组中.
+sign:分割字符串用的分割符; limit:限制的分割份数. retval:分割后的字符串,应该存放在一个字符串数组中.
 
 实例---限制分割份数的分割
 
@@ -1251,7 +1251,7 @@ sign:分割字符串用的分割符; limit:限制的分割份数. retval:分割�
 		}
 	}
 
-	PS:定义多个字符分割符使用"|".e.g. ",|="(表示逗号或等于号); "，|。"(表示逗号或句号)
+	PS:定义多个分割符使用"|".e.g. ",|="(表示逗号或等于号); "，|。"(表示逗号或句号)
 
 **实例---判断字符串是否是数字格式(全部是数字)**
 
@@ -1289,7 +1289,7 @@ sign:分割字符串用的分割符; limit:限制的分割份数. retval:分割�
 			String a = String.format(Locale.US, "%tb", today);
 			//para1:设置本地为US(美国); "%tb":表示格式化为"月份缩写格式".即为格式化为月份的英文缩写
 			String b = String.format(Local.US, "%tB", today);
-			//para1:设置本地为US(美国); "%tb":表示格式化为"月份全写格式".即为格式化为月份的英文全写
+			//para1:设置本地为US(美国); "%tB":表示格式化为"月份全写格式".即为格式化为月份的英文全写
 			String c = String.format("%ta", today);
 			//"%ta":表示格式化为星期简称格式
 			String d = String.format("%tA", today);
@@ -1324,7 +1324,7 @@ sign:分割字符串用的分割符; limit:限制的分割份数. retval:分割�
 			System.out.println("2位数字的12小时制的小时: " + String.format("%tl", date));
 			//"%tl":2位数字的12小时制的小时(0~12:前面的0会省略).此处为4.
 			System.out.println("两位数字的分钟: " + String.format("%tM", date));
-			//"%tM":2位数字中的分钟.此处为28
+			//"%tM":2位数字的分钟.此处为28
 			System.out.println("两位数字中的秒钟: " + String.format("%tS", date));
 			//"%tS":2位数字中的秒钟.此处为48
 			System.out.println("时区缩写: " + String.format("%tZ", date));
@@ -1340,8 +1340,8 @@ sign:分割字符串用的分割符; limit:限制的分割份数. retval:分割�
 	%tD--->"月/日/年"格式(2位的年份)----->03/25/08
 	%tc--->全部日期和时间信息------------>星期二 三月 25 15:20:00 CST 2008
 	%tr--->"时:分:秒 PM/AM"格式(12时制)->03:22:06 下午
-	%tT--->"时:分:秒"格式(24时制)------->15:23:50
-	%tR--->"时:分"格式(24时制)---------->15:25
+	%tT--->"时:分:秒"格式(24小时制)------->15:23:50
+	%tR--->"时:分"格式(24小时制)---------->15:25
 
 **4.常规类型格式化**
 
