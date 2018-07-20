@@ -1,12 +1,28 @@
 # driver debugging skill
+
 ***
+
 ## Q1:driver中的dev_dbg信息的打印：
 	
-	dev_dbg(s->dsc->dev, "%s\n", __func__);	//打印函数名
+	dev_dbg(s->test->dev, "%s\n", __func__);	//打印函数名
 
-**step1: linux端打开dynamic debug:**
+### 1.1 dev_xxx函数:---用法都是一样的.**
+
+	dev_info():启动过程或者模块加载/卸载过程中的"通知类消息"等,一般只会通知一次.(常用在probe()、remove等函数)
+	dev_dbg():使用在普通错误中,如-EINVAL、-ENOMEN等errno发生处,用于调试
+	dev_err():使用在严重错误中,如用户无法获得errno或者程序员不容易猜测系统哪里出了问题的地方
+
+### 1.2 使用dev_xxx的好处
+
+	1.开发版本,打开CONFIG_DYNAMIC_DEBUG和CONFIG_DEBUG_FS,配合dbgfs动态观测和调试内核代码;
+	2.正式版本,关闭CONFIG_DYNAMIC_DEBUG和CONFIG_DEBUG_FS,所有的dbgfs以及dev_dbg信息都从
+		编译阶段自动移除.
+
+### 1.3 dev_dbg打印的开启方法
+
+**step1: linux端打开动态调试开关**
 	
-	buildroot/make linux-menuconfig/kernel hacking/prink and dmesg options/Enable dynamic printk() support
+	make menuconfig选中CONFI_DYNAMIC_DEBUG和CONFIG_DEBUG_FS.	
 
 **step2: 板子端:**
 
@@ -27,41 +43,44 @@
 
 **4)重定向debug信息:**
 
-	echo -n "file ca_dsc_ioctl.c +p" > /dev/debugfs/dynamic_debug/control	//file为某个文件
-	echo -n "module alidsc +p" > /dev/debugfs/dynamic_debug/control			//module为整个dsc模块
-	或:echo -n "func dsc_fetch_subdevice +p" > /sys/kernel/debug/dynamic_debug/control	//func为具体的某个函数
-	echo -n "module alikl +p" > /dev/debugfs/dynamic_debug/control
-	//PS:模块好像有点打印不出来(e.g.aliteeclient没有打印出来过)
-
+	1.控制某个文件所有的dev_dbg()信息
+		echo -n "file xxx.c +p" > /dev/debugfs/dynamic_debug/control  //xxx为文件名
+	2.控制某个函数所有的dev_dbg()信息
+		echo -n "func xxx +p" > /dev/debugfs/dynamic_debug/control	//xxx为函数名
+	3.控制某个模块中的所有的dev_dbg()信息
+		echo -n "module xxx +p" > /dev/debugfs/dynamic_debug/control	 //xxx为模块名
+		//PS:模块好像有点打印不出来???
+	
 **5)dmesg显示调试信息.**
 
-**dev_xxx函数:---用法都是一样的.**
+	dmesg即可看到相应的dev_dbg()输出信息.
 
-	dev_info():启动过程或者模块加载/卸载过程中的"通知类消息"等,一般只会通知一次.(常用在probe()、remove等函数)
-	dev_dbg():使用在普通错误中,如-EINVAL、-ENOMEN等errno发生处,用于调试
-	dev_err():使用在严重错误中,如用户无法获得errno或者程序员不容易猜测系统哪里出了问题的地方
+**6)调试结束,不再想输出dev_dbg()信息,使用下面命令关闭**
+
+	echo -n "file xxx.c -p" > /dev/debugfs/dynamic_debug/control
+	echo -n "func xxx -p" > /dev/debugfs/dynamic_debug/control
 
 **例子:**
 
-	struct ca_dsc_dev {
+	struct ca_test_dev {
 		...
 		struct device *dev;
 		...
 	};
 
-	struct ca_dsc_session{
-		struct ca_dsc_dev *dsc;
+	struct ca_test_session{
+		struct ca_v_dev *test;
 		...
 	};
 
-	struct ca_dsc_session *s = file->private_data;
+	struct ca_test_session *s = file->private_data;
 
-	dev_dbg(s->dsc->dev, "%s\n", __func__);
+	dev_dbg(s->test->dev, "%s\n", __func__);
 	/*para1:struct device的指针; para2:其他的信息.  (para1和para2之间用","隔开)*/
 
 **dev_dbg在driver probe中是没有效果的,因为此时dynamic printk还不起作用.在probe中应该使用dev_info(通知消息)、dev_err(错误消息).**
 
-**6)调整printk打印等级:**
+**7)调整printk打印等级:**
 
 	//查看打印等级
 	cat /proc/sys/kernel/printk		//显示为:7       4       1       7.第一个数字"7"表示等级为7.

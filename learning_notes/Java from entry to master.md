@@ -1582,3 +1582,518 @@ sign:分割字符串用的分割符; limit:限制的分割份数. retval:分割�
 		}
 		//所有得到的结果都是一样---单实例(单例模式)
 	}
+
+***
+
+## Chapter 8 接口、继承与多态
+
+### 8.1 接口
+
+Java语言只支持单重继承,不支持多继承(即一个类只能有一个父类).但Java提供的接口可以实现类的多重继承功能.
+
+#### 8.1.1 接口的定义
+
+	[修饰符] interface 接口名 [extends 父接口列表] {
+		[public] [static] [final] 变量;
+		[public] [abstract] 方法;
+	}
+	/*
+	修饰符:可选参数,指定接口的访问权限.可选值为public.如果省略则使用默认的访问权限.
+	接口名:必选参数,为合法的Java标识符.一般首字母大写.
+	extends 父接口列表:可选参数.指定要定义的接口继承于哪个父接口.
+	方法:接口中的方法只有定义没有实现.
+	*/
+
+定义一个用于计算面积的接口
+
+	public interface InterfaceCalculate {
+		final float PI = 3.14159f;	//定义PI常量
+		float getArea(float r);		//定义一个计算圆面积的方法getArea
+		float getCircumference(float r);	//定义一个计算圆周长的方法getCircumference
+		//接口中的方法只有定义没有实现
+	}
+
+PS:Java接口文件的文件名必须与接口名相同.
+
+#### 8.1.2 接口的实现
+
+一般在类中对接口进行实现.
+
+	[修饰符] class 类名 [extends 父类名] [implements 接口名列表]
+	/*
+	修饰符:可选参数,指定接口的访问权限.可选值为public,abstrace和final.
+	类名:必选参数,为合法的Java标识符.一般首字母大写.
+	extends 父类名:可选参数,指定要定义的类继承于哪个父类.
+	implements 接口名列表:可选参数,指定该类实现哪些接口.如果存在多个接口名,
+		各个接口名使用逗号","分隔.
+	//在类中实现接口时,方法必须与接口中的定义完全一致,并且必须实现接口中定义的所有方法.
+		但是方法实现时的权限(public,private,protected等)可以由类自己定义.
+	*/
+
+定义一个类Cire,实现计算面积的接口InterfaceCalculate.
+
+	public class Cire implements InterfaceCalculate {
+		public float getArea(float r) {
+			float area = PI * r * r;
+			return area;
+		}
+
+		public float getCircumference(float r) {
+			float circumference = 2 * PI * r;
+			return circumference;
+		}
+	}
+
+一个类中如果实现多个接口的冲突解决:
+
+	1.如果出现变量冲突(即多个接口中定义相同变量名的变量),使用"接口名.变量"来访问不同接口中的变量;
+	2.如果出现方法名冲突(即多个接口中定义相同的方法名),只实现一个方法即可.
+
+#### 8.1.3 范例1:图片的不同格式保存
+
+1.编写ImageSaver接口
+
+	public interface ImageSaver {
+		void save(); //保存图片的接口
+	}
+
+2.创建GIFSaver类,实现ImageSaver接口
+
+	public class GIFSaver implements ImageSaver {
+		@Override
+		public void save() {
+			System.out.println("Save the picture as GIF formt!");
+		}
+	}
+
+#### 8.1.4 范例2:为汽车增加GPS定位功能
+
+1.创建Car类
+
+	public class Car {
+		private String name;	//汽车名称
+		private double speed;	//汽车速度
+		public double getSpeed() {
+			/*getSpeed成员函数*/
+		}
+
+		@Override
+		public String toString() {
+			//每个类都继承子Object类,Object类提供了toString方法,此处为重写
+			StringBuilder sb = new StringBuilder();
+			//String,StringBuilder,StringBuffer都为字符串处理类
+			sb.append("name: " + name + ","); //append方法:增加字符串
+			sb.append("speed: " + spped + "kl/m");
+			return sb.toString();	//String的toString方法,返回字符串类对象(即字符串信息).
+		}
+	}
+
+2.编写GPC接口
+
+	public interface GPS {
+		Point getLocationg();	//返回Point类对象
+	}
+
+3.编写GPSCar类,继承Car类并实现GPS接口
+
+	public class GPSCar extends Car implements GPS {
+		@Override
+		public Point getLocation() {
+			Point point = new Point();
+			point.setLocation(super.getSpeed(), super.getSpeed());
+			/*
+			Point类的setLocation返回,用于设置点的坐标信息
+			super:得到当前类的对象的父类.
+			super.getSpeed():引用当前对象的父类的成员函数.即Car类的getSpeed()函数
+			*/
+			return point;
+		}
+		@Override
+		public String toString() {	//重写Object类的otString函数
+			StringBuilder sb = new StringBuilder();
+			sb.append(super.toString);
+			/*
+			引用当前对象的父类的成员函数.即Car类的重写的toString()函数
+			*/
+			sb.append(", location: (" + getLocation().x + ", " + getLocation().y + ")");
+			return sb.toString();	//String的toString方法,返回字符串类对象(即字符串信息).
+		}
+	}
+
+### 8.2 继承
+
+#### 8.2.1 继承的实现
+
+1.编写父类Bird
+
+	public class Bird {
+		String color = "white";
+		String skin = "feather";
+	}
+
+2.编写子类Pigeon,继承自Bird
+
+	public class Pigeon extends Bird {
+		public static void main(String[] args) {
+			Pigeon pigeon = new Pigeon();
+			System.out.println(pigeon.color);	//继承自Bird类,因此具有父类的color变量
+		}
+	}
+
+#### 8.2.2 继承中的重写
+
+如果子类的方法与父类的完全相同(方法名,参数等完全相同),称为子类重写了父类的方法.也叫覆盖.
+
+1.编写父类Animal
+
+	public class Animal {
+		public Animal() {
+		}
+
+		public void cry() {
+			System.out.println("Aniaml cries...");
+		}
+	}
+
+2.编写子类Dog,重写父类的cry()方法
+
+	public class Dog extends Animal {
+		public Dog() {
+		}
+
+		public void cry() {
+			System.out.println("Dog barking...");
+		}
+	}
+
+3.编写子类Cat,重写父类的cry()方法
+
+	public class Cat extends Animal {
+		public Cat() {
+		}
+
+		public void cry() {
+			System.out.println("Cat meow...");
+		}
+	}
+
+4.编写Sheep类,不定义任何方法.构造方法也不定义,会调用父类的构造方法进行构造.
+
+	public class Sheep extends Animal {
+	}
+
+5.创建一个Zoo类,进行测试
+
+	public class Zoo {
+		public static void main(String[] args) {
+			Dog dog = new Dog();	//创建对象并分配内存
+			dog.cry();
+			Cat cat = new Cat();
+			cat.cry();
+			Sheep sheep = new Sheep();
+			sheep.cry();
+		}
+	}
+
+#### 8.2.3 super关键字
+
+子类可以继承父类的非私有的(非private限制的)成员变量和成员方法.如果子类的成员变量或成员方法与父类相同,父类的会被隐藏(方法也叫重写/覆盖).子类想要访问父类的成员变量或成员方法,可以使用super关键字.
+
+**1.调用父类的构造方法**
+
+必须在子类的构造方法中使用super关键字来调用.
+
+	super([参数列表]);	//在子类的构造方法使用
+
+编写父类Beast
+
+	public class Beast {
+		String skin = "";
+		public Beast() {
+		}
+
+		public Beast(String strSkin) {	//带参数的构造方法
+			skin = strSkin;
+		}
+
+		public void move() {
+			System.out.println("running...");
+		}
+	}
+
+编写子类Tiger
+
+	public class Tiger extends Bease {
+		public Tiger() {
+			super("stripe"); //super调用父类的构造方法
+		}
+	}
+
+**2.操作被隐藏的成员变量和被重写的成员方法**
+
+	super.成员变量;
+	super.成员方法([参数列表]);
+
+子类Tiger改变父类Beast的成员变量skin的值
+
+	super.skin = "stripe";
+
+子类Tiger访问父类的成员方法move()
+
+	super.move();
+
+#### 8.2.4 范例3: 经理与员工的差异
+
+1.创建Employee类
+
+	import java.util.Date;
+	public class Employee {
+		private String name;
+		private double salary;
+		private Date birthday;
+
+		public String getName() {
+			return name;
+		}
+		public void setName(String name) {
+			this.name = name;	//this指代创建的对象
+		}
+		
+		public double getSalary() {
+			return salary;
+		}
+		public void setSalary(double salary) {
+			this.salary = salary;
+		}
+
+		public Date getBirthday() {
+			return birthday;
+		}
+		public void setBirthday(Date birthday) {
+			this.birthday = birthday;
+		}
+	}
+
+2.创建Manager类,继承自Employee.
+
+	public class Manager extends Employee {
+		private double bonus;	//经理的奖金
+		public double getBonus() {
+			return bonus;
+		}
+		public void setBonus(double bonus) {
+			this.bonus = bonus;
+		}
+	}
+
+3.创建Test测试类
+
+	import java.util.Date;
+	public class Test {
+		public static void main(String[] args) {
+			Employee employee = new Employee();
+			employee.setName("Java");
+			employee.setSalary(100);
+			employee.setBirthday(new Date());
+
+			Manager manager = new Manager();
+			manager.setName("Defy");
+			manager.setSalary(3000);
+			manager.setBirthday(new Date());
+			manager.setBonus(2000);
+			
+			System.out.println("Employee name: " + employee.getName());
+			System.out.println("Employee salary: " + employee.getSalary());
+			System.out.println("Employee birthday: " + employee.getBirthday());
+			System.out.println("Manager name: " + Manager.getName());
+			System.out.println("Manager salary: " + Manager.getSalary());
+			System.out.println("Manager birthday: " + Manager.getBirthday());
+			System.out.println("Manager bonus: " + Manager.getBonus());
+		}
+	}
+
+#### 8.2.5 范例4: 重写父类中的方法
+
+1.创建Employee类
+
+	public class Employee {
+		public String getInfo() {
+			return "Parent class: I am emplyee!"
+		}
+	}
+
+2.创建Manager类,继承自Employee
+
+	public class Manager extends Employee {
+		@Override
+		public String getInfo() {
+			return "Child class: I am manager!"
+		}
+	}
+
+### 8.3 多态
+
+#### 8.3.1 多态
+
+类的多态性由重载(Overloading)和重写(Overriding)来实现.
+
+重载(Overloading):一个类中出现多个方法名相同,但参数个数或参数类型不同的方法.
+
+	方法返回值的类型不是区分重载的标志.
+
+重写(Overriding):子类和父类的方法完全相同,子类中的会覆盖掉父类中的方法.
+
+方法的重载实例:
+
+	public class Calculate {
+		final float PI = 3.14159f;
+
+		/* Get circle area */
+		public float getArea(float r) {
+			float area = PI * r * r;
+			return area;
+		}
+
+		/* Get rectangle area */
+		public float getArea(float l, float w) {	//Overloading getArea function
+			float area = l * w;
+			return area;
+		}
+
+		/* Draw an arbitrary shape */
+		public void draw(int num) {
+			System.out.println(" Draw" + num + "arbitrary shapes");
+		}
+
+		/* Draw specify shape */
+		public void draw(String shape) {	//Overloading draw function
+			System.out.println("Draw" + shape);
+		}
+
+		public static void main(String[] args) {
+			Calculate calculate = new Calculater();
+			float l = 20;
+			float w = 30;
+			float areaRectangle = calculate.getArea(l, w);
+			System.out.println("A rectangle area with length " + l + 
+				" and width " + w + " is " + areaRectangle);
+			float r = 7;
+			float areaCirc = calculate.getArea(r);
+			System.out.println("A circle area with radius " + r + " is " + areaCirc);
+			int num = 7;
+			calculate.draw(num);
+			calculate.draw("Triangle");
+		}
+	}
+
+#### 8.3.2 范例5: 计算几何图形的面积
+
+1.创建一个Shape抽象类
+
+	public abstract class Shape {	//abstract class:抽象类
+		public String getName() {
+			return this.getClass().getSimpleName();
+			/*
+				this.getClass():得到类的完整名.包含package信息
+				this.getClass().getSimpleName():只取类的完整名中的最后的类名.
+			*/
+		}
+
+		public abstract double getArea();	//抽象函数获得面积
+	}
+
+2.创建Circle类,继承自Shape类
+
+	public class Circle extends Shape {
+		private double radius;
+		public Circle(double radius) {
+			this.radius = radius;
+		}
+
+		@Override
+		public double getArea() {
+			return Math.PI *Math.pow(radius, 2); //pwd(x, y)--->表示x的y次方
+		}
+	}
+
+3.创建Rectangle类,继承自Shape类
+
+	public class Rectangle extends Shape {
+		private double length;
+		private double width;
+		public Rectangle(double length, double width) {
+			this.length = length;
+			this.width = width;
+		}
+
+		@Override
+		public double getArea() {
+			return length * width;
+		}
+	}
+
+4.创建Test类,用于测试
+
+	public class Test {
+		public static void main(String[] args) {
+			Circle circle = new Circle(1);
+			System.out.println("The name of the graph: " + circle.getName());
+			System.out.println("The area of the graph: " + circle.getArea());
+			Rectangle rectangle = new Rectangle(1, 1);
+			System.out.println("The name of the graph: " + rectangle.getName());
+			System.out.println("The area of the graph: " + rectangle.getArea());
+		}
+	}
+
+#### 8.3.2 范例6: 简单的汽车销售市场
+
+1.创建Car抽象类
+
+	public abstract class Car {
+		public abstract String getInfo();
+	}
+
+2.创建BMW类,继承自Car
+
+	public class BMW extends Car {
+		@Override
+		public String getInfo() {
+			return "BMW";
+		}
+	}
+
+3.创建Benz类,继承自Car
+
+	public class Benz extends Car {
+		@Override
+		public String getInfo() {
+			return "Benz";
+		}
+	}
+
+4.创建一个CarFactory类,定义静态方法getCar()--->创建汽车对象
+
+	public class CarFactory {
+		public static Car getCar(String name) {
+			if (name.equalsIgnoreCase("BMW")) {
+				return new BMW();
+			} else if (name.equalsIgnoreCase("Benz")) {
+				return new Benz();
+			} else {
+				return null;	//Java中的空为null.
+			}
+		}
+	}
+
+5.创建Customer类,用于测试.
+
+	public class Customer {
+		public static void main(String[] args) {
+			System.out.println("Customer wants to buy BMW: ");
+			Car bmw = CarFactory.getCar("BMW");
+			System.out.println("Car extraction: " + bmw.getInfo());
+			System.out.println("Customer wants to buy Benz: ");
+			Car benz = CarFactory.getCar("Benz");
+			System.out.println("Car extraction: " + benz.getInfo());
+		}
+	}
