@@ -1027,7 +1027,7 @@ arr:原数组; fromIndex:起始复制下标; toIndex:终止下标/超出(视为�
 	String s = "We are students";
 	System.out.println("字符s在字符串中最后出现的位置是: " + s.lastIndexOf("s"));
 	//字符s最后出现的位置在14.索引从0开始.
-	PS:如果lastIndexOf(" ");如果参数为空字符串" ",则返回字符串的长度(和length方法相同)
+	PS:如果lastIndexOf("");如果参数为空字符串""(不是空格字符串),则返回字符串的长度(和length方法相同)
 
 **3.获取指定索引位置的字符---String的charAt(int index)方法**
 
@@ -1259,9 +1259,9 @@ sign:分割字符串用的分割符; limit:限制的分割份数. retval:分割�
 		public static void main(String[] args){
 			String s = "12312312";
 			if(CheckNumber.IsNumber(s)){ //调用类的方法"类名.类方法(...)"
-				System.out.println(s + "是数字格式");
+				System.out.println(s + " 是数字格式");
 			}else{
-				System.out.println(s + "不是数字格式");
+				System.out.println(s + " 不是数字格式");
 			}
 		}
 		public static boolean IsNumber(String str){
@@ -1269,6 +1269,7 @@ sign:分割字符串用的分割符; limit:限制的分割份数. retval:分割�
 			for(int i=0; i<c.length; i++){
 				if(Character.isDigit(c[i])){
 				//判断字符是否是数字:Character.isDigit(字符),是返回true;不是返回false.
+					continue;
 				}else{
 					return false;
 				}
