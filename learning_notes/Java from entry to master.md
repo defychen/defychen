@@ -128,6 +128,17 @@ Eclipse是IBM公司开发的IDE集成开发工具,是Java集成开发工具之�
 	F6:单步跳过---单步执行,但不进入调用方法内部
 	F5:单步跳入---单步执行,会进入调用方法内部执行.
 
+6)File->New->创建时只有Project, Example, Others三个.
+
+	刚解压好的Eclipse在新建时,可能只有Project, Example, Others三个选择.
+	添加其他Java Project, Package, Class等选项方法:
+	Window->Perspective->Customize Perspective.
+	在Menu Visibility选项卡中,点击File->New,勾选需要显示的菜单项.
+		常用的:Java Project, Package, Class, Interface, Source Folder, Enum,
+		Annotation, Java Working Set, Scrapbook Page, Task, Folder, File,
+		Untitled Text File等.
+	再一次:File->New就会有那些选项.
+
 **实例---简单的输出**
 
 	public class HelloJava{		//系统自动生成
@@ -1447,6 +1458,11 @@ sign:分割字符串用的分割符; limit:限制的分割份数. retval:分割�
 	
 实例---自定义图书类
 
+	1.新建一个名为com.book的package;
+	2.再建立一个名为Book的class,然后编写代码:
+
+	package com.book;	//package name
+
 	public class Book{
 		private String title; //成员变量
 		private String author; //成员变量
@@ -1454,7 +1470,7 @@ sign:分割字符串用的分割符; limit:限制的分割份数. retval:分割�
 
 		/*静态成员:static声明的变量、常量和方法称为静态成员.
 			1.静态成员属于类所有,所有的对象共享类的静态成员;
-			2.静态成员的在本类或其他类中调用方法:"类名.静态类成员";
+			2.静态成员在本类或其他类中调用方法:"类名.静态类成员";
 			3.静态方法中不可以使用this关键字;
 			4.静态方法中不可以直接调用非静态方法;
 			5.类的方法中的局部变量不可以声明为static;
@@ -1491,7 +1507,16 @@ sign:分割字符串用的分割符; limit:限制的分割份数. retval:分割�
 		}
 	}
 
-	//在com.mingrisoft包创建类文件(Test),在Test类的main方法创建一个Book对象并输出其属性
+测试类
+
+	1.在com.book的package下新建一个名为Test的类;
+	2.在New Java Class的导航栏中选中"public static void main(String[] args)",
+		将会自动创建main方法.
+	3.编写代码,引入Book package.
+
+	package com.book;	//package name
+	import com.book.Book;	//引入包里面的具体哪个类
+
 	public class Test{
 		public static void main(String[] args){
 			/*
@@ -1523,6 +1548,7 @@ sign:分割字符串用的分割符; limit:限制的分割份数. retval:分割�
 
 实例---统计图书销量
 
+	package com.book
 	public class Book{
 		private static int counter = 0; //静态私有成员
 		public Book(String title){ //构造函数
@@ -1536,6 +1562,10 @@ sign:分割字符串用的分割符; limit:限制的分割份数. retval:分割�
 	}
 
 	//在项目中创建Test类,在main方法中创建Book对象并得到售出图书数量
+	package com.book;
+	import java.util.Random;	//Random函数需要import
+	import com.book.Book;
+
 	public class Test{
 		public static void main(String[] args){
 			String[] titles = {"《Java从入门到精通》", "《Java编程词典》", "《视频学Java》"};
@@ -1607,6 +1637,9 @@ Java语言只支持单重继承,不支持多继承(即一个类只能有一个�
 
 定义一个用于计算面积的接口
 
+	//File->New->Interface,创建接口.
+	package com.inter;
+
 	public interface InterfaceCalculate {
 		final float PI = 3.14159f;	//定义PI常量
 		float getArea(float r);		//定义一个计算圆面积的方法getArea
@@ -1622,7 +1655,7 @@ PS:Java接口文件的文件名必须与接口名相同.
 
 	[修饰符] class 类名 [extends 父类名] [implements 接口名列表]
 	/*
-	修饰符:可选参数,指定接口的访问权限.可选值为public,abstrace和final.
+	修饰符:可选参数,指定接口的访问权限.可选值为public,abstract和final.
 	类名:必选参数,为合法的Java标识符.一般首字母大写.
 	extends 父类名:可选参数,指定要定义的类继承于哪个父类.
 	implements 接口名列表:可选参数,指定该类实现哪些接口.如果存在多个接口名,
@@ -1632,6 +1665,9 @@ PS:Java接口文件的文件名必须与接口名相同.
 	*/
 
 定义一个类Cire,实现计算面积的接口InterfaceCalculate.
+
+	package com.inter;
+	import com.inter.InterfaceCalculate;
 
 	public class Cire implements InterfaceCalculate {
 		public float getArea(float r) {
@@ -1644,6 +1680,7 @@ PS:Java接口文件的文件名必须与接口名相同.
 			return circumference;
 		}
 	}
+	//PS:还需要创建一个测试类进行测试.
 
 一个类中如果实现多个接口的冲突解决:
 
@@ -1654,11 +1691,16 @@ PS:Java接口文件的文件名必须与接口名相同.
 
 1.编写ImageSaver接口
 
+	package com.picture;
+
 	public interface ImageSaver {
 		void save(); //保存图片的接口
 	}
 
 2.创建GIFSaver类,实现ImageSaver接口
+
+	package com.picture;
+	import com.picture.ImageSaver;
 
 	public class GIFSaver implements ImageSaver {
 		@Override
@@ -1667,20 +1709,46 @@ PS:Java接口文件的文件名必须与接口名相同.
 		}
 	}
 
+3.编写测试类
+
+	package com.picture;
+	import com.picture.GIFSaver;
+	
+	public class Test {
+	
+		public static void main(String[] args) {
+			GIFSaver imageSaver = new GIFSaver();
+			imageSaver.save();
+		}
+	}
+
 #### 8.1.4 范例2:为汽车增加GPS定位功能
 
 1.创建Car类
 
+	package com.gpscar;
+
 	public class Car {
 		private String name;	//汽车名称
 		private double speed;	//汽车速度
+
+		public void setName(String name) {
+			this.name = name;
+		}
+		public void setSpeed(double speed) {
+			this.speed = speed;
+		}
+		
+		public String getName() {
+			return name;
+		}
 		public double getSpeed() {
-			/*getSpeed成员函数*/
+			return speed;
 		}
 
 		@Override
 		public String toString() {
-			//每个类都继承子Object类,Object类提供了toString方法,此处为重写
+			//每个类都继承自Object类,Object类提供了toString方法,此处为重写
 			StringBuilder sb = new StringBuilder();
 			//String,StringBuilder,StringBuffer都为字符串处理类
 			sb.append("name: " + name + ","); //append方法:增加字符串
@@ -1689,13 +1757,21 @@ PS:Java接口文件的文件名必须与接口名相同.
 		}
 	}
 
-2.编写GPC接口
+2.编写GPS接口
+
+	package com.gpscar;
+	import java.awt.Point; //import Point类
 
 	public interface GPS {
 		Point getLocationg();	//返回Point类对象
 	}
 
 3.编写GPSCar类,继承Car类并实现GPS接口
+
+	package com.gpscar;
+	import com.gpscar.Car;
+	import com.gpscar.GPS;
+	import java.awt.Point;
 
 	public class GPSCar extends Car implements GPS {
 		@Override
@@ -1710,7 +1786,7 @@ PS:Java接口文件的文件名必须与接口名相同.
 			return point;
 		}
 		@Override
-		public String toString() {	//重写Object类的otString函数
+		public String toString() {	//重写Object类的toString函数
 			StringBuilder sb = new StringBuilder();
 			sb.append(super.toString);
 			/*
@@ -1721,11 +1797,31 @@ PS:Java接口文件的文件名必须与接口名相同.
 		}
 	}
 
+4.编写测试类
+
+	package com.gpscar;
+	import com.gpscar.GPSCar;
+
+	public class Test {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		GPSCar car = new GPSCar();
+		car.setName("Adui");
+		car.setSpeed(60.0);
+		System.out.println(car);
+		//System.out.println打印对象,会调用对象的toString函数.
+	}
+	}
+
+
 ### 8.2 继承
 
 #### 8.2.1 继承的实现
 
 1.编写父类Bird
+
+	package com.animal;
 
 	public class Bird {
 		String color = "white";
@@ -1733,6 +1829,9 @@ PS:Java接口文件的文件名必须与接口名相同.
 	}
 
 2.编写子类Pigeon,继承自Bird
+
+	package com.animal;
+	import com.animal.Bird;
 
 	public class Pigeon extends Bird {
 		public static void main(String[] args) {
@@ -1746,6 +1845,8 @@ PS:Java接口文件的文件名必须与接口名相同.
 如果子类的方法与父类的完全相同(方法名,参数等完全相同),称为子类重写了父类的方法.也叫覆盖.
 
 1.编写父类Animal
+
+	package com.animal;
 
 	public class Animal {
 		public Animal() {
@@ -1785,6 +1886,9 @@ PS:Java接口文件的文件名必须与接口名相同.
 
 5.创建一个Zoo类,进行测试
 
+	package com.animal;
+	import com.animal.Animal;
+
 	public class Zoo {
 		public static void main(String[] args) {
 			Dog dog = new Dog();	//创建对象并分配内存
@@ -1804,7 +1908,7 @@ PS:Java接口文件的文件名必须与接口名相同.
 
 必须在子类的构造方法中使用super关键字来调用.
 
-	super([参数列表]);	//在子类的构造方法使用
+	super([参数列表]);	//在子类的构造方法中使用
 
 编写父类Beast
 
@@ -1847,7 +1951,9 @@ PS:Java接口文件的文件名必须与接口名相同.
 
 1.创建Employee类
 
+	package com.employee;
 	import java.util.Date;
+
 	public class Employee {
 		private String name;
 		private double salary;
@@ -1877,6 +1983,9 @@ PS:Java接口文件的文件名必须与接口名相同.
 
 2.创建Manager类,继承自Employee.
 
+	package com.employee;
+	import com.employee.Employee;
+
 	public class Manager extends Employee {
 		private double bonus;	//经理的奖金
 		public double getBonus() {
@@ -1889,7 +1998,11 @@ PS:Java接口文件的文件名必须与接口名相同.
 
 3.创建Test测试类
 
+	package com.employee;
+	import com.employee.Employee;
+	import com.employee.Manager;
 	import java.util.Date;
+
 	public class Test {
 		public static void main(String[] args) {
 			Employee employee = new Employee();
@@ -1991,6 +2104,8 @@ PS:Java接口文件的文件名必须与接口名相同.
 
 1.创建一个Shape抽象类
 
+	package com.area;
+
 	public abstract class Shape {	//abstract class:抽象类
 		public String getName() {
 			return this.getClass().getSimpleName();
@@ -2000,10 +2115,13 @@ PS:Java接口文件的文件名必须与接口名相同.
 			*/
 		}
 
-		public abstract double getArea();	//抽象函数获得面积
+		public abstract double getArea();	//获得面积的抽象函数原型
 	}
 
 2.创建Circle类,继承自Shape类
+
+	package com.area;
+	import com.area.Shape;
 
 	public class Circle extends Shape {
 		private double radius;
@@ -2018,6 +2136,9 @@ PS:Java接口文件的文件名必须与接口名相同.
 	}
 
 3.创建Rectangle类,继承自Shape类
+
+	package com.area;
+	import com.area.Shape;
 
 	public class Rectangle extends Shape {
 		private double length;
@@ -2035,6 +2156,10 @@ PS:Java接口文件的文件名必须与接口名相同.
 
 4.创建Test类,用于测试
 
+	package com.area;
+	import com.area.Circle;
+	import com.area.Rectangle;
+
 	public class Test {
 		public static void main(String[] args) {
 			Circle circle = new Circle(1);
@@ -2050,11 +2175,16 @@ PS:Java接口文件的文件名必须与接口名相同.
 
 1.创建Car抽象类
 
+	package com.carbusiness;
+
 	public abstract class Car {
 		public abstract String getInfo();
 	}
 
 2.创建BMW类,继承自Car
+
+	package com.carbusiness;
+	import com.carbusiness.Car;
 
 	public class BMW extends Car {
 		@Override
@@ -2065,6 +2195,9 @@ PS:Java接口文件的文件名必须与接口名相同.
 
 3.创建Benz类,继承自Car
 
+	package com.carbusiness;
+	import com.carbusiness.Car;
+
 	public class Benz extends Car {
 		@Override
 		public String getInfo() {
@@ -2072,7 +2205,11 @@ PS:Java接口文件的文件名必须与接口名相同.
 		}
 	}
 
-4.创建一个CarFactory类,定义静态方法getCar()--->创建汽车对象
+4.创建一个CarFactory类,定义静态方法getCar()--->用于创建汽车对象
+
+	package com.carbusiness;
+	import com.carbusiness.BMW;
+	import com.carbusiness.Benz;
 
 	public class CarFactory {
 		public static Car getCar(String name) {
@@ -2087,6 +2224,10 @@ PS:Java接口文件的文件名必须与接口名相同.
 	}
 
 5.创建Customer类,用于测试.
+
+	package com.carbusiness;
+	import com.carbusiness.Car;
+	import com.carbusiness.CarFactory;
 
 	public class Customer {
 		public static void main(String[] args) {
