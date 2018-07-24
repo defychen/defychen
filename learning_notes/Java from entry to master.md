@@ -2239,3 +2239,122 @@ PS:Java接口文件的文件名必须与接口名相同.
 			System.out.println("Car extraction: " + benz.getInfo());
 		}
 	}
+
+***
+
+## Chapter 9 类的高级特性
+
+### 9.1 抽象类
+
+1.创建抽象类Fruit
+
+	abstract class Fruit {	//抽象类的定义"public(可省略) abstract class 类名"
+		public String color;
+		public Fruit() {
+			color = "green";
+		}
+		/*定义抽象方法*/
+		public abstract void harvest(); 
+		/*抽象方法定义
+			public abstract void(类型) func_name(param);
+			1.抽象方法只有原型,没有实现.因此必须在子类中进行重写.
+			2.抽象方法只能使用使用public/protected修饰,不能使用private/static修饰.
+				private不能被子类继承;static属于类所有,因为是抽象类无实体信息,因此不能使用static.
+			3.包含一个或多个抽象方法的类必须定义为抽象类.
+		*/
+	}
+
+2.创建子类Apple,继承自Fruit类.
+
+	public class Apple extends Fruit {
+		@Override	//重写抽象类的抽象方法harvest().
+		public void harvest() {
+			System.out.println("The apple has been harvested!");
+		}
+	}
+
+3.创建子类Orange,继承自Fruit类.
+
+	public class Orange extends Fruit {
+		@Override
+		public void harvest() {
+			System.out.println("The orange has been harvested!");
+		}
+	}
+
+4.创建测试类Test.
+
+	public class Test {
+		public static void main(String[] args) {
+			System.out.println("The result of calling the harvest function of the 
+				Apple class: ");
+			Apple apple = new Apple();
+			apple.harvest();
+			System.out.println("The result of calling the harvested function of the
+				Orange class: ");
+			Orange orange = new Orange();
+			orange.harvest();
+		}
+	}
+
+### 9.2 内部类
+
+#### 9.2.1 成员内部类
+
+成员内部类:表示在类中声明一个类的成员.也可以叫内部类.
+	
+	成员内部类的特点:
+	1.内部类可以直接访问外部类的成员方法和成员变量(即使声明为private的也可以被直接访问);
+	2.内部类的实例一定要绑定在外部类的实例上.
+	3.内部类可以访问外部类的成员,但是反之则不行.
+
+**1.内部类的创建**
+
+	public class OuterClass {
+		InnerClass in = new InnerClass();	//在外部类中实例化内部类对象
+		public void ouf() {
+			in.inf();	//在外部类调用内部类方法
+		}
+
+		public InnerClass doit() {
+			in.y = 4;	//在外部类访问内部类的成员变量
+			return new InnerClass();
+		}
+
+		class InnerClass {
+			InnerClass() {
+			}
+			public void inf() { //内部类的成员方法
+			}
+			int y = 0;	//内部类的成员变量
+		}
+
+		public static void main(String[] args) {
+			OuterClass out = new OuterClass();
+			OuterClass.InnerClass in = out.diot();
+			/*
+			内部类的对象实例化必须在外部类或外部类的非静态方法中实现
+			1.外部类中实现:
+				上述的:InnerClass in = new InnerClass();
+			2.外部类的非静态方法中实现:
+				上述的:public InnerClass diot();
+			3.使用"外部类实例化对象.new 内部类"进行实例
+				OuterClass out = new OuterClass();
+				OuterClass.InnerClass in = out.new InnerClass();
+			*/
+		}
+	}
+
+**2.使用this关键字获取内部类与外部类的引用--->内/外部类的成员变量相同**
+
+	public class OuterClass {
+		private int x;
+		private class InnerClass {
+			private int x = 9;
+			public void diot(int x) {
+				x++;					//x为形参变量
+				this.x++;				//this.x为内部类的成员变量x
+				OuterClass.this.x++;	//OuterClass.this.x为外部类的成员变量x
+			}
+		}
+	}
