@@ -2259,7 +2259,7 @@ PS:Java接口文件的文件名必须与接口名相同.
 			public abstract void(类型) func_name(param);
 			1.抽象方法只有原型,没有实现.因此必须在子类中进行重写.
 			2.抽象方法只能使用使用public/protected修饰,不能使用private/static修饰.
-				private不能被子类继承;static属于类所有,因为是抽象类无实体信息,因此不能使用static.
+				private不能被子类继承;static属于类所有,因为抽象类无实体信息,因此不能使用static.
 			3.包含一个或多个抽象方法的类必须定义为抽象类.
 		*/
 	}
