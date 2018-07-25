@@ -10,7 +10,7 @@ Java语言是Sun公司开发的,2009年Sun公司被Oracle公司收购.
 
 Java语言不依赖于任何硬件平台和软件平台---也叫独立于平台.
 
-JDK:Jave Development Kit,Jave开发套件.
+JDK:Jave Development Kit,Java开发套件.
 
 **1.2 Java开发方向**
 
@@ -2356,5 +2356,198 @@ PS:Java接口文件的文件名必须与接口名相同.
 				this.x++;				//this.x为内部类的成员变量x
 				OuterClass.this.x++;	//OuterClass.this.x为外部类的成员变量x
 			}
+		}
+	}
+
+#### 9.2.2 局部内部类
+
+局部内部类是指在类的方法中定义的类,其作用范围仅限于该方法.
+
+	public class SellOutClass {
+		private String name;
+		public SellOutClass() {
+			name = "apple";
+		}
+
+		public void sell(int price) {
+			class Apple {	//局部内部类.属于方法sell的一部分,并非SellOutClass类的一部分.
+				int innerPrice = 0;
+				public Apple(int price) {
+					innerPrice = price;
+				}
+				public void price() {
+					System.out.println("Start to sell: " + name);
+					System.out.println("Price is: " + innerPrice + "￥");
+				}
+			}
+
+			Apple apple = new Apple(price);
+			apple.price();
+		}
+		public static void main(String[] args) {
+			SellOutClass sample = new SellOutClass();
+			sample.sell(100);
+		}
+	}
+
+#### 9.2.3 匿名内部类
+
+匿名内部类就是没有名字的内部类.
+
+	匿名内部类规则:
+		1.匿名内部类不能定义任何静态成员、方法;
+		2.匿名内部类中的方法不能是抽象的;
+		3.匿名内部类必须实现接口或抽象父类的所有抽象方法;
+		4.匿名内部类访问的外部类成员变量或成员方法必须用static修饰.
+
+**1.接口**
+
+	public interface Inner {
+		public String say();
+	}
+
+**2.抽象类**
+
+	public abstract class Inner1 implements Inner {
+	}
+
+**3.普通类**
+
+	public class Inner2 implements Inner {
+		public String say() {
+			return "This is Inner2";
+		}
+	}
+
+**4.匿名内部类,extends(继承)自某个类或implement(实现)声明的接口**
+
+	public class Outer {
+		public static String s1 = "This is s1 in Outer";
+		public static String s2 = "This is s2 in Outer";
+		private static String s3 = "This is s3 in Outer";
+
+		public void method1(Inner inner) {
+			System.out.println(inner.say());
+		}
+
+		private static String method2() {
+			return "This is method2 in Outer";
+		}
+
+		public static void main(String[] args) {
+			Outer outer = new Outer();
+
+			/*Inner为接口*/
+			outer.method1(new Inner() {
+				String s1 = "This is s1 in Inner"; //匿名内部类与外部类相同变量s1.
+				public String say() {
+					return s1; //会使用内部类的变量
+				}
+				/*
+					匿名内部类实现接口不需要implements.自动会匹配为implements interface_name.
+				*/
+			});
+
+			/*Inner1为抽下类*/
+			outer.method1(new Inner1() {
+				String s2 = "This is s2 in Inner1";
+				
+				public String say() {	//为什么不需要"@Override"
+					return Outer.s2; //在内部变量名相同时使用"类名.变量名"可以访问外部类声明为stataic的变量.
+				}
+				/*
+					匿名内部类继承抽象不需要extends.自动会匹配为extends class_name.
+				*/
+			});
+
+			/*Inner2为普通类*/
+			outer.method1(new Inner2() {
+				public String say() {
+					return s3;	//可以直接访问外部类声明为static的public/private/protected变量
+				}
+			});
+
+			/*Inner2为普通类*/
+			outer.metho1(new Inner2() {
+				public String say() {
+					return method2();	//访问外部类的私有成员方法
+				}
+			});
+		}
+	}
+
+	/*结果:
+		This is s1 in Inner
+		This is s2 in Outer
+		This is s3 in Outer
+		This is method2 in Outer
+	*/
+
+匿名内部类编译后会生成四个文件: Outer$1.class, Outer$2.class, Outer$3.class, Outer$4.class.
+
+	匿名内部类的命名:外部类名$n.class
+
+#### 9.2.4 静态内部类
+
+用的比较少(略).
+
+#### 9.2.5 内部类的继承
+
+略.
+
+#### 9.2.6 局部内部类设置闹钟
+
+[Java类/package使用手册](http://tool.oschina.net/apidocs/apidoc?api=jdk-zh)
+
+1.创建AlarmClock类
+
+	import java.awt.Toolkit; //java工具箱
+	import java.awt.event.ActionEvent;
+	import java.awt.event.ActionListener;
+	import java.text.SimpleDateFormat;
+	import java.util.Date;
+
+	import javax.swing.Timer;	//在指定时间触发ActionEvent(事件).
+
+	public class AlarmClock {
+		private int dedaly;	//延迟时间
+		private boolean flag;	//是否要发出声音
+
+		public AlarmClock(int delay, boolean flag) {
+			this.delay = delay;
+			this.flag = flag;
+		}
+
+		public void start() {
+			class Printer implements ActionListener {	//局部内部类
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					SimpleDateFormat format = new SimpleDateFormat("k:m:s");
+					String result = format.format(new Date());
+					System.out.println("Current time: " + result);
+					if (flag) {
+						Toolkit.getDefaultToolkit().beep();
+						/*
+							Toolkit.getDefaultToolkit():得到默认工具包.
+							Toolkit.getDefaultToolkit().beep():发出一个嘟嘟声.
+						*/
+					}
+				}
+			}
+			new Timer(delay, new Printer()).start();	//delay单位为ms.
+		}
+	}
+	
+2.创建Test类
+
+	import com.clock.AlarmClock;
+	import javax.swing.JOptionPane; //弹出标准对话框
+
+	public class Test {
+		public static void main(String[] args) {
+			AlarmClock clock = new AlarmClock(1000, true);
+			clock.start();
+			JOptionPane.showMessageDialog(null, "是否退出?"); //显示一个对话框
+			System.exit(0);
 		}
 	}

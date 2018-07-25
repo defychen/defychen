@@ -4,7 +4,7 @@
 
 Protobuf(Google Protocol Buffer):是一种轻便高效的结构化数据存储格式,平台无关、语言无关、可扩展,很适合做数据存储或RPC数据交换格式.
 
-	Protobuf目前提供了C++、Jave、Python三种语言的API.
+	Protobuf目前提供了C++、Java、Python三种语言的API.
 
 Protobuf优点:
 
