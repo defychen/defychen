@@ -2551,3 +2551,303 @@ PS:Java接口文件的文件名必须与接口名相同.
 			System.exit(0);
 		}
 	}
+
+### 9.3 Class类与Java反射
+
+反射机制就是把一个类(类的成员,函数,属性等)当作一个对象来操作.也就是说,类、类的成员等在运行的时候还可以动态去操作.
+
+Demo类
+
+	package com.demo;
+
+	import java.lang.reflect.Constructor;
+	import java.lang.reflect.Field;
+	import java.lang.reflect.InvocationTargetException;
+	import java.lang.reflect.Method;
+	import java.lang.reflect.Modifier;
+	import java.lang.reflect.TypeVariable;
+
+	public class Demo {
+		/**
+		 * 所有的异常最后都抛出来给虚拟机处理
+		 * @param args
+		 * @throws ClassNotFoundException
+		 * @throws InstantiationException
+		 * @throws IllegalAccessException
+		 * @throws InvocationTargetException
+		 * @throws IllegalArgumentException
+		 * @throws NoSuchFieldException
+		 * @throws SecurityException
+		 * @throws NoSuchMethodException	
+		 */
+		public static void main(String[] args) throws ClassNotFoundException, InstantiationException,
+		IllegalAccessException, IllegalArgumentException, InvocationTargetException, SecurityExce
+		ption, NoSuchFieldException, NoSuchMethodException {
+			
+			/* Demo1: 通过Java反射机制得到类的包名和类名 */
+			Demo1();
+			System.out.println("=====================");
+			
+			/* Demo2: 验证所有的类都是Class类的实例对象 */
+			Demo2();
+			System.out.println("=====================");
+
+			/* Demo3: 通过Java反射机制,用Class创建类对象(这是类反射存在的意义所在),无参构造 */
+			Demo3();
+			System.out.println("=====================");
+
+			/* Demo4: 通过Java反射机制得到一个类的构造函数,并实现构造带参实例对象*/
+			Demo4();
+			System.out.println("=====================");
+
+			/* Demo5: 通过Java反射机制操作成员变量, set和get */
+			Demo5();
+			System.out.println("=====================");
+
+			/* Demo6: 通过Java反射机制得到类的一些属性:接口,父类,函数信息,成员信息,类型等. */
+			Demo6();
+			System.out.println("=====================");
+
+			/* Demo7: 通过Java反射机制调用类中方法 */
+			Demo7();
+			System.out.println("=====================");
+
+			/* Demo8: 通过Java反射机制获得类加载器 */
+			Demo8();
+			System.out.println("=====================");
+		}
+		
+		/**
+		 * Demo1: 通过Java反射机制得到类的包名和类名
+		 */
+		public static void Demo1() {
+			Person person = new Person();
+			System.out.println("Demo1: package name: " + person.getClass().getPackage().
+				getName() + ", " + "The full class name: " + person.getClass().getName());
+		}
+
+		/**
+		 * Demo2: 验证所有类都是Class类的实例对象
+		 * @throws ClassNotFoundException
+		 */
+		public static void Demo2() {
+			/* 定义两个类型都未知的Class,看看如何给它们赋值成Person类. */
+			Class<?> class1 = null;
+			Class<?> class2 = null;
+
+			//写法1,可能抛出ClassNotFoundException--->(多用这个写法)
+			class1 = Class.forName("com.demo.Person"); //创建类
+			System.out.println("Demo2:(method 1) package name: " + class1.getPackage().
+			getName() + ", " + "The full class name: " + class1.getName());
+
+			//写法2
+			class2 = Person.class; //类名.class--->创建类
+			System.out.println("Demo2:(method2) package name: " + class2.getPackage().
+			getName() + ", " + "The full class name: " + class2.getName());
+		}
+
+		/**
+		 * Demo3: 通过Java反射机制,用Class创建类对象[这就是反射存在的意义所在]
+		 * @throws ClassNotFoundException
+		 * @throws IllegalAccessException
+		 * @throws InstantiationException
+		 */
+		public static void Demo3() throws ClassNotFoundException, InstantiationException,
+		IllegalAccessException {
+			Class<?> class1 = null;
+			class1 = Class.forName("com.demo.Person");
+			//这里不能带参数,因此实例化需要调用无参构造函数
+			Person person = (Person)class1.newInstance(); //调用无参构造函数
+			person.setAge(20);
+			person.setName("Defy");
+			System.out.println("Demo3: " + person.getName() + " : " + person.getAge());
+		}
+
+		/**
+		 * Demo4: 通过Java反射机制得到一个类的构造函数,并实现创建带参实例对象
+		 * @throws ClassNotFoundException
+		 * @throws InvocationTargetException
+		 * @throws IllegalAccessException
+		 * @throws InstantiationException
+		 * @throws IllegalArgumentException
+		 */
+		public static void Demo4() throws ClassNotFoundException, IllegalArgumentException,
+		InstantiationException, IllegalAccessException, InvocationTargetException {
+			Class<?> class1 = null;
+			Person person1 = null;
+			Person person2 = null;
+
+			class1 = Class.forName("com.demo.Person");
+			//得到一系列的构造函数集合
+			Constructor<?>[] constructors = class1.getConstructors();
+
+			person1 = (Person)constructors[0].newInstance();
+			person1.setAge(30);
+			person1.setName("defy");
+			
+			person2 = (Person)constructors[2].newInstance(20, "defy");
+
+			System.out.println("Demo4: " + person1.getName() + " : " + person1.getAge()
+				+ " ,  " + person2.getName() + " : " + person2.getAge());
+		}
+
+		/**
+		 * Demo5: 通过Java反射机制操作成员变量,set和get
+		 * @throws IllegalAccessException
+		 * @throws IllegalArgumentException
+		 * @throws NoSuchFieldException
+		 * @throws SecurityException
+		 * @throws InstantiationException
+		 * @throws ClassNotFoundException
+		 */
+		public static void Demo5() throws IllegalAccessException, IllegalArgumentException,
+		NoSucheFieldException, SecurityException, InstantiationException, 
+		ClassNotFoundExceptin {
+			Class<?> class1 = null;
+			class1 = Class.forName("com.demo.Person");
+			Object obj = class1.newInstance();
+
+			Field personNameField = class1.getDeclaredField("name"); //拿到name成员变量
+			personNameField.setAccessible(true);
+			personNameField.set(obj, "Mr defy");
+		
+			System.out.println("Demo5: After modifying the variable value: "
+				+ personNameField.get(obj));
+		}
+
+		/**
+		 * Demo6: 通过Java反射机制得到类的一些属性:接口,父类,函数信息,成员信息,类型等
+		 @throws ClassNotFoundException
+		 */
+		public static void Demo6() throws ClassNotFoundException {
+			Class<?> class1 = null;
+			class1 = Class.forName("com.demo.Person");
+
+			//取得父类名称
+			Class<?> superClass = class1.getSuperClass();
+			System.out.println("Demo6: SuperMan parents class: " + superClass.getName());
+
+			System.out.println("=====================");
+
+			Field[] fields = class1.getDeclaredFields();
+			for (int i=0; i<fields.length; i++) {
+				System.out.println("The member of the class: " + fields);
+			}
+			System.out.println("=====================");
+
+			//取得类方法
+			Methods[] methods = class1.getDeclaredMethods();
+			for (int i=0; i<methods.length; i++) {
+				System.out.println("Demo6: Get SuperMan class method:");
+				System.out.println("Function name: " + methods[i].getName());
+				System.out.println("Function return type: " + methods[i].getReturnType());
+				System.out.println("Function access modifier: " + 
+					Modifier.toString(methods[i].getModifiers())); //函数访问修饰符
+				System.out.println("Function: " + methods[i]);
+			}
+
+			System.out.println("=====================");
+			
+			//取得类实现的接口,因为接口类也属于Class.和类取得方法类似
+			Class<?> interfaces[] = class1.getInterfaces();
+			for (int i=0; i<interfaces.length; i++) {
+				System.out.println("Interface name: " + interfaces[i].getName());
+			}
+		}
+
+		/**
+		 * @throws ClassNotFoundException
+		 * @throws NoSuchMethodException
+		 * @throws SecurityException
+		 * @throws InvocationTargetException
+		 * @throws IllegalAccessException
+		 * @throws IllegalArgumentException
+		 * @throws InstantiationException
+		 */
+		public static void Demo7() throws ClassNotFoundException, NoSuchMethodException,
+		SecurityException, InvocationTargetException, IllegalAccessException,
+		IllegalArgumentException, InstantiationException {
+			Class<?> class1 = null;
+			class1 = Class.forName("com.demo.SuperMan");
+			
+			System.out.println("Demo7: Call non-argument function fly(): ");
+			Method method = class1.getMethod("fly"); //得到成员方法成员方法
+			method.invoke(class1.newInstance()); //调用成员方法
+
+			System.out.println("Call with-argument function walk(int m): ");
+			method = class1.getMethod("walk", int.class); //后面表示参数类型
+			method.invoke(class1.newInstance(), 100);
+		}
+
+		/**
+		 * Demo8: 通过Java反射机制得到类加载信息
+		 * 在Java中有三种类加载器.
+		 *		1)Bootstrap ClassLoader:此加载器采用C++编写,一般开发中很少见
+		 *		2)Extension ClassLoader:用来进行扩展类的加载,一般对应jre/lib/ext目录中的类
+		 *		3)AppClassLoader:加载classpath指定的类,是最常用的加载器.同时也是Java中默认的加载器.
+		 *
+		 * @throws ClassNotFoundException
+		 */
+		public static void Demo8() throws ClassNotFoundException {
+			Class<?> class1 = null;
+			class1 = Class.forName("com.demo.SuperMan");
+			String nameString = class1.getClassLoader().getClass().getName();
+
+			System.out.println("Demo8: ClassLoader name: " + nameString);
+		}
+	}	
+
+	class Person {
+		private int age;
+		private String name;
+		public Person() {
+		}
+
+		public Person(int age, String name) {
+			this.age = age;
+			this.name = name;
+		}
+
+		public int getAge() {
+			return age;
+		}
+		public void setAge(int age) {
+			this.age = age;
+		}
+
+		public String getName() {
+			return name;
+		}
+		public void setName(String name) {
+			this.name = name;
+		}
+	}
+
+	class SuperMan extends Person implements ActionInterface {
+		private boolean superPerson;
+
+		public void fly() {
+			System.out.println("Super man can fly!"):
+		}
+
+		public boolean isSuperPerson() {
+			return superPerson;
+		}
+
+		public void setSuperPerson(boolean normalPerson) {
+			superPerson = normalPerson;
+		}
+
+		@Override
+		public void walk(int m) {
+			System.out.println("Super man walk " + m + " miles!");
+		}
+	}
+
+	interface ActionInterface {
+		public void walk(int m);
+	}
+
+***
+
+## Chapter 10 Java集合类
