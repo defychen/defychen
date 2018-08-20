@@ -1061,6 +1061,7 @@ pthread_join()、pthread_testcancel()、pthread_cond_wait()、pthread_cond_timew
 			b[0], b[1], b[2], b[3]);
 
 	//结果都为:78 56 34 12
+
 ## 31、#ifdef __cplusplus...的使用
 
 	#ifdef __cplusplus	//"__cplusplus"是cpp中自定义宏,这个宏表明这是一段cpp的代码
@@ -1098,7 +1099,8 @@ pthread_join()、pthread_testcancel()、pthread_cond_wait()、pthread_cond_timew
 	struct test_device{
 		struct test_device *next;	//为一个结构体指针,属于指针.在32 bit机器中占4 byte
 		char *p;					//指针,在32 bit机器中占4 byte
-		char w;						//声明一个字符,单独打印是占一个byte.但是在此结构体中对自动4 byte对齐,因此占4byte
+		char w;						//声明一个字符,单独打印是占一个byte.但是在此结构体中对自动4 byte
+									//对齐,因此占4byte
 		/*
 		char w[7];					//如果为这种情况,默认是7byte.但是放在对齐中会采用对齐方式存储(8 byte).
 		*/
@@ -1423,6 +1425,7 @@ unused属性用于函数和变量,表示该函数或变量可能不使用.
 
 ## 50. 交换首尾数据
 
+	1.形式1--->在原来的数组中输出.
 	void rever_char(uint8_t c[], uint32_t n)
 	{
 		uint8_t temp = 0;
@@ -1436,6 +1439,41 @@ unused属性用于函数和变量,表示该函数或变量可能不使用.
 			c[j] = temp;
 		}
 	}
+	
+	2.形式2--->输入dest和src.
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <string.h>
+
+	int revstr(char **dst, char *src)	//dst可以输入一个指针
+	{
+		char *ptr;
+		*dst = (char *)malloc(strlen(src) + 1); //为dst分配空间.
+			//strlen求字符串真实的长度.+1表示存放'\0'.
+		ptr = *dst;
+		while (*src) {
+			src++;
+		}
+
+		--src;	//因为最后一个字符是'\0'.赋值时先去掉这一个字符
+		while (*src) {
+			*ptr = *src;
+			++ptr;
+			--src;
+		}
+		*ptr = '\0'; //补充一个字符串结束符
+		printf("%s\n", *dst);
+		return 0;
+	}
+
+	int main(void)
+	{
+		char *from = "Hello world";
+		char *to = NULL;
+		revstr(&to, from);
+		return 0;
+	}
+	
 
 ## 51. 计算CRC32的源码
 
@@ -1725,4 +1763,28 @@ unused属性用于函数和变量,表示该函数或变量可能不使用.
 	for (i=0; i<1024; i++) {
 		test_defy = test + i; //依次取得test数组中的第0~1024个元素.绝对不能是
 							 //test_defy = test + (i * struct test_node); --->这样计算是错的.
+	}
+
+## 56. C语言字符串中大小写字母转换
+
+	#include <stdio.h>
+
+	int main()
+	{
+		char a[100];
+		int i=0;
+		gets(a); //得到一串字符串
+		for (i=0; a[i]!='\0'; i++) {
+			if (a[i]>='a' && a[i]<='z') {
+				a[i] -= 32;
+			} else if (a[i]>='A' && a[i]<='Z') {
+				a[i] += 32;
+			} else if (a[i] == '?') {
+				continue;
+			} else {
+				a[i] = '*';
+			}
+		}
+		puts(a); //输出转换后的字符串
+		return 0;
 	}

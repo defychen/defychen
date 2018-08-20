@@ -213,6 +213,7 @@
 ## 2.2 常用快捷键
 
 	Alt+F4--->退出程序(e.g.如果Markdown开了多个页面,会把所有页面都关闭)
+	Alt+F8--->显示或隐藏左边的"符号窗口(Symbol Window)"
 	Ctrl+E--->完成语法(e.g.产生小写的情况,还不知道有什么用)
 	Ctrl+K--->复制一行------------------------------->挺有用
 	Ctrl+Shift+K--->复制从当前字符到最右边一行--------->挺有用
@@ -355,9 +356,33 @@ AStyle代码格式工具可用于将source insight中的代码风格全部改为
 
 4.文件"GLOBAL.CF3"保存即为配置信息.如果需要删除该文件即可恢复到默认配置.
 
+## 2.11 source insight 3.x解决回车换行缩进过度的方法
+
+问题描述参见3.2.
+
+	Options->Document Options->Auto Indenting
+		1.在Auto Indent Type选择"Simple"
+		2.去掉Smart Indent Options中的选项.
+
 ***
 
-# 3. Beyond Compare的使用
+# 3. Source Insight 4.x版本的使用
+
+## 3.1 source insight 4.x显示/去掉overview
+
+	Options->Preferences->Display->去掉/勾选Overviews (based on file type)
+
+## 3.2 source insight 4.x解决回车换行缩进过度的方法
+
+在source insight 4.x在回车后,输入"{}".会自动缩进4个空格.影响编辑.解决办法:
+
+	Options->File Type Options->Auto Indenting
+		1.在Auto Indent Type选择"Simple"
+		2.去掉Smart Indent Options中的选项.
+
+***
+
+# 4. Beyond Compare的使用
 
 ## 3.1 换行符文本比较时没有发现有区别,但是显示为"红色",表示有区别
 

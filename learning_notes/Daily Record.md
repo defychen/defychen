@@ -121,4 +121,18 @@ Win7/Win10拥有类似linux相同的软连接,创建后在source insight中可�
 
 	mklink /D linux linux-4.17.2 //为linux-4.17.2创建一个名叫linux的符号链接.
 
+## 11. Win7设置宽带拨号上网
+
+一般家庭使用宽带拨号上网的方式进行上网,相关的设置如下:
+
+	1.打开控制面板(Control Panel)->选择"网络和共享中心(Network and Sharing Center)"
+		PS:也可以直接点击右下角网络图标->选择最下面的"Open Network and Sharing Center"
+	2.在"Network and Sharing Center"中,选择"设置新的链接或网络(Set up a new connection or
+	network)":这一项在这一页面的下半部第一条.
+	3.选择"连接到Internet(Connect to the Internet)"->在"你想如何连接?(How do you want to
+	connect)"中选择"带宽(PPPoE)(R) (Broadband(PPPoE))"->然后输入账号和密码即可.
 	
+## 12. Win7如何创建密码
+
+	Control Panel->User Accounts and Family Safety(用户账号和家庭安全)
+	->User Accounts->Create password...(创建密码)

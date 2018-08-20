@@ -2440,7 +2440,7 @@ PS:Java接口文件的文件名必须与接口名相同.
 			/*Inner为接口*/
 			outer.method1(new Inner() {
 				String s1 = "This is s1 in Inner"; //匿名内部类与外部类相同变量s1.
-				public String say() {
+				public String say() {	//实现接口中的所有方法
 					return s1; //会使用内部类的变量
 				}
 				/*
@@ -2448,15 +2448,15 @@ PS:Java接口文件的文件名必须与接口名相同.
 				*/
 			});
 
-			/*Inner1为抽下类*/
+			/*Inner1为抽象类*/
 			outer.method1(new Inner1() {
 				String s2 = "This is s2 in Inner1";
 				
 				public String say() {	//为什么不需要"@Override"
-					return Outer.s2; //在内部变量名相同时使用"类名.变量名"可以访问外部类声明为stataic的变量.
+					return Outer.s2; //在内部变量名相同时使用"类名.变量名"可以访问外部类声明为static的变量.
 				}
 				/*
-					匿名内部类继承抽象不需要extends.自动会匹配为extends class_name.
+					匿名内部类继承抽象类不需要extends.自动会匹配为extends class_name.
 				*/
 			});
 
@@ -2851,3 +2851,458 @@ Demo类
 ***
 
 ## Chapter 10 Java集合类
+
+Java语言的java.util包中提供了一些集合类(又被称为容器).
+
+	1.数组的长度是固定的;集合的长度是可变的.
+	2.数组用来存放基本类型的数据;集合用来存放对象的引用.
+	PS:常用的集合有:List,Set,Map等.Set和List都继承自Collection接口.
+
+### 10.1 常用的集合类接口
+
+#### 10.1.1 List集合接口
+
+1.创建集合对象,并向集合中添加、修改元素,并遍历该集合.
+
+	package com.collection;
+
+	import java.util.Iterator; //迭代器
+	import java.util.LinkedList; //List集合创建时使用
+	import java.util.List; //创建List集合
+
+	public class CollectionDemo {
+		public static void main(String[] args) {
+			String a = "A", b = "B", c = "C", d = "D", e = "E";
+			List<String> list = new LinkedList<String>();
+				//创建集合
+			list.add(a); //向List集合添加元素
+			list.add(e);
+			list.add(d);
+			Iterator<String> firstIterator = list.iterator(); //创建迭代器
+				//list.iterator():由List集合创建迭代器
+			System.out.println("Before modifying element: ");
+			while (firstIterator.hasNext()) {
+				//遍历迭代器中的元素
+				System.out.print(firstIterator.next() + " ");
+			}
+			list.set(1, b); //替换List集合中的元素.第一个位置的替换为b
+			list.set(2, c);
+			Iterator<String> it = list.iterator();
+			System.out.println();
+			System.out.println("After modifying element: ");
+			while (it.hasNext()) {
+				System.out.print(it.next() + " ");
+			}
+		}
+	}
+	
+	/*
+		结果为:
+		Before modifying element:
+		A E D
+		After modifying element:
+		A B C D
+	*/
+
+2.创建集合对象,并输出索引位置
+
+	package.com.collection;
+	
+	import java.util.List;
+	import java.util.ArrayList;
+
+	public class CollectionDemo2 {
+		public static void main(String[] args) {
+			String a = "a", b = "b", c = "c", d = "d", apple = "apple";
+			List<String> list = new ArrayList<String>();
+			list.add(a);
+			list.add(apple);
+			list.add(b);
+			list.add(apple);
+			list.add(c);
+			list.add(apple);
+			list.add(d);
+			System.out.println(list); //输出List集合
+			System.out.println("The index position of the first occurence of \"apple\"
+				is " + list.indexOf(apple));
+			/*
+				\":转义(").
+				list.indexOf(apple):索引apple出现的位置.
+			*/
+			System.out.println("The index position of the last occurence of \"apple\"
+				is " + list.lastIndexOf(apple));
+			System.out.println("The index position of the first occurence of \"b\"
+				is " + list.indexOf(b));
+			System.out.println("The index position of the last occurence of \"b\"
+				is " + list.lastIndexOf(b));
+		}
+	}
+
+	/*
+		结果为:
+		[a, apple, b, apple, c, apple, d]	//List直接输出的形式.
+		The index position of the first occurence of "apple" is 1
+		The index position of the last occurence of "apple" is 5
+		The index position of the first occurence of "b" is 2
+		The index position of the last occurence of "b" is 2
+	*/
+
+#### 10.1.2 Set集合接口
+
+Set集合不允许存在重复值.
+
+	package com.collection;
+
+	import java.util.List;
+	import java.util.Set; //import Set集合
+	import java.util.ArrayList;
+	import java.util.HashSet;
+	import java.util.Iterator;
+
+	public class CollectionDemo3 {
+		public static void main(String[] args) {
+			List<String> list = new ArrayList<String>();
+			list.add("apple");
+			list.add("pear");
+			list.add("banana");
+			list.add("apple");
+			Set<String> set = new HashSet<String>();
+			set.addAll(list); //set.addAll(list):添加集合类到Set中
+			
+			Iterator<String> it = set.iterator(); //创建迭代器
+			System.out.println("The element in the set: ");
+			while (it.hasNext()) {
+				System.out.print(it.next() + " ");
+			}
+		}
+	}
+
+#### 10.1.3 Map集合接口
+
+Map集合提供key-value映射.
+
+	Map集合中不能包含重复的key;每个key最多只能映射到一个value.
+
+向Map集合中插入元素并输出其中的元素.
+
+	package com.collection;
+	
+	import java.util.Map;
+	import java.util.HashMap;
+
+	public class MapDemo {
+		public static void main(String[] args) {
+			Map<String, String> map = new HashMap<String, String>();
+			map.put("1", "apple");
+			map.put("2", "pear");
+			map.put("3", "orange");
+
+			for (int i=1; i<=3; i++) {
+				System.out.println("The " + i + " element is: " + map.get("" + i)):
+				/*
+					map.get("" + i):此处将i的值由整型转换成字符串型.因为key是字符串型.
+				*/
+			}
+		}
+	}
+
+#### 10.1.4 范例1:用List集合传递学生信息
+
+	package com.collection;
+
+	import java.awt.BorderLayout;
+	import java.awt.EventQueue;
+
+	import javax.swing.JFrame;
+	import javax.swing.JPanel;
+	import javax.swing.JScrollPane;
+	import javax.swing.JTable;
+	//import javax.swing.UIManager;
+	import javax.swing.border.EmptyBorder;
+	import javax.swing.table.DefaultTableModel;
+	import java.util.List;
+	import java.util.ArrayList;
+
+	public class ClassInfo extends JFrame {
+		private static final long serialVersionUID = 1L;
+		private JPanel contentPane;
+		private JTable table;
+
+		public static void main(String[] args) {
+			try {
+				//UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLook
+					//AndFeel");
+			} catch(Throwable e) {
+				e.printStackTrace();
+			}
+			EventQueue.invokeLater(new Runnable() {
+				public void run() {
+					try {
+						ClassInfo frame = new ClassInfo();
+						frame.setVisible(true);
+					} catch(Exception e) {
+						e.printStackTrace();
+					}
+				}
+			});
+		}
+
+		/**
+		* Create the frame
+		*/
+		public ClassInfo() {
+			setTitle("\u7528List\u96C6\u5408\u4F20\u9012\u5B66\u751F\u4FE1\u606F");
+			setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			setBounds(100, 100, 392, 223);
+			contentPane = new JPanel();
+			contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+			contentPane.setLayout(new BorderLayout(0, 0));
+			setContentPane(contentPane);
+
+			JScrollPane scrollPane = new JScrollPane();
+			contentPane.add(scrollPane, BorderLayout.CENTER);
+			scrollPane.setViewportView(getTable());
+		}
+
+		private JTable getTable() {
+			if (table == NULL) {
+				table = new JTable(); // create table control
+				table.setRowHeight(23);
+				String[] columns = {"姓名", "性别", "出生日期"};
+				DefaultTableModel model = new DefaultTableModel(columns, 0);
+				table.setModel(model);
+				List<String> students = getStudents();
+				for (String info : students) {
+					String[] args = info.split(",");
+					model.addRow(args);
+				}
+			}
+			return table;
+		}
+
+		private List<String> getStudents() {
+			List<String> list = new ArrayList<String>();
+			list.add("李哥, 男, 1981-1-1");
+			list.add("小陈, 女, 1981-1-1");
+			list.add("小刘, 男, 1981-1-1");
+			list.add("小张, 男, 1981-1-1");
+			list.add("小董, 男, 1981-1-1");
+			list.add("小吕, 男, 1981-1-1");
+			return list;
+		}
+	}
+
+#### 10.1.5 范例2:Map集合二级联动
+
+略.
+
+### 10.2 集合类接口的实现类
+
+#### 10.2.1 List接口的实现类
+
+List接口的实现类即为List接口的初始化类.主要有两种:
+
+**1.ArrayList类**
+
+该类采用可变数组保存对象.
+
+优点:便于根据索引位置对集合进行快速的随机访问.
+
+缺点:向指定的索引位置插入对象或删除对象的速度较慢.
+
+	List<String> list = new ArrayList<String>();
+
+**2.LinkedList类**
+
+该类采用链表结构保存对象.
+
+优点:便于向集合中插入和删除对象.
+
+缺点:对于随机访问集合中的对象效率较慢.
+
+	List<String> list = new LinkedList<String>();
+
+**3.实例---随机获取集合中的某个元素**
+
+	package com.collection;
+	
+	import java.util.List;
+	import java.util.ArrayList;
+
+	public class Gather {
+		public static void main(String[] args) {
+			List<String> list = new ArrayList<String>();
+			list.add("a");
+			list.add("b");
+			list.add("c");
+			int i = (int)(Math.random() * list.size()); //产生1~3的随机数
+			//list.size():此处为3.初始化后为0.
+			//System.out.println("Random value: " + Math.random());
+			System.out.println("Get the random element in the array: " + list.get(i));
+			list.remove(2);
+			System.out.println("After removing operation: ");
+			for (int j=0; j<list.size(); j++) {
+				System.out.println(list.get(i) + " ");
+			}
+		}
+	}
+
+#### 10.2.2 Set接口的实现类
+
+Set接口的实现类即为Set接口的初始化类.主要有两种:
+
+**1.HashSet类**
+
+	Set<String> collSet = new HashSet<String>();
+
+**2.TreeSet类**
+
+	Set<String> collSet2 = new HashSet<String>();
+
+**3.实例---遍历输出HashSet中的全部元素**
+
+1.People类
+
+	package com.collection;
+
+	public class People {
+		private String name;
+		private long id_card;
+
+		public People(String name, long id_card) {
+			this.name = name;
+			this.id_card = id_card;
+		}
+
+		public long getId_card() {
+			return id_card;
+		}
+		public void setId_card(long id_card) {
+			this.id_card = id_card;
+		}
+
+		public String getName() {
+			return name;
+		}
+		public void setName(String name) {
+			this.name = name;
+		}
+	}
+
+2.CollectionHashDemo类
+
+	package com.collection;
+
+	import java.util.Set;
+	import java.util.HashSet;
+	import java.util.Iterator;
+	import com.collection.People;
+
+	public class CollectionHashDemo {
+		public static void main(String[] args) {
+			Set<People> hashSet = new HashSet<People>();
+			hashSet.add(new People("Mr Chen", 201101));
+			hashSet.add(new People("Mr Wang", 201102));
+			hashSet.add(new People("Mr Li", 201103));
+
+			Iterator<People> it = hashSet.iterator();
+			System.out.println("The element in the set are: ");
+			while (it.haseNext()) {
+				People person = it.next();
+				System.out.println(person.getName() + " " + person.getId_card());
+			}
+		}
+	}
+
+#### 10.2.3 Map接口的实现类
+
+Map接口的实现类即为Map接口的初始化类.主要有两种:
+
+**1.HashMap类--->常用**
+
+基于哈希表实现Map接口.允许使用null值和null键.但必须保证key的唯一性.
+
+优点:查找速度快(基于哈希表实现).HashMap对于添加和删除映射关系的效率较高.
+
+缺点:不能保证映射的顺序(即顺序是乱序).
+
+**2.TreeMap类**
+
+不仅实现了Map接口,还实现了java.util.SortedMap接口.因此集合中的映射关系具有一定的顺序.
+
+优点:映射关系是根据键对象按照一定的顺序排列的,不允许键对象时null.
+
+缺点:在添加、删除和定位映射关系上,TreeMap类比HashMap类的性能差一些.
+
+**3.实例---由HashMap类实例化Map集合并遍历,然后创建TreeMap将元素顺序输出**
+
+1.Emp类
+
+	package com.collection;
+
+	public class Emp {
+		private String e_id;
+		private String e_name;
+		public Emp(String e_id, String e_name) {
+			this.e_id = e_id;
+			this.e_name = e_name;
+		}
+	}
+
+2.MapText类
+
+	package com.collection;
+	
+	import java.util.Map;
+	import java.util.Iterator;
+	import java.util.HashMap;
+	import java.util.TreeMap;
+	import java.util.Set;
+	import java.collection.Emp;
+
+	public class MapText {
+		public static void main(String[] args) {
+			Map<String, String> map = new HashMap<String, String>();
+			Emp emp = new Emp("001", "zhangsan");
+			Emp emp2 = new Emp("005", "lisi");
+			Emp emp3 = new Emp("004", "wangyi");
+
+			map.put(emp.getE_id(), emp.getE_name());
+			map.put(emp2.getE_id(), emp2.getE_name());
+			map.put(emp3.getE_id(), emp3.getE_name());
+
+			Set<String> set = map.keySet(); //map.keySet():返回所有key对象组成的Set集合
+			Iterator<String> it = set.iterator();
+			System.out.println("HashMap class implement Map collection, out-of-order:");
+			while (it.hasNext()) {
+				String str = (String)it.next(); /* Get key info */
+				String name = (String)map.get(str); /* Get value info */
+				/*
+					map.get(str):得到key(str)对应的value
+				*/
+				System.out.println(str + " " + name);
+			}
+
+			TreeMap<String, String> treemap = new TreeMap<String, String>();
+			treemap.putAll(map);
+			/*
+			treemap.putAll(map):将map中的所有信息添加到treemap这个Map中.
+			*/
+			Iterator<String> iter = treemap.keySet().iterator();
+			System.out.println("TreeMap class implement Map collection, asending order:");
+			while (iter.hasNext()) {
+				String str = (String)iter.next();
+				String name = (String)map.get(str);
+				/*
+				or: String name = (String)treemap.get(str);
+				*/
+				System.out.println(str + " " + name);
+			}
+		}
+	}
+
+#### 10.2.4 一些范例
+
+略.
+
+### 10.3 迭代器
