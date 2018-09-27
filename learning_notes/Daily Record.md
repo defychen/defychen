@@ -136,3 +136,22 @@ Win7/Win10拥有类似linux相同的软连接,创建后在source insight中可�
 
 	Control Panel->User Accounts and Family Safety(用户账号和家庭安全)
 	->User Accounts->Create password...(创建密码)
+
+## 13. Thinkpad T430增加内存
+
+1.缺口位置:
+
+![](images/thinkpad_t430_gap.png)
+
+2.错误的安装方法:
+
+![](images/thinkpad_t430_wrong.png)
+
+3.正确的安装方法:
+
+![](images/thinkpad_t430_right.png)
+
+安装重点:
+
+	对着内存条的缺口插进去,与水平40度左右斜角插进去,而不是平着插进去,因为平着插进去两边的小铁卡子会挡住.
+	插内存时要用点力插进去,当金手指基本上全插进槽内,然后向下按平,按平就可以了.

@@ -3306,3 +3306,542 @@ Map接口的实现类即为Map接口的初始化类.主要有两种:
 略.
 
 ### 10.3 迭代器
+
+略.
+
+***
+
+## Chapter 11 Java异常处理
+
+### 11.1 异常的分类
+
+#### 11.1.1 可控式异常
+
+在程序编译时就能对程序中可能存在的错误进行处理,并给出具体的错误信息.这些错误称为可控式异常.
+
+1.常用的可控式异常如下:
+
+	1.IOException:当发生某种I/O异常时,抛出此异常;
+	2.SQLException:提供关于数据库访问错误或其他错误信息的异常;
+	3.ClassNotFoundException:类没有找到异常;
+	4.NoSuchFieldException:类不包含指定名称的字段时发生的异常;
+	5.NoSuchMethodException:无法找到某一特定方法时,抛出该异常.
+
+2.实例---在类中加载一个不存在的类(ClassNotFoundException异常)
+
+	package com.exception_example;
+
+	public class Example_01 {
+		private int num = 10;
+		public int getNum() {
+			return num;
+		}
+		
+		public void setNum(int num) {
+			this.num = num;
+		}
+
+		public Example_01() {
+			try {
+				Class.forName("com.exception_example.Test"); //查找类
+			} catch(ClassNotFoundException e) { //因为类不存在,会捕获到异常
+				e.printStackTrace(); //打印出异常的堆栈
+			}
+			System.out.println("test...");
+		}
+
+		public static void main(String[] args) {
+			Example_01 examp = new Example_01();
+			examp.setNum(888);
+			System.out.println(examp.getNum());
+		}
+	}
+
+	//会在控制台输出"java.lang.ClassNotFoundException: com.exception_example.Test"
+
+#### 11.1.1 运行时异常
+
+有些错误能正常编译,但是在运行时会发生异常.称为运行时异常.
+
+1.常用的运行时异常如下:
+
+	1.IndexOutOfBoundsException:集合或数组的索引值超出范围时抛出该异常;
+	2.NullPointerException:程序视图在需要对象的地方使用null时,抛出该异常;
+	3.ArithmeticException:出现异常的运算条件时抛出该异常;
+	4.IllegalArgumentException:向方法传递一个不合法或不正确的参数时抛出该异常;
+	5.ClassCastException:将对象强制转换为不是实例的子类时,抛出该异常.
+
+2.实例1---数组超出下标异常(IndexOutOfBoundsException)
+
+	package com.exception_example;
+	
+	public class Example_02 {
+		int[] number = {100, 80, 50, 70, 20, 60};
+		
+		public void setNum(int index, int value) {
+			number[index] = value;
+		}
+		
+		public int getNum(int index) {
+			return number[index];
+		}
+		
+		public static void main(String[] args) {
+			Example_02 ex = new Example_02();
+			int value = ex.getNum(0);
+			System.out.println(value);
+			value = ex.getNum(6);
+			System.out.println(value);
+		}
+	}
+	/*结果为:
+	100
+	Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: 6
+		at com.exception_example.Example_02.getNum(Example_02.java:11)
+		at com.exception_example.Example_02.main(Example_02.java:18)
+	*/
+
+3.实例2---算术异常(ArithmeticException)
+
+在Java语言中,如果一个整数被0除,将抛出ArithmeticException.但是浮点数被0除,就不会发生算术异常.
+
+	try {
+		System.out.println("-1/0 = " + (-1/0)); //负整数除0,发生ArithmeticException
+	} catch(Exception e) { //所有的异常都可以用Exception捕获
+		System.out.println("Throw exception: " + e.getMessage());
+		//e.getMessage():得到异常信息.
+	}
+
+### 11.2 获取异常信息
+
+在Java中"java.lang.Throwable"类时所有异常类的超类.该类提供了所有获得异常信息的方法.
+
+1.常用的获取异常信息的方法:
+
+	1.String getLocalizedMessage():获得本地化描述;
+	2.String getMessage():获得详细的消息字符串;
+	3.void printStackTrace():强栈踪迹输出到标准错误流;
+	4.String toString():获得剪短描述.
+
+2.实例---异常信息的获取
+
+	package com.exception_example;
+	
+	public class Example_03 {
+		public void printBugInfo() {
+			try {
+				int x = 100;
+				int y = 0;
+				int z = x / y;
+				System.out.println(x + "/" + y + " = " + z);
+			} catch(Exception ex) {
+				ex.printStackTrace();
+				System.out.println("getMessage method: " + ex.getMessage());
+				System.out.println("getLocalizedMessage method: " + ex.getLocalizedMessage());
+				System.out.println("toString method: " + ex.toString());
+			}
+		}
+		public static void main(String[] args) {
+			Example_03 ex = new Example_03();
+			ex.printBugInfo();
+		}
+	}
+	/*结果为:
+	java.lang.ArithmeticException: / by zero
+		at com.exception_example.Example_03.printBugInfo(Example_03.java:8)
+		at com.exception_example.Example_03.main(Example_03.java:19)
+	getMessage method: / by zero
+	getLocalizedMessage method: / by zero
+	toString method: java.lang.ArithmeticException: / by zero
+	*/
+
+### 11.3 异常处理
+
+#### 11.3.1 try...catch处理异常
+
+	try {
+		可能发生异常的语句...
+	}catch(Exception e) {
+		对异常进行处理的语句...
+	}
+
+#### 11.3.2 try...catch...finally处理异常
+
+	try {
+		可能发生异常的语句...
+	}catch(Exception e) {
+		对异常进行处理的语句...
+	}finally {
+		一定会被执行的语句(无论有异常还是无异常).常用于执行垃圾回收、资源释放
+	}
+
+实例---使用try...catch.finally处理异常
+
+	package com.exception_example;
+
+	import java.io.FileInputStream;
+	import java.io.IOException;
+
+	public class Example_04 {
+		private FileInputStream in = null;
+		
+		public void readInfo() {
+			try {
+				in = new FileInputStream("src/com/exception_example/Example_04.java");
+				System.out.println("Create IO stream, allocate memory");
+			}catch(IOException io) {
+				io.printStackTrace();
+				System.out.println("Create IO stream fail!");
+			}finally {
+				if (in != null) {
+					try {
+						in.close(); //release resouce
+						System.out.println("Close IO stream, release IO resource!");
+					}catch(Exception ioe) {
+						ioe.printStackTrace();
+						System.out.println("Close IO exception!");
+					}
+				}
+			}
+		}
+
+		public static void main(String[] args) {
+			Example_04 ex = new Example_04();
+			ex.readInfo();
+		}
+	}
+
+#### 11.3.2 try...finally处理异常
+
+感觉不如前两种好用,略.
+
+### 11.4 抛出异常
+
+#### 11.4.1 使用throws声明抛出异常
+
+	方法声明 throws 异常类1,异常类2,...,异常类n {
+		方法体;
+	}
+
+throws常用于方法声明.方法中可能存在异常异常,但不想在方法中对异常进行处理.就使用throws抛出异常,在调用该方法的其他方法中对异常进行处理(使用try...catch进行捕获等).
+
+实例---使用throws抛出异常
+
+	package com.exception_example;
+	
+	import java.io.FileReader;
+	import java.io.IOException;
+	
+	public class Example_05 {
+		private FileReader read = null;
+		public void createFile() throws Exception {
+			//throws:抛出异常.表明方法中可能存在异常.
+			read = new FileReader("src/com/exception_example/Example_05.java");
+			System.out.println("Allocate memory");
+		}
+		
+		public void test() {
+			try {
+				createFile();
+			}catch(Exception ex) {
+				ex.printStackTrace();
+				System.out.println("Create IO exception");
+			}finally {
+				if (read != null) {
+					try {
+						read.close();
+						System.out.println("Release memory");
+					}catch(IOException e) {
+						e.printStackTrace();
+						System.out.println("Close IO exception");
+					}
+				}
+			}
+		}
+		
+		public static void main(String[] args) {
+			Example_05 ex = new Example_05();
+			ex.test();
+		}
+	}
+
+#### 11.4.2 使用throw抛出异常
+
+	方法{
+		throws new Exception("对异常的说明");
+	}
+
+throw常用于方法中,在方法中抛出异常.通常和if语句一起使用.
+
+实例---使用throw抛出异常
+
+	package com.exception_example;
+	
+	public class Example_06 {
+		final static double PI = 3.14;
+		public void computeArea(double r) throws Exception {
+			if (r <= 20.0) {
+				throw new Exception("Program exception: radius is low than " + r);
+				//在方法中使用throw抛出异常.
+			} else {
+				double circleArea = PI * r * r;
+				System.out.println("The area of the circle is: " + circleArea);
+			}
+		}
+		
+		public static void main(String[] args) {
+			Example_06 ex = new Example_06();
+			try {
+				ex.computeArea(10);
+			} catch(Exception e) {
+				System.out.println(e.getMessage());
+			}
+		}
+	}
+
+
+### 11.5 自定义异常
+
+略.
+
+***
+
+## Chapter 12 输入/输出
+
+### 12.1 输入/输出流
+
+Java中负责输入/输出流的类都放在java.io包中.
+
+	import java.io.*; //引入所有的java输入/输出流类.
+
+#### 12.1.1 输入流
+
+**1.InputStream类**
+
+InputStream类负责字节输入流,是所有字节输入流的父类.遇到错误时会引发IOException异常.
+
+InputStream类常用方法如下:
+
+	1.read():从输入流中读取数据的下一个字节.返回0~255的int字节值.如果到大流末尾时,返回-1.
+	2.read(byte[] b):从输入流读取一定长度的字节到b中.返回读取的字节数.
+	3.mark(int readlimit):在输入流的当前位置放置一个标记.表示允许读取的字节数.
+	4.reset():将输入指针返回到当前所做的标记处.
+	5.skip(long n):跳过输入流上的n个字节并返回实际跳过的字节数.
+	6.markSupported():当前流支持mark()/reset()操作就返回true.
+	7.close():关闭此输入流并释放与该流关联的所有系统资源.
+
+**2.Reader类**
+
+Java中的字符是Unicode编码,双字节.InputStream类时处理字节的.而Reader类时专门用于处理字符文本的.操作与InputStream类似,需要时查看JDK文档即可.
+
+#### 12.1.2 输出流
+
+**1.OutputStream流**
+
+OutputStream类负责字节输出流,是所有字节输出流的父类.遇到错误时会引发IOException异常.
+
+OutputStream类常用方法如下(所有方法返回void型):
+
+	1.write(int b):将制定的字节写入到输出流.
+	2.write(byte[] b):将b.length个字节从b数组写入到输出流.
+	3.write(byte[] b, int off, int len):将b数组中偏移off开始的len个字节写入到输出流.
+	4.flush():彻底完成输出并清空缓存区.
+	5.close():关闭输出流.
+
+**2.Writer类**
+
+Writer类用于处理字符输出流.与Reader类似.
+
+#### 12.1.3 实例:显示指定类型的文件
+
+	package com.fileIO;
+	
+	import javax.swing.*;
+	import javax.swing.table.DefaultTableModel;
+	import java.awt.*;
+	import java.awt.event.ActionEvent;
+	import java.awt.event.ActionListener;
+	import java.io.File;
+	import java.io.FileFilter;
+	import java.text.SimpleDateFormat;
+	import java.util.Date;
+	
+	public class FilesList extends JFrame {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+		JFrame jFrame = new JFrame();
+		JPanel jPanel1 = new JPanel();
+		JPanel jPanel2 = new JPanel();
+		JLabel label = new JLabel("输入文件扩展名: ");
+		JTextField jTextField = new JTextField();
+		JButton button = new JButton("选择文件夹");
+		String[] columnNames = {"文件名", "文件大小", "修改时间"};
+		String[][] data = new String[0][3];
+		DefaultTableModel model = new DefaultTableModel(data, columnNames);
+		JTable jTable = new JTable(model);
+		JScrollPane scroll = new JScrollPane(jTable);
+		public FilesList() {
+			jPanel1.setLayout(new GridLayout(1, 3));
+			jPanel1.setSize(450, 30);
+			jTextField.setSize(150, 30);
+			
+			jPanel1.add(label);
+			jPanel1.add(jTextField);
+			jPanel1.add(button);
+			/* Listening */
+			button.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					do_button_actionPerformed(e);
+				}
+			});
+			jFrame.setLayout(new FlowLayout());
+			jFrame.add(jPanel1);
+			jFrame.add(scroll);
+			
+			jFrame.setSize(500, 500);
+			jFrame.setVisible(true);
+		}
+		
+		protected void do_button_actionPerformed(ActionEvent e) {
+			/* Get the content in the Text */
+			final String fileType = jTextField.getText();
+			/* Pop-up warning if the content is empty */
+			if (fileType.isEmpty()) {
+				JOptionPane.showMessageDialog(this, "请输入文件类型", "", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+			
+			/* File selector */
+			JFileChooser chooser = new JFileChooser();
+			/* Choose directory */
+			chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+			/* Disable choose multi-file */
+			chooser.setMultiSelectionEnabled(false);
+			/* Open File selector */
+			int result = chooser.showOpenDialog(this);
+			if (result == JFileChooser.APPROVE_OPTION) {
+				/* Get the same type of the file */
+				File[] listFiles = chooser.getSelectedFile().listFiles(new FileFilter() {
+					@Override
+					public boolean accept(File pathname) {
+						if (pathname.getName().endsWith(fileType)) {
+							return true;
+						} else {
+							return false;
+						}
+					}
+				});
+				DefaultTableModel model = (DefaultTableModel) jTable.getModel();
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				/* Traverse File Array */
+				for (File file : listFiles) {
+					String name = file.getName();
+					long size = file.length();
+					String modifyDate = format.format(new Date(file.lastModified()));
+					model.addRow(new String[] {name, "" + size, modifyDate});
+				}
+				jTable.setModel(model);
+			}
+		}
+		
+		public static void main(String[] args) {
+			// TODO Auto-generated method stub
+			FilesList a = new FilesList();
+		}
+	}
+
+#### 12.1.4 实例:查找替换文本文件内容
+
+略.
+
+### 12.2 File类
+
+File类定义了一些与平台无关的方法来操作文件(e.g.创建、删除、重命名文件等).
+
+#### 12.2.1 文件的创建与删除
+
+使用File类创建一个文件对象.有以下几种方法可以创建:
+
+1.File(String pathname)
+
+pathname是路径名称(包含文件名).
+
+	File file = new File("d:/1.txt"); //使用"/"是因为"\"已经被用于转义字符了.
+
+2.File(String parent, String child):根据父路径和子路径创建一个File对象.
+
+parent:父路径字符串; child:子路径字符串.
+
+3.File(File f, String child):根据parent抽象路径名和child路径名创建一个File对象.
+
+f:父路径对象; child:子路径字符串.
+
+4.实例---判断文件存在与否,存在就删除;不存在就创建.
+
+	package com.fileIO;
+	
+	import java.io.File;
+	
+	public class FileTest1 {
+		public static void main(String[] args) {
+			File file = new File("D:/myword", "test.txt");
+			if (file.exists()) {
+				file.delete(); //删除File对象
+				System.out.println("File has been deleted!");
+			} else {
+				try {
+					file.createNewFile(); //创建File对象
+					System.out.println("File has been created!");
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+#### 12.2.2 获取文件信息
+
+File类获取文件信息方法如下:
+
+	1.getName():获取文件名称;
+	2.canRead():判断文件是否可读;
+	3.canWrite():判断文件是否可写;
+	4.exists():判断文件是否存在;
+	5.length():获取文件长度(以字节为单位);
+	6.getAbsolutePath():获取文件的绝对路径;
+	7.getParent():获取文件的父路径;
+	8.isFile():判断文件是否是一个文件;
+	9.isDirectory():判断文件是否是一个目录;
+	10.isHidden():判断文件是否是隐藏文件;
+	11.lastModified():获取文件最后修改时间.
+
+实例---获取work.txt文件的文件名、长度,并判断是否是隐藏文件.
+
+	package com.fileIO;
+	
+	import java.io.File;
+	
+	public class FileTest2 {
+		public static void main(String[] args) {
+			File file = new File("D:/myword", "work.txt");
+			if (file.exists()) {
+				String name = file.getName();
+				long length = file.length();
+				boolean hidden = file.isHidden();
+				System.out.println("File name is: " + name);
+				System.out.println("File length is: " + length);
+				System.out.println("Is hidden file? " + hidden);
+			} else {
+				System.out.println("File is not exists!!");
+			}
+		}
+	}
+
+#### 12.2.3 实例:文件批量重命名
+
+略.
+
+### 12.3 文件输入/输出流
