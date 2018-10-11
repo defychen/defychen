@@ -814,3 +814,132 @@ memory型变量与reg型变量的区别:
 	
 PS:fork-join块内,各条语句可以不按顺序给出(因为是计算绝对时间).但是为了增加可读性,还是按顺序书写比较好.
 
+### 5.2 条件语句
+
+条件语句分为:if-else和case语句.都是顺序语句,应放在always块内.
+
+#### 5.2.1 if-else语句
+
+if-else语句的特点:
+
+	1.if后面的表达式为逻辑表达式、关系表达式或一位的变量;
+	2.若表达式的值为0或z,则判定的结果为"假/false";若为1,则结果为"真/true";
+	3.语句如果为多句时,一定要用"begin-end"语句括起来,形成一个复合块语句.
+	4.if语句可以嵌套,如果嵌套时if与else数目不一致,使用begin-end将单独的if语句括起来,易读.
+		if (expression1)
+			begin
+				if (expression2) statement1;
+			end
+		else
+			statement2;
+
+实例---模为60的BCD码加法计数器
+
+	module count60(qout, cout, data, load, cin, reset, clk);
+		output [7:0] qout;
+		output cout;
+		input [7:0] data;
+		input load, cin, reset, clk;
+		reg [7:0] qout;
+		always @ (posedge clk)	//always块内语句是顺序执行的
+			begin
+				if (reset)
+					qout = 0;		//同步复位
+				else if (load)
+					qout = data;	//同步置数
+				else if (cin)		//如果cin=1,执行+1计数;否则qout保持不变
+					begin
+						if (qout[3:0] == 9)	//低4位是否为9?
+							begin
+								qout[3:0] = 0;	//是则回0
+								if [qout[7:4] == 5]	//高4位是否为5?
+									qout[7:4] = 0;	//是则回0
+								else
+									qout[7:4] = qout[7:4] + 1;	//高4位不为5,+1
+							end
+						else
+							qout[3:0] = qout[3:0] + 1;	//低4位不为9,+1
+					end
+				end
+			assign cout = ((qout[7:0] == 8'h59) & cin) ? 1 : 0;
+			/*
+				如果qout[7:0]刚好是8'h59,而且又有+1操作.则产生一个进位输出.
+				always块语句和assign语句是并行执行的.
+			*/
+		endmodule
+
+#### 5.2.2 case语句(多分支语句)
+
+case语句的特点:
+
+	1.当某个控制信号取不同的值时,给另一个输出信号赋不同的值;
+	2.case语句常用于多条件译码电路(e.g.译码器、数据选择器、状态机、微处理器的指令译码等);
+	3.case语句分为:case, casez, casex.
+
+**1.case语句**
+
+	case (表达式)	//通常为一个信号的某些位
+		值1: 语句1;	//具体状态值,因此为常量表达式
+		值2: 语句2;
+			...
+		值n: 语句n;	//各值互不相同,且位宽必须全部相同(且与控制表达是也必须相同).
+		default: 语句n+1;	//default可有可无.但只能由一个.
+	endcase
+
+**2.casez和casex语句--->case语句的变体**
+
+	1.case语句中,分支表达式每一位值都是确定的(为0或1);
+	2.casez语句中,若分支表达式某些位的值为高阻态z,则不考虑对这些位的比较;
+	3.casex语句中,若分支表达式某些位的值为z或不定值x,则不考虑对这些位的比较;
+	4.分值表达式中,用"?"来标识x或z.
+
+实例---用casez来描述的数据选择器
+
+	module mux_z(out, a, b, c, d, select);
+		output out;
+		input a, b, c, d;
+		input [3:0] select;
+		reg out;	//必须声明???
+		always @ (select[3:0] or a or b or c or d)
+			begin
+				casez (select)
+					4'b???1: out = a;	//?标识x/z,此处表示高阻态
+					4'b??1?: out = b;
+					4'b?1??: out = c;
+					4'b1???: out = d;
+				endcase
+			end
+	endmodule
+
+**3.条件语句注意事项**
+
+	1.应列出所有条件分支,否则当条件不满足时,编译器会生成一个隐含锁存器保持原值;
+		保持原值可用于设计时序电路,如计数器:条件满足时+1,否则保持原值不变.
+	2.在组合电路设计中,应该避免生成隐含锁存器.方法为:
+		if语句最后加上else项;case语句最后写上default项.
+
+**4.正确使用if语句**
+
+1.生成了不想要的锁存器:
+
+![](images/if_unexpected_latch.png)
+
+	always @ (al or d)
+		begin
+			if (al)	//此处没有else,因此当al为0时,q保持原值!
+				q <= d;
+		end
+
+2.不会生成锁存器---一个数据选择器
+
+![](images/if_expected.png)
+
+	always @ (al or d)
+		begin
+			if (al)
+				q <= d;
+			else
+				q <= 0;	//当al为0时,q等于0!
+		end
+
+	
