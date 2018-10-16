@@ -1,4 +1,4 @@
-# Verilog HDL
+v# Verilog HDL
 
 ## Chapter 1 引言
 
@@ -439,7 +439,7 @@ wire型向量(总线)定义:
 
 	reg:常代表触发器;
 	integer:32位带符号整数型变量;
-	read:64位带符号实数型变量;
+	real:64位带符号实数型变量;
 	time:无符号时间变量.
 
 register型变量与nets型变量的区别:
@@ -942,4 +942,307 @@ case语句的特点:
 				q <= 0;	//当al为0时,q等于0!
 		end
 
-	
+**5.正确使用case语句**
+
+1.生成了不想要的锁存器:
+
+	always @ (sel[1:0] or a or b) begin
+		case (sel[1:0])
+			2'b00: q <= a;
+			2'b11: q <= b;
+		endcase	//当sel为00或11以外的值时,q保持原值!(为锁存)
+	end
+
+2.不会生成锁存器---一个数据选择器
+
+	always @ (sel[1:0] or a or b) begin
+		case (sel[1:0])
+			2'b00: q <= a;
+			2'b11: q <= b;
+			default: q <= 'b0;	//当sel为00或11以外的值时,q为0.(不会锁存为原值)
+
+### 5.3 循环语句
+
+### 5.3.1 for语句
+
+for语句的结构:
+
+	for (循环变量初值; 循环执行条件; 循环变量增值)
+		执行语句
+
+实例1---7人投票器,超过4人投赞成票,则表决通过.
+
+	module vote7(pass, vote);
+		output pass;
+		input [6:0] vote;
+		reg [2:0] sum;	//sum为reg型变量,用于统计赞成的人数
+		integer i;
+		reg pass;
+		always @ (vote)
+			begin
+				sum = 0;
+				for (i=0; i<=6; i=i+1)
+					if (vote[i])	//投了赞成票=>即为1
+						sum = sum + 1;	//sum增加1
+					else;	//保持
+				if (sum[2])		//也可以写成:if (sum[2:0] >= 3'd4)
+					pass = 1;	//超过4人投赞成票,表决通过
+				else
+					pass = 0;
+			end
+	endmodule
+
+实例2---for语句实现两个8位二进制数乘法
+
+	module mult_for(outcome, a, b);
+		parameter size = 8;
+		output [2*size : 1] outcome;
+		input [size : 1] a, b;
+		reg [2*size : 1] outcome;
+		integer i;
+		always @ (a or b) begin
+			outcome = 0;
+			for (i=1; i<=size; i=i+1)
+				if (b[i])
+					outcome = outcome + (a << (i-1));	//a左移(i-1)位,后面的用0填充.
+				else;
+		end
+	endmodule
+
+### 5.3.2 repeat语句
+
+连续执行一条或多条语句n次.repeat语句结构如下:
+
+	repeat (循环次数) begin
+		执行语句
+	end
+
+实例---repeat语句实现两个8位二进制数乘法(不如for语句简单)
+
+	module mult_repeat(outcome, a, b);
+		parameter size = 8;
+		output [2*size : 1] outcome;
+		input [size : 1] a, b;
+		reg [2*size : 1] outcome;
+		reg [2*size : 1] temp_a;	//存放a左移一位后的结果
+		reg [size : 1] temp_b;		//存放b右移一位后的结果
+		always @ (a or b) begin
+			outcomt = 0;
+			temp_a = a;
+			temp_b = b;
+			repeat (size) begin	//重复执行后面的语句size次
+				if (temp_b[1])	//temp_b最低位为1,则执行下面的加法
+					outcome = outcome + temp_a;
+				else;	//保持原值
+				temp_a = temp_a << 1;	//每循环一次,a左移一位
+				temp_b = temp_b >> 1;	//每循环一次,b右移一位
+			end
+		end
+	endmodule
+
+### 5.3.3 while语句
+
+while语句结构如下:
+
+	while (条件表达式) begin
+		执行语句
+	end
+
+实例1---while语句实现对一个8位二进制数中值为1的位进行计数.
+
+	module count1s_while(count, rega, clk);
+		output [3:0] count;
+		input [7:0] rega;
+		input clk;
+		reg [3:0] count;
+		always @ (posedge clk)
+			begin:count1	//count1:应该为一个标号
+				reg[7:0] tempreg;	//用作条件表达式
+				count = 0;
+				tempreg = rega;
+				while (tempreg) begin	//非0,执行下面语句
+					if (tempreg[0])
+						count = cout + 1;	//tempreg最低位为1,统计+1.
+					else;
+					tempreg = tempreg >> 1;	//右移1位.更改条件表达式的值.
+				end
+		end
+	endmodule
+
+实例2---for语句实现对一个8位二进制数中值为1的位进行计数(更简单)
+
+	module count1s_for_good(count, rega);
+		output [3:0] count;
+		input [7:0] rega;
+		reg [3:0] count;
+		always @ (rega)
+			begin:block
+				integer i;
+				count = 0;
+				for (i=0; i<=7; i=i+1)
+					if (rega[i] == 1)
+						count = count + 1;
+					else;
+			end
+	endmodule
+
+PS:while语句只有当循环块有时间控制(即@ (posedge clk))时才可综合!!!!
+
+### 5.3.4 forever语句
+
+无条件连续执行forever后面的语句或语句块.forever语句结构如下:
+
+	forever 语句
+
+forever语句特点:
+
+	1.forever语句常用在测试模块中产生周期性的波形,作为仿真激励信号;
+	2.常用disable语句跳出循环;
+	3.不同于always语句,不能独立写在程序中,一般用于initial语句块中.
+
+实例
+
+	initial
+		begin:Clocking
+			clk = 0;
+			#10 forever #10 clk = !clk;
+		end
+	initial
+		begin:Stimulus
+			...
+			disable Clocking;	//停止时钟
+		end
+
+### 5.4 结构说明语句
+
+分为4种:
+
+	initial说明语句:只执行一次;
+	always说明语句:不断重复执行,直到仿真结束;
+	task说明语句:可在程序模块中的一处或多处调用;
+	function说明语句:可在程序模块中的一处或多处调用;
+
+#### 5.4.1 always块语句
+
+包含一个或多个声明语句(e.g.过程赋值语句、任务调用、条件语句或循环语句等),在仿真运行的全过程中,在定时控制下被反复执行.
+
+**1.规则**
+
+	1.在always块中被赋值的只能是register型变量(e.g.reg, integer, real, time等);
+	2.每个always块在仿真一开始便开始执行,当执行完块中最后一个语句,继续从always块的开头执行.
+	3.当always块中包含一个以上的语句时,这些语句必须放在begin-end或fork-join块中:
+		always @ (posedge clk or negedge clear) begin
+			if (!clear) qout = 0;	//异步清0
+			else		qout = 1;	//此处包含if...else至少两个语句,要用begin-end.
+		end
+	4.always语句必须与一定的时序控制结合在一起才有用,没有时序控制,易形成仿真死锁.
+		e.g.生成一个0延迟的无线循环跳变过程---形成仿真死锁:
+			always areg = ~areg;
+
+实例1---在测试文件中,生成一个无线延续的信号波形(时钟信号)
+
+	`define half_period 50
+	module half_clk_top;
+		reg reset, clk;	//输入信号
+		wire clk_out;	//输出信号
+		always #half_period clk = ~clk;	//生成无线延续,间隔50的时钟信号
+			...
+	endmodule
+
+实例2---用always块语句产生T'FF和8位二进制计数器.
+
+	module always_demo(counter, tick, clk);
+		output [7:0] counter;
+		output	tick;
+		input clk;
+		reg [7:0] counter;
+		reg tick;
+		always @ (posedge clk) begin	//每次碰到clk的上升沿就会执行一次
+			tick = ~tick;	//每次clk的上升沿翻转一次
+			counter = counter + 1;	//每次clk的上升沿计数一次
+		end
+	endmodule
+
+**2.模板及说明**
+
+1.模板:
+
+	always @ (敏感信号表达式) begin
+		//过程赋值语句.reg, integer, real, time等
+		//if, case, while, repeat, for, task, function等语句
+	end
+
+2.说明:
+
+	1.敏感信号表达式(又称事件表达式或敏感表),当其值改变时,则执行一遍块内语句;
+	2.在敏感信号表达式中应列出影响块内取值的所有信号;
+	3.敏感信号为多个信号时,中间用关键字or连接;
+	4.敏感信号不要为x或z,否则会阻挡进程;
+	5.always的时间控制可以为沿触发(描述时序逻辑),也可为电平触发(描述组合逻辑);
+	6.关键字posedge表示上升沿触发,negedge表示下降沿触发.
+
+说明实例:
+
+	1.两个沿触发的always块:
+		always @ (posedge clock or posedge reset) begin
+			...
+		end
+	2.多个电平触发的always块:
+		always @ (a or b or c) begin
+			...
+		end
+
+**3.可综合性问题**
+
+always块语句是用于综合过程最有用的语句之一,为了得到最好的综合结果,必须按照下面的模板来编写:
+
+模板1:
+
+	always @ (Inputs)	//所有输入信号必须列出,用or隔开
+		begin
+			...		//组合逻辑关系
+		end
+
+模板2:
+
+	always @ (Inputs)	//所有输入信号必须列出,用or隔开
+		begin
+			if (Enable) begin
+				...		//锁存动作
+			end
+		end
+
+模板3:
+
+	always @ (posedge Clock)	//Clock only(只有时钟)
+		begin
+			...		//同步动作
+		end
+
+模板4:
+
+	always @ (posedge Clock or negedge Reset) //Clock and Reset only(有时钟和复位信号)
+		begin
+			if (~Reset)		//测试异步复位电平是否有效
+				...			//异步动作
+			else
+				...			//同步动作
+		end					//可产生触发器和组合逻辑
+
+**4.注意点**
+
+1.当always块有多个敏感信号时,一定要采用if...else if语句,不能采用并列的if语句.否则会造成一个寄存器有多个时钟驱动,出现编译错误.
+
+	always @ (posedge min_clk or negedge reset) begin
+		if (reset)
+			min <= 0;
+		else if (min = 8'h59)	//当reset无效且min=8'h59时(此处一定不能写成if)
+			begin
+				min <= 0;
+				h_clk <= 1;
+			end
+	end
+
+2.通常采用异步清0.只有在时钟周期很小或清0信号为电平信号时(容易捕捉到清0信号)才采用同步清0.
+
+#### 5.4.1 initial语句
