@@ -291,6 +291,46 @@ compliant:顺从的,服从的; conform:符合,遵照
 	and instruction fields only.
 	->简单的寻址模式,只有从寄存器内容和指令字段确定的所有装载/存储地址
 
+## 42.backwards, optimal
+
+backwards:向后,倒;	optimal:最佳的,最理想的
+
+	An important feature of the ARMv8 architecture is backwards compatibility, combined with
+	the freedom for optimal implementation in a wide range of standard and more specialized
+	use cases.
+	->ARMv8体系结构的一个重要特性是向后兼容,并在广泛的标准用例和更专业的用例中实现了最优的实现.
+
+## 43.evolved
+
+进化了的
+
+	The ARM architecture has evolved significantly since this introduction, and ARM continues
+	to develop it.
+	->ARM体系结构自引入以来已经发生了显著的变化,ARM也在一直持续的开发它.
+
+## 44.obsolete
+
+淘汰,废弃.过时的
+
+	Of these, the first three version are now obsolete.
+	->其中,前三个版本现在已经废弃了(过时了).
+
+## 45.latency
+
+延迟,潜伏
+
+	Implements a programmers model designed for low-latency interrupt processing, with
+	hardware stacking of registers and support for writing interrupt handlers in high-level
+	languages.
+	->实现了为低延迟中断处理而设计的程序员模型,通过硬件寄存器的堆叠和支持用高级语言编写中断处理程序
+
+## 46.variant
+
+变体,转化
+
+	Implements a variant of the R-profile PMSA.
+	->实现R-profile PMSA的一个变体
+
 
 
 
