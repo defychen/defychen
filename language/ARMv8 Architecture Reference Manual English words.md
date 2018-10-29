@@ -331,9 +331,40 @@ backwards:向后,倒;	optimal:最佳的,最理想的
 	Implements a variant of the R-profile PMSA.
 	->实现R-profile PMSA的一个变体
 
+## 49.consistency
 
+一致性
 
+	ARMv8 introduces major changes to the ARM architecture, while maintaining a high level
+	of consistency with previous versions of the architecture.
+	->ARMv8对ARM体系结构进行了重大更改,同时保持了与以前版本体系结构的高度一致性
 
+## 50.terms
 
+条款,术语
 
+	The following subsections describe key ARMv8 architectural concepts. Each section 
+	introduces the corresponding terms that are used to describe the architecture.
+	->下面的小节描述了ARMv8的关键架构概念,每个部分都介绍了用于描述体系结构的相应术语
 
+## 51.procedure
+
+程序,手续,步骤
+
+	the procedure link register
+	->程序链接寄存器
+
+## 52.scalar
+
+标量
+
+	Provides 32 128-bit registers for SIMD vector and scalar floating-point support.
+	->为SIMD矢量和标量浮点支持提供32个128位寄存器.
+
+## 53.hierarchy
+
+等级制度,层次
+
+	Defines the ARMv8 Exception model, with up to four Exception levels,EL0-EL3, that
+	provide an execution privilege hierarchy.
+	->定义ARMv8异常模型,最多有四个异常级别:EL0 - EL3,它们提供执行特权层次结构
