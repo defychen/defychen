@@ -368,3 +368,135 @@ backwards:向后,倒;	optimal:最佳的,最理想的
 	Defines the ARMv8 Exception model, with up to four Exception levels,EL0-EL3, that
 	provide an execution privilege hierarchy.
 	->定义ARMv8异常模型,最多有四个异常级别:EL0 - EL3,它们提供执行特权层次结构
+
+## 54.indices
+
+指数,目录(index的复数),索引.
+
+	Vector indices are in the range 0 to (number of elements - 1).
+	->向量索引在0到(元素数量- 1)之间.
+
+## 55.specifier
+
+说明符
+
+	data type specifier
+	->数据类型说明符
+
+## 56.polynomial
+
+多项式
+
+## 57.arithmetic
+
+算数,算法
+
+## 58.multiply
+
+乘法
+
+	A multiply instruction must distinguish between integer and floating-point data types.
+	->乘法指令必须区分整数和浮点数据类型.
+
+## 59.modulo
+
+模运算
+
+	module arithmetic
+	->模计算
+
+## 60.alternative
+
+可选择性的,替代的
+
+	Alternative half-precision.
+	->替代的半精度.
+
+## 61.pseudocode
+
+伪代码
+
+## 62.ternary
+
+三元的,三重的
+
+	ternary operator
+	->三元运算符
+
+## 63.pack
+
+打包,包装
+
+	In a implementation that includes the SIMD instructions that operate on the SIMD and
+	floating-point register file, a register can hold one or more packed elements, all of
+	the same size and type.
+	->在包含对SIMD和浮点寄存器文件进行操作的SIMD指令的实现中,寄存器可以容纳一个或多个打包的元素,它们
+		的大小和类型都相同.
+
+## 64.indice, significant
+
+indice:索引; significant:重要的,有意义的.
+
+	Vector indices are in the range 0 to (number of elements - 1). An index of 0 refers to
+	the least significant end of the vector.
+	->向量索引在0到(元素数量-1)之间.索引0指的是向量最低有效位的一端.
+
+## 65.leave open
+
+未解决的,悬而未决的,保留的
+
+	The description of IEEE half-precision includes ARM-specific details that are left open
+	by the standard, and is only an introduction to the formats and to the values they can
+	contain.
+	->对IEEE半精度的描述包括arm特定的细节,这些细节由标准保留,只是对格式和它们可以包含的值的介绍.
+
+## 66.infinity
+
+无穷,无限大
+
+	For more information, especially on the handling of infinities, NaNs and signed zero,
+	see the IEEE 754 standard.
+
+## 67.exponent
+
+指数
+
+	The interpretation of the format depends on the value of the exponent field.
+	->格式的解释取决于指数域的值
+
+## 68.normalized
+
+标准化的,归一化
+
+	The value is a normalized number and is equal to:
+	->这个值是一个标准化的数字,等于
+	The minumum positive normalized number is ...
+	->最小的归一化数是...
+
+## 69.denormalized, fraction
+
+denormalized:非规范化的; fraction:小数,分数
+
+	The value is either a zero or a denormalized number, depending on the fraction bits:
+	->根据分数位(小数位)的不同,这个值要么是零,要么是非正规化数:
+
+## 70.identically
+
+同一地,相等地
+
+	These usually behave identically.
+	->它们的行为通常是相同的.
+
+## 71.yield, circumstances
+
+yield:产生,屈服,收益; circumstances:环境,情况
+
+	However, they yield different results in some circumstances.
+	->然而,它们在某些情况下会产生不同的结果
+
+## 72.comparison
+
+比较
+
+	integer comparison
+	->整数比较
