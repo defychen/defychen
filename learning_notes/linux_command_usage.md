@@ -502,4 +502,26 @@ ar(archive)命令,归档.通常用于将多个目标文件.o进行归档,形成�
 	rm -rf soft_link		//没有"/",这个是删除软链接
 	rm -rf soft_link/	//加了个"/",这个是删除文件夹
 
+## 29.sudo su root账号切换(root用户和普通用户切换)
+
+当忘记root密码时,用户修改root密码方法:
+
+**方法1:用户具有sudo权限**
+
+如果用户具有sudo权限,则运行:
+
+	1.执行:sudo su root
+	//然后输入当前用户的密码
+	2.进入到root账户,执行:passwd	//修改root密码
+	//输入两次新的root密码.
+
+	PS:用户账户切换
+	su //切换到root用户,需要输入root密码
+	su defychen	//切换到defychen用户
+	PS:在root账户下,输入exit可以快速退出到普通用户.
+
+**方法2:用户不具有sudo权限**
+
+略.
+
 ## 13. wget命令
