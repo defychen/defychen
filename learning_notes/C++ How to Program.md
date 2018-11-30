@@ -1894,3 +1894,103 @@ STL中的算法大部分是使用迭代器来访问容器中的元素,因此一�
 
 ### 15.2 容器简介
 
+容器可以分为4类:序列容器(sequence container)、有序关联容器(ordered associative container)、无序关联容器(unordered associative container)和容器适配器(container adapter).
+
+**1.各类容器包含的类型**
+
+	1.序列容器
+		array:固定大小,直接访问任意元素;
+		deque:从头部或尾部进行快速插入和删除操作,直接访问任意元素;
+		forward_list:单链表,在任意位置快速插入和删除操作.C++11标准新出的容器;
+		list:双向链表,在任意位置快速插入和删除操作;
+		vector:从尾进行快速插入和删除操作,直接访问任意元素.
+	2.有序关联容器(key按顺序保存)
+		set:快速查找,无重复元素;
+		multiset:快速查找,可有重复元素;
+		map:一对一映射,无重复元素,基于key快速查找;
+		multimap:一对一映射,可有重复元素,基于key快速查找.
+	3.无序关联容器
+		unordered_set:快速查找,无重复元素;
+		unordered_multiset:快速查找,可有重复元素;
+		unordered_map:一对一映射,无重复元素,基于key快速查找;
+		unordered_multimap:一对一映射,可有重复元素,基于key快速查找.
+	4.容器适配器
+		stack(栈):后进先出(LIFO);
+		queue(队列):先进先出(FIFO);
+		priority_queue(优先级队列):优先级最高的元素先出.
+
+**2.各类容器特点**
+
+	1.序列容器
+		描述线性的数据结构.
+	2.关联容器
+		描述非线性的数据结构,可以快速锁定其中的元素.
+		存储值的集合或key-value对.关联容器中得key是不可变的(不能被修改的).
+	3.容器适配器
+		是在序列容器的基础上加上某些约束条件得到.包括stack和queue.
+	PS:
+		序列容器和关联容器一起成为首类容器;
+		string类型类似线性容器,但是只能存储字符数据.
+
+**3.STL容器的通用函数**
+
+	1.默认构造函数
+		对容器进行默认初始化的构造函数.
+	2.拷贝构造函数
+		将容器初始化为同类型已有容器的副本的构造函数.
+	3.转移构造函数
+		将一个已经在某容器中的元素转移到同类型的新容器中.
+	4.析构函数
+		在容器不再需要时执行清理工作.
+	5.empty
+		判断容器是否为空.即没有元素返回true,有则返回false.
+	6.insert
+		在容器中插入一个元素.
+	7.size
+		返回当前容器中得元素个数.
+	8.copy operator =
+		把一个容器赋值给另一个
+	9.move operator =
+		将元素从一个容器移动到另一个容器.
+	10.operator <
+		若第一个容器小于第二个容器则返回true,否则返回false.
+	11.operator <=
+		若第一个容器小于或等于第二个容器则返回true,否则返回false.
+	12.operator >
+		若第一个容器大于第二个容器则返回true,否则返回false.
+	13.operator >=
+		若第一个容器大于或等于第二个容器则返回true,否则返回false.
+	14.operator ==
+		若第一个容器等于第二个容器则返回true,否则返回false.
+	15.false operator != 
+		若第一个容器不等于第二个容器则返回true,否则返回false.
+	16.swap
+		交换两个容器中得元素.
+	17.max_size
+		返回一个容器中得最大元素个数.
+	18.begin
+		返回引用容器中第一个元素的iterator或const_iterator.该函数有两个版本.
+	19.end
+		返回引用容器中末端之后位置的iterator或const_iterator.该函数有两个版本.
+	20.cbegin--->C++11新加的
+		返回引用容器第一个元素的const_iterator
+	21.cend--->C++11新加的
+		返回引用容器末端之后位置的const_iterator
+	22.rbegin
+		返回引用容器末端位置的reverse_iterator或const_reverse_iterator.该函数有两个版本.
+	23.rend
+		返回引用容器第一个元素之前位置的reverse_iterator或const_reverse_iterator.该函数有两个版本.
+	24.crbegin--->C++11新加的
+		返回引用容器末端的const_reverse_iterator.
+	25.crend--->C++11新加的
+		返回引用容器第一个元素之前位置的const_reverse_iterator.
+	26.erase
+		删除容器中的一个或多个元素.
+	27.clear
+		删除容器中所有元素.
+
+PS:
+
+	1.priority_queue没有提供重载的<,<=,>,>=,==和!=运算符;
+	2.无序关联容器没有提供重载的<,<=,>和>=运算符;
+	3.forward_list没有提供成员函数rbegin,rend,crbegin和crend.
