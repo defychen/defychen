@@ -2564,9 +2564,9 @@ multimap用于快速存取key-value值对,以pair对象存取.multimap允许多�
 
 map用于快速存取唯一的key-value值对,以pair对象存取.map中的key-value一对一映射.位于<map>.
 
-#include <iostream>
-#include <map>
-using namespace std;
+	#include <iostream>
+	#include <map>
+	using namespace std;
 
 	int main()
 	{
@@ -2598,3 +2598,144 @@ using namespace std;
 	}
 
 ### 15.7 容器适配器
+
+容器适配器包括:stack, queue和priority_queue.
+
+	1.适配器不是首类容器,没有提供真正用于存储元素的数据结构实现,而且不支持迭代器;
+	2.适配器支持成员函数push和pop;
+	3.适配器一般配合序列容器一起使用.
+		stack<int, vector<int>> xxx;
+
+#### 15.7.1 适配器stack
+
+stack:后进先出.可以使用deque,vector,list等来实现.头文件<stack>.
+
+	#include <iostream>
+	#include <stack>
+	#include <vector>
+	#include <list>
+	using namespace std;
+	
+	template<typename T>
+	void pushElements(T &stackRef);
+	
+	template<typename T>
+	void popElements(T &stackRef);
+	
+	int main()
+	{
+		stack<int> intDequeStack;
+		/*
+			stack需要使用一种容器来存储数据(e.g.deque,vector,list等).
+			此处使用默认的deque.
+		*/
+		stack<int, vector<int>> intVectorStack;	//使用vector来实现stack
+		stack<int, list<int>> intListStack;		//使用list来实现stack
+	
+		cout << "Pushing onto intDequeStack: ";
+		pushElements(intDequeStack);
+		cout << "\nPushing onto intVectorStack: ";
+		pushElements(intVectorStack);
+		cout << "\nPushing onto intListStack: ";
+		pushElements(intListStack);
+		cout << endl << endl;
+	
+		cout << "Popping from intDequeStack: ";
+		popElements(intDequeStack);
+		cout << "\nPopping from intVectorStack: ";
+		popElements(intVectorStack);
+		cout << "\nPopping from intListStack: ";
+		popElements(intListStack);
+		cout << endl;
+	}
+	
+	template<typename T>
+	void pushElements(T &stackRef)
+	{
+		for (int i = 0; i < 10; ++i)
+		{
+			stackRef.push(i);	//push(i):把元素插入到stack顶端.
+			cout << stackRef.top() << ' ';	//top():获得stack顶端元素引用.
+		}
+	}
+	
+	template<typename T>
+	void popElements(T &stackRef)
+	{
+		while (!stackRef.empty())	//empty():判断stack是否为空,为空返回true,非空返回false.
+		{
+			cout << stackRef.top() << ' ';
+			stackRef.pop();	//pop():从顶端删除元素.
+			/*
+				stack.size():获得stack内元素个数.
+			*/
+		}
+	}
+
+#### 15.7.2 适配器queue
+
+queue:队列,先进先出.可以用list或deque(默认)来实现.头文件<queue>.
+
+	#include <iostream>
+	#include <queue>
+	using namespace std;
+	
+	int main()
+	{
+		queue<double> values;
+	
+		values.push(3.2);	//push(3.2):往queue的末端插入元素.
+		values.push(9.8);
+		values.push(5.4);
+	
+		cout << "Popping from values: ";
+	
+		while (!values.empty())	//empty():判断queue是否为空.空返回true,非空返回false.
+		{
+			cout << values.front() << ' ';	//front():获得queue的第一个元素
+			values.pop();	//pop():从queue的头部删除元素
+			/*
+				back():获得queue的最后一个元素;
+				size():获得queue中元素个数.
+			*/
+		}
+	
+		cout << endl;
+	}
+
+#### 15.7.3 适配器priority_queue
+
+priority_queue按序插入元素和在头部删除元素.使用vector和deque实现.当元素插入到priority_queue中时,会自动按照优先顺序排序(使用堆排序)---默认为less<T>,即递增排序.优先级最高的元素首先被删除.
+
+	#include <iostream>
+	#include <queue>
+	using namespace std;
+	
+	int main()
+	{
+		priority_queue<double> priorities;
+		//实例存储double值的priority_queue.默认使用less<T>递增排序.
+	
+		priorities.push(3.2);	//push(3.2):插入元素.
+		priorities.push(9.8);
+		priorities.push(5.4);
+	
+		cout << "Popping from priorities: ";
+	
+		while (!priorities.empty())	//empty():判断priority_queue是否为空.为空返回true,
+		{							//非空返回false.
+			cout << priorities.top() << ' ';	//top():获得优先级最高的元素
+			priorities.pop();	//弹出优先级最高的元素
+		}
+		cout << endl;
+	}
+	PS:
+		结果为:Popping from priorities: 9.8 5.4 3.2
+
+### 15.8 bitset类
+
+略.
+
+***
+
+## Chapter 16.
