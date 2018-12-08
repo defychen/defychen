@@ -1868,6 +1868,501 @@ C++标准库类模板vector,表示一种更健壮的、有很多附加能力的�
 
 ***
 
+## Chapter 9.类的深入剖析:抛出异常
+
+### 9.1 Time类实例
+
+良好编程习惯:
+
+	1.public,private,protected等成员访问说明符在类定义中只使用一次.且public放在最前面;
+	2.数据成员应该放在private中---最小权限原则.
+
+1.Time类定义
+
+	#ifndef _TIME_H_
+	#define _TIME_H_	//防止发生多次包含同一个头文件的错误.
+	
+	class Time
+	{
+	public:
+		Time();
+		void setTime(int, int, int);
+		void printUniversal() const;	//常量成员函数,表示该函数不允许修改数据成员
+		void printStandard() const;
+	private:
+		unsigned int hour;
+		unsigned int minute;
+		unsigned int second;
+	};
+	
+	#endif
+
+2.Time类成员函数的定义
+
+被定义在类定义内部的成员函数都被隐式地声明为inline.
+
+	#include <iostream>
+	#include <iomanip>
+	#include <stdexcept>	//异常处理头文件
+	#include "Time.h"
+	using namespace std;
+	
+	Time::Time()
+		: hour(0), minute(0), second(0)	//使用构造函数初始化列表初始化类的数据成员
+	{			//如果是静态成员应该在声明的地方初始化
+	}
+	
+	void Time::setTime(int h, int m, int s)
+	{
+		if ((h >= 0 && h <= 24) && (m >= 0 && m <= 60) &&
+			(s >= 0 && s <= 60))
+		{
+			hour = h;
+			minute = m;
+			second = s;
+		}
+		else
+			throw invalid_argument("hour, minute and/or second was out of range");
+			/*
+				invalid_argument:为一种异常类型.此处为创建一个类型为invalid_argument的异常对象.
+				invalid_argument(""):()中的内容为要输出的字符串.可以通过:
+				try...catch(invalid_argument &e)	//捕获到异常
+					e.what();	//可以打印出之前设置的要输出的字符串.
+			*/
+	}
+	
+	void Time::printUniversal() const
+	{
+		cout << setfill('0') << setw(2) << hour << ":"
+			<< setw(2) << minute << ":" << setw(2) << second;
+		/*
+			setfill('0'):表示当输出域宽(setw(x)设置的)大于数字个数时填充的字符.因为输出默认右对齐,
+			因此会填充在数据的左边.
+			setfill():为"黏性"设置,一旦设置,将应用到后续值得显示中.如需更改,重新设置即可.
+			setw(2):"非黏性"设置,只对紧接着的显示起作用.
+		*/
+	}
+	
+	void Time::printStandard() const
+	{
+		cout << ((hour == 0 || hour == 12) ? 12 : hour % 12) << ":"
+			<< setfill('0') << setw(2) << minute << ":" << setw(2)
+			<< second << (hour < 12 ? " AM" : " PM");
+	}
+
+3.测试程序
+
+	#include <iostream>
+	#include <stdexcept>
+	#include "Time.h"
+	using namespace std;
+	
+	int main()
+	{
+		Time t;
+		
+		cout << "The initial universal time is ";
+		t.printUniversal();	//00:00:00
+		cout << "\nThe initial standard time is ";
+		t.printStandard();	//12:00:00 AM
+		
+		t.setTime(13, 27, 6);
+		cout << "\n\nUniversal time after setTime is ";
+		t.printUniversal();	//13:27:06
+		cout << "\nStandard time after setTime is ";
+		t.printStandard();	//1:27:06 PM
+		
+		try
+		{
+			t.setTime(99, 99, 99);	//try可能出现异常的调用
+		}
+		catch(invalid_argument &e)	//捕获到invalid_argument异常对象.且是异常对象的引用
+		{
+			cout << "Exception: " << e.what() << endl;	
+			/*
+				e.what():调用异常对象引用的what()函数.会打印出创建时传给构造函数的字符
+				(即为异常错误信息).
+			*/
+		}
+		
+		cout << "\n\nAfter attempting invalid settings:"
+			<< "\nUniversal time: ";
+		t.printUniversal();	//13:27:06--->与之前的一样
+		cout << "\nStandard tiem: ";
+		t.printStandard();	//1:27:06 PM
+		cout << endl;
+	}
+
+PS:
+
+	1.类的每个对象只包含自己单独的一份数据成员,类的成员函数所有的对象共享一份副本.因此,类的对象并不大;
+	2.在成员函数中存在与数据成员相同的局部变量,如果需要访问到类的成员变量,可以使用:
+		类名::成员变量名--->即可访问到.
+
+### 9.2 Time类实例:具有默认实参的构造函数
+
+1.Time类定义
+
+	#ifndef __TIME_H__
+	#define __TIME_H__
+	
+	class Time
+	{
+	public:
+		explicit Time(int = 0, int = 0, int = 0);
+		/*
+			explicit:明确的.表示该构造函数在使用中必须匹配才能调用成功,不会发生隐式的构造函数调用.
+				expicit在实现时也是去掉的.
+			具有默认实参的构造函数(默认实参仅在声明时含有,在实现时只有形参变量).
+			一个默认所有实参的构造函数是一个默认的构造函数,一个类最多只有一个默认构造函数.
+		*/
+		
+		void setTime(int, int, int);
+		void setHour(int);
+		void setMinute(int);
+		void setSecond(int);
+		
+		unsigned int getHour() const;	//常量成员函数,表示该函数不允许修改数据成员
+		unsigned int getMinute() const;
+		unsigned int getSecond() const;
+		
+		void printUniversal() const;
+		void printStandard() const;
+	private:
+		unsigned int hour;
+		unsigned int minute;
+		unsinged int second;	
+	};
+	
+	#endif
+
+2.Time类成员函数的定义
+
+	#include <iostream>
+	#include <iomanip>
+	#include <stdexcept>
+	#include "Time.h"
+	using namespace std;
+	
+	Time::Time(int hour, int minute, int second)	//实现时,默认实参和explicit都是去掉的
+	{
+		setTime(hour, minute, second);
+	}
+	
+	void Time::setTime(int h, int m, int s)
+	{
+		setHour(h);
+		setMinute(m);
+		setSecond(s);
+	}
+	
+	void Time::setHour(int h)
+	{
+		if (h >= 0 && h < 24)
+			hour = h;
+		else
+			throw invalid_argument("hour must be 0-23");
+	}
+
+	void Time::setMinute(int m)
+	{
+		if (m >= 0 && m < 60)
+			minute = m;
+		else
+			throw invalid_argument("minute must be 0-59");
+	}
+	
+	void Time::setSecond(int s)
+	{
+		if (s >= 0 && s < 60)
+			second = s;
+		else
+			throw invalid_argument("second must be 0-59");
+	}
+	
+	unsigned int Time::getHour() const	//const成员函数在定义和实现均需要有const关键字
+	{
+		return hour;
+	}
+	
+	unsigned int Time::getMinute() const	//const成员函数在定义和实现均需要有const关键字
+	{
+		return minute;
+	}
+
+	unsigned int Time::getSecond() const	//const成员函数在定义和实现均需要有const关键字
+	{
+		return second;
+	}
+
+	void Time::printUniversal() const
+	{
+		cout << setfill('0') << setw(2) << getHour() << ":"
+			<< setw(2) << getMinute() << ":" << setw(2) << getSecond();
+		/*
+			setfill('0'):表示当输出域宽(setw(x)设置的)大于数字个数时填充的字符.因为输出默认右对齐,
+			因此会填充在数据的左边.
+			setfill():为"黏性"设置,一旦设置,将应用到后续值得显示中.如需更改,重新设置即可.
+			setw(2):"非黏性"设置,只对紧接着的显示起作用.
+		*/
+	}
+	
+	void Time::printStandard() const
+	{
+		cout << ((getHour() == 0 || getHour() == 12) ? 12 : getHour() % 12) << ":"
+			<< setfill('0') << setw(2) << getMinute() << ":" << setw(2)
+			<< getSecond() << (getHour() < 12 ? " AM" : " PM");
+	}
+
+3.测试程序
+
+	#include <iostream>
+	#include <stdexcept>
+	#include "Time.h"
+	using namespace std;
+	
+	int main()
+	{
+		Time t1;				//使用全部的默认实参值.00:00:00
+		Time t2(2);				//02:00:00
+		Time t3(21, 34);		//21:34:00
+		Time t4(12, 25, 42);	//12:25:42
+		
+		cout << "Constructed with:\n\nt1: all arguments defaulted\n ";
+		t1.printUniversal();	//00:00:00
+		cout << "\n ";
+		t1.printStandard();		//12:00:00 AM
+		
+		cout << "\n\nt2: hour specified: minute and second defaulted\n ";
+		t2.printUniversal();	//02:00:00
+		cout << "\n ";
+		t2.printStandard();		//2:00:00 AM
+		
+		cout << "\n\nt3: hour and minute specified: second defaulted\n ";
+		t3.printUniversal();	//21:34:00
+		cout << "\n ";
+		t3.printStandard();		//9:34:00 PM
+		
+		cout << "\n\nt4: hour, minute and second specified\n ";
+		t4.printUniversal();	//12:25:42
+		cout << "\n ";
+		t4.printStandard();		//12:25:42 PM
+		
+		try
+		{
+			Time t5(27, 74, 99);
+		}
+		catch (invalid_argument &e)
+		{
+			cerr << "\n\nException while initializing t5: " << e.what() << endl;
+			//会打出"hour must be 0-23".
+		}
+	}
+
+### 9.3 重载的构造函数和委托构造函数
+
+**1.重载的构造函数**
+
+	Time();
+	Time(int);
+	Time(int, int);
+	Time(int, int, int);
+
+**2.委托构造函数**
+
+委托构造函数:在类中调用同一个类的其他构造函数来实现功能,即将自己的工作委托给其他构造函数.
+
+	Time::Time()
+		: Time(0, 0, 0)	//带类名称的成员初始化器(初始化列表),会调用Time(int,int,int)构造函数
+	{
+	}
+	
+	Time::Time(int hour)
+		: Time(hour, 0, 0)
+	{
+	}
+
+	Time::Time(int hour, int minute)
+		: Time(hour, minute, 0)
+	{
+	}
+
+### 9.4 析构函数及调用顺序
+
+1.CreateAndDestroy类定义
+
+	#include <string>
+	using namespace std;
+	
+	#ifndef __CREATE_H__
+	#define __CREATE_H__
+	
+	class CreateAndDestroy
+	{
+	public:
+		CreateAndDestroy(int, string);		//构造函数没有返回值
+		~CreateAndDestroy();	//析构函数无形参,无返回值.前面一个"~"
+	private:
+		int objectID;
+		string message;
+	};
+	
+	#endif
+
+2.CreateAndDestroy类成员函数实现
+
+	#include <iostream>
+	#include "CreateAndDestroy.h"
+	using namespace std;
+
+	CreateAndDestroy::CreateAndDestroy(int ID, string messageString)
+		: objectID(ID), message(messageString)	//初始化列表初始化类的数据成员
+	{
+		cout << "Object " << objectID << " constructor runs "
+			<< message << endl;
+	}
+	
+	CreateAndDestroy::~CreateAndDestroy()	//析构函数
+	{
+		cout << (objectID == 1 || objectID == 6 ? "\n" : "");
+		
+		cout << "Object " << objectID << " destructor runs "
+			<< message << endl;
+	}
+
+3.测试程序
+
+	#include <iostream>
+	#include "CreateAndDestroy.h"
+	using namespace std;
+	
+	void create(void);
+	
+	CreateAndDestroy first(1, "(global before main)");	//1.全局对象首先执行,先于main函数
+		//全局最先构造,最后析构
+	
+	int main()
+	{
+		cout << "\nMAIN FUNCTION: EXECUTION BEGINS" << endl;
+		CreateAndDestroy second(2, "(local automatic in main)");
+		static CreateAndDestroy third(3, "(local static in main)");
+		
+		create();
+		
+		cout << "\nMAIN FUNCTION: EXECUTION RESUMES" << endl;
+		CreateAndDestroy fourth(4, "(local automatic in main)");
+		cout << "\nMAIN FUNCTION: EXECUTION ENDS" << endl;
+	}
+	
+	void create(void)
+	{
+		cout << "\nCREATE FUNCTION: EXECUTION BEGINS" << endl;
+		CreateAndDestroy fifth(5, "(local automatic in create)");
+		static CreateAndDestroy sixth(6, "(local static in create)");
+		CreateAndDestroy seventh(7, "(local automatic in create)");
+		cout << "\nCREATE FUNCTION: EXECUTION ENDS" << endl;
+	}
+
+PS:析构的顺序:局部,static,全局.
+
+### 9.5 返回private数据成员的引用或指针
+
+1.类中的定义
+
+	unsigned int &badSetHour(int);	//类中函数原型.返回成员变量的引用
+
+2.成员函数实现
+
+	unsigned int &Time::badSetHour(int h)
+	{
+		if (hh >= 0 && h < 24)
+			hour = h;
+		else
+			throw invalid_argument("hour must be 0-23");
+		return hour;	//返回成员变量.返回值带有"&",因此是成员变量的引用
+	}
+
+3.测试程序
+
+	#include <iostream>
+	#include "Time.h"
+	using namespace std;
+	
+	int main()
+	{
+		Time t;
+		
+		int &hourRef = t.badSetHour(20);	//此时hourRef是成员变量hour的引用
+		
+		hourRef = 30;	//可以直接修改成员变量的值
+		
+		t.badSetHour(12) = 74;	//首先hour先被赋值12;然后返回引用时hour又被赋值非法制74.
+	}
+
+### 9.6 默认逐个成员赋值
+
+1.Date类定义
+
+	#ifndef __DATE_H__
+	#define __DATE_H__
+	
+	class Date
+	{
+	public:
+		explicit Date(int = 1, int = 1, int = 2000);	//显示构造函数
+		void print();
+	private:
+		unsigned int month;
+		unsigned int day;
+		unsigned int year;
+	};
+	
+	#endif
+
+2.Date类的成员函数实现
+
+	#include <iostream>
+	#include "Date.h"
+	using namespace std;
+	
+	Date::Date(int m, int d, int y)
+		: month(m), day(d), year(y)	//初始化列表
+	{
+	}
+
+	void Date::print()
+	{
+		cout << month << "/" << day << "/" << year;
+	}
+
+3.测试程序
+
+	#include <iostream>
+	#include "Date.h"
+	using namespace std;
+	
+	int main()
+	{
+		Date date1(7, 4, 2001);
+		Date date2;	//使用默认实参
+		
+		cout << "date1 = ";
+		date1.print;	//"7/4/2001"
+		cout << "date2 = ";
+		date2.print;	//"1/1/2000"
+		
+		date2 = date1;	//相同类型的对象,可以直接赋值.对应的成员变量会做相应的赋值
+		date2.print();	//"7/4/2001"
+		cout << endl;
+	}
+
+### 9.7 const对象和const成员函数
+
+	1.const对象可以仅可以调用const成员函数,调用non-const成员函数就会报错;
+	2.non-const对象可以都可以调用(const成员函数和non-const成员函数均可以调用).
+
+***
+
 ## Chapter 15.标准库的容器和迭代器
 
 ### 15.1 标准模板库(STL)简介

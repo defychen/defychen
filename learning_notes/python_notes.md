@@ -1559,6 +1559,10 @@ os.mkdir(pathname, mode):以权限mode创建一个名叫pathname的目录(如果
 	os.mkdir(path, 0755)	//创建path目录
 	os.mkdir(path) //创建path目录,权限为0777
 
+**os.system函数**
+
+os.system(cmd):执行linux下的shell命令.返回命令执行状态.
+
 ### 10.2 sys模块
 
 **1.sys.platform**
@@ -1743,6 +1747,35 @@ root_dir:需要打包的源文件/目录.
 		tar = tarfile.open('mytar.tar', 'r')
 		tar.extractall() //可设置解压的地址
 		tar.close()
+
+### 10.5 commands模块
+
+python中的commands模块用于调用linux的shell命令.有3种方法:
+
+	commands.getstatus(cmd)			//返回命令的执行状态
+	commands.getoutput(cmd)			//返回执行结果
+	commands.getstatusoutput(cmd)	//返回一个tuple,包含执行状态和执行结果
+
+实例---调用shell命令,查看某文件是否存在
+
+	#!/usr/bin/python
+	#-*- coding:utf-8 -*-
+	
+	import commands
+	import os
+	aa = "hello"
+	output = commands.getstatusoutput("find . -name " + aa)
+	//在当前路径下查找"hello"文件是否存在
+	print output
+	/*
+		得到:(0, './11/hello')
+		0:表示该命令执行成功.类似rm删掉一个不存在的文件,则会得到256的值.
+		'./11/hello':表示该文件存在,在路径./11/hello.
+	*/
+	print os.path.abspath(output[1])
+	/*
+		os.path.abspath(output[1]):获取查找到的文件的绝对路径.
+	*/
 
 ***
 
@@ -2054,7 +2087,7 @@ socket:表示打开了一个网络连接.
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)	
 	//创建一个socket,AF_INET:IPv4协议(IPv6---AF_INET6);SOCK_STREAM:面向流的TCP协议
 	s.connect(('www.sina.com.cn', 80))	//IP地址+端口号.---IP地址可由域名"www.sina.com.cn"自动转换
-	//端口号分类:80 web服务标准端口;25 SMTP服务端口;21 FTP服务端口.端口号<1024---Internet标准服务端口;>1024可以任意使用.
+	//端口号分类:80 web服务标准端口;25 SMTP服务端口;21 FTP服务端口.端口号<1024---Internet标准服务
 	s.send('GET / HTTP/1.1\r\nHost: www.sina.com.cn\r\nConnection: close\r\n\r\n')
 	//发送数据---此处为请求首页内容.
 	
