@@ -2361,6 +2361,558 @@ PS:析构的顺序:局部,static,全局.
 	1.const对象可以仅可以调用const成员函数,调用non-const成员函数就会报错;
 	2.non-const对象可以都可以调用(const成员函数和non-const成员函数均可以调用).
 
+### 9.8 某个类的对象作为另一个类的成员
+
+一个类将其他类的对象作为其成员,也叫组成.可以很好的实现软件的复用性.
+
+	成员对象以在类定义中声明的对象顺序进行构造,而非以构造函数中成员的初始化列表顺序进行构造.且在宿主
+	对象构造之前建立.
+
+**实例**
+
+1.Date类定义---用于生成某个类的成员对象
+
+	#pragma once
+	#ifndef __DATE_H__
+	#define __DATE_H__
+	class Date
+	{
+	public:
+		static const unsigned int monthsPerYear = 12;
+		explicit Date(int = 1, int = 1, int = 1990);
+		void print() const;
+		~Date();
+	private:
+		unsigned int month;
+		unsigned int day;
+		unsigned int year;
+	
+		unsigned int checkDay(int) const;
+	};
+	
+	#endif
+
+2.Date类的成员函数实现
+
+	#include <array>
+	#include <iostream>
+	#include <stdexcept>
+	#include "Date.h"
+	using namespace std;
+	
+	Date::Date(int m, int d, int y)
+	{
+		if (m > 0 && m <= monthsPerYear)
+			month = m;
+		else
+			throw invalid_argument("month must be 1-12");
+	
+		year = y;
+		day = checkDay(d);
+	
+		cout << "Date object constructor for date ";
+		print();
+		cout << endl;
+	}
+	
+	void Date::print() const
+	{
+		cout << month << "/" << day << "/" << year;
+	}
+	
+	Date::~Date()
+	{
+		cout << "Date object destructor for date";
+		print();
+		cout << endl;
+	}
+	
+	unsigned int Date::checkDay(int testDay) const
+	{
+		static const array<int, monthsPerYear + 1> daysPerMonth =
+		{ 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+	
+		if (testDay > 0 && testDay <= daysPerMonth[month])
+			return testDay;
+	
+		if (month == 2 && testDay == 29 && (year % 400 == 0 ||
+			(year % 4 == 0 && year % 100 != 0)))
+			return testDay;
+	
+		throw invalid_argument("Invalid day for current month and year");
+	}
+
+3.Employee类定义---包含类对象的类
+
+	#ifndef __EMPLOYEE_H__
+	#define __EMPLOYEE_H__
+	
+	#include <string>
+	#include "Date.h"
+	
+	class Employee
+	{
+	public:
+		Employee(const std::string &, const std::string &,
+			const Date &, const Date &);
+		void print() const;
+		~Employee();
+	private:
+		std::string firstName;
+		std::string lastName;
+		const Date birthDate;
+		/*
+			Date类对象成员,在构造Employee对象时,该对象就被构造.有隐式的调用Date类复制构造函数的
+			过程,不会有构造函数的任何打印.在Employee对象析构时,会明确的调用析构函数,析构函数中存在
+			的打印也会打出来.
+		*/
+		const Date hireDate;
+	};
+	
+	#endif
+
+4.Employee类成员函数实现
+
+	#include <iostream>
+	#include "Employee.h"
+	#include "Date.h"
+	using namespace std;
+	
+	Employee::Employee(const string &first, const string &last,
+		const Date &dateOfBirth, const Date &dateOfHire)
+		: firstName(first),
+		  lastName(last),
+		  birthDate(dateOfBirth),	//调用类的默认复制构造函数(每个类都有),将已经声明的对象传递进来
+		  hireDate(dateOfHire)
+	{
+		cout << "Employee object constructor: " << firstName << " " << lastName << endl;
+	}
+	
+	void Employee::print() const
+	{
+		cout << lastName << ", " << firstName << " Hired: ";
+		hireDate.print();
+		cout << " BirthDay: ";
+		hireDate.print();
+		cout << endl;
+	}
+	
+	Employee::~Employee()
+	{
+		cout << "Employee object destructor: "
+			<< lastName << ", " << firstName << endl;
+	}
+
+5.测试程序
+
+	#include <iostream>
+	#include "Date.h"
+	#include "Employee.h"
+	using namespace std;
+	
+	int main()
+	{
+		Date birth(7, 24, 1949);
+		Date hire(3, 12, 1988);
+		Employee manager("Bob", "Blue", birth, hire);
+	
+		cout << endl;
+		manager.print();
+	}
+
+6.结果
+
+	Date object constructor for date 7/24/1949
+	Date object constructor for date 3/12/1988
+	Employee object constructor: Bob Blue	
+	//Employee对象构造时,原本成员对象Date也会有复制构造函数的调用,但是执行时是不会打印出来的.
+	
+	Blue, Bob Hired: 3/12/1988 BirthDay: 3/12/1988
+	Employee object destructor: Blue, Bob
+	Date object destructor for date3/12/1988
+	Date object destructor for date7/24/1949
+	Date object destructor for date3/12/1988
+	Date object destructor for date7/24/1949
+	/*
+		析构的顺序:
+			1.成员对象宿主类对象;
+			2.成员对象;
+			3.传递给成员对象的对象.
+	*/
+
+PS:
+
+也可以在成员初始化列表中不对类成员对象进行初始化,这样定义的成员对象的默认构造函数就会被调用.但是这种情况不是太好,因为没有成员对象中的数据成员全是默认值,非想要的值.不推荐这样做.
+
+### 9.9 friend函数和friend类
+
+类的friend函数(友元函数)在类的作用域之外定义,却具有访问类的非public(包括public)成员的权限.单独的函数、整个类以及其他类的成员函数均可以被声明为另一个类的友元.
+
+**1.friend的声明**
+
+	1.声明一个函数为一个类的友元:
+		class xxx
+		{
+			friend void func(parameter);	//声明函数func为类xxx的友元函数.
+		};
+	2.声明类ClassTwo为类ClassOne的友元类:
+		class ClassOne
+		{
+			friend class ClassTwo;	//声明类ClassTwo为类ClassOne的友元类.
+		};
+
+**2.实例---使用friend函数修改类的private成员数据**
+
+	#include <iostream>
+	using namespace std;
+	
+	class Count
+	{
+		friend void setX(Count &, int);	
+		/*
+		1.friend函数不属于类,是一个独立的函数;
+		2.类的friend函数在类中定义,以friend关键字开头.可以出现在类的任何位置,不受类的public,
+			private以及protected管控.一般在public成员函数声明之前进行声明(即最前面),方便观看;
+		3.friend函数可以直接操作类的数据成员;
+		3.仅在声明时出现friend关键字,后续实现不能带friend关键字.
+		*/
+	public:
+		Count()
+			: x(0)
+		{
+		}
+	
+		void print() const
+		{
+			cout << x << endl;
+		}
+	private:
+		int x;
+	};
+	
+	void setX(Count &c, int val)	//友元函数的实现,不能带关键字friend
+	{
+		c.x = val;	//可以直接操作到类的数据成员.
+	}
+	
+	int main()
+	{
+		Count counter;
+	
+		cout << "counter.x after instaniation: ";
+		counter.print();
+	
+		setX(counter, 8);
+		cout << "counter.x after call to setX friend function: ";
+		counter.print();
+	}
+
+### 9.10 this指针
+
+this指针的特点:
+
+	1.this指针用于类中,隐式的直接指向实例化的对象,只能用于非static成员函数,不能用于static成员函数,
+		因为static成员函数不依赖于对象而存在;
+	2.this指针在类中用于访问类的数据成员和非static成员函数.
+
+**实例1---this指针访问对象的数据成员**
+
+	#include <iostream>
+	using namespace std;
+	
+	class Test
+	{
+	public:
+		explicit Test(int = 0);
+		void print() const;
+	private:
+		int x;
+	};
+	
+	Test::Test(int value)
+		: x(value)
+	{
+	}
+	
+	void Test::print() const
+	{
+		cout << "x = " << x;
+		cout << "\nthis->x = " << this->x;
+		cout << "\n(*this).x = " << (*this).x << endl;
+		/*
+			(*this):取this的内容,即为对象.
+			(*this).x:即为取对象的x成员.	//在类中访问.
+		*/
+	}
+	
+	int main()
+	{
+		Test testObject(12);
+		testObject.print();
+	}
+
+**实例2---使用this指针串联调用成员函数**
+
+1.Time类定义
+
+	#ifndef __TIME_H__
+	#define __TIME_H__
+	
+	class Time
+	{
+	public:
+		explicit Time(int = 0, int = 0, int = 0);
+	
+		Time &setTime(int, int, int); //定义函数返回Time对象的引用.在实现时可以返回"*this"即可.
+		Time &setHour(int);
+		Time &setMinute(int);
+		Time &setSecond(int);
+	
+		unsigned int getHour() const;
+		unsigned int getMinute() const;
+		unsigned int getSecond() const;
+	
+		void printUniversal() const;
+		void printStandard() const;
+	private:
+		unsigned int hour;
+		unsigned int minute;
+		unsigned int second;
+	};
+	
+	#endif
+
+2.Time类成员函数实现
+
+	#include <iostream>
+	#include <iomanip>
+	#include <stdexcept>
+	#include "Time.h"
+	using namespace std;
+	
+	Time::Time(int hr, int min, int sec)
+	{
+		setTime(hr, min, sec);
+	}
+	
+	Time &Time::setTime(int h, int m, int s)
+	{
+		setHour(h);
+		setMinute(m);
+		setSecond(s);
+		return *this;	//返回"*this",即对象.与返回值对象的引用符合.
+	}
+	
+	Time &Time::setHour(int h)
+	{
+		if (h >= 0 && h < 24)
+			hour = h;
+		else
+			throw invalid_argument("hour must be 0-23");
+		return *this;
+	}
+	
+	Time &Time::setMinute(int m)
+	{
+		if (m >= 0 && m < 60)
+			minute = m;
+		else
+			throw invalid_argument("minute must be 0-59");
+		return *this;
+	}
+	
+	Time &Time::setSecond(int s)
+	{
+		if (s >= 0 && s < 60)
+			second = s;
+		else
+			throw invalid_argument("second must be 0-59");
+		return *this;
+	}
+	
+	unsigned int Time::getHour() const
+	{
+		return hour;
+	}
+	
+	unsigned int Time::getMinute() const
+	{
+		return minute;
+	}
+	
+	unsigned int Time::getSecond() const
+	{
+		return second;
+	}
+	
+	void Time::printUniversal() const
+	{
+		cout << setfill('0') << setw(2) << hour << ":"
+			<< setw(2) << minute << ":" << setw(2) << second;
+	}
+	
+	void Time::printStandard() const
+	{
+		cout << ((hour == 0 || hour == 12) ? 12 : hour % 12)
+			<< ":" << setfill('0') << setw(2) << minute
+			<< ":" << setw(2) << second << (hour < 12 ? " AM" : " PM");
+	}
+
+3.测试程序
+
+	#include <iostream>
+	#include "Time.h"
+	using namespace std;
+	
+	int main()
+	{
+		Time t;
+	
+		t.setHour(8).setMinute(30).setSecond(22);	//成员函数串联调用
+	
+		cout << "Universal time: ";
+		t.printUniversal();
+	
+		cout << "\nStandard time: ";
+		t.printStandard();
+	
+		cout << "\n\nNew standard time: ";
+		t.setTime(20, 20, 20).printStandard();
+		cout << endl;
+	}
+
+4.结果
+
+	Universal time: 08:30:22
+	Standard time: 8:30:22 AM
+	
+	New standard time: 8:20:20 PM
+
+### 9.11 static类成员
+
+	1.类的static数据成员是所有对象共享;
+	2.类的static成员函数(public)可以使用:
+		类名::成员函数--->进行访问.
+	3.类的static数据成员和成员函数不依赖于类而存在.
+
+**实例---static数据成员和成员函数**
+
+1.Employee类的定义
+
+	#ifndef __EMPLOYEE_H__
+	#define __EMPLOYEE_H__
+	
+	#include <string>
+	
+	class Employee
+	{
+	public:
+		Employee(const std::string &, const std::string &);
+		~Employee();
+		std::string getFirstName() const;
+		std::string getLastName() const;
+	
+		static unsigned int getCount();	//static成员函数
+	private:
+		std::string firstName;
+		std::string lastName;
+		static unsigned int count;
+		/*
+		static数据成员:可以在声明时进行初始化,也可以在类的实现中进行初始化.一般在实现中初始化的多.
+		*/
+	};
+	
+	#endif
+
+2.Employee类的成员函数实现
+
+	#include <iostream>
+	#include "employee.h"
+	using namespace std;
+	
+	unsigned int Employee::count = 0;
+	//在类的实现中初始化static成员变量.此时前面不能有static关键字.
+	
+	unsigned int Employee::getCount()	//static成员函数的实现,此时前面也不能有static关键字
+	{									//否则表示该函数仅在该文件中可见.
+		return count;
+	}
+	/*
+	1.static成员函数不能访问类的非static成员函数或非static数据成员.因为非static成员函数和非static
+		数据成员依赖于对象而存在.static成员函数也不具有this指针;
+	2.static成员函数也不能被声明为const类型,因为const指示函数不能修改它操作的对象,但是static成员函数
+		不依赖于对象.
+	PS:总之:static数据成员和static成员函数独立于类的对象而存在.而this指针和const与类的具体对象相关联.
+	*/
+	
+	Employee::Employee(const string &first, const string &last)
+		: firstName(first), lastName(last)
+	{
+		++count;	//在非static成员中引用static数据成员.
+		cout << "Employee constructor for " << firstName
+			<< " " << lastName << " called." << endl;
+	}
+	
+	Employee::~Employee()
+	{
+		cout << "~Employee() called for " << firstName
+			<< " " << lastName << endl;
+		--count;
+	}
+	
+	string Employee::getFirstName() const
+	{
+		return firstName;
+	}
+	
+	string Employee::getLastName() const
+	{
+		return lastName;
+	}
+
+3.测试程序
+
+	#include <iostream>
+	#include "employee.h"
+	using namespace std;
+	
+	int main()
+	{
+		cout << "Number of employee before instantiation of any objects is "
+			<< Employee::getCount() << endl;
+	
+		{
+			Employee e1("Susan", "Baker");
+			Employee e2("Robert", "Jones");
+	
+			cout << "Number of employees after objects are instantiated is "
+				<< Employee::getCount();
+	
+			cout << "\n\nEmployee 1:"
+				<< e1.getFirstName() << " " << e1.getLastName()
+				<< "\nEmployee 2:"
+				<< e2.getFirstName() << " " << e2.getLastName() << "\n\n";
+		}
+	
+		cout << "\nNumber of employees after objects are deleted is "
+			<< Employee::getCount() << endl;
+	}
+
+4.结果
+
+	Number of employee before instantiation of any objects is 0
+	Employee constructor for Susan Baker called.
+	Employee constructor for Robert Jones called.
+	Number of employees after objects are instantiated is 2
+	
+	Employee 1:Susan Baker
+	Employee 2:Robert Jones
+	
+	~Employee() called for Robert Jones
+	~Employee() called for Susan Baker
+	
+	Number of employees after objects are deleted is 0
+
 ***
 
 ## Chapter 15.标准库的容器和迭代器

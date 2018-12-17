@@ -45,3 +45,40 @@
 		upgrade之前一定要执行update,这样才能保证更新到最新.
 	*/
 
+## 5. 执行"apt install python-pip"时出错
+
+**1.问题**
+
+当执行"apt install python-pip(安装python的pip程序,以便可以pip install xxx)"时出错:
+
+	E: Could not get lock /var/lib/dpkg/lock - open (11: Resource temporarily unavailable)
+	E: Unable to lock the administration directory (/var/lib/dpkg/), is another process
+	using it?
+
+**2.原因**
+
+出现这个问题可能是有另一个程序正在运行,导致资源被锁不可用.而导致资源被锁的原因可能是上次运行安装或更新时没有正常完成,进而出现此状况.	
+
+**3.解决办法**
+
+执行下面的命令:
+
+	sudo rm /var/cache/apt/archives/lock
+	sudo rm /var/lib/dpkg/lock
+	PS:必须按照上面的顺序,否则会失败.
+
+**4.重新执行"apt install python-pip"即可**
+
+## 6. 安装"net-tools"
+
+**1.问题**
+
+刚安装的linux可能在执行"ifconfig"时,没有这个命令.报如下的错误:
+
+	Comand "ifconfig" not found, but can be installed with:
+		apt install net-tools
+	PS:即没有ifconfig命令.
+
+**2.解决**
+
+	apt install net-tools

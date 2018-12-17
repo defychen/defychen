@@ -2557,6 +2557,64 @@ platform模块用来访问平台的相关属性
 	platform.processor() //返回处理器名称
 	platform.system() //返回系统名称(e.g."Windows"/"Linux")
 
+### 15.5 xlrd,xlwt模块
+
+Python一般使用xlrd(excel read)来读取Excel文件,使用xlwt(excel write)来写Excel文件.
+
+#### 15.5.1 安装xlrd,xlwt模块
+
+	pip install xlrd
+	pip install xlwt
+
+### 15.6 requests模块
+
+requests模块主要用于网络访问.由于使用人性化,因此它比urlib,urlib2,httplib,httplib2更有优势.
+
+#### 15.6.1 安装requests模块
+
+	pip install requests
+
+#### 15.6.2 使用requests模块
+
+	#!/usr/bin/python
+	# -*- coding:utf-8 -*-
+	import requests		//导入requests模块
+	
+	file = r"D:\repository\data\bs4.txt"
+	/*
+		在windows下,对于路径名有特殊的识别.只有下面两种方法可以被正确识别:
+			1)r"D:\repository\data\bs4.txt"	//这种路径肯定能别识别(前面带r/R进行转义)
+			2)"D:\\repository\data\bs4.txt"	//使用两个反斜杠(有时候能识别,有时候不能识别)
+			推荐使用第一种.
+	*/
+	res = requests.get('https://www.sina.com.cn/')
+	/*
+	requests.get('url'):抓取请求的url中的数据.
+		url可以通过输入网站"www.sina.com"->网页中右击选择"审查元素"->Network->
+		刷新下网页->在Name中选择"www.sina.com.cn"->在Headers页的General下存在:
+			Request URL:https://www.sina.com.cn/	//请求的url
+			Request Method:GET	//请求的方法为get,因此此处为get
+	所请求的数据会存放在res中.
+	*/
+	res.encoding = 'utf-8'
+	/*
+	因为python不知道请求的网页的编码,因此会自动使用默认的编码格式"ISO-8859-1".查看编码格式方法为:
+		res.encoding	//得到结果为"ISO-8859-1"
+	此处使用:res.encoding = 'utf-8'	//将编码设为utf-8
+	*/
+	#print res.text.encode('gbk', 'ignore')
+	/*
+	由于Windows系统的cmd使用的编码是CP936,即GBK编码.python解释器需要将Unicode字符编码为GBK,然后
+	才能在cmd中显示出来.但是Unicode编码中常会包含一些GBK编码无法显示的字符,此时会提示"'gbk' codec
+	can't encode"的错误.因此使用:
+		res.text.encode('gbk', 'ignore')	//表示忽略GBK无法编码的字符.
+		print res.text.encode('gbk', 'ignore')	//显示请求网页响应的数据.即Response中的消息.
+	*/
+	#print file		//打印文件路径名,可以验证windows下文件识别
+	with open(file, 'w') as f:	//以写的方式打开文件,如果不带r(转义)会报错.
+		f.write(res.text.encode('gbk', 'ignore'))	//将响应的html消息写入到文件中.
+	
+
 ***
 
 ## 16. Python的正则表达式
