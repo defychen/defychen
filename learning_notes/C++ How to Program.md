@@ -2915,6 +2915,509 @@ this指针的特点:
 
 ***
 
+## Chapter 10.运算符重载: string类
+
+### 10.1 使用标准库中string类的重载运算符
+
+1.实例
+
+	#include <iostream>
+	#include <string>
+	using namespace std;
+	
+	int main()
+	{
+		string s1("happy");		//使用"happy"初始化s1
+		string s2(" birthday");
+		string s3;	//创建一个空的string
+	
+		cout << "s1 is \"" << s1 << "\"; s2 is \"" << s2
+			<< "\"; s3 is \"" << s3 << "\""
+			<< "\n\nThe results of comparing s2 and s1:"
+			<< "\ns2 == s1 yields " << (s2 == s1 ? "true" : "false")	//false
+			<< "\ns2 != s1 yields " << (s2 != s1 ? "true" : "false")	//true
+			<< "\ns2 > s1 yields " << (s2 > s1 ? "true" : "false")		//false(ASCII码比较)
+			<< "\ns2 < s1 yields " << (s2 < s1 ? "true" : "false")		//true
+			<< "\ns2 >= s1 yields " << (s2 >= s1 ? "true" : "false")	//false
+			<< "\ns2 <= s1 yields " << (s2 <= s1 ? "true" : "false");	//true
+		
+		cout << "\n\nTesting s3.empty():" << endl;
+		if (s3.empty())		//string的empty成员函数判断string是否为空,为空返回true;否则返回false.
+		{
+			cout << "s3 is empty; assigning s1 to s3;" << endl;
+			s3 = s1;	//string重载了赋值运算符
+			cout << "s3 is \"" << s3 << "\"";
+		}
+	
+		cout << "\n\ns1 += s2 yields s1 = ";
+		s1 += s2;	//string重载了"+="运算符. s2被追加到s1后面.
+		cout << s1;
+	
+		cout << "\n\ns1 += \" to you\" yields" << endl;
+		s1 += " to you";
+		cout << "s1 = " << s1 << "\n\n";
+	
+		cout << "The substring of s1 starting at location 0 for\n"
+			<< "14 character, s1.substr(0, 14), is:\n"
+			<< s1.substr(0, 14) << "\n\n";	//从位置0开始的14个字符长
+	
+		cout << "The substring of s1 starting at\n"
+			<< "location 15, s1.substr(15), is: \n"
+			<< s1.substr(15) << endl;	//从位置15开始的剩余所有字符
+	
+		string s4(s1);
+		cout << "\ns4 = " << s4 << "\n\n";
+	
+		cout << "assigning s4 to s4" << endl;
+		s4 = s4;	//自我赋值
+		cout << "s4 = " << s4 << endl;
+	
+		s1[0] = 'H';	//字符串0位置重新赋值为'H'.
+		s1[6] = 'B';	//字符串6位置重新赋值为'B'.
+		cout << "\ns1 after s1[0] = 'H' and s1[6] = 'B' is: "
+			<< s1 << "\n\n";
+	
+		try
+		{
+			cout << "Attemp to assign 'd' to s1.at(30) yields:" << endl;
+			s1.at(30) = 'd';	//s1.at(30)='d':传递了一个无效的下标,会抛出"out_of_range"的异常.
+		}
+		catch (out_of_range &ex)	//捕捉到"out_of_range"的异常
+		{
+			cout << "An exception occured: " << ex.what() << endl;
+		}
+	}
+
+2.结果
+
+	s1 is "happy"; s2 is " birthday"; s3 is ""
+	
+	The results of comparing s2 and s1:
+	s2 == s1 yields false
+	s2 != s1 yields true
+	s2 > s1 yields false
+	s2 < s1 yields true
+	s2 >= s1 yields false
+	s2 <= s1 yields true
+	
+	Testing s3.empty():
+	s3 is empty; assigning s1 to s3;
+	s3 is "happy"
+	
+	s1 += s2 yields s1 = happy birthday
+	
+	s1 += " to you" yields
+	s1 = happy birthday to you
+	
+	The substring of s1 starting at location 0 for
+	14 character, s1.substr(0, 14), is:
+	happy birthday
+	
+	The substring of s1 starting at
+	location 15, s1.substr(15), is:
+	to you
+	
+	s4 = happy birthday to you
+	
+	assigning s4 to s4
+	s4 = happy birthday to you
+	
+	s1 after s1[0] = 'H' and s1[6] = 'B' is: Happy Birthday to you
+	
+	Attemp to assign 'd' to s1.at(30) yields:
+	An exception occured: invalid string position
+
+### 10.2 运算符重载的基础知识
+
+运算符重载函数构成:
+
+	operator+要重载的运算符	->operator+		//重载加法运算符的重载函数
+
+类的运算符重载函数必须是:
+
+	1.非static的成员函数(因为运算符重载函数必须由类的对象调用,并作用在这个对象上);
+	2.非成员函数(一般为friend函数).
+	PS:当重载()、[]、->或任何赋值操作符时,重载函数必须被声明为类成员.其他没有限制.
+
+### 10.3 重载二元运算符
+
+二元运算符有两种方式可以被重载:
+
+**1.作为成员函数的二元重载运算符**
+
+该函数必须为非static成员函数.且带有一个参数.
+
+	e.g.自定义String类,需要比较String类的两个对象x,y.x<y就会被处理成:x.operator(y).该成员函数声明为:
+	class String
+	{
+	public:
+		bool operator<(const String &) const;
+		...
+	};
+	PS:因为x<y,其做操作数x是String类的对象.因此该运算符重载函数可以作为类的成员函数.
+
+**2.作为非成员函数的二元重载运算符**
+
+此时的函数一般为类的友元函数.且接受两个参数(其中一个为类的对象或者对象的引用,不然就没有重载的必要).
+
+	e.g.自定义String类,需要比较String类的两个对象x,y.x<y就会被处理成:operator(x,y).该成员函数声明为:
+	bool operator(const String &, const String &);
+
+### 10.4 重载>>和<<
+
+1.PhoneNumber类定义
+
+	#ifndef __PHONENUMBER_H__
+	#define __PHONENUMBER_H__
+	
+	#include <iostream>
+	#include <string>
+	
+	class PhoneNumber
+	{
+		friend std::ostream &operator<<(std::ostream &, const PhoneNumber &);
+		//重载>>为友元函数.接受两个参数,前一个为ostream对象的引用,后一个为定义类对象的引用
+		friend std::istream &operator>>(std::istream &, PhoneNumber &);
+	private:
+		std::string areaCode;
+		std::string exchange;
+		std::string line;
+	};
+	
+	#endif
+
+2.PhoneNumber类的友元函数的实现
+
+	#include <iomanip>
+	#include "PhoneNumber.h"
+	using namespace std;
+	
+	ostream &operator<<(ostream &output, const PhoneNumber &number)
+	{
+		output << "(" << number.areaCode << ") "
+			<< number.exchange << "-" << number.line;
+		return output;
+	}
+	
+	istream &operator>>(istream &input, PhoneNumber &number)
+	{
+		input.ignore();	//忽略的字符个数,不带参数的为默认1个.
+		input >> setw(3) >> number.areaCode;	//setw(3)限制读入的字符个数,此处为3个.
+		input.ignore(2);	//忽略2个字符.
+		input >> setw(3) >> number.exchange;
+		input.ignore();
+		input >> setw(4) >> number.line;
+		return input;
+	}
+
+3.测试程序
+
+	#include <iostream>
+	#include "PhoneNumber.h"
+	using namespace std;
+	
+	int main()
+	{
+		PhoneNumber phone;
+	
+		cout << "Enter phone number in the form (123) 456-7890:" << endl;
+	
+		cin >> phone;	//此处会产生"operator>>(cin, phone)"非成员函数的调用
+	
+		cout << "The phone number entered was: ";
+	
+		cout << phone << endl;	//此处会产生"operator<<(cout, phone)"非成员函数的调用
+	}
+
+4.结果
+
+	Enter phone number in the form (123) 456-7890:
+	(800) 555-1212
+	The phone number entered was: (800) 555-1212
+
+### 10.5 重载一元运算符
+
+一元运算符有两种方式可以被重载:
+
+**1.作为成员函数的一元重载运算符**
+
+该函数必须为非static成员函数.且不带参数.
+
+	e.g.自定义String类,!s求s对象是否为空.!s就会被处理成:s.operator!().该成员函数声明为:
+	class String
+	{
+	public:
+		bool operator!() const;
+		...
+	};
+	PS:因为!s,其做操作数s是String类的对象.因此该运算符重载函数可以作为类的成员函数.
+
+**2.作为非成员函数的一元重载运算符**
+
+此时的函数一般为类的友元函数.且只接受一个参数(该参数必须为类的对象或者对象的引用,不然就没有重载的必要).
+
+	e.g.自定义String类,!s求s对象是否为空.!s就会被处理成:operator!(s).该成员函数声明为:
+	bool operator!(const String &);
+
+### 10.6 重载一元前置与后置运算符:++和--
+
+分析Date类的前置与后置自增运算符:
+
+**1.前置自增:**
+
+	假想Date对象d1的天数+1,前置自增"++d1"的实现:
+		1.非static成员函数实现调用:
+			产生的函数调用为:
+				d1.operator++();
+			该运算符函数原型为:
+				Date &operator++();	//前置按引用返回Date对象,因为前置返回的值为真实更新后的值.
+		2.非成员函数实现调用:
+			产生的函数调用为:
+				operator++(d1);
+			函数原型为:
+				Date &operator++(Date &);
+
+**2.后置自增:**
+
+	假想Date对象d1的天数+1,前置自增"d1++"的实现:
+		1.非static成员函数实现调用:
+			产生的函数调用为:
+				d1.operator++(0);	//带一个0参数仅仅用于区分前置和后置的标记.没有其他含义.
+			该运算符函数原型为:
+				Date operator++(int);
+				//后置按值返回Date对象,因为后置返回为更新前的值(一般为一个临时对象),且耗空间.
+		2.非成员函数实现调用:
+			产生的函数调用为:
+				operator++(d1, 0);	//带一个0参数仅仅用于区分前置和后置的标记.没有其他含义.
+			函数原型为:
+				Date operator++(Date &, int);
+
+PS:后置操作会创建临时对象,对性能会造成很大影响.一般使用前置会好一点.
+
+### 10.7 实例研究: Date类
+
+1.Date类的定义
+
+	#ifndef __DATE_H__
+	#define __DATE_H__
+	
+	#include <array>
+	#include <iostream>
+	
+	class Date
+	{
+		friend std::ostream &operator<<(std::ostream &, const Date &);
+	public:
+		Date(int m = 1, int d = 1, int y = 1900);
+		void setDate(int, int, int);
+		Date &operator++();
+		Date operator++(int);
+		Date &operator+=(unsigned int);
+		static bool leapYear(int);
+		bool endOfMonth(int) const;
+	private:
+		unsigned int month;
+		unsigned int day;
+		unsigned int year;
+	
+		static const std::array<unsigned int, 13> days;
+		void helpIncrement();
+	};
+	
+	#endif
+
+2.Date类成员函数的实现
+
+	#include <iostream>
+	#include <string>
+	#include "Date.h"
+	using namespace std;
+	
+	const array<unsigned int, 13> Date::days =
+	{0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+	
+	Date::Date(int month, int day, int year)
+	{
+		setDate(month, day, year);
+	}
+	
+	void Date::setDate(int mm, int dd, int yy)
+	{
+		if (mm >= 1 && mm <= 12)
+			month = mm;
+		else
+			throw invalid_argument("Month must be 1-12");
+	
+		if (yy >= 1900 && yy <= 2100)
+			year = yy;
+		else
+			throw invalid_argument("Year must be >= 1900 and <= 2100");
+	
+		if ((month == 2 && leapYear(year) && dd >= 1 && dd <= 29) ||
+			(dd >= 1 && dd <= days[month]))
+			day = dd;
+		else
+			throw invalid_argument("Day is out of range for current month and year");
+	}
+	
+	Date &Date::operator++()	//返回的为对象的引用
+	{
+		helpIncrement();
+		return *this;
+	}
+	
+	Date Date::operator++(int)
+	{
+		Date temp = *this;
+		helpIncrement();
+		return temp; //返回之前保存的对象(为一个值).不能返回引用,因为该函数一旦退出temp对象就不存在了.
+		//返回局部对象的引用或者指针会报错.返回值就没问题.
+	}
+	
+	Date &Date::operator+=(unsigned int additionalDays)
+	{
+		for (int i = 0; i < additionalDays; ++i)
+			helpIncrement();
+	
+		return *this;
+	}
+	
+	bool Date::leapYear(int testYear)	//判断闰年
+	{
+		if (testYear % 400 == 0 ||
+			(testYear % 100 != 0 && testYear % 4 == 0))
+			return true;
+		else
+			return false;
+	}
+	
+	bool Date::endOfMonth(int testDay) const
+	{
+		if (month == 2 && leapYear(year))
+			return testDay == 29;
+		else
+			return testDay == days[month];
+	}
+	
+	void Date::helpIncrement()
+	{
+		if (!endOfMonth(day))
+			++day;
+		else if (month < 12)
+		{
+			++month;
+			day = 1;
+		}
+		else
+		{
+			++year;
+			month = 1;
+			day = 1;
+		}
+	}
+	
+	ostream &operator<<(ostream &output, const Date &d)
+	{
+		static string monthName[13] = { "", "February",
+			"March", "April", "May", "June", "July", "August",
+			"September", "October", "November", "December" };
+		output << monthName[d.month] << " " << d.day << ", " << d.year;
+		return output;
+	}
+
+3.测试程序
+
+	#include <iostream>
+	#include "Date.h"
+	using namespace std;
+	
+	int main()
+	{
+		Date d1(12, 27, 2010);
+		Date d2;
+	
+		cout << "d1 is " << d1 << "\nd2 is" << d2;
+		cout << "\n\nd1 += 7 is " << (d1 += 7);
+	
+		d2.setDate(2, 28, 2008);
+		cout << "\n\n d2 is " << d2;
+		cout << "\n++d2 is " << ++d2 << " (leap year allows 29th)";
+	
+		Date d3(7, 13, 2010);
+	
+		cout << "\n\nTesting the prefix increment operator:\n"
+			<< "  d3 is " << d3 << endl;
+		cout << "++d3 is " << ++d3 << endl;
+		cout << "  d3 is " << d3;
+	
+		cout << "\n\nTesting the postfix increment operator:\n"
+			<< "  d3 is " << d3 << endl;
+		cout << "d3++ is " << d3++ << endl;
+		cout << "  d3 is " << d3 << endl;
+	}
+
+4.结果
+
+	d1 is  27, 2010
+	d2 isFebruary 1, 1900
+	
+	d1 += 7 is February 3, 2011
+	
+	d2 is March 28, 2008
+	++d2 is March 29, 2008 (leap year allows 29th)
+	
+	Testing the prefix increment operator:
+	  d3 is August 13, 2010
+	++d3 is August 14, 2010
+	  d3 is August 14, 2010
+	
+	Testing the postfix increment operator:
+	  d3 is August 14, 2010
+	d3++ is August 14, 2010
+	  d3 is August 15, 2010
+
+### 10.8 动态内存管理
+
+动态内存管理通过new与delete实现,是在堆上分配内存.
+
+**1.使用new动态获取内存**
+
+	Time *timePtr = new Time();
+	//从堆上为Time类型的对象分配空间,调用默认构造函数进行初始化.返回一个指向Time类型的指针(即Time *).
+
+**2.使用delete销毁动态分配的内存**
+
+	delete timePtr;	//后面带一个指针即可.先调用析构函数,再收回对象占用的内存.
+	PS:delete后的对象应该设为nullptr???
+
+**3.动态内存初始化**
+
+	double *ptr = new double(3.14159);	//建立double对象并初始化为3.14159
+	Time *timePtr = new Time(12, 25, 0);	//新建一个Time对象并初始化为12:45PM.
+
+**4.使用new[]动态分配内置数组**
+
+	int *gradesArray = new int[10](); //分配10个元素整数数组的空间.
+	/*
+		new int[10]():后面的"()"表示初始化数组元素,没有填写默认整数为0、bool类型为false、指针类型为
+		nullptr对象则通过默认构造函数进行初始化.
+	*/
+
+**5.C++11使用列表初始化动态分配的数组**
+
+	int *gradesArray = new int[10]{};	//后面带的{}表示初始化列表,用分号分隔
+
+**6.使用delete[]释放动态分配的数组内存**
+
+	delete [] gradesArray;	//删除gradesArray指向的动态分配的数组的内存
+
+### 10.9 实例研究:Array类
+
+
+
+
+***
+
 ## Chapter 15.标准库的容器和迭代器
 
 ### 15.1 标准模板库(STL)简介

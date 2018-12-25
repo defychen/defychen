@@ -17,7 +17,16 @@ python使用最广的解释器是CPython.
 
 **运行Python文件(".py"后缀)**
 
-	#!/usr/bin/python	/*在.py文件开头指定使用python解析脚本*/
+	#!/usr/bin/python
+	/*
+	在.py文件开头指定使用/usr/bin/python解析脚本,在linux下如果使用"python xxx.py"该语句则会无效.加上
+	该句可以让python程序使用"./xxx.py"执行.
+	PS:通常有两种指定解释器:
+		1)#!/usr/bin/python:直接写死了使用该路径下的python解释,但有时如果python没有被安装到该目录下
+		或者希望使用其他版本的python去解释就需要修改脚本.因此这种写法不好;
+		2)#!/usr/bin/env python:这种写法会去环境变量PATH指定的第一个python来执行脚本,这种方式比较
+		好.扩展性好,且不易出错.
+	*/
 	$ chmod a+x xxx.py	/*为.py文件增加执行权限(一般注意查看其他脚本的权限,保持一致)*/
 	./xxx.py	/*执行*/
 
