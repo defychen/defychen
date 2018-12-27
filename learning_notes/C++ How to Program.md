@@ -3413,8 +3413,270 @@ PS:后置操作会创建临时对象,对性能会造成很大影响.一般使用
 
 ### 10.9 实例研究:Array类
 
+1.Array类定义:
 
+	#ifndef __ARRAY_H__
+	#define __ARRAY_H__
+	
+	#include <iostream>
+	
+	class Array
+	{
+		friend std::ostream &operator<<(std::ostream &, const Array &);
+		friend std::istream &operator>>(std::istream &, Array &);
+	public:
+		explicit Array(int = 10);
+		Array(const Array &);
+		~Array();
+		size_t getSize() const;
+	
+		const Array &operator=(const Array &);
+		bool operator==(const Array &) const;
+	
+		bool operator!=(const Array &right) const
+		{
+			return !(*this == right);
+		}
+	
+		int &operator[](int);
+		int operator[](int) const;
+	private:
+		size_t size;
+		int *ptr;
+	};
+	
+	#endif
 
+2.Array类成员函数实现
+
+	#include <iostream>
+	#include <iomanip>
+	#include <stdexcept>
+	
+	#include "Array.h"
+	using namespace std;
+	
+	Array::Array(int ArraySize)
+	:size(ArraySize > 0 ? ArraySize :
+	throw invalid_argument("Array size must be greater than 0")),
+	ptr(new int[size])
+	{
+		for (size_t i = 0; i < size; ++i)
+			ptr[i] = 0;
+	}
+	
+	Array::Array(const Array &arrayToCopy)
+	:size(arrayToCopy.size),
+	ptr(new int[size])
+	{
+		for (size_t i = 0; i < size; i++)
+			ptr[i] = arrayToCopy.ptr[i];
+	}
+	
+	Array::~Array()
+	{
+		delete[] ptr;
+	}
+	
+	size_t Array::getSize() const
+	{
+		return size;
+	}
+	
+	const Array &Array::operator=(const Array &right)
+	{
+		if (&right != this)
+		{
+			if (size != right.size)
+			{
+				delete[] ptr;
+				size = right.size;
+				ptr = new int[size];
+			}
+	
+			for (size_t i = 0; i < size; ++i)
+				ptr[i] = right.ptr[i];
+		}
+	
+		return *this;
+	}
+	
+	bool Array::operator==(const Array &right) const
+	{
+		if (size != right.size)
+			return false;
+	
+		for (size_t i = 0; i < size; ++i)
+		{
+			if (ptr[i] != right.ptr[i])
+				return false;
+		}
+	
+		return true;
+	}
+	
+	int &Array::operator[](int subscript)
+	{
+		if (subscript < 0 || subscript >= size)
+			throw out_of_range("Subscript out of range");
+	
+		return ptr[subscript];
+	}
+	
+	int Array::operator[](int subscript) const
+	{
+		if (subscript < 0 || subscript >= size)
+			throw out_of_range("Subscript out of range");
+	
+		return ptr[subscript];
+	}
+	
+	istream &operator>>(istream &input, Array &a)
+	{
+		for (size_t i = 0; i < a.size; ++i)
+			input >> a.ptr[i];
+	
+		return input;
+	}
+	
+	ostream &operator<<(ostream &output, const Array &a)
+	{
+		for (size_t i = 0; i < a.size; ++i)
+		{
+			output << setw(12) << a.ptr[i];
+	
+			if ((i + 1) % 4 == 0)
+				output << endl;
+		}
+	
+		if (a.size % 4 != 0)
+			output << endl;
+	
+		return output;
+	}
+
+3.测试程序
+
+	#include <iostream>
+	#include <stdexcept>
+	#include "Array.h"
+	using namespace std;
+	
+	int main()
+	{
+		Array integers1(7);
+		Array integers2;
+	
+		cout << "Size of Array integers1 is "
+			<< integers1.getSize()
+			<< "\nArray after initialization:\n" << integers1;
+	
+		cout << "\nSize of Array integers2 is "
+			<< integers2.getSize()
+			<< "\nArray after initialization:\n" << integers2;
+	
+		cout << "\nEnter 17 integers:" << endl;
+		cin >> integers1 >> integers2;
+	
+		cout << "\nAfter input, the Arrays contain:\n"
+			<< "integers1:\n" << integers1
+			<< "integers2:\n" << integers2;
+	
+		cout << "\nEvaluating: integers1 != integers2" << endl;
+	
+		if (integers1 != integers2)
+			cout << "integers1 and integers2 are not equal" << endl;
+	
+		Array integers3(integers1);
+	
+		cout << "\nSize of Array integers3 is "
+			<< integers3.getSize()
+			<< "\nArray after initialization:\n" << integers3;
+	
+		cout << "\nAssigning integers2 to integers1:" << endl;
+		integers1 = integers2;
+	
+		cout << "integers1:\n" << integers1
+			<< "integers2:\n" << integers2;
+	
+		cout << "\nEvaluating: integers1 == integers2" << endl;
+	
+		if (integers1 == integers2)
+			cout << "integers1 and integers2 are equal" << endl;
+	
+		cout << "\nintegers1[5] is " << integers1[5];
+	
+		cout << "\n\nAssigning 1000 to integers1[5]" << endl;
+		integers1[5] = 1000;
+		cout << "integers1:\n" << integers1;
+	
+		try
+		{
+			cout << "\nAttempt to assign 1000 to integers1[15]" << endl;
+			integers1[15] = 1000;
+		}
+		catch (out_of_range &ex)
+		{
+			cout << "An exception occured: " << ex.what() << endl;
+		}
+	}
+
+4.结果
+
+	Size of Array integers1 is 7
+	Array after initialization:
+	           0           0           0           0
+	           0           0           0
+	
+	Size of Array integers2 is 10
+	Array after initialization:
+	           0           0           0           0
+	           0           0           0           0
+	           0           0
+	
+	Enter 17 integers:
+	1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17
+	
+	After input, the Arrays contain:
+	integers1:
+	           1           2           3           4
+	           5           6           7
+	integers2:
+	           8           9          10          11
+	          12          13          14          15
+	          16          17
+	
+	Evaluating: integers1 != integers2
+	integers1 and integers2 are not equal
+	
+	Size of Array integers3 is 7
+	Array after initialization:
+	           1           2           3           4
+	           5           6           7
+	
+	Assigning integers2 to integers1:
+	integers1:
+	           8           9          10          11
+	          12          13          14          15
+	          16          17
+	integers2:
+	           8           9          10          11
+	          12          13          14          15
+	          16          17
+	
+	Evaluating: integers1 == integers2
+	integers1 and integers2 are equal
+	
+	integers1[5] is 13
+	
+	Assigning 1000 to integers1[5]
+	integers1:
+	           8           9          10          11
+	          12        1000          14          15
+	          16          17
+	
+	Attempt to assign 1000 to integers1[15]
+	An exception occured: Subscript out of range
 
 ***
 

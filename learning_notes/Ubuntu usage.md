@@ -82,3 +82,7 @@
 **2.解决**
 
 	apt install net-tools
+
+## 7. 安装git
+
+	sudo apt-get install git
