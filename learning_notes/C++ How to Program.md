@@ -3424,9 +3424,14 @@ PS:后置操作会创建临时对象,对性能会造成很大影响.一般使用
 	{
 		friend std::ostream &operator<<(std::ostream &, const Array &);
 		friend std::istream &operator>>(std::istream &, Array &);
+		//重载的"<<或>>"不可以是Array类的成员函数(为友元函数).因为Array对象总是位于"<<或>>"的右侧.
 	public:
-		explicit Array(int = 10);
-		Array(const Array &);
+		explicit Array(int = 10);	//默认构造函数.接受一个int实参,默认值为10.
+		Array(const Array &);	//拷贝构造函数,参数为类的一个常量对象引用.
+		/*
+			如果不想要该成员函数可以按如下声明方式删除:
+				Array(const Array &) = delete;
+		*/
 		~Array();
 		size_t getSize() const;
 	
@@ -3435,11 +3440,15 @@ PS:后置操作会创建临时对象,对性能会造成很大影响.一般使用
 	
 		bool operator!=(const Array &right) const
 		{
-			return !(*this == right);
+			return !(*this == right);	//函数定义位于头文件中,编译器可以产生内联函数,减少函数调用开销.
 		}
 	
-		int &operator[](int);
-		int operator[](int) const;
+		int &operator[](int);	//返回一个引用,该引用可作为可修改的左值使用.
+		int operator[](int) const;	//返回一个值,主要用于输出用,为常量函数(不能修改对象的数据成员).
+		/*
+		cout << obj[3] << endl; =>会调用该函数,因为operator<<(...),接受一个const对象.const对象只能
+		调用const成员函数.
+		*/
 	private:
 		size_t size;
 		int *ptr;
@@ -3475,7 +3484,7 @@ PS:后置操作会创建临时对象,对性能会造成很大影响.一般使用
 	
 	Array::~Array()
 	{
-		delete[] ptr;
+		delete[] ptr;	//此处不把ptr设置为nullptr,是因为析构函数执行后Array对象已不在内存中.
 	}
 	
 	size_t Array::getSize() const
@@ -3499,6 +3508,7 @@ PS:后置操作会创建临时对象,对性能会造成很大影响.一般使用
 		}
 	
 		return *this;
+		//返回当前对象的(*this)常量引用.可以允许"x=y=z"串联赋值,但是不能(x=y)=z,这种会有错.
 	}
 	
 	bool Array::operator==(const Array &right) const
@@ -3588,6 +3598,10 @@ PS:后置操作会创建临时对象,对性能会造成很大影响.一般使用
 			cout << "integers1 and integers2 are not equal" << endl;
 	
 		Array integers3(integers1);
+		/*
+		该句等价于: Array integers3 = integers1;	->此处(=)不是赋值运算符.当等号出现在对象声明中时,
+		调用该对象的构造函数.并把等号右边的值当做构造函数的参数.
+		*/
 	
 		cout << "\nSize of Array integers3 is "
 			<< integers3.getSize()
@@ -3677,6 +3691,84 @@ PS:后置操作会创建临时对象,对性能会造成很大影响.一般使用
 	
 	Attempt to assign 1000 to integers1[15]
 	An exception occured: Subscript out of range
+
+### 10.10 类型转换
+
+**1.类型转换方法**
+
+	static_cast<int>(var);	//将变量var转换成int类型
+
+**2.类中转换运算符函数声明**
+
+	MyClass::operator char*() const;
+	/*
+	声明一个重载的强制类型转换运算符函数.将用户自定义类型MyClass对象转换成一个临时的char *对象.声明为
+		const是保证不修改原始的对象.
+	如果s是该类的对象,调用方法为:
+		static_cast<char *>(s);
+	会产生函数调用:
+		s.operator char*();	//将s转换成char *.
+	*/
+
+**3.重载强制类型转换运算符函数**
+
+	MyClass::operator int() const;	//自定义类型对象转换为int类型
+	MyClass::operator OtherClass() const;	//自定义类型对象转换为OtherClass类型
+
+### 10.11 explicit构造函数与转换运算符
+
+任何单参数的不被声明为explicit构造函数都可以被编译器执行隐式转换,传进去的实参会生成一个不想要的对象.
+
+	/*Array.h中的定义的构造函数去掉了explicit*/
+	#include <iostream>
+	//#include <stdexcept>
+	#include "Array.h"
+	using namespace std;
+	
+	void outputArray(const Array &);
+	
+	int main()
+	{
+		Array integers1(7);
+		outputArray(integers1);
+		outputArray(3);	
+		/*
+		去掉explicit后,编译器认为接受单个int参数的Array构造函数是一个转换构造函数.将参数3看成一个包含
+		3个元素的临时Array对象.
+		*/
+	}
+	
+	void outputArray(const Array &arrayToOutput)
+	{
+		cout << "The Array received has " << arrayToOutput.getSize()
+			<< " elements. The contents are:\n" << arrayToOutput << endl;
+	}
+	/*
+		结果为:
+		The Array received has 7 elements. The contents are:
+           0           0           0           0
+           0           0           0
+		
+		The Array received has 3 elements. The contents are:
+		           0           0           0
+	*/
+
+**声明成explicit的构造函数不能再隐式转换中使用,因此可以避免这个问题.**
+
+### 10.12 重载函数调用运算符()
+
+函数调用运算符"()"的重载函数必须是一个非静态的成员函数.
+
+	String String::operator()(size_t index, size_t length) const;
+	/*
+	该函数可以用于选择一个String的子类.选择从index开始的length个字符.
+	e.g. string1包含字符串"AEIOU",则string(2, 3),生成如下成员函数调用:
+		string1.operator()(2, 3);	结果为:"IOU"
+	*/
+
+***
+
+## Chapter 11.面向对象编程:继承
 
 ***
 

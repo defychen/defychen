@@ -998,7 +998,7 @@ python对匿名函数的支持有限
 
 ***
 
-## 7、 面向对象编程
+## 7. 面向对象编程
 
 	class Student(object):	//类定义,派生于object(所有类都可以派生于object).类名大写字母开头
 		def __init__(self, name, score): 
