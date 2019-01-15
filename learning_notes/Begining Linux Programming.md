@@ -224,6 +224,12 @@ PATH变量:
 		echo "/bin/bash is NOT a directory"
 	fi
 
+**模糊匹配---相当于正则表达式**
+
+	if [ $PWD=~*/defychen* ]; then	//=~:匹配后面的字符"*/defychen*"至少一次.
+		echo "xxx"					//且中间不能有空格.否则会报错
+	fi
+
 ### 2.3 控制结构
 
 **if语句**

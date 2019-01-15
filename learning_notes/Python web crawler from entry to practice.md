@@ -375,8 +375,12 @@ POST请求主要用于在登录的时候保护自己的密码.因为使用GET请
 				filename = picDir + picture.picName + '.webp'
 				print picture.picSrcUrl
 				with open(filename, 'wb') as f:	
-				//必须以'wb'打开,因为图片是二进制形式.否则下载下来的图片会形成马赛克.
 					f.write(requests.get(picture.picSrcUrl, timeout = 5).content)
+				/*
+				1.必须以'wb'打开,因为图片是二进制形式.否则下载下来的图片会形成马赛克;
+				2.requests.get(url, timeout = 5).content //content里面放的就是图片的二进制编码.
+					将该编码写入到文件即可得到图片.
+				*/
 			except:
 				print picture.picSrcUrl, 'download fail'
 				pass
@@ -393,25 +397,30 @@ POST请求主要用于在登录的时候保护自己的密码.因为使用GET请
 	while True:
 		baseUrl = 'https://movie.douban.com/top250' + param
 		response = requests.get(baseUrl, timeout = 5)
-		response.raise_for_status()
+		response.raise_for_status()	//如果status_code非200,就会抛出异常.
 		responseStr = response.text
 		soup = BeautifulSoup(responseStr, 'lxml')
 		/*
 			以"lxml"形式解析.需要安装lxml模块:
 			pip install lxml
 		*/
-		olArticle = soup.find('ol', class_='grid_view')
-		liList = divItem = olArticle.find_all('li')
+		olArticle = soup.find('ol', class_='grid_view')	//获取ol对象
+		liList = divItem = olArticle.find_all('li')	//ol下面包括很多li信息.
 		for index in range(len(liList)):
 			stringTitle = ''
 			divItemInfo = liList[index].find('div', class_ = 'info')
 			divBd = divItemInfo.find('div', class_ = 'bd')
 			titleList = divItemInfo.find('div', class_ = 'hd').a.find_all('span')
+			//获取影片的大致描述(导演、演员以及上映时间等)
 			strDescription = divBd.p.getText()
+			//影片星级
 			strRatingStar = divBd.div.find_all('span')[1].getText()
+			//影片评价数
 			strComment = divBd.div.find_all('span')[3].getText()
+			//影片总结(有的没有所以需要判空)
 			if divBd.find('p', class_ = 'quote'):
 				strQuote = divBd.find('p', class_ = 'quote').span.getText()
+			//名字拼接
 			for indexTitle in range(len(titleList)):
 				stringTitle = stringTitle + titleList[indexTitle].getText()
 			'''
@@ -430,18 +439,48 @@ POST请求主要用于在登录的时候保护自己的密码.因为使用GET请
 				windows下,中文需要:encode('gbk', 'ignore')即以gbk编码,utf-8会显示乱码.
 			*/
 			divItemPic = liList[index].find('div', class_ = 'pic')
-			listPicture.append(Picture(divItemPic.a.img.get('alt'), divItemPic.a.img.get('src')))
+			listPicture.append(Picture(divItemPic.a.img.get('alt'), divItemPic.a.img.
+				get('src')))	//构建Picture对象,准备下载图片.
 		print '\n'
+		//获取底部分页的导航条
 		divpaginator = soup.find('div', class_ = 'paginator')
+		//获取下一页
 		spanNext = divpaginator.find('span', class_ = 'next')
 		if not spanNext.link:
-			break
-	
+			break	//到最后一页,退出循环
+		//获取link的某个属性,使用get('href')
 		param = spanNext.link.get('href')
 	
 	try:
+		//所有数据内容爬取完毕,创建一个线程下载图片
 		threadDownload = threading.Thread(target = downloadPicture, args = (listPicture, ))
 		threadDownload.setDaemon(False)
-		threadDownload.start()
+		/*
+			threadDownload.setDaemon(True):设置派生线程为守护线程,此时主线程退出派生线程也会退出.
+			threadDownload.setDaemon(False):设置为False,主线程不会退出,直至派生线程执行完毕.
+		*/
+		threadDownload.start()	//线程启动.
 	except:
 		print 'Error: unable to start thread'
+
+***
+
+## Chapter 4 动态网页抓取
+
+动态网页抓取的两种技术:
+
+	1.通过浏览器审查元素解析真实网页地址;
+	2.使用selenium模拟浏览器.
+
+### 4.1 网页动态更新技术(指代AJAX技术)
+
+AJAX(Asynchronous Javascript And XML):异步JavaScript和XML.通过在后台与服务器进行少量的数据交换就可以实现网页的异步更新(即在不重新加载整个网页的情况下对网页的某部分进行更新).
+
+	相比于静态网页更新的技术的优势:
+		1.传统的网页(即静态网页)如果需要更新必须重载整个页面,AJAX网页只需要重载某部分内容,可以减少重复
+			内容的的下载;
+		2.节省流量.AJAX可以使互联网应用程序更小、更快、更友好.
+
+使用AJAX技术的实例:
+
+	
