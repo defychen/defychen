@@ -4,6 +4,58 @@
 
 ## Chapter 1 前言
 
+### 1.1 SystemC的入门
+
+现代片上系统的设计之难源于其复杂性,复杂性催生SystemC(系统级设计语言)和电子系统级设计(Electronic System Level, ESL)方法学.
+
+**1.系统级仿真**
+
+	1.目的:确认设计的体系架构是否恰当、总线是否能够满足吞吐量和实时性要求以及存储器是否被浪费;
+	2.时间:系统级仿真先于RTL设计;
+	3.语言:一般使用UML,C,C++等.
+
+**2.RTL级设计**
+
+	1.RTL:Register Transfer Level,寄存器传输级;
+	2.语言:VHDL和Verilog HDL;
+	3.特点:在系统级仿真后面,由于系统级设计使用C/C++,因此需要手工从C/C++代码转换成VHDL/Verilog HDL代码;
+	4.效率:手工编写RTL代码效率不高.
+
+**3.ESL设计**
+
+	1.ESL:Electronic System Level,电子系统级设计;
+	2.语言:SystemC和C/C++,SystemC是C++的扩展库;
+	3.特点:可以进行系统级仿真,速度快,且语言基于现有语言,环境、编译和调试工具可以复用现有的,效率高.
+
+**4.SystemC和System Verilog的使用范围**
+
+	1.SystemC:特别适合于建模体系结构,开发事物处理级(TL)模型和在验证中描述软件的行为;
+	2.System Verilog:是进行RTL设计的最佳语言.
+
+### 1.2 一个"Hello, SystemC!"建模实例
+
+	/*1.类定义*/
+	#include <iostream>
+	#include "systemc.h"	//SystemC的头文件
+	SC_MODULE(hello) {
+	/*
+	SC_MODULE是SystemC中定义的一个宏,表示生成一个类.括号中的"hello"即为类名.
+	*/
+		SC_CTOR(hello) {
+		/*
+		SC_CTOR也是一个宏.表示生成构造函数.括号中的"hello"为构造函数名,与类名相同.
+			cout << "Hello, SystemC!" << endl;
+		*/
+		}
+	};
+
+	/*2.SystemC的main函数*/
+	int sc_main(int argc, char *argv[]) {
+		/*sc_main相当于C的main函数,即为入口函数*/
+		hello h("hi");	//hello为之前定义的类名,构造一个实例对象
+		return 0;
+	}
+
 ***
 
 ## Chapter 2 SystemC基本语法

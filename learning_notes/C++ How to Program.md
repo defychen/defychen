@@ -3770,9 +3770,346 @@ PS:后置操作会创建临时对象,对性能会造成很大影响.一般使用
 
 ## Chapter 11.面向对象编程:继承
 
+### 11.1 基类和派生类
+
+派生类的定义方式:
+
+	class Derived_class : public Base_class
+	//表示类Derived_class由Base_class继承而来(属于pulibc继承)
+
+public继承特点:
+
+	1.基类的所有成员成为派生类的成员,且保持其原始的成员访问权限;
+	2.友元函数不能被继承;
+	PS:各种类型的继承中,基类的private成员都不能被派生类直接访问(即派生类对基类的private成员没有直接访问
+		权限),但是可以通过继承得到的基类成员函数去访问.
+
+### 11.2 基类和派生类的实例
+
+#### 11.2.1 基类定义及实现
+
+1.基类头文件CommissionEmployee.h
+
+	#ifndef __COMMISSION_H__
+	#define __COMMISSION_H__
+	
+	#include <string>
+	
+	class CommissionEmployee
+	{
+	public:
+		CommissionEmployee(const std::string &, const std::string &, const std::string &,
+				double = 0.0, double = 0.0);
+		void setFirstName(const std::string &);
+		std::string getFirstName() const;
+	
+		void setLastName(const std::string &);
+		std::string getLastName() const;
+	
+		void setSocialSecurityNumber(const std::string &);
+		std::string getSocialSecurityNumber() const;
+	
+		void setGrossSales(double);
+		double getGrossSales() const;
+	
+		void setCommissionRate(double);
+		double getCommissionRate() const;
+	
+		double earnings() const;
+		void print() const;
+	protected:	//如果定义为private,由于派生类没有访问权限就会报错(派生类不能直接访问基类的private数据).
+				//此处protected,派生类可以访问到.但是不安全.protected尽量少用.
+		std::string firstName;
+		std::string lastName;
+		std::string socialSecurityNumber;
+		double grossSales;
+		double commissionRate;
+	};
+	
+	#endif
+
+2.基类类实现CommissionEmployee.cpp
+
+	#include <iostream>
+	#include <stdexcept>
+	
+	#include "CommissionEmployee.h"
+	using namespace std;
+	
+	CommissionEmployee::CommissionEmployee(const string &first, const string &last,
+										   const string &ssn, double sales, double rate)
+	{
+		firstName = first;
+		lastName = last;
+		socialSecurityNumber = ssn;
+		setGrossSales(sales);
+		setCommissionRate(rate);
+	}
+	
+	void CommissionEmployee::setFirstName(const string &first)
+	{
+		firstName = first;
+	}
+	
+	string CommissionEmployee::getFirstName() const
+	{
+		return firstName;
+	}
+	
+	void CommissionEmployee::setLastName(const string &last)
+	{
+		lastName = last;
+	}
+	
+	string CommissionEmployee::getLastName() const
+	{
+		return lastName;
+	}
+	
+	void CommissionEmployee::setSocialSecurityNumber(const string &ssn)
+	{
+		socialSecurityNumber = ssn;
+	}
+	
+	string CommissionEmployee::getSocialSecurityNumber() const
+	{
+		return socialSecurityNumber;
+	}
+	
+	void CommissionEmployee::setGrossSales(double sales)
+	{
+		if (sales >= 0.0)
+			grossSales = sales;
+		else
+			throw invalid_argument("Gross sales must be >= 0.0");
+	}
+	
+	double CommissionEmployee::getGrossSales() const
+	{
+		return grossSales;
+	}
+	
+	void CommissionEmployee::setCommissionRate(double rate)
+	{
+		if ((rate > 0.0) && (rate < 1.0))
+			commissionRate = rate;
+		else
+			throw invalid_argument("Commission rate must be > 0.0 and < 1.0");
+	}
+	
+	double CommissionEmployee::getCommissionRate() const
+	{
+		return commissionRate;
+	}
+	
+	double CommissionEmployee::earnings() const
+	{
+		return commissionRate * grossSales;
+	}
+	
+	void CommissionEmployee::print() const
+	{
+		cout << "commission employee: " << firstName << ' ' << lastName
+			<< "\nsocial security number: " << socialSecurityNumber
+			<< "\ngross sales: " << grossSales
+			<< "\ncommission rate: " << commissionRate;
+	}
+
+#### 11.2.2 派生类定义及实现
+
+1.派生类头文件BasePlusCommissionEmployee.h
+
+	#ifndef __BASEPLUS_H__
+	#define __BASEPLUS_H__
+	
+	#include <string>
+	#include "CommissionEmployee.h"
+	
+	class BasePlusCommissionEmployee : public CommissionEmployee	//public继承
+	{
+	public:
+		BasePlusCommissionEmployee(const std::string &, const std::string &,
+			const std::string &, double = 0.0, double = 0.0, double = 0.0);
+	
+		void setBaseSalary(double);
+		double getBaseSalary() const;
+	
+		double earnings() const;
+		void print() const;
+	private:
+		double baseSalary;
+	};
+	
+	#endif
+
+2.派生类类实现BasePlusCommissionEmployee.cpp
+
+	#include <iostream>
+	#include <stdexcept>
+	#include "BasePlusCommissionEmployee.h"
+	using namespace std;
+	
+	BasePlusCommissionEmployee::BasePlusCommissionEmployee(
+		const string &first, const string &last, const string &ssn,
+		double sales, double rate, double salary)
+		: CommissionEmployee(first, last, ssn, sales, rate)
+		//调用基类的构造函数.基类初始化器语法.
+	{
+		setBaseSalary(salary);
+	}
+	
+	void BasePlusCommissionEmployee::setBaseSalary(double salary)
+	{
+		if (salary >= 0.0)
+			baseSalary = salary;
+		else
+			throw invalid_argument("Salary must be >= 0.0");
+	}
+	
+	double BasePlusCommissionEmployee::getBaseSalary() const
+	{
+		return baseSalary;
+	}
+	
+	double BasePlusCommissionEmployee::earnings() const
+	{
+		return baseSalary + (commissionRate * grossSales);
+	}
+	
+	void BasePlusCommissionEmployee::print() const
+	{
+		cout << "commission employee: " << firstName << ' ' << lastName
+			<< "\nsocial security number: " << socialSecurityNumber
+			<< "\ngross sales: " << grossSales
+			<< "\ncommission rate: " << commissionRate
+			<< "\nbase salary: " << baseSalary;
+	}
+
+#### 11.2.3 测试程序test.cpp
+
+	#include <iostream>
+	#include <iomanip>
+	#include "BasePlusCommissionEmployee.h"
+	using namespace std;
+	
+	int main()
+	{
+		BasePlusCommissionEmployee employee("Bob",
+			"Lewis", "333-33-3333", 5000, .04, 300);
+	
+		cout << fixed << setprecision(2);
+	
+		cout << "Employee information obtained by get functions:\n"
+			<< "\nFirst name is " << employee.getFirstName()
+			<< "\nLast name is " << employee.getLastName()
+			<< "\nSocial security number is " << employee.getSocialSecurityNumber()
+			<< "\nGross sales is " << employee.getGrossSales()
+			<< "\nCommission rate is " << employee.getCommissionRate()
+			<< "\nBase salary is " << employee.getBaseSalary() << endl;
+	
+		employee.setBaseSalary(1000);
+	
+		cout << "\nUpdated employee information output by print function: \n" << endl;
+		employee.print();
+	
+		cout << "\n\nEmployee's earnings: $" << employee.earnings() << endl;
+	}
+
+### 11.3 更好的基类和派生类的实例
+
+#### 11.3.1 基类定义及实现
+
+1.基类头文件CommissionEmployee.h
+
+	private:	//基类的数据成员使用private权限
+		std::string firstName;
+		std::string lastName;
+		std::string socialSecurityNumber;
+		double grossSales;
+		double commissionRate;
+	};
+
+2.基类类实现CommissionEmployee.cpp
+	
+	CommissionEmployee::CommissionEmployee(
+		const string &first, const string &last, const string &ssn,
+		double sales, double rate)
+		: firstName(first), lastName(last), socialSecurityNumber(ssn)
+	{
+		setGrossSales(sales);
+		setCommissionRate(rate);
+	}
+	
+	double CommissionEmployee::earnings() const
+	{
+		return getCommissionRate() * getGrossSales();
+		//使用get函数使代码具有健壮性.
+	}
+	
+	void CommissionEmployee::print() const
+	{
+		cout << "commission employee: " << getFirstName() << ' ' << getLastName()
+			<< "\nsocial security number: " << getSocialSecurityNumber()
+			<< "\ngross sales: " << getGrossSales()
+			<< "\ncommission rate: " << getCommissionRate();
+		//使用get函数使代码具有健壮性.
+	}
+
+#### 11.3.2 派生类定义及实现
+
+1.派生类头文件BasePlusCommissionEmployee.h
+
+与之前的相同.
+
+2.派生类类实现BasePlusCommissionEmployee.cpp
+	
+	double BasePlusCommissionEmployee::earnings() const
+	{
+		return getBaseSalary + CommissionEmployee::earnings();
+		/*
+			使用CommissionEmployee::earnings();调用基类的earnings函数.
+			格式为"基类类名::基类成员函数"
+		*/
+	}
+	
+	void BasePlusCommissionEmployee::print() const
+	{
+		cout << "base-salaried ";
+
+		CommissionEmployee::print();	//调用基类的print()函数
+
+		cout << "\nbase salary: " << getBaseSalary();
+	}
+
+#### 11.3.3 测试程序test.cpp
+
+直接复用就好.
+
+### 11.4 派生类中的构造函数和析构函数
+
+派生类中不会继承基类的东西包括:
+
+	1.构造函数和析构函数;
+	2.基类的友元函数.
+
+派生类对象的实例及析构过程:
+
+	1.构造时按照派生顺序依次调用(即基类构造函数最先调用,最后是派生类的构造函数调用);
+	2.析构时派生类析构函数先调用,最后才是基类的析构函数被调用(顺序与构造相反).
+
+### 11.5 public、protected和private继承
+
+略.
+
 ***
 
-## Chapter 15.标准库的容器和迭代器
+## Chapter 12 面向对象编程:多态性
+
+
+
+***
+
+## Chapter 15 标准库的容器和迭代器
 
 ### 15.1 标准模板库(STL)简介
 
