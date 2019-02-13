@@ -56,6 +56,93 @@
 		return 0;
 	}
 
+### 1.3 一个二输入与非门建模实例
+
+**1.nand2.h**
+
+	#ifndef __NAND2_H__
+	#define __NAND2_H__
+	
+	#include <systemc.h>
+	SC_MODULE(nand2) {
+		sc_in<bool> A;
+		sc_in<bool> B;
+		sc_out<bool> F;
+		void do_nand() {
+			F = !(A & B);
+		}
+	
+		SC_CTOR(nand2) {
+			SC_METHOD(do_nand);
+			sensitive << A << B;
+		}
+	};
+	
+	#endif
+
+**2.testbench定义**
+
+	#ifndef __TB_H__
+	#define __TB_H__
+	#include <iostream>
+	#include <systemc.h>
+	
+	SC_MODULE(tb) {
+		sc_out<bool> a, b;
+		sc_in<bool> f;
+		sc_in_clk clk;
+		void gen_input(){
+			wait(); a = 0; b = 0;
+			wait(); a = 0; b = 1;
+			wait(); a = 1; b = 0;
+			wait(); a = 1; b = 1;
+			wait(100);
+		}
+	
+		void display_variable(){
+			cout << "a = " << a << ", b = " << b << ", f = " << f << endl;
+		}
+	
+		SC_CTOR(tb){
+			SC_CTHREAD(gen_input, clk.pos());
+			SC_METHOD(display_variable);
+			sensitive << f << a << b;
+			dont_initialize();
+		}
+	};
+	
+	#endif
+
+**3.测试程序**
+
+	#include <systemc.h>
+	#include "nand2.h"
+	#include "tb.h"
+	
+	int sc_main(int argc, char *argv[])
+	{
+		sc_signal<bool> a, b, f;
+		sc_clock clk("clk", 20, SC_NS);
+		nand2 N2("nand2");
+		N2.A(a);
+		N2.B(b);
+		N2.F(f);
+	
+		tb tbl("tb");
+		tbl.clk(clk);
+		tbl.a(a);
+		tbl.b(b);
+		tbl.f(f);
+		sc_trace_file *tf = sc_create_vcd_trace_file("nand2");
+		sc_trace(tf, N2.A, "A");
+		sc_trace(tf, N2.B, "B");
+		sc_trace(tf, N2.F, "F");
+		sc_start(200, SC_NS);
+		sc_close_vcd_trace_file(tf);
+		sc_start(200, SC_NS);
+		return 0;
+	}
+
 ***
 
 ## Chapter 2 SystemC基本语法
