@@ -4105,7 +4105,743 @@ public继承特点:
 
 ## Chapter 12 面向对象编程:多态性
 
+### 12.1 类继承层次中对象之间的关系
 
+#### 12.1.1 基类指针指向派生类对象
+
+因为派生类对象也是基类对象
+
+	1.可以直接将派生类对象直接赋值给基类指针,此时调用成员函数必须调用基类的成员函数.不能调用派生类的成员函
+	数,会报错.
+	2.如果基类和派生成员函数名相同,句柄类型决定哪个类的函数被调用(即句柄类型为基类指针,所以调用基类的成员
+	函数).即使指向的是派生类对象.
+
+#### 12.1.2 派生类指针指向基类对象
+
+编译器会报错,不允许这样做
+
+#### 12.1.3 向下转换
+
+	基类指针指向派生类对象,如果需要调用派生类成员函数.采用向下转换(downcasting)技术,将基类指针强制转换
+	为派生类指针,即可访问.
+
+### 12.2 virtual函数和virtual析构函数
+
+#### 12.2.1 函数调用情形
+
+基类指针指向派生类对象的成员函数调用情形如下:
+
+	1.一般的成员函数声明时(即无virtual声明),调用的是基类的成员函数;
+	2.当使用virtual声明成员函数时,调用的是派生类对象的成员函数.
+
+#### 12.2.2 virtual函数声明
+
+对于相同的基类成员函数,在不同的派生类中功能不一样.为了达到使用指向派生类的基类指针去调用不同的派生类的成员函数.可以在基类中将该成员函数声明为virtual类.
+
+	1.在基类中声明virtual成员函数形式:
+		virtual void draw() const;
+	2.基类中声明了virtual成员函数,派生类为了程序清晰可读.最好在派生类中也将该成员函数声明为virtual,且使用
+	override关键词进行检查:
+		virtual void draw() const override;
+		/*
+		1.派生类中也是用virtual关键词;
+		2.派生类中后面使用override关键词,用于检查基类中是否存在一个相同函数签名的成员函数,不存在就报错.
+			达到检查的目的;
+		*/
+	3.对于基类中virtual成员函数,派生类也可以不添加virtual,默认继承而来的也是virtual类型,只是不易读.
+
+#### 12.2.3 基类指针/引用调用virtual函数
+
+对于virtual函数,可以使用指向派生类对象的基类指针或指向派生类对象的基类引用调用,可达到多态的目的.也叫动态绑定.
+
+	DerivedClass derivedObj;
+	1.基类指针指向派生类对象
+	BaseClass *ptr1 = &derivedObj;	//基类指针指向派生类对象
+	ptr1.virtFunc();		//会调用派生类的virtFunc();
+	2.派生类对象的基类引用
+	BaseClass derivedRef = &derivedObj;	//派生类对象的基类引用
+	derivedRef.virtFunc();	//会调用派生类的virtFunc();
+
+#### 12.2.4 实例
+
+**1.CommissionEmployee.h**
+
+	#ifndef __COMMISSION_H__
+	#define __COMMISSION_H__
+	
+	#include <string>
+	#include <iostream>
+	
+	class CommissionEmployee
+	{
+	public:
+		CommissionEmployee(const std::string &, const std::string &, const std::string &,
+				double = 0.0, double = 0.0);
+		void setFirstName(const std::string &);
+		std::string getFirstName() const;
+	
+		void setLastName(const std::string &);
+		std::string getLastName() const;
+	
+		void setSocialSecurityNumber(const std::string &);
+		std::string getSocialSecurityNumber() const;
+	
+		void setGrossSales(double);
+		double getGrossSales() const;
+	
+		void setCommissionRate(double);
+		double getCommissionRate() const;
+	
+		virtual double earnings() const;	//virtual函数,只在头文件中需要添加.
+		virtual void print() const;			//virtual函数,只在头文件中需要添加.
+	protected:
+		std::string firstName;
+		std::string lastName;
+		std::string socialSecurityNumber;
+		double grossSales;
+		double commissionRate;
+	};
+	
+	#endif
+
+**2.CommissionEmployee.cpp**
+
+	#include "CommissionEmployee.h"
+	using namespace std;
+	
+	CommissionEmployee::CommissionEmployee(const string &first, const string &last,
+										   const string &ssn, double sales, double rate)
+	{
+		firstName = first;
+		lastName = last;
+		socialSecurityNumber = ssn;
+		setGrossSales(sales);
+		setCommissionRate(rate);
+	}
+	
+	void CommissionEmployee::setFirstName(const string &first)
+	{
+		firstName = first;
+	}
+	
+	string CommissionEmployee::getFirstName() const
+	{
+		return firstName;
+	}
+	
+	void CommissionEmployee::setLastName(const string &last)
+	{
+		lastName = last;
+	}
+	
+	string CommissionEmployee::getLastName() const
+	{
+		return lastName;
+	}
+	
+	void CommissionEmployee::setSocialSecurityNumber(const string &ssn)
+	{
+		socialSecurityNumber = ssn;
+	}
+	
+	string CommissionEmployee::getSocialSecurityNumber() const
+	{
+		return socialSecurityNumber;
+	}
+	
+	void CommissionEmployee::setGrossSales(double sales)
+	{
+		if (sales >= 0.0)
+			grossSales = sales;
+		else
+			throw invalid_argument("Gross sales must be >= 0.0");
+	}
+	
+	double CommissionEmployee::getGrossSales() const
+	{
+		return grossSales;
+	}
+	
+	void CommissionEmployee::setCommissionRate(double rate)
+	{
+		if ((rate > 0.0) && (rate < 1.0))
+			commissionRate = rate;
+		else
+			throw invalid_argument("Commission rate must be > 0.0 and < 1.0");
+	}
+	
+	double CommissionEmployee::getCommissionRate() const
+	{
+		return commissionRate;
+	}
+	
+	double CommissionEmployee::earnings() const
+	{
+		return commissionRate * grossSales;
+	}
+	
+	void CommissionEmployee::print() const
+	{
+		cout << "commission employee: " << firstName << ' ' << lastName
+			<< "\nsocial security number: " << socialSecurityNumber
+			<< "\ngross sales: " << grossSales
+			<< "\ncommission rate: " << commissionRate;
+	}
+
+**3.BasePlusCommissionEmployee.h**
+
+	#ifndef __BASEPLUS_H__
+	#define __BASEPLUS_H__
+	
+	#include <string>
+	#include "CommissionEmployee.h"
+	
+	class BasePlusCommissionEmployee : public CommissionEmployee
+	{
+	public:
+		BasePlusCommissionEmployee(const std::string &, const std::string &,
+			const std::string &, double = 0.0, double = 0.0, double = 0.0);
+	
+		void setBaseSalary(double);
+		double getBaseSalary() const;
+	
+		virtual double earnings() const override;	//派生类头文件也添加virtual,可读性好
+		virtual void print() const override;
+	private:
+		double baseSalary;
+	};
+	
+	#endif
+
+**4.BasePlusCommissionEmployee.cpp**
+
+	#include <iostream>
+	#include <stdexcept>
+	#include "BasePlusCommissionEmployee.h"
+	using namespace std;
+	
+	BasePlusCommissionEmployee::BasePlusCommissionEmployee(
+		const string &first, const string &last, const string &ssn,
+		double sales, double rate, double salary)
+		: CommissionEmployee(first, last, ssn, sales, rate)
+	{
+		setBaseSalary(salary);
+	}
+	
+	void BasePlusCommissionEmployee::setBaseSalary(double salary)
+	{
+		if (salary >= 0.0)
+			baseSalary = salary;
+		else
+			throw invalid_argument("Salary must be >= 0.0");
+	}
+	
+	double BasePlusCommissionEmployee::getBaseSalary() const
+	{
+		return baseSalary;
+	}
+	
+	double BasePlusCommissionEmployee::earnings() const
+	{
+		return baseSalary + (commissionRate * grossSales);
+	}
+	
+	void BasePlusCommissionEmployee::print() const
+	{
+		cout << "commission employee: " << firstName << ' ' << lastName
+			<< "\nsocial security number: " << socialSecurityNumber
+			<< "\ngross sales: " << grossSales
+			<< "\ncommission rate: " << commissionRate
+			<< "\nbase salary: " << baseSalary;
+	}
+
+**5.test.cpp**
+
+	#include <iostream>
+	#include <iomanip>
+	#include "CommissionEmployee.h"
+	#include "BasePlusCommissionEmployee.h"
+	using namespace std;
+	
+	int main()
+	{
+		CommissionEmployee commissionEmployee("Sue", "Jones", "222-22-2222", 10000, 0.06);
+		CommissionEmployee *commissionEmployeePtr = nullptr;
+	
+		BasePlusCommissionEmployee basePlusCommissionEmployee("Bob", "Lewis", "333-33-3333",
+			5000, .04, 300);
+		BasePlusCommissionEmployee *basePlusCommissionEmployeePtr = nullptr;
+	
+		cout << fixed << setprecision(2);
+		cout << "Invoking print function on base-class and derived-class "
+			<< "\nobjects with static binding\n\n";
+		commissionEmployee.print();
+		cout << "\n\n";
+		basePlusCommissionEmployee.print();
+	
+		cout << "\n\nInvoking print function on base-class and "
+			<< "derived-class \nobjects with dynamic binding";
+		commissionEmployeePtr = &commissionEmployee;
+		cout << "\n\nCalling virtual function print with base-class pointer"
+			<< "\nto base-class object invokes base-class "
+			<< "print function:\n\n";
+		commissionEmployeePtr->print();
+	
+		basePlusCommissionEmployeePtr = &basePlusCommissionEmployee;
+		cout << "\n\nCalling virtual function print with derived-class pointer"
+			<< "\nto derived-class object invokes derived-class "
+			<< "print function:\n\n";
+		basePlusCommissionEmployeePtr->print();
+	
+		commissionEmployeePtr = &basePlusCommissionEmployee;
+		cout << "\n\nCalling virtual function print with base-class pointer"
+			<< "\nto derived-class object invokes derived-class "
+			<< "print function:\n\n";
+		commissionEmployeePtr->print();
+		cout << endl;
+	}
+
+#### 12.2.5 virtual析构函数
+
+对于含有virtual函数的基类,当使用new申请派生类对象的空间,赋值给基类指针.如果delete基类指针,此时就会报错.
+
+**1.virtual析构函数**
+
+	virtual ~CommissionEmployee();
+	//基类声明virtual析构函数,当删除基类指针指向的对象时,自动删除对应的new的派生类对象空间.
+
+**2.Final成员函数和类**
+
+略.
+
+### 12.3 抽象类和纯virtual函数
+
+	virtual void draw() const = 0;	//在virtual函数的基础上,后面添加" = 0",即可变成纯virtual函数.
+	/*
+		1.基类中只有纯virtual函数的定义,无实现;
+		2.派生类必须实现纯virtual函数成为具体类(可以实例化对象),否则也会成为抽象类;
+		3.含有纯virtual函数的基类会成为抽象类,不能实例化对象.但是可以定义指针或引用,用于实现多态性;
+		4.抽象类用于定义类的公共接口,包含一个或多个纯virtual函数;
+		5.可以使用抽象基类来声明指向派生具体类的指针或引用,实现多态性.
+	*/
+
+### 12.4 实例研究:应用多态性的工资发放系统
+
+**1.employee.h**
+
+	#ifndef __EMPLOYEE_H__
+	#define __EMPLOYEE_H__
+	
+	#include <string>
+	#include <iostream>
+	
+	class Employee
+	{
+	public:
+		Employee(const std::string &, const std::string &, const std::string &);
+		virtual ~Employee(){ };
+		void setFirstName(const std::string &);
+		std::string getFirstName() const;
+	
+		void setLastName(const std::string &);
+		std::string getLastName() const;
+	
+		void setSocialSecurityNumber(const std::string &);
+		std::string getSocialSecurityNumber() const;
+	
+		virtual double earnings() const = 0;	//纯virtual函数,抽象类.定义接口
+		virtual void print() const;
+	protected:
+		std::string firstName;
+		std::string lastName;
+		std::string socialSecurityNumber;
+	};
+	
+	#endif
+
+**2.employee.cpp**
+
+	#include "employee.h"
+	using namespace std;
+	
+	Employee::Employee(const string &first, const string &last, const string &ssn)
+		:firstName(first), lastName(last), socialSecurityNumber(ssn)
+	{
+	}
+	
+	void Employee::setFirstName(const string &first)
+	{
+		firstName = first;
+	}
+	
+	string Employee::getFirstName() const
+	{
+		return firstName;
+	}
+	
+	void Employee::setLastName(const string &last)
+	{
+		lastName = last;
+	}
+	
+	string Employee::getLastName() const
+	{
+		return lastName;
+	}
+	
+	void Employee::setSocialSecurityNumber(const string &ssn)
+	{
+		socialSecurityNumber = ssn;
+	}
+	
+	string Employee::getSocialSecurityNumber() const
+	{
+		return socialSecurityNumber;
+	}
+	
+	void Employee::print() const
+	{
+		cout << getFirstName() << " " << getLastName()
+			<< "\nsocial security number: " << getSocialSecurityNumber();
+	}
+
+**3.salariedEmployee.h**
+
+	#ifndef __SALARIED_H__
+	#define __SALARIED_H__
+	
+	#include <string>
+	#include "employee.h"
+	
+	class SalariedEmployee : public Employee
+	{
+	public:
+		SalariedEmployee(const std::string &, const std::string &, const std::string &, double = 0.0);
+		virtual ~SalariedEmployee() { };
+	
+		void setWeeklySalary(double);
+		double getWeeklySalary() const;
+	
+		virtual double earnings() const override;
+		virtual void print() const override;
+	private:
+		double weeklySalary;
+	};
+	
+	#endif
+
+**4.salariedEmployee.cpp**
+
+	#include <iostream>
+	#include <stdexcept>
+	#include "salariedEmployee.h"
+	using namespace std;
+	
+	SalariedEmployee::SalariedEmployee(const string &first,
+		const string &last, const string &ssn, double salary)
+		: Employee(first, last, ssn)	//对基类数据成员进行初始化.属于private属性
+	{
+		setWeeklySalary(salary);
+	}
+	
+	void SalariedEmployee::setWeeklySalary(double salary)
+	{
+		if (salary >= 0.0)
+			weeklySalary = salary;
+		else
+			throw invalid_argument("Weekly salary must be >= 0.0");
+	}
+	
+	double SalariedEmployee::getWeeklySalary() const
+	{
+		return weeklySalary;
+	}
+	
+	double SalariedEmployee::earnings() const
+	{
+		return getWeeklySalary();
+	}
+	
+	void SalariedEmployee::print() const
+	{
+		cout << "salaried employee: ";
+		Employee::print();	//调用基类的print函数
+		cout << "\nweekly salary: " << getWeeklySalary();
+	}
+
+**5.commissionEmployee.h**
+
+	#ifndef __COMMISSION_H__
+	#define __COMMISSION_H__
+	
+	#include <string>
+	#include <iostream>
+	#include "employee.h"
+	
+	class CommissionEmployee : public Employee
+	{
+	public:
+		CommissionEmployee(const std::string &, const std::string &, const std::string &,
+				double = 0.0, double = 0.0);
+		virtual ~CommissionEmployee() { };
+	
+		void setGrossSales(double);
+		double getGrossSales() const;
+	
+		void setCommissionRate(double);
+		double getCommissionRate() const;
+	
+		virtual double earnings() const override;
+		virtual void print() const override;
+	private:
+		double grossSales;
+		double commissionRate;
+	};
+	
+	#endif
+
+**6.commissionEmployee.cpp**
+
+	#include "commissionEmployee.h"
+	using namespace std;
+	
+	CommissionEmployee::CommissionEmployee(const string &first, const string &last,
+		const string &ssn, double sales, double rate)
+		: Employee(first, last, ssn)	//对基类数据成员进行初始化.属于private属性
+	{
+		setGrossSales(sales);
+		setCommissionRate(rate);
+	}
+	
+	void CommissionEmployee::setGrossSales(double sales)
+	{
+		if (sales >= 0.0)
+			grossSales = sales;
+		else
+			throw invalid_argument("Gross sales must be >= 0.0");
+	}
+	
+	double CommissionEmployee::getGrossSales() const
+	{
+		return grossSales;
+	}
+	
+	void CommissionEmployee::setCommissionRate(double rate)
+	{
+		if ((rate > 0.0) && (rate < 1.0))
+			commissionRate = rate;
+		else
+			throw invalid_argument("Commission rate must be > 0.0 and < 1.0");
+	}
+	
+	double CommissionEmployee::getCommissionRate() const
+	{
+		return commissionRate;
+	}
+	
+	double CommissionEmployee::earnings() const
+	{
+		return getCommissionRate() * getGrossSales();
+	}
+	
+	void CommissionEmployee::print() const
+	{
+		cout << "commission employee: ";
+		Employee::print();
+		cout << "\ngross sales: " << getGrossSales()
+			<< "; commission rate: " << getCommissionRate();
+	}
+
+**7.baseCommissionEmployee.h**
+
+	#ifndef __BASEPLUS_H__
+	#define __BASEPLUS_H__
+	
+	#include <string>
+	#include "commissionEmployee.h"
+	
+	class BasePlusCommissionEmployee : public CommissionEmployee
+	{
+	public:
+		BasePlusCommissionEmployee(const std::string &, const std::string &,
+			const std::string &, double = 0.0, double = 0.0, double = 0.0);
+		virtual ~BasePlusCommissionEmployee() { };
+		void setBaseSalary(double);
+		double getBaseSalary() const;
+	
+		virtual double earnings() const override;
+		virtual void print() const override;
+	private:
+		double baseSalary;
+	};
+	
+	#endif
+
+**8.baseCommissionEmployee.cpp**
+
+	#include <iostream>
+	#include <stdexcept>
+	#include "basePlusCommissionEmployee.h"
+	using namespace std;
+	
+	BasePlusCommissionEmployee::BasePlusCommissionEmployee(
+		const string &first, const string &last, const string &ssn,
+		double sales, double rate, double salary)
+		: CommissionEmployee(first, last, ssn, sales, rate)
+		//对基类数据成员进行初始化.属于private属性
+	{
+		setBaseSalary(salary);
+	}
+	
+	void BasePlusCommissionEmployee::setBaseSalary(double salary)
+	{
+		if (salary >= 0.0)
+			baseSalary = salary;
+		else
+			throw invalid_argument("Salary must be >= 0.0");
+	}
+	
+	double BasePlusCommissionEmployee::getBaseSalary() const
+	{
+		return baseSalary;
+	}
+	
+	double BasePlusCommissionEmployee::earnings() const
+	{
+		return getBaseSalary() + CommissionEmployee::earnings();
+	}
+	
+	void BasePlusCommissionEmployee::print() const
+	{
+		cout << "base-salaried ";
+		CommissionEmployee::print();
+		cout << "; base salary: " << getBaseSalary();
+	}
+
+**9.test.cpp**
+
+	#include <iostream>
+	#include <iomanip>
+	#include <vector>
+	#include "employee.h"
+	#include "salariedEmployee.h"
+	#include "commissionEmployee.h"
+	#include "basePlusCommissionEmployee.h"
+	using namespace std;
+	
+	void virtualViaPointer(const Employee *const);
+	void virtualViaRef(const Employee &);
+	
+	int main()
+	{
+		cout << fixed << setprecision(2);
+	
+		SalariedEmployee salariedEmployee(
+			"John", "Smith", "111-11-1111", 800);
+		CommissionEmployee commissionEmployee(
+			"Sue", "Jone", "333-33-3333", 10000, .06);
+		BasePlusCommissionEmployee basePlusCommissionEmployee(
+			"Bob", "Lewis", "444-44-4444", 5000, .04, 300);
+		cout << "Employees processed individually using static binding:\n\n";
+		salariedEmployee.print();
+		cout << "\nearned $" << salariedEmployee.earnings() << "\n\n";
+		commissionEmployee.print();
+		cout << "\nearned $" << commissionEmployee.earnings() << "\n\n";
+		basePlusCommissionEmployee.print();
+		cout << "\nearned $" << basePlusCommissionEmployee.earnings() << "\n\n";
+	
+		vector<Employee *> employees(3);	//抽象类指针的vector,含有3个指针.
+	
+		employees[0] = &salariedEmployee;
+		employees[1] = &commissionEmployee;
+		employees[2] = &basePlusCommissionEmployee;
+	
+		cout << "Employee processed polymorphically via dynamic binding:\n\n";
+		cout << "Virtual function calls made off base-class pointers:\n\n";
+		for (const Employee *employeePtr : employees)
+			virtualViaPointer(employeePtr);
+	
+		cout << "Virtual function calls made off base-class references:\n\n";
+		for (const Employee *employeePtr : employees)
+			virtualViaRef(*employeePtr);
+		return 0;
+	}
+	
+	void virtualViaPointer(const Employee *const baseClassPtr)
+	{
+		baseClassPtr->print();
+		cout << "\nearned $" << baseClassPtr->earnings() << "\n\n";
+	}
+	
+	void virtualViaRef(const Employee &baseClassRef)
+	{
+		baseClassRef.print();
+		cout << "\nearned $" << baseClassRef.earnings() << "\n\n";
+	}
+
+### 12.5 实例研究:dynamic_cast, typeid, type_info的使用
+
+	#include <iostream>
+	#include <iomanip>
+	#include <vector>
+	#include <typeinfo>
+	#include "employee.h"
+	#include "salariedEmployee.h"
+	#include "commissionEmployee.h"
+	#include "basePlusCommissionEmployee.h"
+	using namespace std;
+	
+	int main()
+	{
+		cout << fixed << setprecision(2);
+		vector<Employee *> employees(3);
+	
+		employees[0] = new SalariedEmployee("John", "Smith", "111-11-1111", 800);
+		employees[1] = new CommissionEmployee("Sue", "Jones", "333-33-3333", 10000, .06);
+		employees[2] = new BasePlusCommissionEmployee("Bob", "Lewis", "444-44-4444", 5000, .04, 300);
+	
+		for (Employee *employeePtr : employees)
+		{
+			employeePtr->print();
+			cout << endl;
+	
+			BasePlusCommissionEmployee *derivedPtr = 
+				dynamic_cast<BasePlusCommissionEmployee *>(employeePtr);
+			/*
+				dynamic_cast<BasePlusCommissionEmployee *>(employeePtr):动态的把employeePtr从
+				类型Employee *向下强制转换为类型BasePlusCommissionEmployee *.如果employeePtr指向
+				的对象是一个BasePlusCommissionEmployee对象,则将该地址赋给指针derivedPtr,否则,
+				derivedPtr赋值为nullptr.
+				因此:dynamic_cast具有基对象的类型检查功能.
+				static_cast:直接进行强制类型转换.
+			*/
+			if (derivedPtr != nullptr)
+			{
+				double oldBaseSalary = derivedPtr->getBaseSalary();
+				cout << "old base salary: $" << oldBaseSalary << endl;
+				derivedPtr->setBaseSalary(1.10 * oldBaseSalary);
+				cout << "new base salary with 10% increase is: $"
+					<< derivedPtr->getBaseSalary() << endl;
+			}
+			cout << "earned $" << employeePtr->earnings() << "\n\n";
+		}
+	
+		for (const Employee *employeePtr : employees)
+		{
+			cout << "deleting object of " << typeid(*employeePtr).name() << endl;
+			/*
+			typeid(*employeePtr):返回一个type_info类对象的引用.用于获得一些参数类型的一些信息;
+			typeid(*employeePtr).name():获得参数类型的名称(e.g.class BasePlusCommissionEmployee).
+			typeid包含在<typeinfo>头文件中.
+			*/
+			delete employeePtr;
+		}
+	}
+
+
+***
+
+## Chapter 13 输入/输出流的深入剖析
 
 ***
 

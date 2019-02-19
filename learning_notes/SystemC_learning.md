@@ -65,16 +65,16 @@
 	
 	#include <systemc.h>
 	SC_MODULE(nand2) {
-		sc_in<bool> A;
-		sc_in<bool> B;
-		sc_out<bool> F;
+		sc_in<bool> A;		//输入信号A
+		sc_in<bool> B;		//输入信号B
+		sc_out<bool> F;		//输出信号F
 		void do_nand() {
-			F = !(A & B);
+			F = !(A & B);	//与非,得到F的值
 		}
 	
 		SC_CTOR(nand2) {
-			SC_METHOD(do_nand);
-			sensitive << A << B;
+			SC_METHOD(do_nand);		//SC_METHOD(do_nand):表示进程do_nand
+			sensitive << A << B;	//进程do_nand对A,B信号敏感.一旦A,B信号发生变化,则会调用进程一次
 		}
 	};
 	
@@ -105,9 +105,14 @@
 	
 		SC_CTOR(tb){
 			SC_CTHREAD(gen_input, clk.pos());
-			SC_METHOD(display_variable);
+			/*
+			SC_CTHREAD(gen_input, clk.pos()):表示含有进程gen_input,且该进程会有clk.pos时钟的上升沿
+				触发.
+			*/
+			SC_METHOD(display_variable); //SC_METHOD(display_variable):表示进程display_variable
 			sensitive << f << a << b;
-			dont_initialize();
+			//进程display_varialbe对f,a,b信号敏感.一旦发生变化,则会调用一次
+			dont_initialize();	//不要在仿真零时刻调用进程display_variable,会出错
 		}
 	};
 	
@@ -121,19 +126,19 @@
 	
 	int sc_main(int argc, char *argv[])
 	{
-		sc_signal<bool> a, b, f;
+		sc_signal<bool> a, b, f;	//初始值a,b,f均为0
 		sc_clock clk("clk", 20, SC_NS);
 		nand2 N2("nand2");
-		N2.A(a);
-		N2.B(b);
-		N2.F(f);
+		N2.A(a);	//完成端口绑定.N2.A <---> tbl.a
+		N2.B(b);	//完成端口绑定.N2.B <---> tbl.b
+		N2.F(f);	//完成端口绑定.N2.F <---> tbl.f
 	
 		tb tbl("tb");
 		tbl.clk(clk);
-		tbl.a(a);
-		tbl.b(b);
-		tbl.f(f);
-		sc_trace_file *tf = sc_create_vcd_trace_file("nand2");
+		tbl.a(a);	//端口绑定
+		tbl.b(b);	//端口绑定
+		tbl.f(f);	//端口绑定
+		sc_trace_file *tf = sc_create_vcd_trace_file("nand2");	//sc_trace保存波形文件
 		sc_trace(tf, N2.A, "A");
 		sc_trace(tf, N2.B, "B");
 		sc_trace(tf, N2.F, "F");
@@ -142,6 +147,14 @@
 		sc_start(200, SC_NS);
 		return 0;
 	}
+
+**4.结果**
+
+	a = 0, b = 0, f = 1
+	a = 0, b = 1, f = 1
+	a = 1, b = 0, f = 1
+	a = 1, b = 1, f = 1		//不能理解,难道是因为刚好处在翻转的位置???
+	a = 1, b = 1, f = 0
 
 ***
 
