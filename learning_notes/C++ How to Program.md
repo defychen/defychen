@@ -4867,6 +4867,238 @@ char类型的输出
 	<iomanip>:声明了参数化流操作符(e.g.setw,setprecision),用于向格式化I/O提供有用的服务;
 	<fstream>:声明了文件处理服务.
 
+### 13.2 输出流
+
+### 13.2.1 char *变量的输出
+
+**1.cout输出char的数组**
+
+	unsigned char a[2] = {0x11, 0xbb};
+	//此处必须使用unsigned char(无符号);使用char(有符号)输出时会出现"0xffffffbb"的错误.
+	cout << a[0] << a[1] << endl; //会显示0x11,0xbb所代表的ascii码的值.
+								  //0xbb由于超过了128,因此不会显示.
+	cout << hex << int(a[0]) << int(a[1]) << endl; //此时才会显示正确的值0x11,0xbb;
+	printf("%x, %x", a[0], a[1]); //printf显示正确的0x11,0xbb.
+
+**2.char \*变量的输出**
+
+	#include <iostream>
+	#include <stdio.h>
+	using namespace std;
+	
+	int main()
+	{
+		const char *const word = "again";
+		unsigned char a[2] = {0x11, 0xbb};
+		cout << "Value of word is: " << word << endl //默认输出char *所代表的字符串(again).
+			<< "Valud of static_cast<const word *>(word) is: "
+			<< static_cast< const void *>(word) << endl;
+		//将const char *转成const void *,可以打印char *所代表字符串的首地址(e.g.
+		//012EDC74->十六进制显示).且此处必须转换为const void *,否则会报错.
+		cout << hex << a[0] << a[1] << endl;
+		printf("%x, %x", a[0], a[1]);
+	}
+
+### 13.2.2 put成员函数使用
+
+cout的put成员函数用于输出单个字符.
+
+	cout.put('A');	//输出字符'A'
+	cout.put('A').put('B').put('\n'); //输出AB以及一个换行符
+	cout.put(65);	//输出65所带的ASCII字符(即:A).
+
+### 13.3 输入流
+
+#### 13.3.1 get和getline成员函数
+
+**1.无实参的cin.get()函数**
+
+	#include <iostream>
+	using namespace std;
+	
+	int main()
+	{
+		int character;
+		cout << "Before input, cin.eof() is: " << cin.eof() << endl
+		//cin.eof():未到文件尾其值为0(即false),到文件尾时其值为1(即true).无文件或输入操作为0.
+			<< "Enter a sentence followed by end-of-file:" << endl;
+		while ((character = cin.get()) != EOF)
+			cout.put(character);
+		/*
+			cin.get():无实参时,读取一个一个字符,返回读取到的字符,保存到character中.当读取到文件尾时,
+			返回EOF.
+		*/
+	
+		cout << "\nEOF in this system is: " << character << endl; //打印EOF的值,为-1.
+		cout << "After input of EOF, cin.eof() is: " << cin.eof() << endl;
+		//到文件尾,值为1.
+	}
+
+	/*结果为:
+	Before input, cin.eof() is: 0
+	Enter a sentence followed by end-of-file:
+	Testing the get and put member functions
+	Testing the get and put member functions
+	^Z	//此处输入Ctrl+Z(Windows表示文件尾).
+	
+	EOF in this system is: -1
+	After input of EOF, cin.eof() is: 1
+	*/
+
+**2.cin与带参数的cin.get()函数**
+
+	#include <iostream>
+	using namespace std;
+	
+	int main()
+	{
+		const int SIZE = 80;
+		char buffer1[SIZE];
+		char buffer2[SIZE];
+	
+		cout << "Enter a sentence: " << endl;
+		cin >> buffer1;	//cin读取字符,遇到空白字符本次读取结束.且会丢弃前面的空白字符.
+	
+		cout << "\nThe string read with cin was: " << endl
+			<< buffer1 << endl << endl;
+	
+		cin.get(buffer2, SIZE);
+		/*
+			cin.get(buffer, SIZE, "\n");
+			para1:指定存放的buffer;	para2:读取的字符最大个数; para3:制定分隔符,默认为"\n",可不写.
+			cin.get():读取时不会丢弃前面的空白字符.
+		*/
+		cout << "The string read with cin.get was: " << endl
+			<< buffer2 << endl;
+	}
+
+	/*结果为:
+	Enter a sentence:
+	Constrasting string input with cin and cin.get
+	
+	The string read with cin was:
+	Constrasting
+	
+	The string read with cin.get was:
+	 string input with cin and cin.get
+	*/
+
+**3.cin.getline()函数**
+
+	cin.getline(buffer, SIZE);	
+	/*
+	与cin.get函数一样使用,只是:
+	cin.get():以分隔符为界,读取分隔符前面的字符.分隔符会保留在输入流中,下次仍可以读取到.
+	cin.getline():以分隔符为界,读取分隔符前面的字符.分隔符会从输入流中去掉.
+	*/
+
+#### 13.3.2 cin.ignore, cin.peek, cin.putback
+
+**1.cin.ignore(para1, para2)**
+
+para1:跳过的字符个数; para2:指定结束符.且会将结束符从流中删除.
+
+**2.cin.peek()**
+
+返回输入流中的下一个字符(即cin将要读取的字符).只查看不抽取.
+
+**3.cin.putback(char para)**
+
+将字符para插入到流的当前指针位置.
+
+**4.实例**
+
+	#include <iostream>
+	using namespace std;
+	
+	int main()
+	{
+		char buf[1024];
+		cin.get(buf, 10, '/');	//流前面的直到'/'的字符已经被get走.
+		cout << buf << endl;
+		memset(buf, 0, sizeof(buf));
+		cin.ignore(100, 'i');	//忽略get走后的紧接着的100个字符.且当前位置的'i'也被删除.
+		cin.putback('i');	//将'i'插入到当前指针的位置.
+	
+		char peek = cin.peek();	//返回当前位置的字符,即'i'.
+		cout << "peek = " << peek << "---" << endl;
+		cin.get(buf, 1024, '/');
+		cout << buf << endl;
+	}
+
+	/*结果为:
+		i like c/   i like c++/
+		i like c
+		peek = i---
+		i like c++
+	*/
+
+#### 13.3.3 cin.read, cout.write, cin.gcount
+
+	cin.read(buffer, 20);	//读取20个字符到buffer中
+	cout.write(buffer, cin.gcount());
+	/*
+		cin.gcount():统计cin中含有的字符数.
+		cout.write(buffer, cin.gcount()):输出buffer中的20个字符.
+	*/
+### 13.4 流操纵符
+
+流操纵符的使用需要包含<iomanip>头文件.
+
+#### 13.4.1 整数的基数设置:dec, oct, hex, setbase
+
+一旦更改基数设置,后续的输出均使用该基数.
+
+	cout << hex << var;	//输出十六进制
+	cout << oct << var; //输出八进制
+	cout << dec << var; //输出十进制
+	cout << setbase(10) << var; //设置基数为10,输出十进制
+
+#### 13.4.2 浮点精度(cout.precision, setprecision)
+
+即控制浮点数的精度(小数点后边的位数).具有"粘性",直到下一个精度设置为止.
+
+	cout << fixed; //设置定点标记
+	...
+	cout.precision(4);	//保留小数点后4位
+	cout << var;	//输出变量,此时保留小数点后4位
+
+	cout << setprecision(4) << var;	//保留小数点后4位
+
+#### 13.4.3 域宽(width, setw)
+
+	1.width		//不具有黏性,仅对后面的操作有效.
+	cin.width(5);	//从流中读取最多5个字符
+	...
+	cin >> sentence;
+	//sentence为char sentence[10];的一个数组.则只读取4个字符,最后一个为空字符.同时cin遇到不在开头的空白
+	//字符时,提取操作结束.
+	cout.width(5);	//输出宽度为5.字符数不够填充空白,多的正常打印.
+	2.setw
+	setw(5);	//设置宽度为5,具有黏性.
+
+### 13.5 各种流操纵符
+
+	skipws		//跳过输入流的空白字符
+	left		//输出左对齐
+	right		//输出右对齐
+	internal	//字符左对齐,数字右对齐
+	boolalpha	//bool值以true/false显示
+	dec			//十进制显示
+	oct			//八进制显示
+	hex			//十六进制显示
+	showbase	//显示基数(O:八进制;0x/0X:十六进制)
+	showpoint	//浮点数必须显示小数点(e.g.9.00000正常显示9,但是如果是showpoint则显示9.00000)
+	uppercase	//十六进制数显示大写字母(0X,A~F).科学计数法显示E.
+	showpos		//整数前显示"+"
+	scientific	//科学计数法显示浮点数
+	fixed		//以定点小数形式显示浮点数
+	setfill('*')	//设置填充为"*"
+
+***
+
+## Chapter 14 文件处理
+
 ***
 
 ## Chapter 15 标准库的容器和迭代器
