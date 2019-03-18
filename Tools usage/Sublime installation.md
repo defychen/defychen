@@ -125,7 +125,7 @@ Preferences->Key Bindings,输入一下内容保存即可:
 
 ***
 
-# 2. Python 3安装BeautifulSoup和requests第三方模块
+# 2. Python 3安装BeautifulSoup和requests第三方模块--->不适用了
 
 BeautifulSoup是Python的一个库,主要的功能是从网页中抓取数据.
 
@@ -203,3 +203,34 @@ requests是Python实现的简单易用的HTTP库,使用起来比urlib简洁.编�
 
 参考文章[Python-Windows下安装BeautifulSoup和requests第三方模块](https://blog.csdn.net/yannanxiu/article/details/50432498)
 
+# 3. Pycharm安装及破解
+
+Pycharm是一款非常好用的python IDE,提供专业版和社区版,专业版收费、社区办免费但是功能没有专业版强大.
+
+## 3.1 Pycharm下载
+
+**1.下载地址**
+
+[下载地址](https://www.jetbrains.com/pycharm/download/previous.html)
+
+**2.版本选择**
+
+选择版本为(Version 2018.2)--->这个版本可以破解(选择左边的专业版).
+
+![](images/pycharm_version.png)
+
+	注意右边的Release时间:July 25,2018--->必须为该版本,否则后面破解不了.
+
+## 3.2 安装
+
+安装选项按照下面的选择:
+
+![](images/pycharm_install.png)
+
+	Create Desktop Shortcut:选择64-bit launcher(64-bit快捷方式);
+	Create Associations:勾选上".py",之后的".py"文件就会用Pycharm打开;
+	Download and install JRE x86 by JetBrains:勾选上支持JRE运行环境--->支持JRE环境,勾选上即可.
+
+## 3.3 破解
+
+破解补丁位置(D:\repository_software)
