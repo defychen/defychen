@@ -481,6 +481,181 @@ AJAX(Asynchronous Javascript And XML):异步JavaScript和XML.通过在后台与�
 			内容的的下载;
 		2.节省流量.AJAX可以使互联网应用程序更小、更快、更友好.
 
-使用AJAX技术的实例:
+AJAX加载的网页爬取方法:
 
+	1.通过浏览器审查元素解析地址;
+	2.通过Selenium模拟浏览器抓取.
+
+### 4.2 通过解析真实地址抓取(以抓取京东评论为例)
+
+**1.打开检查功能**
+
+百度搜索"京东"->首页中左边的"家用电器"点击->左边的"平板电视"点击"小米的4K超高清"->弹出的"小米官方旗舰店"->右击选择"审查元素"->点击"Network"->刷新页面->点击"商品评价(17万+)",如下所示:
+
+![](images/get_comments_jingdong.png)
+
+**2.找到url及评论数据所在位置**
+
+获取评论的位置如下图所示:
+
+![](images/get_comments_position_jingdong.png)
+
+	评论数据以json文件格式获取.
+
+**3.爬取url,获得评论.代码如下:**
+
+	import re
+	import requests
+	from bs4 import BeautifulSoup
+	import time
+	import random
+	import json
 	
+	votes_dir = r'D:\\repository\\data\\votes.csv'
+	
+	f = open(votes_dir, 'w', encoding='gbk')
+	f.write('comments, reference name, nick name\n')
+	/*
+		f.write('comments, reference name, nick name\n'):
+			1.逗号分隔会写入到不同的单元格;
+			2."\n"换行会导致写入到下一行.
+		"cvs文件":可以用excel打开,也可以用文本编辑器打开.
+	*/
+	
+	url1 = 'https://sclub.jd.com/comment/productPageComments.action?callback=fetchJSON_
+		comment98vv4481&productId=100000875011&score=0&sortType=5&page='
+	url2 = '&pageSize=10&isShadowSku=0&fold=1'
+	/*
+		爬取的url为"https://sclub.jd.com/comment/productPageComments.action?callback=fetchJSON_
+		comment98vv4506&productId=100000875011&score=0&sortType=5&page=
+		0&pageSize=10&isShadowSku=0&fold=1":
+		在url1和ur2之间存在一个page=0:标识爬取评论的哪一页,评论翻页是通过该数字标识的.
+	*/
+	
+	def start():
+	    for i in range(10):	//爬取前10页
+	        t = str(time.time()).split('.')
+			/*
+				time.time():返回一个时间,带有多位小数(e.g.1553041841.4286044)
+				time.time().split('.'):表示将返回的时间以小数点"."分隔,形成2个数字.
+				t = str(time.time().split('.')):t为一个列表,t[0]=1553041841,t[1]=4286044.
+			*/
+	        #print(time.time())
+	        final_url = url1 + str(i) + url2	//组成的url构成爬取的具体某一页.
+	        time.sleep(random.random())
+			/*
+				random.random():返回一个随机值.
+				time.sleep(random.random()):睡眠一个随机值.防止请求太快,可能出问题.
+			*/
+	        resp = requests.get(final_url)	//请求该url
+	        data = resp.text
+	
+	        #print(data.encode('gbk'), 'ignore')
+	
+	        data = re.findall(r'{.*}', data)[0]
+			/*
+				re.findall(r'{.*}', data)[0]:匹配第一个"{}",返回其中的内容.
+			*/
+	
+	        data = json.loads(data)	
+			/*
+				使用json.loads(data)把字符串格式的响应体数据转化为json数据.因为json格式的数据更
+				容易解析.
+			*/
+	        #print(data)
+	        comments_list = data['comments']
+			/*
+				data['comments']:提取comments数据,提取到的数据为一个列表.列表中元素如下:
+				[{'id': 12299237085, 'topped': 0, 'guid': '96e21836-7032-4787-ba2d-b95dfd533
+					bc0', 'content': '感觉还是很不错的，大小跟我大厅挺匹配的，...]
+				在Pycharm中,将列表中的数据打印出来,然后拷贝到word文档中即可查看到具体的信息.
+			*/
+	        #print(comments_list)
+	        for comment in comments_list:
+	            f.write('%s, %s, %s\n' % (
+	                comment['content'],
+	                comment['referenceName'],
+	                comment['nickname']
+	            ))
+			/*
+				遍历列表,提取列表元素所需的评论、商品名字、昵称等信息.
+			*/
+	
+	if __name__ == '__main__':
+	    start()
+
+### 4.3 通过Selenium模拟浏览器抓取
+
+#### 4.3.1 Selenium环境搭建
+
+**1.下载360极速浏览器的Chrome驱动**
+
+	360极速浏览器使用Google的Chrome内核,Google的Chrome浏览器也可以使用相同的驱动(需要内核版本对应上)
+
+1.查看Chrome内核版本
+
+帮助->关于360极速浏览器.弹出的窗口如下:
+
+![](images/360_chrome_version.png)
+
+	此处的内核版本为:69,Chrome驱动版本与内核版本的对应关系:
+	v2.43		v69-71
+	v2.42		v68-70	--->选择该个版本,其他版本应该也可以.没试过
+	v2.41		v67-69
+	v2.40		v66-68
+	v2.39		v66-68
+	v2.38		v65-67
+	v2.37		v64-66
+	v2.36		v63-65
+	v2.35		v62-64
+	v2.34		v61-63
+
+2.下载对应Chrome内核的Chrome驱动
+
+[下载地址](http://npm.taobao.org/mirrors/chromedriver/)
+
+下载方法如下:
+
+![](images/chrome_driver_version.png)
+
+![](images/chrome_zip.png)
+
+	需要选择"Chromedriver_win32.zip"这一个驱动,因为浏览器只有32-bit.无64-bit只说,但是也支持
+	64-bit的OS.
+
+3.拷贝Chrome驱动文件到python目录
+
+	拷贝压缩文件中的"chromedriver.exe"到python的安装目录"G:\Programs (x86)\Python\Python3.7\"
+	1.放在python安装的顶层目录或者Scripts目录都行--->目前试了顶层目录是ok的,Scripts目录没试过;
+	2.Chrome驱动的压缩文件中只有一个"chromedriver.exe",直接拷贝该文件即可.
+
+**2.Selenium的介绍及安装**
+
+Selenium是一个用于Web应用程序测试的工具.Selenium测试直接运行在浏览器中,就像真正的用户在操作一样.支持IE, Firefox, Google Chrome, Safari, Opera等.
+
+1.在cmd中安装(执行下面命令即可):
+
+	pip install selenium
+
+2.在Pycharm中添加
+
+	File->Settings->Project:xxx->点击"Project Interpreter"
+	1.如果在cmd中安装了,在右边的框框中就会显示有"selenium",也可以进行第2步再安装一次;
+	2.如果没有,点击右边的"+",增加package.在搜索中输入"selenium",点击下面的"Install Package".安装即可.
+
+#### 4.3.2 Selenium简单应用
+
+在Pycharm中输入以下代码:
+
+	from selenium.webdriver.chrome.options import Options
+	from selenium import webdriver
+	from selenium.webdriver.common.keys import Keys
+	import time
+	browser_url = r'D:\Program Files (x86)\360 browser\360Chrome\Chrome\Application
+		\360chrome.exe'
+	chrome_options = Options()
+	chrome_options.binary_location = browser_url
+	
+	driver = webdriver.Chrome(options = chrome_options)
+	driver.get('http://www.baidu.com')
+	driver.quit()

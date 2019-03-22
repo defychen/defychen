@@ -233,4 +233,60 @@ Pycharm是一款非常好用的python IDE,提供专业版和社区版,专业版�
 
 ## 3.3 破解
 
-破解补丁位置(D:\repository_software)
+**1.复制破解文件到bin目录**
+
+破解补丁文件位置:
+
+	D:\repository_software\pycharm\JetbrainsCrack-2.8-release-enc.jar
+
+复制该破解文件到安装目录:
+
+	D:\Program Files\JetBrains\PyCharm 2018.2\bin--->复制到安装的bin目录
+
+**2.修改文件**
+
+1.修改bin目录下的"pycharm.exe.vmoptions":
+
+	打开"pycharm.exe.vmoptions"文件,在后面增加:
+	-javaagent:D:\Program Files\JetBrains\PyCharm 2018.2\bin\JetbrainsCrack-2.8-release-enc.jar
+	//-javaagent:破解文件的路径
+
+2.修改bin目录下的"pycharm64.exe.vmoptions":
+
+	打开"pycharm64.exe.vmoptions"文件,在后面增加:
+	-javaagent:D:\Program Files\JetBrains\PyCharm 2018.2\bin\JetbrainsCrack-2.8-release-enc.jar
+	//-javaagent:破解文件的路径
+
+## 3.4 激活
+
+启动Pycharm,出现激活窗口.在"Activate code"的提示框下面输入:
+
+该段代码位于"D:\repository_software\pycharm\activate_code.txt"
+
+	{"licenseId":"ThisCrackLicenseId",
+	"licenseeName":"11011",
+	"assigneeName":"xxx",
+	"assigneeEmail":"xxx",
+	"licenseRestriction":"xxx",
+	"checkConcurrentUse":false,
+	"products":[
+	{"code":"II","paidUpTo":"2099-12-31"},
+	{"code":"DM","paidUpTo":"2099-12-31"},
+	{"code":"AC","paidUpTo":"2099-12-31"},
+	{"code":"RS0","paidUpTo":"2099-12-31"},
+	{"code":"WS","paidUpTo":"2099-12-31"},
+	{"code":"DPN","paidUpTo":"2099-12-31"},
+	{"code":"RC","paidUpTo":"2099-12-31"},
+	{"code":"PS","paidUpTo":"2099-12-31"},
+	{"code":"DC","paidUpTo":"2099-12-31"},
+	{"code":"RM","paidUpTo":"2099-12-31"},
+	{"code":"CL","paidUpTo":"2099-12-31"},
+	{"code":"PC","paidUpTo":"2099-12-31"},
+	{"code":"DB","paidUpTo":"2099-12-31"},
+	{"code":"GO","paidUpTo":"2099-12-31"},
+	{"code":"RD","paidUpTo":"2099-12-31"}
+	],
+	"hash":"2911276/0",
+	"gracePeriodDays":7,
+	"autoProlongated":false}
+
