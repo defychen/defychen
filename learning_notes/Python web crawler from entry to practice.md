@@ -648,14 +648,81 @@ Selenium是一个用于Web应用程序测试的工具.Selenium测试直接运行
 在Pycharm中输入以下代码:
 
 	from selenium.webdriver.chrome.options import Options
-	from selenium import webdriver
+	//import Options:用于后面输入网址等信息
+	from selenium import webdriver	//import webdriver:引入web驱动
 	from selenium.webdriver.common.keys import Keys
 	import time
-	browser_url = r'D:\Program Files (x86)\360 browser\360Chrome\Chrome\Application
+	browser_path = r'D:\Program Files (x86)\360 browser\360Chrome\Chrome\Application
 		\360chrome.exe'
 	chrome_options = Options()
-	chrome_options.binary_location = browser_url
+	chrome_options.binary_location = browser_path
+	/*
+		binary_location:启动的浏览器的路径.360浏览器名字需为"360chrome"(默认也即为该名字).
+	*/
 	
 	driver = webdriver.Chrome(options = chrome_options)
-	driver.get('http://www.baidu.com')
-	driver.quit()
+	/*
+		webdriver.Chrome(...):web驱动调用Chrome浏览器去启动,括号中为浏览器的路径.
+		如果写成(chrome_options=chrome_options):会报"DeprecationWarning: use options instead of
+			chrome_options...":是因为未来使用options取代chrome_options.因此,此处只需要将
+			chrome_options改为options即可.
+	*/
+	driver.get('http://www.baidu.com')	//启动的浏览器访问"http://www.baidu.com"
+	driver.quit()	//过一段时间后退出
+
+#### 4.3.2 Selenium实例(抓取京东评论)
+
+	from selenium.webdriver.chrome.options import Options
+	from selenium import webdriver
+	from selenium.webdriver.common.keys import Keys
+	from selenium.common.exceptions import NoSuchElementException
+	from selenium.webdriver.support.wait import WebDriverWait
+	import time
+	import time
+	browser_path = r'D:\Program Files (x86)\360 browser\360Chrome\Chrome\Application
+		\360chrome.exe'
+	url = r'https://item.jd.com/100000875011.html'
+	chrome_options = Options()
+	chrome_options.binary_location = browser_path
+	
+	driver = webdriver.Chrome(options = chrome_options)
+	driver.get(url)
+	driver.implicitly_wait(10)
+	#print(driver.page_source)
+	#comment = driver.find_element_by_css_selector('div.tab-con')
+	click_operate = driver.find_element_by_xpath('//*[@id="detail"]/div[1]/ul/li[5]').click()
+	item_list = driver.find_elements_by_xpath('//*[@id="comment-0"]/*[@class="comment-item"]')
+	#page_wrap = driver.find_element_by_xpath('//*[@id="comment-0"]/*[@class="com-table-
+		footer"]/div[1]/div[1]/*[@class="ui-pager-next"]').click()
+	#page_wrap = driver.find_element_by_xpath('//*[@id="comment-0"]/*[@class="com-table-
+		footer"]/div[1]/div[1]/a[2]').send_keys(Keys.ENTER)
+	#page_wrap = driver.find_element_by_xpath('//*[@id="comment-0"]/*[@class="com-table-
+		footer"]/div[1]/div[1]/*[@class="ui-pager-next"]').send_keys(Keys.ENTER)
+	
+	next_xpath = '//*[@id="comment-0"]/*[@class="com-table-footer"]/div[1]/div[1]/*
+		[@class="ui-pager-next"]'
+	item_per_page = len(item_list)
+	while True:
+	    for item in range(item_per_page):
+	        comment_xpath = '//*[@id="comment-0"]/div[' + str(item + 1) + ']/div[2]/p'
+	        #comment = driver.find_elements_by_xpath(comment_xpath)
+	        comment = WebDriverWait(driver, 30).until(lambda x: x.find_elements_by_xpath
+				(comment_xpath))
+	        comment_text = [c.text for c in comment]
+	        print (comment_text[0])
+	    try:
+	        #next_page = driver.find_element_by_xpath(next_xpath)
+	        #next_page.send_keys(Keys.ENTER)
+	        WebDriverWait(driver, 10).until(lambda y: y.find_element_by_xpath(next_xpath)).
+				send_keys(Keys.ENTER)
+	    except NoSuchElementException as e:
+	        break
+	    finally:
+	        print ('Succeed')
+	    time.sleep(0.5)
+	
+	
+	#print (len(comment_list))
+	#comment_text = [c.text for c in comment_list]
+	#print (comment_text)
+	
