@@ -86,3 +86,11 @@
 ## 7. 安装git
 
 	sudo apt-get install git
+
+注意点:
+	1.查看git的版本:
+	git --version
+	2.sudo apt-get下载的文件的目录:
+		/var/cache/apt/archives		//但是使用"sudo apt-get install git"没有发现文件
+	3.文件下载的目录可以在"/etc/apt/source.list"中指定  --->还没有发现真正的用途
+

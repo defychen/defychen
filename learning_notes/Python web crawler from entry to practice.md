@@ -673,31 +673,68 @@ Selenium是一个用于Web应用程序测试的工具.Selenium测试直接运行
 #### 4.3.2 Selenium实例(抓取京东评论)
 
 	from selenium.webdriver.chrome.options import Options
-	from selenium import webdriver
-	from selenium.webdriver.common.keys import Keys
+	//import Options:用于后面输入网址等信息
+	from selenium import webdriver	//import webdriver:引入web驱动
+	from selenium.webdriver.common.keys import Keys //用于模拟键盘操作
 	from selenium.common.exceptions import NoSuchElementException
-	from selenium.webdriver.support.wait import WebDriverWait
+	//用于NoSuchElementException的异常
+	from selenium.webdriver.support.wait import WebDriverWait //用于设置等待时间
 	import time
-	import time
+
 	browser_path = r'D:\Program Files (x86)\360 browser\360Chrome\Chrome\Application
 		\360chrome.exe'
-	url = r'https://item.jd.com/100000875011.html'
+	url = r'https://item.jd.com/100000875011.html' //请求的网页
 	chrome_options = Options()
 	chrome_options.binary_location = browser_path
 	
 	driver = webdriver.Chrome(options = chrome_options)
 	driver.get(url)
-	driver.implicitly_wait(10)
-	#print(driver.page_source)
+	driver.implicitly_wait(10) //设置全局的等待时间.
+	#print(driver.page_source) //driver.page_source:获得整个网页的html代码
 	#comment = driver.find_element_by_css_selector('div.tab-con')
+	/*
+		driver.find_element_by_css_selector('div.tab-con'):通过元素的class来寻找.
+		在html中显示为:<div class="tab-con">
+		如果要找多个元素使用:
+		driver.find_elements_by_css_selector('div.tab-con')--->即element变为elements.
+	*/
 	click_operate = driver.find_element_by_xpath('//*[@id="detail"]/div[1]/ul/li[5]').click()
+	/*
+		driver.find_element_by_xpath():通过路径来寻找.
+		//*[@id="detail"]/div[1]/ul/li[5]:
+			//:为标准开头,必须以"//"开头
+			*[@id="detail"]:寻找包含(id="detail")的所有元素(一般找唯一的元素)--->此处通过点击
+				"商品评价",找到商品评价所在行,向上寻找,可找到一行代码为"<div class="ETab" 
+				id="detail">".此处即为匹配该行.
+			/div1[1]/ul/li[5]:
+				div[1]--->匹配<div class=...>.html中第一行从1开始,而不是从0开始.
+				ul--->匹配<ul>
+				li[5]--->匹配<li ...>的第五行.
+		click():此处表示找到"商品评价"的选项,然后点击.
+		PS:此处寻找单个元素,因此用"drvier.find_element_by_xpath".				
+	*/
 	item_list = driver.find_elements_by_xpath('//*[@id="comment-0"]/*[@class="comment-item"]')
+	/*
+		//*[@id="comment-0"]/*[@class="comment-item"]:
+			//:标准开头,必须以"//"开头
+			*[@id="comment-0"]:寻找包含(id="comment-0")的所有元素(一般找唯一的元素).匹配代码为:
+				<div id="comment-0" data-tab="item">
+			/*[@class="comment-item"]:在下一级目录中寻找包含(class="comment-item")的所有元素.匹配
+				代码为<div class="comment-item" ...>,因为有很多,返回的是一个list.
+		PS:此处用于统计出每一页评论的数量,用于遍历.			
+	*/
 	#page_wrap = driver.find_element_by_xpath('//*[@id="comment-0"]/*[@class="com-table-
 		footer"]/div[1]/div[1]/*[@class="ui-pager-next"]').click()
 	#page_wrap = driver.find_element_by_xpath('//*[@id="comment-0"]/*[@class="com-table-
 		footer"]/div[1]/div[1]/a[2]').send_keys(Keys.ENTER)
 	#page_wrap = driver.find_element_by_xpath('//*[@id="comment-0"]/*[@class="com-table-
 		footer"]/div[1]/div[1]/*[@class="ui-pager-next"]').send_keys(Keys.ENTER)
+	/*
+		('//*[@id="comment-0"]/*[@class="com-table-footer"]/div[1]/div[1]/*[@class=
+			"ui-pager-next"]'):用于寻找到"下一页"的标签.
+		PS:此处用click()方法不管用(应该是selenium的bug).
+			使用send_keys(Keys.ENTER):即键盘敲击ENTER键,达到click相同的效果.
+	*/
 	
 	next_xpath = '//*[@id="comment-0"]/*[@class="com-table-footer"]/div[1]/div[1]/*
 		[@class="ui-pager-next"]'
@@ -708,21 +745,26 @@ Selenium是一个用于Web应用程序测试的工具.Selenium测试直接运行
 	        #comment = driver.find_elements_by_xpath(comment_xpath)
 	        comment = WebDriverWait(driver, 30).until(lambda x: x.find_elements_by_xpath
 				(comment_xpath))
+			/*
+				WebDriverWait(driver, timeout, poll_frequency):
+					para1:返回浏览器的一个实例,即driver;
+					timeout:设置的超时时间;
+					poll_frequency:循环查询的间隔时间,默认为0.5s.
+				WebDriverWait(...).until(lambda x: x.find_elements_by_xpath(xxx)):表示直到
+					查询到xxx才结束,否则就到超时再结束.
+			*/
 	        comment_text = [c.text for c in comment]
+			//因为comment是一个list,该list大小为1.查看类型可以:type(comment),返回为list.
 	        print (comment_text[0])
 	    try:
 	        #next_page = driver.find_element_by_xpath(next_xpath)
 	        #next_page.send_keys(Keys.ENTER)
 	        WebDriverWait(driver, 10).until(lambda y: y.find_element_by_xpath(next_xpath)).
 				send_keys(Keys.ENTER)
-	    except NoSuchElementException as e:
+			//此处为查询到之后,就执行send_keys(Keys.ENTER)--->相当于单击.
+	    except NoSuchElementException as e:	//表示捕获到NoSuchElementException异常.
 	        break
 	    finally:
 	        print ('Succeed')
 	    time.sleep(0.5)
-	
-	
-	#print (len(comment_list))
-	#comment_text = [c.text for c in comment_list]
-	#print (comment_text)
 	
