@@ -711,7 +711,7 @@ Selenium是一个用于Web应用程序测试的工具.Selenium测试直接运行
 				ul--->匹配<ul>
 				li[5]--->匹配<li ...>的第五行.
 		click():此处表示找到"商品评价"的选项,然后点击.
-		PS:此处寻找单个元素,因此用"drvier.find_element_by_xpath".				
+		PS:此处寻找单个元素,因此用"drvier.find_element_by_xpath".
 	*/
 	item_list = driver.find_elements_by_xpath('//*[@id="comment-0"]/*[@class="comment-item"]')
 	/*
@@ -767,4 +767,79 @@ Selenium是一个用于Web应用程序测试的工具.Selenium测试直接运行
 	    finally:
 	        print ('Succeed')
 	    time.sleep(0.5)
-	
+
+**Selenium其他操作方法实例**
+
+	1.clear:清除元素的内容;
+	2.send_keys:模拟按键输入;
+	3.click:单击元素;
+	4.submit:提交表单.
+	/*实例:*/
+	user = driver.find_element_by_name("username")
+	/*
+		find_element_by_name:查找元素的name所在位置(<input name="username">).一般用于输入用户的账户.
+	*/
+	user.clear	//清除用户名输入框内容
+	user.send_keys("1234567")	//在输入框中输入用户名(即账号)
+	pwd = driver.find_element_by_name("password")
+	/*
+		查找密码输入框所在位置,即找到密码输入框.用于输入用户的密码.
+	*/
+	pwd.clear	//清除密码输入框内容
+	pwd.send_keys("******")		//在密码输入框输入密码
+	driver.find_element_by_id("loginBtn").click()
+	/*
+		find_element_by_id():通过id来查找.并单击,用于登录.
+	*/
+
+PS:Selenium还有其他的操作方法:(双击、拖拽等)暂略.
+
+#### 4.3.3 Selenium高级操作
+
+使用Selenium相比较于使用浏览器"检查"的方法爬取动态网页要慢.为了加快爬取速度,常用的方法如下:
+
+	1.控制CSS的加载;
+	2.控制图片文件的显示;
+	3.控制JavaScript的运行.
+
+**1.控制CSS的加载**
+
+CSS样式文件主要是用来控制页面的外观和元素放置位置的,对内容没影响.
+
+PS:如何控制,在Chrome没有找到方法.
+
+**2.显示图片的加载**
+
+限制图片的加载可以极大地提高爬取的效率.方法如下:
+
+	prefs = {
+		'profile.default_content_setting_values' : {
+			'images' : 2	//为2表示限制图片加载
+		}
+	}
+	chrome_options = Options()
+	start_time = time.time()
+	chrome_options.add_experimental_option('prefs', prefs)	//图片的设置
+	...
+	end_time = time.time()
+	print (end_time.__float__() - start_time.__float__())	//计算爬取时间
+
+**3.控制JavaScript的运行**
+
+如果抓取的内容不是通过JavaScript动态加载得到的,可以禁止JavaScript的执行来提高抓取效率.方法如下:
+
+	prefs = {
+		'profile.default_content_setting_values' : {
+			'javascript' : 2	//为2表示限制JavaScript的运行
+		}
+	}
+	chrome_options = Options()
+	start_time = time.time()
+	chrome_options.add_experimental_option('prefs', prefs)	//图片的设置
+	...
+	end_time = time.time()
+	print (end_time.__float__() - start_time.__float__())	//计算爬取时间
+
+PS:通常图片会比JavaScript节省时间.最快的是两者都用.
+
+### 4.4 Selenium爬虫实践
