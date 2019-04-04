@@ -911,14 +911,65 @@ Python内置标准库,执行速度适中,文档容错能力强--->经常使用.
 
 	soup = BeautifulSoup(html_eg.text, 'lxml')
 
+#### 5.2.2 BeautifulSoup的实例
+
+**1.爬取新浪网页的相关标题以及链接:**
+
 	import requests
 	from bs4 import BeautifulSoup
 	url = 'https://news.sina.com.cn'
-	headers = {'user-agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML,
+	headers = {'user-agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, 
 		like Gecko) Chrome/69.0.3497.100 Safari/537.36'}
 	r = requests.get(url, headers = headers)
-	
-	soup = BeautifulSoup(r.text, 'lxml')
-	items = soup.find_all('div', class_='ct_t_01')
-	for item in items:
-	    print (item)
+	r.encoding = 'utf-8'
+	/*
+		网页默认使用的是"ISO-8859-1",该种方法导致中文显示乱码.
+		查看请求回来的编码:
+			print (r.encoding)	--->得到结果为"ISO-8859-1".
+		r.encoding = 'utf-8':表示使用utf-8编码.
+		PS:
+			utf-8:通用编码,对中文和英文兼容性好;--->最好的编码方式
+			GB2312:主要用于中文编码;
+			gbk:GB2312编码的扩展,也主要用于中文编码.
+	*/
+	soup = BeautifulSoup(r.text, 'lxml') //使用'lxml'解析器
+	#items = soup.find_all('div', class_='ct_t_01') //查找匹配<div class="ct_t_01" ...>
+	#items = soup.find_all('h1', {'class' : 'ct_t_01'}) //使用这种明显的dict方式比较好理解
+	headlines = soup.find_all('h1', {'data-client':'headline'})
+	#print (headlines)
+	for headline in headlines:
+	    #print (headline)
+		/*
+		单挑信息为:
+		<h1 data-client="headline"><a href="https://news.sina.com.cn/c/xl/2019-04-04/
+		doc-ihvhiewr3243881.shtml" target="_blank">习近平的情怀：天地英雄气 千秋尚凛然</a></h1>
+		*/
+	    print (headline.a.get('href'))
+		/*
+			a.get('href'):获得a当中的href元素(此处为网址).如果要获得target使用a.get('target')即可.
+		*/
+	    print (headline.a.text)
+		/*
+			a.text:获得a当中的文本元素.
+		*/
+	'''
+	//下面的使用较少
+	for item in items:	//因为class为ct_t_01的有3个匹配成功.每个里面有多个h1具有文字信息.
+	    #print(item)
+	    titles = item.find_all('h1') //在class为ct_t_01中查找到所有的h1
+	    #for title in titles:
+	        #print (title.a.get('href')) //打印出href元素信息
+	        #print(title.a.get('target')) //打印出target元素信息
+	'''
+
+**2.select选择器**
+
+暂略.
+
+### 5.3 使用lxml解析网页
+
+暂略.
+
+***
+
+## Chapter 6 数据存储
