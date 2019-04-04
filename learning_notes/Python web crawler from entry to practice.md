@@ -842,4 +842,83 @@ PS:如何控制,在Chrome没有找到方法.
 
 PS:通常图片会比JavaScript节省时间.最快的是两者都用.
 
-### 4.4 Selenium爬虫实践
+### 4.4 Selenium爬虫实践---爬取深圳短租数据
+
+	from selenium.webdriver.chrome.options import Options
+	from selenium import webdriver
+	from selenium.webdriver.common.keys import Keys
+	from selenium.common.exceptions import NoSuchElementException
+	from selenium.webdriver.support.wait import WebDriverWait
+	import time
+	browser_path = r'D:\Program Files (x86)\360 browser\360Chrome\Chrome\Application
+		\360chrome.exe'
+	url = r'https://zh.airbnb.com/s/Shenzhen----China/homes?refinement_paths%5B%5D=%
+		2Fhomes&query=Shenzhen%2C%20%2C%20China&search_type=SECTION_NAVIGATION&allow_override
+		%5B%5D=&s_tag=lGVxhEWt'
+	chrome_options = Options()
+	chrome_options.binary_location = browser_path
+	driver = webdriver.Chrome(options=chrome_options)
+	driver.get(url)
+	driver.implicitly_wait(10)
+		//设置全局的等待时间--->此处很重要,必须设置一个等待时间,因为网页需要一个响应时间.
+	rent_list_path = '//*[@id="site-content"]/div/div/div[2]/div/div/div/div/section/div/div/
+		div[2]/div/div/div[2]/div/div/*[@class="_14csrlku"]'
+		//xpath可以在打开的审查元素中选中需要获取路径的元素->右击->选择Copy->Copy XPath即可
+		// (selector也可以这样)
+	rent_info_list = WebDriverWait(driver, 10).until(lambda x: x.find_elements_by_
+		xpath(rent_list_path))	//使用WebDriverWait这种方式比较好,可以设置时间.防止网页响应太慢.
+	rent_info_len = len(rent_info_list)
+	for item in range(rent_info_len):
+	    rent_xpath = '//*[@id="site-content"]/div/div/div[2]/div/div/div/div/section/div/div/
+		div[2]/div/div/div[2]/div/div/div[' + str(item + 1) + ']/div/div/div/div[1]/div[1]/
+		div[2]/div/div/div/a'
+		//xpath可以使用网页中Copy XPath的方法拷贝
+	    rent_info_list = WebDriverWait(driver, 15).until(lambda x: x.find_elements_by_
+			xpath(rent_xpath))	//这种方式比普通的driver.find_elements_by_xpath好一点
+	    rent_text = [c.text for c in rent_info_list]
+	    #print (len(rent_info_list))
+	    print (rent_text[0])
+
+***
+
+## Chapter 5 解析网页
+
+### 5.1 使用正则表达式解析网页
+
+关于正则表达式请看"python notes.md"中的描述.
+
+### 5.2 使用BeautifulSoup解析网页
+
+BeautifulSoup可以方便的从HTML或XML文件中提取数据.
+
+#### 5.2.1 BeautifulSoup的安装
+
+	pip install bs4
+
+**BeautifuSoup的解析器**
+
+使用解析器解析HTML代码,转成BeautifulSoup对象.
+
+1.html.parser
+
+Python内置标准库,执行速度适中,文档容错能力强--->经常使用.
+
+	soup = BeautifulSoup(html_eg.text, 'html.parser')	//使用html.parser解析html代码
+
+2.lxml
+
+速度快,文档容错能力强--->因为解析的快,经常使用.
+
+	soup = BeautifulSoup(html_eg.text, 'lxml')
+
+	import requests
+	from bs4 import BeautifulSoup
+	url = 'https://news.sina.com.cn'
+	headers = {'user-agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML,
+		like Gecko) Chrome/69.0.3497.100 Safari/537.36'}
+	r = requests.get(url, headers = headers)
+	
+	soup = BeautifulSoup(r.text, 'lxml')
+	items = soup.find_all('div', class_='ct_t_01')
+	for item in items:
+	    print (item)

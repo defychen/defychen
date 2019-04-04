@@ -2634,58 +2634,106 @@ Python的re模块就是正则表达式(Regular Expressions).
 
 ### 16.1 常用的字符含义
 
-	.		匹配任意除换行符"\n"之外的字符	a.c			abc(匹配可以为a,b...任意字符)
+	.		匹配任意字符,除换行符"\n"之外	a.c			abc(匹配可以为a,b...任意字符)
 	*		匹配前一个字符0次或者多次		abc*		ab;abccc(匹配"c"0次或多次)
 	+		匹配前一个字符1次或多次		abc+		abc;abccc(匹配"c"1次或多次)
 	?		匹配前一个字符0次或1次			abc?		ab;abc(匹配"c"1次或多次)
+	^		匹配字符串开头				???(怎么使用)
+	$		匹配字符串末尾				???(怎么使用)
 	{m}		匹配前一个字符m次				ab{2}c		abbc(b为2次)
 	{m,n}	匹配前一个字符m到n次			ab{1,2}c	abc;abbc(b出现1次或者2次)
 	()		匹配括号中的表达式				(abc)		abc(匹配abc)
+	[]		表示一组字符
 
-	\d		数字(0-9)					a\dc		a1c(\d为一个数字)
+	\s		匹配空白字符					a\sc		a c(中间一个空白字符)
+	\S		匹配非空白字符				a\S			axc(x不能为空白字符)
+	\d		匹配数字(0-9)					a\dc		a1c(\d为一个数字0-9)
+	\D		匹配非数字(不是0-9)
 	\w		任何字符(A-Z,a-z,0-9,_)		a\wc		abc(\w为一个字符)	
 	\.		匹配"."这个字符				a\.txt		a.txt
 
 ### 16.2 re模块的函数
 
-**re.findall(r'匹配格式', str)**
+**1.re.findall(pattern, string)**
 
-查找字符串中所有(非重复)出现的正则表达式模式(匹配格式),返回一个匹配列表
+找到所有的匹配,并返回一个匹配列表
 
+实例1:
+
+	import re
 	text = 'JGod is a handsome boy, but he is a ider'
 	print re.findall(r'\w*o\w*', text) //查找含有"o"字符的单词
 	//结果为:['JGod', 'handsome', 'boy']
 
-**re.search(r'匹配格式', str)**
+实例2:
 
-在给定的字符串中寻找"第一个"匹配给定正则表达式的子字符串
+	import re
+	m_findall = re.findall('[0-9]+', '12345 is the first number, 23456 is the second')
+	print (m_findall)
+	//结果为:
+	['12345', '23456']	//[0-9]:表示0-9的任意数字;"+"表示匹配前一个字符一次或多次,此处为多次.
 
-	a = re.search(r'(tina)(fei)haha\2', 'tinafeihahafei tinafeihahatina').group()
-	/*
-		group():会将查找的字符串分组(e.g.tina为1;fei为2;haha为3)
-		\2:表示字符串分组中的第二组,即fei
-	*/
-	//结果为:tinafeihahafei
+**2.re.search(pattern, string)**
 
-	/*如果为:
+在给定的字符串中string寻找,并返回"第一个"成功匹配字符串
+
+实例1:
+
+	import re
 	a = re.search(r'(\d+)x(\d+)', '1080x1920')
-		第一个\d会匹配到1080,如果要选取第一个的值:a.group(1)
-		第二个\d会匹配到1920,如果要选取第二个的值:a.group(2)
+	print (a)
+	print (a.group(0))
+	print (a.group(1))
+	print (a.group(2))
+	print (a.groups())
+	//结果为:
+	1080x1920
+	1080
+	1920
+	('1080', '1920')
+
+**3.re.match(pattern, string, flags=0)**
+
+re.match从字符串的起始位置开始匹配一个模式,如果起始位置匹配不成功,则返回None.pattern为正则表达式,string为原始字符串,flags用来控制正则表达式的匹配方式(e.g.是否区分大小写、多行匹配等).
+
+实例1:
+
+	import re
+	m = re.match('www', 'www.baidu.com')
+	print ("Result: ", m)
+	print ("Start and End: ", m.span())
+	print ("The start position: ", m.start())
+	print ("The end position: ", m.end())
+	//结果为:
+	Result:  <re.Match object; span=(0, 3), match='www'>
+	Start and End:  (0, 3)	//m.span():存放起始和终点位置
+	The start position:  0	//match起始从0开始
+	The end position:  3	//3:表示匹配上了位置0,1,2处的三个字符
+
+实例2:
+
+	import re
+	line = "Fat cats are smarter than dogs, is it right?"
+	m = re.match(r'(.*) are (.*?) dogs', line)
+		//此处的r表示raw string,表示不会对引号内部的反斜线"\"做特殊处理.
+	print ("The sentence of match: ", m.group(0))	//group(0):表示匹配的整句话
+	print ("The first result of match: ", m.group(1))	//group(1):第一个匹配的结果
+	print ("The second result of match: ", m.group(2))	//group(2):第二个匹配的结果
+	print ("The result list of match: ", m.groups())	//groups():表示匹配列表
+	//结果为:
+	The sentence of match:  Fat cats are smarter than dogs
+	The first result of match:  Fat cats
+		--->(.*):此处表示匹配前一个字符(为任意字符)多次,且匹配尽量多的字符
+	The second result of match:  smarter than
+		--->(.*?):前面的.*表示匹配前一个字符(为任意字符)多次,(?)表示匹配尽量少的字符
+	The result list of match:  ('Fat cats', 'smarter than')
+
+	/*测试:
+	m = re.match(r'(.*) are (.*?)', line)
+	此时m.group(2)为空,因为可以匹配零次,后面也没限制;
+	m = re.match(r'(.*) are (.*?)', line)
+	此时m.group(2)为"smarter than dogs, is it right?",因为会匹配的尽可能的多.
 	*/
-
-**re.match(r'匹配格式', str)**
-
-使用带有"可选"标记的正则表达式的模式来匹配字符串,匹配成功返回匹配对象,否则返回None.
-
-	m = re.match(r'(foo\w)(\w)', 'fooasdfooasd')
-	/*
-		匹配结果:
-			foo\w:匹配"foo"后面一个字符"a".结果为"fooa"
-			\w:紧接着的一个字符"s"
-	*/
-	if m is not None:
-		print(m.group(1)) //结果为"fooa"
-		print(m.groups()) //结果为"('fooa', 's')"
 
 ### 16.3 re模块的函数实例
 
