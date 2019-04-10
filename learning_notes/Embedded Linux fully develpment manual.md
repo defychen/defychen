@@ -1,7 +1,19 @@
 # Embedded Linux Fully Development Manual
 
 # 第1篇 嵌入式Linux开发环境构建篇
+
+## Chapter 1 嵌入式Linux开发概述
+
+略--->主要是一些介绍性的内容.
+
+## Chapter 2 嵌入式Linux开发环境构建
+
+
+
 ***
+
+***
+
 # 第2篇 ARM9嵌入式系统基础实例篇
 
 ## Chapter 5 GPIO接口
@@ -220,7 +232,9 @@ C程序执行的第一条指令并不在main函数中,在生成一个C程序的�
 	
 		return 0;
 	}
+
 ***
+
 ## Chapter 6 存储控制器
 
 ### 6.1 使用存储控制器访问外设的原理
@@ -233,39 +247,39 @@ C程序执行的第一条指令并不在main函数中,在生成一个C程序的�
 
 **S3C2410/S3C2440存储控制器地址空间分布图---物理地址空间**
 
-	-----------------------------------------------------------------------------------------------------
+	------------------------------------------------------------------------------------------
 					OM[1:0]=01,10		
 				---------------------
 					Boot Internal
 					 SRAM(4KB)								OM[1:0]=00	
 	0x4000_0000	---------------------					---------------------
-					SROM/SDRAM								SROM/SDRAM				2MB/4MB/8MB/16MB---BANK7
-					  (nGCS7)								  (nGCS7)				/32MB/64MB/128MB(可变)
+					SROM/SDRAM								SROM/SDRAM 2MB/4MB/8MB/16MB---BANK7
+					  (nGCS7)								  (nGCS7)	/32MB/64MB/128MB(可变)
 	0x3800_0000	---------------------					---------------------
-					SROM/SDRAM								SROM/SDRAM				2MB/4MB/8MB/16MB---BANK6
-					  (nGCS6)								  (nGCS6)				/32MB/64MB/128MB(可变)
+					SROM/SDRAM								SROM/SDRAM 2MB/4MB/8MB/16MB---BANK6
+					  (nGCS6)								  (nGCS6)	/32MB/64MB/128MB(可变)
 	0x3000_0000	---------------------					---------------------
 					   SROM									    SROM				
-					  (nGCS5)								  (nGCS5)				128MB(固定)BANK5
+					  (nGCS5)								  (nGCS5)		   128MB(固定)BANK5
 	0x2800_0000	---------------------					---------------------
 					   SROM									    SROM				
-					  (nGCS4)								  (nGCS4)				128MB(固定)BANK4
+					  (nGCS4)								  (nGCS4)			128MB(固定)BANK4
 	0x2000_0000	---------------------					---------------------
 					   SROM										SROM				
-					  (nGCS3)								  (nGCS3)				128MB(固定)BANK3
+					  (nGCS3)								  (nGCS3)			128MB(固定)BANK3
 	0x800_0000	---------------------					---------------------
 					   SROM										SROM				
-					  (nGCS2)								  (nGCS2)				128MB(固定)BANK2
+					  (nGCS2)								  (nGCS2)			128MB(固定)BANK2
 	0x1000_0000	---------------------					---------------------
 					   SROM										SROM				
-					  (nGCS1)								  (nGCS1)				128MB(固定)BANK1
+					  (nGCS1)								  (nGCS1)			128MB(固定)BANK1
 	0x0800_0000	---------------------					---------------------
 					   SROM									Boot Internal				
-					  (nGCS0)								  SRAM(4KB)				128MB(固定)BANK0
+					  (nGCS0)								  SRAM(4KB)			128MB(固定)BANK0
 	0x0000_0000	---------------------					---------------------
 
 		[Not using NAND Flash for Boot ROM]				[Using NAND flash for Boot ROM]
-	-----------------------------------------------------------------------------------------------------
+	------------------------------------------------------------------------------------------
 	//从上图可以看到,CPU可访问的物理地址为1GB---0~29的地址范围
 
 S3C2410/S3C2440的寄存器地址范围处于0x4800_0000~0x5FFF_FFFF.
@@ -359,7 +373,8 @@ S3C2410/S3C2440的寄存器地址范围处于0x4800_0000~0x5FFF_FFFF.
 		b halt_loop
 
 	/*后面的指令都是由位置无关的指令跳转到,因为全部在steppingstone里执行*/
-	disable_watch_dog:			@bl跳转是位置无关的相对跳转指令,因此这些均在Steppingstone里执行---无地址信息
+	disable_watch_dog:			@bl跳转是位置无关的相对跳转指令,因此这些均在Steppingstone里执行
+								@无地址信息
 		mov r1, #0x53000000		@watchdog寄存器0x5300_0000,该指令等价于ldr r1, =0x53000000.此时r1=0x5300_0000
 		mov r2, #0x0			@r2=0x0
 		str r2, [r1]			@将r2的值(0x0)写入到[r1]这个地址里,即让0x5300_0000里的值为0x0.
@@ -380,9 +395,11 @@ S3C2410/S3C2440的寄存器地址范围处于0x4800_0000~0x5FFF_FFFF.
 		mov pc, lr				@返回
 
 	/*初始化SDRAM*/
-	memsetup:		@配置存储控制器的寄存器以便使用SDRAM等外设---使用物理地址挂上的设备需要配置存储控制器的一些寄存器
+	memsetup:		@配置存储控制器的寄存器以便使用SDRAM等外设---使用物理地址挂上的设备需要配置存储控制器
+					@的一些寄存器
 		mov r1, #MEM_CTL_BASE	@存储控制器的13个寄存器的起始地址
-		adrl r2, mem_cfg_val	@adr:指定地址,后面的l:表示数据为long.相当于r2存放mem_cfg_val标号的地址地址
+		adrl r2, mem_cfg_val	@adr:指定地址,后面的l:表示数据为long.相当于r2存放mem_cfg_val标号的地
+			址地址
 		add r3, r1, #52			@r1+52(13*4---13个寄存器,每个寄存器4byte).然后存放到r3.此时r3为存储控制器的终止地址
 	1:	@实现循环
 		ldr r4, [r2], #4		@复制r2的4 byte到r4,并让r2地址+4
@@ -773,7 +790,9 @@ CPU运行过程中,检测外设发生某些不预期事件的方法:
 	/*external interrupt register*/
 	#define		EINTMASK			(*(volatile unsigned long *)0x560000A4)
 	#define		EINTPEND			(*(volatile unsigned long *)0x560000A8)
+
 ***
+
 ## Chapter 11 通用异步收发器UART
 
 ### 11.1 UART原理及UART部件使用方法
