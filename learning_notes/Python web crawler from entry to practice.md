@@ -973,3 +973,92 @@ Python内置标准库,执行速度适中,文档容错能力强--->经常使用.
 ***
 
 ## Chapter 6 数据存储
+
+### 6.1 将数据存储至TXT或CSV
+
+#### 6.1.1 将数据存储至TXT
+
+**1.字符串中间使用TAB键隔开**
+
+	output = '\t'.join(['name', 'title', 'age', 'gender'])
+	print(output)
+	//结果为:name	title	age	gender--->中间为tab键隔开的
+
+**2.实例**
+
+	1.写操作
+	output = '\t'.join(['name', 'title', 'age', 'gender'])
+	with open(r'D:\test\test.txt', 'w') as f:
+		f.write(output)		//将output信息写入到test.txt文件中
+	2.读操作
+	with open(r'D:\test\test.txt', 'r') as f:
+		print(f.read())			//读取test.txt文件中的全部内容
+		print(f.readline())		//读取test.txt文件中的第一行内容(每次读取一行)
+		/*
+			f.readlines()	//一次读取全部内容,返回一个list
+		for line in f.readlines():	//遍历列表再输出
+			print(line)
+		*/
+
+#### 6.1.2 将数据存储至CSV
+
+CSV(Commoa-Separated Values):是逗号分隔值的文件格式,可以使用Excel打开.行用换行符分隔;列用","分隔.
+
+**1.CSV文本实例**
+
+一个test.csv的文件内容如下(无空格时):
+
+	A1,B1,C1,D1		//A1,B1,C1,D1位于同一行;A1/A2/A3/A4位于同一列.且逗号之后没有空格
+	A2,B2,C2,D2
+	A3,B3,C3,D3
+	A4,B4,C4,D4
+
+如果逗号之后有空格,该字符在一个单元格显示时会在前面带一个空格.
+
+	A1, B1, C1, D1
+	A2,B2,C2,D2
+	A3,B3,C3,D3
+	A4,B4,C4,D4
+
+显示效果如下:
+
+![](images/csv_illustrate.png)
+
+**2.读取CSV文件**
+
+	import csv	//不需要重新安装,直接import就可以使用(应该是默认自带有)
+	with open(r'D:\test\test.csv', 'r', encoding='utf-8') as csvfile:
+		//open后面的encoding为指定编码规则
+		csv_reader = csv.reader(csvfile)
+		/*
+			将打开的文件以读的形式关联到csv,即将文件读出来.此处的csv_reader为一个对象.
+			但是该对象可以像list一样的使用.
+		*/
+		//print (type(csv_reader)) --->结果为class.
+		for row in csv_reader:	//list中每一个元素为一行
+			print (row)	//打印出一整行的元素
+			print (row[0])	//打印每行的第一个元素
+
+**3.写入CSV文件**
+
+	import csv
+	output_list = ['1', '2', '3', ''4]
+	with open(r'D:\test\test1.csv', 'a+', encoding='utf-8', newline='') as csvfile:
+		//此处的newline='':表示下一行为空,去掉该参数会导致每次执行两行数字之间有一行空行.
+		w = csv.writer(csvfile)
+		//将打开的文件以写的形式关联到csv,即往文件中写入数据.此处的w为类的对象
+		w.writerow(output_list)	//调用w的writerow()方法写入一行数据.
+
+PS:写入的数据是右对齐的.
+
+### 6.2 将数据存储至MySQL数据库
+
+MySQL是一种关系型数据库管理系统(关系型数据库将数据保存在不同的表中),使用SQL语言.
+
+	比如存储A先生的个人信息(性别、年龄等)和购买记录,关系型数据库处理方法:
+		1.将个人信息放在"用户"表中;
+		2.购买记录放在"购买记录"表中;
+		3.两张表使用A先生的用户id作为关键字(primary key)关联起来.
+
+MySQL关系型数据库体积小、速度快且免费,在网络爬虫的数据存储中作为常用的数据库.
+
