@@ -34,6 +34,9 @@ python使用最广的解释器是CPython.
 
 	name = raw_input('Please enter your name:')	#提示输入,输入的信息会放到name这一变量中
 	print 'hello,', name						#打印出"hello, ...(用户输入的信息)"
+	/*
+		python 3.x去掉了raw_input(),使用input()函数替代raw_input().
+	*/
 
 raw_input()读取的内容永远是以字符串的形式返回,如果需要整数必须:
 
@@ -418,6 +421,13 @@ list/tuple/dict/str(字符串)等可迭代对象都可以用"for...in"来实现�
 判断是否为可迭代对象
 	
 	from collections import Iterable	/*从collections模块引入Iterable*/
+	/*
+		python 3.x之后使用"from collections import Iterable"会报"DeprecationWarning: Using or
+		importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated, 
+		and in 3.8 it will stop working.
+		解决方法:
+		from collections.abc import Iterable
+	*/
 	isinstance('abc', Iterable)	/*判断字符串是否为可迭代对象.返回"True"*/
 	isinstance([1, 2, 3], Iterable)	/*list可迭代,返回"True"*/
 	isinstance(123, Iterable)	/*整数不可迭代,返回"False"*/
@@ -444,7 +454,10 @@ list/tuple/dict/str(字符串)等可迭代对象都可以用"for...in"来实现�
 	[x * x for x in range(1, 11)]	/*也是生成[1, 4, 9,...,100]*/
 	[x * x for x in range(1, 11) if x % 2 == 0]	/*仅偶数平方*/
 	//两层循环
-	[m + n for m in 'ABC' for n in 'XYZ']	/*两个str组合的全排列*/
+	[m + n for m in 'ABC' for n in 'XYZ']
+	/*两个str组合的全排列,结果为:
+		"AX, AY, AZ, BX, BY, BZ, CX, CY, CZ"
+	*/
 
 列出当前目录下所有文件和目录名
 
@@ -454,7 +467,11 @@ list/tuple/dict/str(字符串)等可迭代对象都可以用"for...in"来实现�
 把list所有字符串中的字符变成小写
 
 	L = ['Hello', 'World', 'IBM', 'Apple']
-	[s.lower() for s in L]	/*s.lower():将str字符串的字符变成小写*/
+	[s.lower() for s in L]
+	/*
+		s.lower():将str字符串的字符变成小写
+		s.upper():将str字符串的字符变成大写
+	*/
 	//list中包含字符串和整数
 	L = ['Hello', 'World', 18, 'IBM', 'Apple']
 	[s.lower() for s in L if isinstance(s, str)]	/*增加判断是否为字符串*/
@@ -468,7 +485,7 @@ list/tuple/dict/str(字符串)等可迭代对象都可以用"for...in"来实现�
 
 **1.显示内置的所有函数**
 
-	print (dir(__buildins__))
+	print (dir(__builtins__))
 
 **2.获得内置函数的帮助信息**
 
@@ -499,11 +516,17 @@ list/tuple/dict/str(字符串)等可迭代对象都可以用"for...in"来实现�
 	PS:如果iterable为空,返回的为start的值(e.g.sum([], 10)--->结果为10)
 	*/
 
-3.cmp(x, y)比较函数
+3.cmp(x, y)比较函数(python 2.x)/operator模块(python 3.x)
 
-	cmp(1, 2)	/*para1 < para2, 返回"-1"*/
-	cmp(2, 1)	/*para1 > para2, 返回"1"*/
-	cmp(3, 3)	/*para1 = para2, 返回"0"*/
+	1.python 2.x使用cmp函数比较
+		cmp(1, 2)	/*para1 < para2, 返回"-1"*/
+		cmp(2, 1)	/*para1 > para2, 返回"1"*/
+		cmp(3, 3)	/*para1 = para2, 返回"0"*/
+	2.python 3.x使用operator模块比较
+		import operator
+		print (operator.eq(1, 1))	//等于,返回True
+		print (operator.gt(2, 1))	//大于,返回True
+		print (operator.lt(1, 2))	//小于,返回True
 
 **4.数据类型转换**
 
@@ -748,6 +771,7 @@ map()函数接收两个参数.一个函数,一个list.map会将函数依次作�
 
 reduce()函数接收两个参数.一个函数,一个list.函数从list中取两个参数计算,得到返回值和list中的第三个参数作为函数的参数继续参与计算.直到最后得到返回值.
 
+	from functools import reduce	//python 3.x后,reduce不再在built-in function里.需要import
 	reduce(f, [x1, x2, x3, x4]) = f(f(f(x1, x2), x3), x4)
 
 	//求和
@@ -769,14 +793,6 @@ reduce()函数接收两个参数.一个函数,一个list.函数从list中取两�
 		return {'0':0, '1':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9}[s]
 
 	reduce(fn, map(char2num, '13579'))	//结果为:13579
-
-	// str2int函数
-	def str2int(s):
-		def fn(x, y):
-			return x * 10 + y
-		def char2num(s):
-			return {'0':0, '1':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9}[s]
-		return reduce(fn, map(char2num, s))
 
 	//使用lambda函数简化
 	def char2num(s):
