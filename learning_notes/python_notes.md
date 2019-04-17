@@ -768,6 +768,11 @@ map()函数接收两个参数.一个函数,一个list.map会将函数依次作�
 
 	//将list中的所有数字转化为字符串
 	map(str, [1, 3, 5, 7, 9])	//结果为:['1', '3', '5', '7', '9']
+	/*
+		map()默认返回map对象:<map object at 0x005B9FB0>
+		如果需要打印的话,需要转成list对象:
+			print (list(map(str, [1, 3, 5, 7, 9])))
+	*/
 
 reduce()函数接收两个参数.一个函数,一个list.函数从list中取两个参数计算,得到返回值和list中的第三个参数作为函数的参数继续参与计算.直到最后得到返回值.
 
@@ -826,6 +831,7 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 	//从小到大排序(默认)
 	sorted([36, 5, 12, 9, 21])	//排序完:[5, 9, 12, 21, 36]
 	//实现倒序排序
+	1.python 2.x实现
 	def reversed_cmp(x, y):
 		if x > y:
 			return -1
@@ -834,12 +840,20 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 		return 0
 	sorted([36, 5, 12, 9, 21], reversed_cmp)	//结果为:[36, 21, 12, 9, 5]
 	//list在前,函数在后.与前面的不一样
+	2.python 3.x实现(python 3.x取消了cmp函数,sorted函数调用更简单了):
+		print (sorted([36, 5, 12, 9, 21],reverse=True))
+		/*
+			指定reverse参数为True表示倒序,默认是升序(False).
+			结果为:[36, 21, 12, 9, 5]
+		*/
+
 
 字符串排序
 
 	sorted(['bob', 'about', 'Zoo', 'Credit'])	//结果为:['Credit', 'Zoo', 'about', 'bob']
 		//默认按着ASCII的大小比较,有大小写之分
 	//忽略大小写
+	1.python 2.x实现:
 	def cmp_ignore_case(s1, s2):
 		u1 = s1.upper()	//将字母转变为大写,upper()和lower作用于整个字符串
 		u2 = s2.upper()	//将字母转变为大写,upper()和lower作用于整个字符串
@@ -851,6 +865,14 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 
 	sorted(['bob', 'about', 'Zoo', 'Credit'], cmp_ignore_case)
 	//结果为:['about', 'bob', 'Credit', 'Zoo']
+	2.python 3.x实现:
+	print (sorted(['bob', 'about', 'Zoo', 'Credit'], key = lambda x : x.upper()))
+	/*
+		sorted函数:
+			para1为一个list;
+			para2为接收一个参数的函数(匿名函数也行),需要用key来指定;
+			para3为指定升序/降序,用reverse=False/True来指定(默认升序)
+	*/
 
 **字符串转换大小写函数**
 	
@@ -953,10 +975,13 @@ python对匿名函数的支持有限
 
 ### 6.2 别名
 
+	1.python 2.x使用:
 	try:	//Python IO的两套库"cStringIO"和"StringIO",接口和功能相同.cStringIO用c写的,速度快.
 		import cStringIO as StringIO	//优先导入cStringIO作为StringIO,"as"相当于别名
 	except ImportError:	//导入失败会捕获到ImportError
 		import StringIO	//失败再导入StringIO.后面的代码均可以用StringIO正常工作
+	2.python 3.x使用:
+	from io import StringIO	//因为python 3.x没有cStringIO,是从io中import进来的.
 
 	//example
 	try:
@@ -1015,9 +1040,9 @@ python对匿名函数的支持有限
 	4.全局变量和函数中使用global修饰
 		hehe = 6
 		def f():
-			global hehe //使用模块内的全局变量
+			global hehe //明确说明在该函数中使用模块内定义的全局变量,该函数所有操作该变量都是用全局变量
 			print(hehe) //输出6
-			hehe = 3 //全局变量赋值为3
+			hehe = 3 //全局变量重新赋值为3,此时全局变量值被改变为3.
 		f()
 		print(hehe) //输出3
 		//运行正常输出6和3
