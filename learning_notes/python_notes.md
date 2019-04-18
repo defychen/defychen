@@ -1128,10 +1128,14 @@ python对匿名函数的支持有限
 	
 常用在if判断中:
 
+	1.python 2.x用types.String/ListType等来判断某种类型:
 	import types	//导入types模块
 	type('abc') == types.StringType	//判断是否为字符型,是返回Ture
 	type([]) == types.ListType		//判断是否为list,是返回Ture
 	type(str) == types.TypeType		//所有类型都是TypeType
+	2.python 3.x直接使用str/int/list来判断某种类型:
+	print (type('abc') == str)	//返回True
+	print (type(123) == int)	//返回True
 
 	//使用isinstance()更简单
 	isinstance(d, Dog)	//判断d是否为Dog类,如果是返回True.否则返回False
@@ -1193,7 +1197,7 @@ python对匿名函数的支持有限
 
 ### 7.2 定制类
 
-**__str\__:用于打印类实例时显示的好看**
+**\__str__:用于打印类实例时显示的好看**
 
 	//正常打印类实例
 	class Student(object):
@@ -1206,8 +1210,14 @@ python对匿名函数的支持有限
 	class Student(object):
 		def __init__(self, name):
 			self.name = name
+		/* python 2.x使用的__str__(self):不需要返回 */
 		def __str__(self):
 			print 'Student object (name: %s)' % self.name
+		/* python 3.x使用__str__(self):需要返回即return.因此:
+		def __str__(self):
+			return 'Student object (name: %s)' % self.name
+		 */
+		
 	//打印类实例
 	>>>print Student('Michael')   //会得到"Student object (name: Michael)"
 
@@ -1217,7 +1227,7 @@ python对匿名函数的支持有限
 	//解决:在类定义最后加上下面一句即可
 	__repr__ = __str__		//为调试服务的
 
-**__iter\__:用于类的"for...in"循环,类似list或tuple**
+**\__iter__:用于类的"for...in"循环,类似list或tuple**
 
 	//斐波那契数列类实现,可以作用于for循环
 	class Fib(object):
@@ -1225,12 +1235,14 @@ python对匿名函数的支持有限
 			self.a, self.b = 0, 1	//初始化头两个数
 		def __iter__(self):
 			return self			//定义迭代对象.实例本身为迭代对象,故返回自己
+		// python 2.x可以使用next(self):拿到循环的下一个值
 		def next(self):			//Python中的for循环会不断调用迭代对象的next()方法拿到循环的下一个值
 			self.a, self.b = self.b, self.a + self.b	//计算下一个值
 			if self.a > 100000:	//循环退出条件
 				raise StopIteration()	//抛出"StopIteration;"---终止循环.
 					//以前的记录"StopIteration();---后面有分号".但是测试过有没有都正确.没有";"比较和常规.
 			return self.a	//返回下一个值
+		/* python 3.x改为使用__next__(self):--->其他都一样. */
 
 	//调用
 	>>>for n in Fib():
@@ -1270,9 +1282,13 @@ Python的"pdb"以单步方式执行代码.
 	try:
 		print 'try...'		//此句打印
 		r = 10 / 0			
-		//1)此处除"0"错误,会直接跳到except,后面语句不执行; 2)如果0改成2,后面的语句会执行,并且会跳过except直接执行finally
+		//此处除"0"错误,会直接跳到except,后面语句不执行; 2)如果0改成2,后面的语句会执行,并且会跳过
+		//except直接执行finally
 		print 'result: ', r
 	except ZeroDivisionError, e:	//捕获除0错误. "e":保存错误信息---自动保存的
+	/* python 3.x改成:
+	except ZeroDivisionError as e:
+	*/
 		print 'except: ', e
 	finally:			//有finally时,finally语句块肯定会执行
 		print 'finally...'
@@ -1296,8 +1312,14 @@ Python的"pdb"以单步方式执行代码.
 		r = 10 / int('a')	//强制转换int('a')---此处会抛出"ValueError"的错误
 		print 'result: ', r
 	except ValueError, e:	//捕获ValueError的错误
+	/* python 3.x改成:
+	except ValueError as e:
+	*/
 		print 'ValueError: ', e
 	except ZeroDivisionError, e:	//除0错误
+	/* python 3.x改成:
+	except ZeroDivisionError as e:
+	*/
 		print 'ZeroDivisionError: ', e
 	else:	//其实捕获错误相当于条件判断"if",因此没有错误可以使用"else"
 		print 'No error!'
@@ -1321,6 +1343,9 @@ Python的"pdb"以单步方式执行代码.
 		try:
 			bar('0')
 		except StandardError, e:	//多层调用,但是可以在合适的层次去捕获错误
+		/* python 3.x改成:
+		except StandardError as e:
+		*/
 			print 'Error!'
 		finally:
 			print 'finally...'
@@ -1356,6 +1381,9 @@ Python内置的logging模块记录错误信息,并且可以让程序继续执行
 		try:
 			bar('0')
 		except StandardError, e:	//捕获标准错误
+		/* python 3.x改成:
+		except StandardError as e:
+		*/
 			logging.exception(e)	//调用logging.exception来记录错误信息,程序会继续执行
 	main()
 	print 'END'	//出现了错误,但是程序会继续执行.该句按照python程序逻辑从上往下会继续执行
@@ -1385,7 +1413,8 @@ logging还可以将错误记录到日志文件,见后面的logging模块.
 
 	def foo(s):
 		n = int(s)
-		assert n != 0, 'n is zero!'	//1)assert为真,自动跳过该行语句继续执行; 2)为假,抛出"AssertionError"错误并退出
+		assert n != 0, 'n is zero!'
+		//1)assert为真,自动跳过该行语句继续执行; 2)为假,抛出"AssertionError"错误并退出
 		return 10 / n
 	def main():
 		foo('0')
@@ -1400,7 +1429,9 @@ logging还可以将错误记录到日志文件,见后面的logging模块.
 
 **方法 3---logging**
 
-默认情况下,logging将日志打印到屏幕,日志级别是WARNING.级别大小:CRITICAL>ERROR>WARNING>INFO>DEBUG>NOTSET.
+默认情况下,logging将日志打印到屏幕,日志级别是WARNING.
+
+	级别从高到低:CRITICAL>ERROR>WARNING>INFO>DEBUG>NOTSET.
 
 **通过logging.basicConfig函数对logging输出进行相关配置**
 
@@ -1557,7 +1588,7 @@ pdb.set_trace():设置一个断点
 
 ### 10.1 os模块
 
-**os模块**
+**1.os模块**
 
 	import os	//导入os模块
 	os.name		//操作系统名字(如果为posix---说明系统是linux/Unix/Mac os X; 如果为nt则是windows)
@@ -1567,21 +1598,29 @@ pdb.set_trace():设置一个断点
 	os.rename('test.txt', 'test.py')	//文件重命名
 	os.remove('test.py')				//删除文件
 
-**os.path相关函数**
+**2.os.path相关函数**
 
 	import os.path
 	os.path.abspath('.')	//列出当前目录的绝对路径
+	os.path.realpath('.')	//也是列出当前目录的绝对路径
 	//在某个目录下创建新目录步骤:
-	1)os.path.join('/user/defy', 'testdir')		
-	//先将新目录的完整路径表示出来.第一个通常为绝对路径(也可以用相对路径).两个路径会合成为一个
+	1)os.path.join('/user/defy', 'testdir')
+	/*
+		先将新目录的完整路径表示出来.第一个通常为绝对路径(也可以用相对路径).两个路径会合成为一个
+		此处为:/user/defy/testdir
+	*/
 	2)os.mkdir('/user/defy/testdir')			//创建一个目录
-	os.rmdir('/user/defy/testdir')				//删除一个目录
+	os.rmdir('/user/defy/testdir')
+	/*
+		删除一个目录,该目录必须为空.如果存在文件可以:
+			os.remove(dir_path + '/file_name')	//先把文件删除,再os.rmdir()删除目录.
+	*/
 	3)os.path.isfile('/user/defy/test.txt') 
-	//判断"user/defy/test.txt"是否是一个存在的文件,如果是返回True,否则返回False.
+	//判断"/user/defy/test.txt"是否是一个存在的文件,如果是返回True,否则返回False.
 
 	//拆分路径
 	os.path.split('/user/defy/testdir/file.txt')
-	/*拆分得到('/user/defy/testdir', '.file.txt')---最后一级为目录或文件名*/
+	/*拆分得到('/user/defy/testdir', 'file.txt')---最后一级为文件名*/
 	//得到扩展名
 	os.path.splitext('/user/defy/testdir/file.txt')
 	/*得到('/user/defy/testdir/file', '.txt')---最后一级为扩展名*/
@@ -1592,47 +1631,53 @@ pdb.set_trace():设置一个断点
 实例---列出当前目录下的所有目录或所有.py文件
 
 	[x for x in os.listdir('.') if os.path.isdir(x)]	//列出所有目录
-	
+
 	[x for x in os.listdir('.') if os.path.isfile(x) and os.path.splitext(x)[1] == '.py']
-	//列出所有的.py文件---os.path.split(x)返回的为tuple,因此"os.path.splitext(x)[1]"相当于取后面的扩展名
+	//列出所有的.py文件---os.path.splitext(x)返回的为tuple,因此"os.path.splitext(x)[1]"
+	//相当于取后面的扩展名
 
-**os.popen函数**
+**3.os.popen函数**
 
-os.popen(cmd):为一个命令(cmd)执行结果打开一个管道.再调用.read()方法即可将内容独处.
+os.popen(cmd):为一个命令(cmd)执行结果打开一个管道.返回值调用read()方法即可将内容(命令执行结果)读出.
 
 	b = os.popen('ls') //为ls命令执行结果打开一个管道,并返回给b
-	print b.read() //可以将"ls"命令执行结果从b这个管道中读出.
+	print b.read() //b.read():将"ls"命令执行结果从b这个管道中读出.
 
-**os.getcwd函数**
+**4.os.getcwd函数**
 
 os.getcwd():获得当前的工作目录
 
 	os.getcwd()相当于linux的命令pwd.
 
-**os.chdir函数**
+**5.os.chdir函数**
 
-os.chdir(path):change directory,切换目录到path.
+os.chdir(path):change directory(类似linux下的cd命令),切换目录到path.
 
 	//切换到"/usr/defy/test"目录
 	os.chdir('/usr/defy/test') //只能使用绝对路径
 
-**os.path.isdir函数**
+**6.os.path.isdir函数**
 
 os.path.isdir(pathname):如果pathname是一个存在的目录,返回True;否则返回False.
 
-**os.mkdir函数**
+**7.os.mkdir函数**
 
 os.mkdir(pathname, mode):以权限mode创建一个名叫pathname的目录(如果没有指定mode,则为0777).
 
 	import os
 	path = "/usr/defychen/test"
 	
-	os.mkdir(path, 0755)	//创建path目录
+	os.mkdir(path, mode = 755)	//创建path目录
 	os.mkdir(path) //创建path目录,权限为0777
 
-**os.system函数**
+**8.os.system函数**
 
 os.system(cmd):执行linux下的shell命令.返回命令执行状态.
+
+	os.system('dir') //在windows下执行"dir"相当于linux下的ls.但是由于编码的问题会显示乱码.linux会好点
+	//比较好的方法:
+	b = os.popen('dir')
+	print (b.read())	//也是显示命令执行结果,windows不会出现乱码.
 
 ### 10.2 sys模块
 
@@ -1643,6 +1688,9 @@ os.system(cmd):执行linux下的shell命令.返回命令执行状态.
 	在linux命令行输入:python
 	>>> import sys
 	>>> sys.platform //结果为:linux2--->linux 2.x/3.x/4.x都显示为linux2
+	
+	windows下执行:
+		sys.platform //结果为:win32
 
 **2.sys.version**
 
@@ -1655,7 +1703,7 @@ os.system(cmd):执行linux下的shell命令.返回命令执行状态.
 
 **3.sys.stdout.write**
 
-往标准输出(一般为屏幕)写入字符串,一般配合sys.stdout.flush将字符串从标准输出打出来
+往标准输出(一般为屏幕)写入字符串,一般配合sys.stdout.flush将字符串从标准输出打印出来
 
 	import sys
 	sys.stdout.write('xxxx....')
@@ -1663,7 +1711,7 @@ os.system(cmd):执行linux下的shell命令.返回命令执行状态.
 
 ### 10.3 random模块
 
-	#!/usr/bin/python
+	#!/usr/bin/env python
 	# -*- coding:utf-8 -*-
 
 	import random
@@ -1671,19 +1719,16 @@ os.system(cmd):执行linux下的shell命令.返回命令执行状态.
 	print(random.random()) 		//随机产生[0, 1)之间的数(e.g. 0.189xxx)
 	print(random.randint(1, 6)) //随机产生[1,6]之间的整数(e.g. 2)
 	print(random.randrange(1, 3)) //随机产生[1, 3)之间的整数(e.g. 1)
-	print(random.randrange(0, 101, 2)) //随机产生[0, 101)步长为2的数(e.g. 74)
+	print(random.randrange(0, 101, 2)) //随机产生[0, 101)步长为2的数,即偶数(e.g. 74)
 	print(random.choice("hello")) //从指定字符串中随机取出一个字符(e.g."e")
 	print(random.choice([1, 2, 3, 4])) //从列表中随机取出一个元素(e.g.2)
 	print(random.choice(("abc", "123", "liu"))) //从tuple中随机取出一个元素(e.g."liu")
 	print(random.sample("hello", 3)) //从列表中随机取出3个元素(e.g.'l', 'h', 'o')
 	print(random.uniform(1, 10)) //随机产生指定区域的浮点数(e.g.1.2919)
 
-	/*
-		random.shuffle(list):将列表中的所有元素随机排序
-	*/
 	items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
 	print("洗牌前:", items) //洗牌前: [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
-	random.shuffle(items)
+	random.shuffle(items)  //random.shuffle(list):将列表中的所有元素随机排序
 	print("洗牌后:", items) //洗牌后: [6, 9, 2, 7, 1, 3, 8, 5, 4, 0]
 
 ### 10.4 shutil模块
@@ -1819,9 +1864,11 @@ root_dir:需要打包的源文件/目录.
 		tar.extractall() //可设置解压的地址
 		tar.close()
 
-### 10.5 commands模块
+### 10.5 commands模块(python 2.x)/subprocess模块(python 3.x)
 
-python中的commands模块用于调用linux的shell命令.有3种方法:
+**1.commands模块主要用于python 2.x**
+
+python中的commands模块用于调用linux下的shell命令.有3种方法:
 
 	commands.getstatus(cmd)			//返回命令的执行状态
 	commands.getoutput(cmd)			//返回执行结果
@@ -1847,6 +1894,16 @@ python中的commands模块用于调用linux的shell命令.有3种方法:
 	/*
 		os.path.abspath(output[1]):获取查找到的文件的绝对路径.
 	*/
+
+**2.subprocess在python 3.x中用于取代commands模块**
+
+	!!/usr/bin/env python
+	#-*- coding:utf-8 -*-
+	
+	import subprocess
+	import os
+	aa = 'hello'
+	output = subprocess.getstatusoutput('find . -name' + aa)
 
 ***
 
@@ -1917,8 +1974,11 @@ python中的commands模块用于调用linux的shell命令.有3种方法:
 	if __name__ == '__main__':	//直接运行"./hello.py",python中的特殊变量"__name__"就会置为"__main__"
 								//在其他地方导入时,就会判断失败,用于单独测试某模块的正确性
 		print 'Parent process %s.' % os.getpid()
-		p = Process(target=run_proc, args=('test',))	//创建一个进程实例.target:指定子进程需要执行的函数
-											//args:子进程执行的函数参数,是一个tuple.只有一个时需要加逗号('test',)
+		p = Process(target=run_proc, args=('test',))	
+		/*
+			创建一个进程实例.target:指定子进程需要执行的函数
+			args:子进程执行的函数参数,是一个tuple.只有一个时需要加逗号('test',)
+		*/
 		print 'Process will start.'
 		p.start()			//启动子进程
 		p.join()			//等待子进程结束再继续往下运行,常用于进程间同步
