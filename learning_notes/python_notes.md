@@ -1940,10 +1940,13 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 
 **json.loads(json格式)---JSON格式转换为Python(也叫反序列化)**
 
-	json_str = {"age":20, "score":88, "name":"Bob"}
+	json_str = '{"age":20, "score":88, "name":"Bob"}'
+	/*
+		json.loads(para)的参数para必须是str类型,此处使用'{}'为了避免单引号和双引号解析错误,{}外面使用
+		双引号("")会报错,因为不能分辨出双引号的匹配.
+	*/
 	json.loads(json_str)
-	//得到的结果为:{u'age':20, u'score':88, u'name':u'Bob'}
-	//反序列化得到的字符串对象默认都是unicode而不是str.
+	//得到的结果为:{'age':20, 'score':88, 'name':'Bob'}
 
 ***
 
@@ -1951,7 +1954,7 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 
 ### 12.1 多进程(multiprocessing)
 
-**1)fork方法---windows没有**
+**1)fork方法---windows没有,使用会报"AttributeError: module 'os' has no attribute 'fork'."**
 
 	import os	//os模块
 	print 'Process (%s) start...' % os.getpid()		//得到主进程的PID,使用"%d"也可以.也许"%s"兼容性好
@@ -1971,8 +1974,11 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 	def run_proc(name):
 		print 'Run child process %s (%s)...' % (name, os.getpid())
 
-	if __name__ == '__main__':	//直接运行"./hello.py",python中的特殊变量"__name__"就会置为"__main__"
-								//在其他地方导入时,就会判断失败,用于单独测试某模块的正确性
+	if __name__ == '__main__':
+		/*
+			直接运行"./hello.py",python中的特殊变量"__name__"就会置为"__main__"在其他地方导入时,
+			就会判断失败,用于单独测试某模块的正确性.
+		*/
 		print 'Parent process %s.' % os.getpid()
 		p = Process(target=run_proc, args=('test',))	
 		/*
@@ -1992,7 +1998,7 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 	def long_time_task(name):
 		print 'Run task %s (%s)...' % (name, os.getpid())
 		start = time.time()		//得到当前时间,为秒数
-		time.sleep(random.random() * 3)		//random.random()---得到随机值(0~1); time.sleep()进程睡眠
+		time.sleep(random.random() * 3)	//random.random()---得到随机值(0~1); time.sleep()进程睡眠
 		end = time.time()
 		print 'Task %s runs %0.2f seconds.' % (name, (end - start))	//得到运行时间
 
@@ -2000,7 +2006,8 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 		print 'Parent process %s.' % os.getpid()
 		p = Pool()		//创建一个进程池p
 		for i in range(5):
-			p.apply_async(long_time_task, args=(i, ))	//进程池指定运行函数使用"p.apply_async(func, args)"
+			p.apply_async(long_time_task, args=(i, ))	
+			//进程池指定运行函数使用"p.apply_async(func, args)"
 		print 'Waiting for all subprocess done...'
 		p.close()	//join之前必须调用close,然后就不能再继续添加新的进程了
 		p.join()
@@ -2036,8 +2043,8 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 	#读数据进程执行的代码
 	def read(q):
 		while True:		//死循环
-			value = q.get(True)		//参数True会导致:如果队列中没有数据使调用线程暂停,直至有数据会继续
-									//如果为False会导致:如果队列中为空,会引发异常.所以一般为True
+			value = q.get(True)	//参数True会导致:如果队列中没有数据则调用线程暂停,直至有数据才继续
+								//如果为False会导致:如果队列中为空,会引发异常.所以一般为True
 			print 'Get %s from queue.' % value
 
 	if __name__ == '__main__':
@@ -2053,6 +2060,14 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 		pw.join()
 		#pr(读进程是死循环),需要强行终止
 		pr.terminate()		//强行终止死循环进程
+	/*结果为:
+		Put A to queue...
+		Get A from queue.
+		Put B to queue...
+		Get B from queue.
+		Put C to queue...
+		Get C from queue.
+	*/
 
 ### 12.2 多线程---threading模块
 
@@ -2076,7 +2091,7 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 	print 'thread %s ended.' % threading.current_thread().name
 
 	//结果:
-	thread MainThread is running...		//主线程名字"MainThread"
+	thread MainThread is running...		//主线程名字默认为"MainThread"
 	thread LoopThread is running...		//如果没有指定name,系统默认名字为"Thread-1", "Thread-2",...	
 	thread LoopThread >>> 1
 	thread LoopThread >>> 2
@@ -2098,8 +2113,8 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 	lock = threading.Lock()		//线程锁
 	
 	def change_it(n):
-		#先存后取,结果为不便.(此处仍为0)
-		global balance	//表明为全局变量
+		#先存后取,结果为不便.此处为0.
+		global balance	//明确说明在函数中使用之前定义的全局变量balance
 		balance = balance + n
 		balance = balance - n
 
@@ -2118,7 +2133,7 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 	t2.start()		//启动线程t2
 	t1.join()		//等待线程1结束
 	t2.join()		//等待线程2结束
-	print balance
+	print balance	//结果为0
 
 **操作系统出现硬盘狂响,点窗口无反应是因为开的任务(进程/线程)过多,操作系统忙着切换任务,此时根本没有时间去执行任务.**
 
@@ -2136,7 +2151,8 @@ Python的hashlib提供了常用的摘要算法(MD5, SHA1等).
 
 	import hashlib
 	md5 = hashlib.md5()		//得到hashlib库中的md5函数
-	md5.update('how to use md5 in python hashlib?')		//md5.update(''):将字符串写入md5的一段buffer---添加字符串
+	md5.update('how to use md5 in python hashlib?')
+	//md5.update(''):将字符串写入md5的一段buffer---添加字符串
 	print md5.hexdigest()		//md5.hexdigest()---开始计算得到md5值
 
 	//结果为:d26a53750bc40b38b65a520292f69306
@@ -2283,7 +2299,8 @@ socket:表示打开了一个网络连接.
 **实例---客户端/服务器的TCP连接**
 
 	//服务器程序:echo_server.py
-	#!/usr/bin/python	//指定python程序的位置,此时可以直接"./echo_server.py"调用,否则必须"python echo_server.py"
+	#!/usr/bin/python
+	//指定python程序的位置,此时可以直接"./echo_server.py"调用,否则必须"python echo_server.py"
 	import socket, time, threading	//会使用socket,time,threading等模块
 	
 	def tcplink(sock, addr):
