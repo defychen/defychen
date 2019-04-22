@@ -2151,17 +2151,21 @@ Python的hashlib提供了常用的摘要算法(MD5, SHA1等).
 
 	import hashlib
 	md5 = hashlib.md5()		//得到hashlib库中的md5函数
-	md5.update('how to use md5 in python hashlib?')
-	//md5.update(''):将字符串写入md5的一段buffer---添加字符串
+	md5.update('how to use md5 in python hashlib?'.encode('utf-8'))
+	/*
+		md5.update(''):将字符串写入md5的一段buffer---添加字符串
+		从python 3.x开始,md5.update('xxx'.encode('utf-8'))--->要将字符串编码成utf-8的编码.
+	*/
 	print md5.hexdigest()		//md5.hexdigest()---开始计算得到md5值
 
 	//结果为:d26a53750bc40b38b65a520292f69306
 
 分块多次调用update(),最终的md5值都是一样的:
+
 	import hashlib
 	md5 = hashlib.md5()
-	md5.update('how to use md5 in ')
-	md5.update('python hashlib?')
+	md5.update('how to use md5 in '.encode('utf-8'))
+	md5.update('python hashlib?'.encode('utf-8'))
 	print md5.hexdigest()
 
 **MD5:最常见的摘要算法,速度快,生成的长度是32个16进制字符串(32*4 = 128 bit = 16 byte).**
@@ -2170,8 +2174,8 @@ Python的hashlib提供了常用的摘要算法(MD5, SHA1等).
 
 	import hashlib
 	sha1 = hashlib.sha1()	//得到hashlib库中的sha1函数
-	sha1.update('how to use sha1 in ')
-	sha1.update('python hashlib?')
+	sha1.update('how to use sha1 in '.encode('utf-8'))
+	sha1.update('python hashlib?'.encode('utf-8'))
 	print sha1.hexdigest()		//计算得到sha1值
 
 	//结果为:b752d34ce353e2916e943dc92501021c8f6bca8c
@@ -2233,8 +2237,12 @@ socket:表示打开了一个网络连接.
 	import socket	//导入socket库
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)	
 	//创建一个socket,AF_INET:IPv4协议(IPv6---AF_INET6);SOCK_STREAM:面向流的TCP协议
-	s.connect(('www.sina.com.cn', 80))	//IP地址+端口号.---IP地址可由域名"www.sina.com.cn"自动转换
-	//端口号分类:80 web服务标准端口;25 SMTP服务端口;21 FTP服务端口.端口号<1024---Internet标准服务
+	s.connect(('www.sina.com.cn', 80))	
+	/*
+		IP地址+端口号.---IP地址可由域名"www.sina.com.cn"自动转换.connect接收一个参数,因此需要将ip
+			+端口号组成一个tuple再传进去.
+		端口号分类:80 web服务标准端口;25 SMTP服务端口;21 FTP服务端口.
+			端口号<1024---Internet标准服务
 	s.send('GET / HTTP/1.1\r\nHost: www.sina.com.cn\r\nConnection: close\r\n\r\n')
 	//发送数据---此处为请求首页内容.
 	
@@ -2265,9 +2273,12 @@ socket:表示打开了一个网络连接.
 2)绑定监听的IP地址和端口:
 
 	s.bind(('127.0.0.1', 9999))
-	//1)IP地址:服务器有多块网卡,每块网卡对应一个IP地址.bind中的IP地址区域填写"0.0.0.0"表示本服务器所有的IP地址.
-		"127.0.0.1"表示本机地址.此时客户端必须同时在本机运行才能连接上,外部计算机无法连接.
-	//2)端口:端口号<1024需要管理员权限才能绑定.>1024可以任意绑定
+	/*
+	1)IP地址:服务器有多块网卡,每块网卡对应一个IP地址.bind中的IP地址区域填写"0.0.0.0"表示本服务器
+		所有的IP地址."127.0.0.1"表示本机地址.此时客户端必须同时在本机运行才能连接上,外部计算机无法连接.
+	2)端口:端口号<1024需要管理员权限才能绑定.>1024可以任意绑定.
+	3)bind()函数接收一个参数,因此需要将ip+端口号组成一个tuple再传进去.
+	*/
 
 3)监听端口:
 	
@@ -2277,8 +2288,12 @@ socket:表示打开了一个网络连接.
 4)接收客户端连接,并创建线程处理客户端连接:
 
 	while True:		//使用死循环来接收客户端连接
-		sock, addr = s.accept()		//s.accept()等待并返回一个客户端连接.
-		//sock:表示一个客户端的socket; addr:包含客户端的IP地址(此处为127.0.0.1,与服务器相同)和客户端的端口
+		sock, addr = s.accept()
+		/*
+			s.accept()等待并返回一个客户端连接.
+			sock:表示一个客户端的socket;
+			addr:包含客户端的IP地址(此处为127.0.0.1,与服务器相同)和客户端的端口
+		*/
 		t = threading.Thread(target=tcplink, args=(sock, addr))	//创建处理客户端连接的线程
 		t.start()		//启动线程
 
@@ -2305,13 +2320,20 @@ socket:表示打开了一个网络连接.
 	
 	def tcplink(sock, addr):
 		print 'Accept a new connection from %s:%s...' % addr
-		sock.send('Welcome')
+		sock.send('Welcome'.encode())
+		/*
+			python 3.x之后所有网络/磁盘数据都是基于字节流,因此:
+				sock.send('Welcome'.encode()):socket需要将字符串转成字节流来发送.
+		*/
 		while True:
-			data = sock.recv(1024)
+			data = sock.recv(1024).decode()
+			/*
+			sock.recv(1024).decode():最大接收2014字节的数据,基于字节流.因此需要转成str用于后续分析.
+			*/
 			time.sleep(1)
 			if data == 'exit' or not data:
 				break
-			sock.send('Hello, %s' % data)
+			sock.send(('Hello, %s' % data).encode()) //转成字节流
 		sock.close()
 		print 'Connection from %s:%s closed.' % addr
 	
@@ -2336,11 +2358,11 @@ socket:表示打开了一个网络连接.
 	#create connect
 	s.connect(('127.0.0.1', 9999))
 	#receive welcome message
-	print s.recv(1024)
+	print s.recv(1024).decode() //将字节流转成str
 	for data in ['Defy', 'Tracy', 'Sarah']:
 		#send data
-		s.send(data)
-		print s.recv(1024)
+		s.send(data.encode()) //转成字节流
+		print s.recv(1024).decode() //将字节流转成str
 	s.send('exit')	//结束发送
 	s.close()
 
@@ -2365,9 +2387,17 @@ socket:表示打开了一个网络连接.
 	print 'Bind UDP on 9999...'
 	#receive data
 	while True:
-		data, addr = s.recvfrom(1024)	//服务器端接收数据使用"s.recvfrom(1024)"
+		data, addr = s.recvfrom(1024)
+		/*
+			服务器端接收数据使用"s.recvfrom(1024)".
+			recvfrom(字节数):返回一个tuple,包含data和addr(ip+port)信息.
+			tuple不能转成str,因此此处不需要decode().
+		*/
 		print 'Received from %s:%s...' % addr
-		s.sendto('Hello, %s!' % data, addr)	//s.sendto(data, addr).参数1:需要发送的数据;参数2:IP+端口
+		s.sendto(('Hello, %s!' % data).encode(), addr)
+		/*
+			s.sendto(data.encode(), addr):para1:需要发送的数据;para2:IP+port.data需要转成字节流.
+		*/
 
 	//客户端:udp_client.py
 	#!/usr/bin/python
@@ -2375,10 +2405,10 @@ socket:表示打开了一个网络连接.
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	for data in ['Defy', 'Tracy', 'Sarah']:
 		#send data to server
-		s.sendto(data, ('127.0.0.1', 9999))
+		s.sendto(data.encode(), ('127.0.0.1', 9999)) //数据需要转成字节流
 		time.sleep(1)	//睡眠1s
 		#receive data
-		print s.recv(1024)	//客户端接收数据使用"s.recv(1024)"
+		print s.recv(1024).decode()	//客户端接收数据使用"s.recv(1024)",接收纯数据.需要转成str.
 	s.close()
 	
 ***
@@ -2457,8 +2487,12 @@ Python下载地址[Python下载地址](https://www.python.org/downloads/)
 			print pix[x, y] //输出每个像素点构成的R,G,B值
 			r, g, b = pix[x, y] //也可以这样得到r,g,b的值
 	#缩略
-	im.thumbnail(w//2, h//2) //"//"在python 3.x中表示整除; "/":表示浮点除法
-		//Image.thumbnail:按照宽、高对图形进行缩略.在缩略时,保持图片的宽高比例.
+	im.thumbnail((w//2, h//2)) 
+		/*
+		"//"在python 3.x中表示整除; "/":表示浮点除法;
+		Image.thumbnail((xxx)):接收一个参数,因此需要将w//2,h//2组成一个tuple.
+		Image.thumbnail:按照宽、高对图形进行缩略.在缩略时,保持图片的宽高比例.
+		*/
 	#保存图片
 	im.save('/user/defy/thumbnai.jpg', 'jpeg')
 		//para1:文件名; para2:格式. 因为xxx.jpg就是jpeg格式,
@@ -2468,8 +2502,8 @@ Python下载地址[Python下载地址](https://www.python.org/downloads/)
 	#!/usr/bin/python
 	#-*- coding: utf-8 -*-
 	from PIL import Image, ImageFilter
-	im2 = Image.open('/user/defy/test.jpg')
-	im2 = im.filter(ImageFilter.BLUR)
+	im = Image.open('/user/defy/test.jpg')
+	im = im.filter(ImageFilter.BLUR)
 	/*
 		im.filter():过滤.配合ImageFilter的滤波方法实现图像的滤波
 		常用的滤波方法:
@@ -2491,8 +2525,14 @@ Python下载地址[Python下载地址](https://www.python.org/downloads/)
 
 	#generate random character
 	def rndChar():
-		return chr(random.randint(65, 90)) //random.randint(a, b):生成a~b的随机数
-		//chr:数字转换字母函数.此处将ASCII码(65~90)转换为大写字母(A~Z)
+		rndSeed = random.randint(1,3)	//产生[1,3]的随机整数
+		if rndSeed == 1:	//用于产生随机数字
+			return chr(random.randint(48, 57))
+		elif rndSeed == 2:	//用于产生大写字母
+			return chr(random.randint(65, 90)) //random.randint(a, b):生成a~b的随机数
+			//chr:数字转换字母函数.此处将ASCII码(65~90)转换为大写字母(A~Z)
+		else:	//用于产生小写字母
+			return chr(random.randint(97, 122))
 	
 	#generate random color1
 	def rndColor1():
@@ -2548,8 +2588,8 @@ Python下载地址[Python下载地址](https://www.python.org/downloads/)
 		*/
 
 	#fuzzy processing(模糊处理)
-	image = image.filter(ImageFilter.BLUR)
-	image.save('/usr/defychen/code.jpg', 'jpeg')
+	image2 = image.filter(ImageFilter.BLUR)
+	image2.save('/usr/defychen/code.jpg', 'jpeg')
 
 #### 15.2.3 PIL库中Image模块的使用
 
