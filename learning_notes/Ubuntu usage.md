@@ -45,11 +45,13 @@
 		upgrade之前一定要执行update,这样才能保证更新到最新.
 	*/
 
-## 5. 执行"apt install python-pip"时出错
+## 5. 关于Ubuntu中出现"Could not get lock /var/lib/dpkg/lock"解决方案
 
 **1.问题**
 
-当执行"apt install python-pip(安装python的pip程序,以便可以pip install xxx)"时出错:
+1.当执行"apt install python-pip(安装python的pip程序,以便可以pip install xxx)"时出错:
+
+2.当执行"apt-get install gcc-arm-linux-gnueabi":下载并安装包时出错:
 
 	E: Could not get lock /var/lib/dpkg/lock - open (11: Resource temporarily unavailable)
 	E: Unable to lock the administration directory (/var/lib/dpkg/), is another process
@@ -57,17 +59,38 @@
 
 **2.原因**
 
-出现这个问题可能是有另一个程序正在运行,导致资源被锁不可用.而导致资源被锁的原因可能是上次运行安装或更新时没有正常完成,进而出现此状况.	
+简单描述为:apt还在运行,/var/lib/apt/lists、/var/lib/dpkg、/var/cache/archives会被锁定.导致其他apt操作不会成功.
+
+	出现这个问题可能是有另一个程序正在运行,导致资源被锁不可用.而导致资源被锁的原因可能是上次运行安装或
+	更新时没有正常完成,进而出现此状况.
 
 **3.解决办法**
 
-执行下面的命令:
+1.查找所有apt相关进程,并杀死:
 
-	sudo rm /var/cache/apt/archives/lock
-	sudo rm /var/lib/dpkg/lock
-	PS:必须按照上面的顺序,否则会失败.
+	1.查找apt相关进程
+	ps afx | grep apt
+	 3284 pts/0    S+     0:00          \_ grep --color=auto apt
+		//该进程自带,不能被kill.后面两个进程需要kill掉.
+	 2869 ?        Ss     0:00 /bin/sh /usr/lib/apt/apt.systemd.daily install
+	 2873 ?        S      0:00  \_ /bin/sh /usr/lib/apt/apt.systemd.daily lock_is_held install
+	2.杀掉apt相关进程
+		kill -9 2873
+		kill -9 2869
 
-**4.重新执行"apt install python-pip"即可**
+2.删掉锁定的文件:
+
+	1.删除对应目录下的锁文件:
+		rm -rf /var/lib/dpkg/lock
+	2.强制重新配置软件包:
+		dpkg --configure -a
+	3.更新软件包源文件
+		apt update
+
+**4.重新安装包文件即可**
+
+	1.再次执行"apt install python-pip"	//如果安装python pip
+	2.执行"apt-get install gcc-arm-linux-gnueabi"	//安装交叉编译工具链
 
 ## 6. 安装"net-tools"
 

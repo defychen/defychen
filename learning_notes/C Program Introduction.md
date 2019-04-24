@@ -445,7 +445,13 @@ int const * const a:
 		表示含有5个unsigned char *的数组.即为:
 			pTest[0], pTest[1],	pTest[2], pTest[3], pTest[4]
 	*/
-	
+	memset(pTest, 0, 5 * sizeof(unsigned char *)); //初始化
+	for (int i=0; i<5; i++) {
+		pTest[i] = new unsigned char[3];	//申请3个unsigned char的空间
+		memset(pTest[i], 0x1, 3 * sizeof(unsigned char)); //初始化
+	}
+
+	printf("value: 0x%x\n", pTest[1][2]);	//结果为:value 0x1.
 
 ***
 
