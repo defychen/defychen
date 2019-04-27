@@ -543,4 +543,11 @@ apt-get(Advanced Package Tool:高级安装工具):linux上的软件包管理器.
 	sudo apt-get update	//更新源
 	sudo apt-get upgrade  	//更新已经安装的包	
 
+## 31. shutdown命令
+
+	shutdown -h now		//马上关机
+	shutdown -h 20:30	//20:30准时关机
+	shutdown -r now		//马上重启
+	shutdown -r 20:30	//20:30准时重启
+
 ## 13. wget命令
