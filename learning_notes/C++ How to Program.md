@@ -325,7 +325,7 @@ xxx.cpp文件名通常与接口文件名一样.
 	/*
 		返回类型 类名::成员函数名(形参类型 形参)
 		1.构造函数无返回类型,因为前面没有;
-		2."::"二元作用域分辨运算符.用于将成员函数绑定到类型.建立两者之间的一个联系.
+		2."::"二元作用域分辨运算符.用于将成员函数绑定到类.建立两者之间的一个联系.
 	*/
 	GradeBook::GradeBook(string name)
 	{
@@ -5099,6 +5099,45 @@ para1:跳过的字符个数; para2:指定结束符.且会将结束符从流中�
 
 ## Chapter 14 文件处理
 
+### 14.1 创建顺序文件
+
+	#include <iostream>
+	#include <string>
+	#include <fstream>	//执行文件处理,必须包含<iostream>和<fstream>
+	#include <cstdlib>	//包含有exit函数原型
+	using namespace std;
+	
+	int main()
+	{
+		ofstream outClientFile("clients.txt", ios::out);
+		/*
+			para1:文件名;
+			para2:打开模式:
+				ios::out:打开一个文件作为输出文件(即写文件),会清空原有内容,ofstream的默认模式;
+				ios::app:将数据添加到文件的末尾;
+				ios::ate:打开一个文件作为输出文件,并移动到文件末尾(ios:app使用的方式)--->使用较少;
+				ios::in:打开一个文件作为输入文件(即读文件),ifstream的默认模式;
+				ios:trunc:丢弃文件的内容(ios::out使用的方式);
+				ios:binary:打开一个文件进行二进制输入或输出.
+		*/
+	
+		if (!outClientFile) {
+			cerr << "File open fail!" << endl;
+			exit(EXIT_FAILURE);
+		}
+	
+		cout << "Enter the account, name, and balance." << endl
+			<< "Enter end-of-file to end input.\n?";
+		int account;
+		string name;
+		double balance;
+	
+		while (cin >> account >> name >> balance) {
+			outClientFile << account << ' ' << name << ' ' << balance << endl;
+			cout << "?";
+		}
+	}
+
 ***
 
 ## Chapter 15 标准库的容器和迭代器
@@ -5972,3 +6011,65 @@ priority_queue按序插入元素和在头部删除元素.使用vector和deque实
 ***
 
 ## Chapter 16.
+
+***
+
+## Chapter 21. string类和字符串流处理的深入剖析
+
+### 21.12 字符串流处理
+
+#### 21.12.2 stringstream的使用实例
+
+stringstream一般用于string和int类型相互转换.
+
+**1.clear()和str()使用**
+
+	#include <iostream>
+	#include <sstream>	//要使用stringstream必须包含<sstream>和<iostream>
+	#include <string>
+	using namespace std;
+	int main()
+	{
+		string strIn;
+		int value;
+		cout << "Please input three integers: " << endl; //input 1 2 3
+		getline(cin, strIn);
+		//stringstream ss(strIn);
+		stringstream ss;
+		ss << strIn;
+		/*
+			stringstream流内部维护了一个读写指针:
+				1)使用stringstream ss(strIn);初始化,此时写指针在0的位置;
+				2)使用stringstream ss; ss << strIn;进行初始化,此时写指针在移动,
+					输入1 2 3后,写指针移动到3的位置(从0开始);
+		*/
+	<1>	while (ss >> value) {
+			// ss >> value:每输出一次,读指针会向前移动一次,最终移动到3的位
+			//置(如果位置没被更新,则会一直在3的位置).
+			cout << value << " ";
+		}
+	<2>	ss.str(""); //将stringstream流清空,读写指针会移动到0的位置
+	<3>	ss.clear(); //用于设置stringstream的good位,如果没有调用ss.clear(),ss不会再接收其他的输入
+		cout << "\nss size:" << ss.str().length(); //ss.str().length():获取ss字符串的长度
+		cout << "\nPlease input thress integers: " << endl; //input 4 5 6
+		getline(cin, strIn);
+		//cout << strIn << endl;
+		ss << strIn;
+		cout << "ss size:" << ss.str().length(); //获取ss字符串的长度
+		cout << "\nss strIn: " << ss.str() << endl;
+	<4>	while (ss >> value) {
+			cout << value << " ";
+		}
+	}
+
+分析:
+
+	1.如果注释掉<2>和<3>的代码:则<4>处的代码不会执行.因为<1>在执行时已经将ss的读指针移动到了3的位置,且
+		后续的输入(4 5 6)由于没有ss.clear()的调用,ss对象不会接收;
+	2.如果仅注释掉<2>保留<3>:此时(4 5 6)会与(1 2 3)一起保留在ss中,ss中的为"1 2 34 5 6"(不会被清空).
+		此时<4>输出"4 5 6".从读指针的位置3开始输出;
+	3.如果仅注释掉<3>保留<2>:则<4>处的代码不会执行,且ss为空(ss.str("")将流清空),且后续的输入(4 5 6),
+		ss对象不会接收;
+	4.如果<2>和<3>都保留:则输出正确.因为ss.str("")将流清空(使读写指针回到0的位置),ss.clear()使得ss可
+		以接收新的输入.
+	PS:如果要重复使用stringstream,则ss.str("")和ss.clear()一起使用,避免出错.
