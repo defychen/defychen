@@ -5099,7 +5099,7 @@ para1:跳过的字符个数; para2:指定结束符.且会将结束符从流中�
 
 ## Chapter 14 文件处理
 
-### 14.1 创建顺序文件
+### 14.1 创建顺序文件(即写顺序文件)
 
 	#include <iostream>
 	#include <string>
@@ -5114,16 +5114,26 @@ para1:跳过的字符个数; para2:指定结束符.且会将结束符从流中�
 			para1:文件名;
 			para2:打开模式:
 				ios::out:打开一个文件作为输出文件(即写文件),会清空原有内容,ofstream的默认模式;
+					因此,也可以:
+						ofstream outClinentFile("clients.txt");	//使用默认模式
 				ios::app:将数据添加到文件的末尾;
 				ios::ate:打开一个文件作为输出文件,并移动到文件末尾(ios:app使用的方式)--->使用较少;
 				ios::in:打开一个文件作为输入文件(即读文件),ifstream的默认模式;
 				ios:trunc:丢弃文件的内容(ios::out使用的方式);
 				ios:binary:打开一个文件进行二进制输入或输出.
+			PS:通过open成员函数打开一个文件:
+				ofstream outClientFile;	//先创建一个ofstream对象
+				outClientFile.open("clients.txt", ios::out);	//通过open函数打开一个文件
 		*/
 	
-		if (!outClientFile) {
+		if (!outClientFile) {	//类似c中的open函数,判断文件是否被成功打开
 			cerr << "File open fail!" << endl;
 			exit(EXIT_FAILURE);
+			/*
+				exit(EXIT_SUCCESS):表示程序正常退出;
+				exit(EXIT_FAILURE):表示程序遇到错误而退出.
+				PS:EXIT_SUCCESS/FAILURE在<cstdlib>中定义.
+			*/
 		}
 	
 		cout << "Enter the account, name, and balance." << endl
@@ -5133,10 +5143,221 @@ para1:跳过的字符个数; para2:指定结束符.且会将结束符从流中�
 		double balance;
 	
 		while (cin >> account >> name >> balance) {
+			/*
+				当输入"Ctrl+z"文件结束符,cin接收到空,此时判断为false而退出循环.
+				文件结束符:
+					UNIX/Linux/Mac OSX: Ctrl+d
+					Windows: Ctrl+z(有时后面需要加回车键)
+			*/
 			outClientFile << account << ' ' << name << ' ' << balance << endl;
+			//通过"<<"将数据写入到文件.
 			cout << "?";
 		}
+
+		outClientFile.close();	//显示关闭文件.程序退出,默认也会关闭.显示关闭会更好点.
 	}
+
+输入的信息如下:
+
+![](images/ofstream_test.png)
+
+### 14.2 从顺序文件读取数据
+
+**1.从顺序文件读取数据**
+
+	#include <iostream>
+	#include <fstream>
+	#include <iomanip>
+	#include <string>
+	#include <cstdlib>
+	using namespace std;
+	
+	void outputLine(int, const string &, double);
+	
+	int main()
+	{
+		ifstream inClientFile("clients.txt", ios::in);
+		/*
+			打开一个文件用于输入,也可以:
+				ifstream inClientFile("clients.txt");	//因为ios::in是ifstream默认打开模式
+		*/
+	
+		if (!inClientFile) { //判断文件是否被成功打开
+			cerr << "File open fail!" << endl;
+			exit(EXIT_FAILURE);
+		}
+	
+		int account;
+		string name;
+		double balance;
+	
+		cout << left << setw(10) << "Account" << setw(13)
+			<< "Name" << "Balance" << endl << fixed << showpoint;
+	
+		while (inClientFile >> account >> name >> balance) {
+			//会跳过空格和换行,当到文件尾时返回空指针(bool值为false).
+			outputLine(account, name, balance);
+		}
+
+		inClientFile.close();	//显示调用关闭比较好
+	}
+	
+	void outputLine(int account, const string &name, double balance)
+	{
+		cout << left << setw(10) << account << setw(13) << name
+			<< setw(7) << setprecision(2) << right << balance << endl;
+	}
+
+**2.文件定位指针**
+
+1.seekg成员函数:仅能用于istream.一般用于ifstream,因为ifstream继承自istream.
+
+	seekg:用于指定读文件时读指针的位置;
+	ifstream inClientFile("clients.txt", ios::in);
+	1.inClientFile.seekg(0):将读指针重定位于文件的起始位置(即位置0);
+	2.inClientFile.seekg(0, ios::beg):和前面一样,因为默认就是"ios::beg",可省略;
+	3.inClientFile.seekg(n, ios::cur):将读指针重定位与相对于当前位置偏移n的位置;
+	4.inClientFile.seekg(n, ios::end):将读指针重定位与相对于文件末尾偏移n的位置;
+	5.inClientFile.seekg(0, ios::end):将读指针重定位与文件末尾.
+
+2.seekp成员函数:仅能用于ostream.一般用于ofstream,因为ofstream继承自ostream.
+
+	seekp:用于指定写文件时写指针的位置;
+	ofstream outClientFile("clients.txt", ios::out);
+	//操作和seekg类似
+
+3.tellg和tellp成员函数:返回当前读/写指针的位置.
+
+	long location = inClientFile.tellg();	//返回当前读指针的位置,返回值为long类型
+	long location = outClientFile.tellp();	//返回当前写指针的位置,返回值为long类型
+
+**3.贷款查询程序**
+
+	#include <iostream>
+	#include <fstream>
+	#include <iomanip>
+	#include <string>
+	#include <cstdlib>
+	using namespace std;
+	
+	enum RequestType {
+		ZERO_BALANCE = 1,
+		CREDIT_BALANCE,
+		DEBIT_BALANCE,
+		END
+	};
+	
+	int getRequest();
+	bool shouldDisplay(int, double);
+	void outputLine(int, const string &, double);
+	
+	int main()
+	{
+		ifstream inClientFile("clients.txt", ios::in);
+		if (!inClientFile) {
+			cerr << "File open fail" << endl;
+			exit(EXIT_FAILURE);
+		}
+	
+		int account;
+		string name;
+		double balance;
+	
+		int request = getRequest();
+		while (request != END) {
+			switch (request) {
+			case ZERO_BALANCE:
+				cout << "\nAccounts with zero balances:\n";
+				break;
+			case CREDIT_BALANCE:
+				cout << "\nAccounts with credit balances:\n";
+				break;
+			case DEBIT_BALANCE:
+				cout << "\nAccounts with debit balances:\n";
+				break;
+			}
+	
+			inClientFile >> account >> name >> balance;
+			while (!inClientFile.eof()) {
+				/*
+					inClientFile.eof():判断是否到了文件尾,文件尾返回true;非文件尾返回false.
+					此处也可以:
+					while (inClientFile >> account >> name >> balance) {
+						...//此时前面的输入和后面的输入均可去掉.
+					}
+				*/
+				if (shouldDisplay(request, balance)) {
+					outputLine(account, name, balance);
+				}
+				inClientFile >> account >> name >> balance;
+			}
+			inClientFile.clear();
+			inClientFile.seekg(0);
+			request = getRequest();
+		}
+	
+		cout << "End of run." << endl;
+	}
+	
+	int getRequest()
+	{
+		int request;
+		cout << "\nEnter request" << endl
+			<< " 1 - List accounts with zero balances" << endl
+			<< " 2 - List accounts with credit balances" << endl
+			<< " 3 - List accounts with debit balances" << endl
+			<< " 4 - End of run" << fixed << showpoint;
+	
+		do {
+			cout << "\n? ";
+			cin >> request;
+		} while (request < ZERO_BALANCE && request > END); //不在范围内就重新输入
+		return request;
+	}
+	
+	bool shouldDisplay(int type, double balance)
+	{
+		if (type == ZERO_BALANCE && balance == 0)
+			return true;
+	
+		if (type == CREDIT_BALANCE && balance < 0)
+			return true;
+	
+		if (type == DEBIT_BALANCE && balance > 0)
+			return true;
+	
+		return false;
+	}
+	
+	void outputLine(int account, const string &name, double balance)
+	{
+		cout << left << setw(10) << account << setw(13) << name
+			<< setw(7) << setprecision(2) << right << balance << endl;
+	}
+
+### 14.3 创建随机存取文件
+
+**1.利用ostream的write成员函数写入字节数据**
+
+	ofstream outFile("filename", ios::out | ios::binary);
+		//需要以binary模式打开,随机存取文件(即write)是以二进制写入的.
+	int number = 5;
+	outFile.write(reinterpret_cast<const char *>(&number), sizeof(number));
+	/*
+		para1:写入的对象(常规类型或自定义类型).必须是const char*类型,此处为将int *转成
+			const char*对象写入;
+		para2:写入的大小.一个size_t类型的整数.一般sizeof(对象)即可.
+		PS:write函数可以指定大小,可以一次性写入一个类对象的大小.
+	*/
+
+**2.使用reinterpret_cast运算符转换指针类型**
+
+	1.reinterpret_case:用于转换指针:
+		reinterpret_cast<const char *>(&number):将int *指针转换为const char *;
+	2.static_cast:用于转换类型:
+		static_case<double>(number):用于将int类型转换为double,不会影响原数据.
+
+**3.实例---贷款处理程序**
 
 ***
 
