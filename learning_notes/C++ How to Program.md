@@ -5359,6 +5359,426 @@ para1:跳过的字符个数; para2:指定结束符.且会将结束符从流中�
 
 **3.实例---贷款处理程序**
 
+创建一个固定记录格式(ClientData中所定义的),共100条但全初始化为空的贷款处理程序.
+
+1.ClientData.h
+
+	#ifndef _CLIENTDATA_H_
+	#define _CLIENTDATA_H_
+	
+	#include <string>
+	class ClientData
+	{
+	public:
+		ClientData(int = 0, const std::string & = "",
+			const std::string & = "", double = 0.0);
+		void setAccountNumber(int);
+		int getAccountNumber() const;
+		void setLastName(const std::string &);
+		std::string getLastName() const;
+		void setFirstName(const std::string &);
+		std::string getFirstName() const;
+		void setBalance(double);
+		double getBalance() const;
+	private:
+		int accountNumber;
+		char lastName[15];
+		char firstName[10];
+		double balance;
+	};
+	
+	#endif /* _CLIENTDATA_H_ */
+
+2.ClientData.cpp
+
+	#include <string>
+	#include "ClientData.h"
+	using namespace std;
+	
+	ClientData::ClientData(int accountNumberValue, const string &lastName,
+		const string &firstName, double balanceValue)
+		: accountNumber(accountNumberValue),
+		balance(balanceValue)
+	{
+		setLastName(lastName);
+		setFirstName(firstName);
+	}
+	
+	int ClientData::getAccountNumber() const
+	{
+		return accountNumber;
+	}
+	
+	void ClientData::setAccountNumber(int accountNumberValue)
+	{
+		accountNumber = accountNumberValue;
+	}
+	
+	string ClientData::getLastName() const
+	{
+		return lastName;
+	}
+	
+	void ClientData::setLastName(const string &lastNameString)
+	{
+		int length = lastNameString.size();
+		length = (length < 15 ? length : 14);
+		lastNameString.copy(lastName, length);
+		/*
+		VS2012/2013使用string类的copy函数时,编译会出现以下错误:
+			error C4996:'std::basic_string<char,std::char_traits<char>,std::allocator<char>>::copy'
+			: Function call with parameters that may be unsafe - this call relies on the 
+			caller to check that the passed values are correct. To disable this warning,
+			use -D_SCL_SECURE_NO_WARNINGS. See documentation on how to use Visual C++ '
+			Checked Iterators'
+		解决办法:
+		调试--->xxx属性--->弹出的属性页依次"配置属性"--->--->C/C++--->预处理器--->"预处理器定位"右边
+		下拉菜单中选择"编辑"--->在预处理器定义中添加"_SCL_SECURE_NO_WARNINGS"即可.
+		PS:添加"_SCL_SECURE_NO_WARNINGS"是为了去掉提示错误"D_SCL_SECURE_NO_WARNINGS"前面的"-D".
+		*/
+		lastName[length] = '\0'; //最后一个字符为"null"
+	}
+	
+	string ClientData::getFirstName() const
+	{
+		return firstName;
+	}
+	
+	void ClientData::setFirstName(const string &firstNameString)
+	{
+		int length = firstNameString.size();
+		length = (length < 10 ? length : 9);
+		firstNameString.copy(firstName, length);
+		firstName[length] = '\0';
+	}
+	
+	double ClientData::getBalance() const
+	{
+		return balance;
+	}
+	
+	void ClientData::setBalance(double balanceValue)
+	{
+		balance = balanceValue;
+	}
+
+3.ClientTest.cpp
+
+	#include <iostream>
+	#include <fstream>
+	#include <cstdlib>
+	#include "ClientData.h"
+	using namespace std;
+	
+	int main()
+	{
+		ofstream outCredit("credit.dat", ios::out | ios::binary);
+		//以定长写入记录,须以binary打开
+	
+		if (!outCredit) {
+			cerr << "File open fail!" << endl;
+			exit(EXIT_FAILURE);
+		}
+	
+		ClientData blankClient;
+		for (int i=0; i<100; i++) {
+			outCredit.write(reinterpret_cast<const char *>(&blankClient),
+				sizeof(ClientData));
+			//使用reinterpret_cast运算符转换指针类型(ClientData *)为const char*类型.
+		}
+	}
+
+### 14.4 向随机存取文件随机写入数据
+
+	#include <iostream>
+	#include <fstream>
+	#include <cstdlib>
+	#include "ClientData.h"
+	using namespace std;
+	
+	int main()
+	{
+		int accountNumber;
+		string lastName;
+		string firstName;
+		double balance;
+	
+		fstream outCredit("credit.dat", ios::in | ios::out | ios::binary);
+		if (!outCredit) {
+			cerr << "File open failed!" << endl;
+			exit(EXIT_FAILURE);
+		}
+	
+		cout << "Enter account number(1 to 100, 0 to end input)\n?";
+		ClientData client;
+		cin >> accountNumber;
+	
+		while (accountNumber > 0 && accountNumber <= 100) {
+			cout << "Enter lastname, firstname, balance\n?";
+			cin >> lastName;
+			cin >> firstName;
+			cin >> balance;
+			client.setAccountNumber(accountNumber);
+			client.setLastName(lastName);
+			client.setFirstName(firstName);
+			client.setBalance(balance);
+	
+			outCredit.seekp((client.getAccountNumber() - 1) * sizeof(ClientData));
+			/*
+				ofstream对象的seekp设置写文件定位指针,表示从文件的哪个位置使用write输出数据.
+				计算时,需要账号-1,因为记录都是从0开始的(和数组的index类似).
+			*/
+			outCredit.write(reinterpret_cast<const char *>(&client), sizeof(ClientData));
+	
+			cout << "Enter account number\n?";
+			cin >> accountNumber;
+		}
+	}
+
+运行结果为:
+
+![](images/random_write_file.png)
+
+### 14.5 从随机存取文件顺序读取数据
+
+	#include <iostream>
+	#include <iomanip>
+	#include <fstream>
+	#include <cstdlib>
+	#include "ClientData.h"
+	using namespace std;
+	
+	void outputLine(ostream &, const ClientData &);
+	int main()
+	{
+		ifstream inCredit("credit.dat", ios::in | ios::binary);
+		if (!inCredit) {
+			cerr << "File open failed!" << endl;
+			exit(EXIT_FAILURE);
+		}
+	
+		cout << left << setw(10) << "Account" << setw(16)
+			<< "Last Name" << setw(11) << "First Name" << left
+			<< setw(10) << right << "Balance" << endl;
+		ClientData client;
+	
+		inCredit.read(reinterpret_cast<char *>(&client),
+			sizeof(ClientData));
+		/*
+			ifstream的read函数从文件的当前位置读入指定数目的字节数据到一个对象中,同时读位置会不断更新.
+			read函数的第一个参数要求为"char *"类型,因此:
+				reinterpret_cast<char *>(&client):将ClientData*转换为char *类型.
+		*/
+		while (inCredit && !inCredit.eof()) { //出错或到达文件尾则退出循环
+			if (client.getAccountNumber() != 0)
+				outputLine(cout, client);
+	
+			inCredit.read(reinterpret_cast<char *>(&client), sizeof(ClientData));
+		}
+	}
+	
+	void outputLine(ostream &output, const ClientData &record)
+	{
+		output << left << setw(10) << record.getAccountNumber()
+			<< setw(16) << record.getLastName()
+			<< setw(11) << record.getFirstName()
+			<< setw(10) << setprecision(2) << right << fixed
+			<< showpoint << record.getBalance() << endl;
+	}
+
+运行结果为:
+
+![](images/random_read_file.png)
+
+### 14.6 实例:事务处理程序
+
+	#include <iostream>
+	#include <fstream>
+	#include <iomanip>
+	#include <cstdlib>
+	#include "ClientData.h"
+	using namespace std;
+	
+	int enterChoice();
+	void createTextFile(fstream &);
+	void updateRecord(fstream &);
+	void newRecord(fstream &);
+	void deleteRecord(fstream &);
+	void outputLine(ostream &, const ClientData &);
+	int getAccount(const char *const);
+	
+	enum Choices{PRINT = 1, UPDATE, NEW, DELETE, END};
+	
+	int main()
+	{
+		fstream inOutCredit("credit.dat", ios::in | ios::out | ios::binary);
+		if (!inOutCredit) {
+			cerr << "File open failed!" << endl;
+			exit(EXIT_FAILURE);
+		}
+	
+		int choice;
+		while ((choice = enterChoice()) != END) {
+			switch(choice) {
+			case PRINT:
+				createTextFile(inOutCredit);
+				break;
+			case UPDATE:
+				updateRecord(inOutCredit);
+				break;
+			case NEW:
+				newRecord(inOutCredit);
+				break;
+			case DELETE:
+				deleteRecord(inOutCredit);
+				break;
+			default:
+				cerr << "Incorrect choice" << endl;
+				break;
+			}
+			inOutCredit.clear();
+		}
+	}
+	
+	int enterChoice()
+	{
+		cout << "\nEnter your choice" << endl
+			<< "1 - store a formatted text file of accounts" << endl
+			<< "    called \"print.txt\" for printing" << endl
+			<< "2 - update an account" << endl
+			<< "3 - add a new account" << endl
+			<< "4 - delete an account" << endl
+			<< "5 - end program\n? ";
+		int menuChoice;
+		cin >> menuChoice;
+		return menuChoice;
+	}
+	
+	void createTextFile(fstream &readFromFile)
+	{
+		ofstream outPrintFile("print.txt", ios::out);
+		if (!outPrintFile) {
+			cerr << "File open failed!" << endl;
+			exit(EXIT_FAILURE);
+		}
+	
+		outPrintFile << left << setw(10) << "Account" << setw(16)
+			<< "Last Name" << setw(11) << "First Name" << right
+			<< setw(10) << "Balance" << endl;
+	
+		readFromFile.seekg(0);
+		ClientData client;
+		readFromFile.read(reinterpret_cast<char *>(&client),
+			sizeof(ClientData));
+	
+		while (!readFromFile.eof()) {
+			if (client.getAccountNumber() != 0)
+				outputLine(outPrintFile, client);	//将ofstream对象实参传给osteam形参
+			readFromFile.read(reinterpret_cast<char *>(&client),
+			sizeof(ClientData));
+			
+		}
+	}
+	
+	void updateRecord(fstream &updateFile)
+	{
+		int accountNumber = getAccount("Enter account to update");
+		updateFile.seekg((accountNumber - 1) * sizeof(ClientData));
+	
+		ClientData client;
+		updateFile.read(reinterpret_cast<char *>(&client),
+			sizeof(ClientData));
+	
+		if (client.getAccountNumber() != 0) {
+			outputLine(cout, client);
+			cout << "\nEnter charge (+) or payment (-): ";
+			double transaction;
+			cin >> transaction;
+			
+			double oldBalance = client.getBalance();
+			client.setBalance(oldBalance + transaction);
+			outputLine(cout, client);
+	
+			updateFile.seekp((accountNumber - 1) * sizeof(ClientData));
+			updateFile.write(reinterpret_cast<const char *>(&client),
+				sizeof(ClientData));
+		} else {
+			cerr << "Account #" << accountNumber
+				<< " has no information." << endl;
+		}
+	}
+	
+	void newRecord(fstream &insertInFile)
+	{
+		int accountNumber = getAccount("Enter new account number");
+		insertInFile.seekg((accountNumber - 1) * sizeof(ClientData));
+		ClientData client;
+		insertInFile.read(reinterpret_cast<char *>(&client),
+			sizeof(ClientData));
+	
+		if (client.getAccountNumber() == 0) {
+			string lastName;
+			string firstName;
+			double balance;
+	
+			cout << "Enter lastName, firstName, balance\n?";
+			cin >> setw(15) >> lastName;
+			cin >> setw(10) >> firstName;
+			cin >> balance;
+	
+			client.setLastName(lastName);
+			client.setFirstName(firstName);
+			client.setBalance(balance);
+			client.setAccountNumber(accountNumber);
+			insertInFile.seekp((accountNumber - 1) * sizeof(ClientData));
+			insertInFile.write(reinterpret_cast<const char *>(&client),
+				sizeof(ClientData));
+		} else {
+			cerr << "Account #" << accountNumber
+				<< " already contains information." << endl;
+		}
+	}
+	
+	void deleteRecord(fstream &deleteFromFile)
+	{
+		int accountNumber = getAccount("Enter account to delete");
+		deleteFromFile.seekg((accountNumber - 1) * sizeof(ClientData));
+	
+		ClientData client;
+		deleteFromFile.read(reinterpret_cast<char *>(&client),
+			sizeof(ClientData));
+	
+		if (client.getAccountNumber() != 0) {
+			ClientData blankClient;
+			deleteFromFile.seekp((accountNumber - 1) * sizeof(ClientData));
+			deleteFromFile.write(reinterpret_cast<const char *>(&blankClient),
+				sizeof(ClientData));
+			cout << "Account #" << accountNumber << " deleted.\n";
+		} else {
+			cerr << "Account #" << accountNumber << " is empty.\n";
+		}
+	}
+	
+	void outputLine(ostream &output, const ClientData &record)
+	{
+		output << left << setw(10) << record.getAccountNumber()
+			<< setw(16) << record.getLastName()
+			<< setw(11) << record.getFirstName()
+			<< setw(10) << setprecision(2) << right << fixed
+			<< showpoint << record.getBalance() << endl;
+	}
+	
+	int getAccount(const char *const prompt)
+	{
+		int accountNumber;
+		do {
+			cout << prompt << " (1 - 100): ";
+			cin >> accountNumber;
+		}while (accountNumber < 1 || accountNumber > 100);
+	
+		return accountNumber;
+	}
+
 ***
 
 ## Chapter 15 标准库的容器和迭代器
