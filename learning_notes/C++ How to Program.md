@@ -6653,6 +6653,8 @@ priority_queue按序插入元素和在头部删除元素.使用vector和deque实
 
 ## Chapter 16.
 
+
+
 ***
 
 ## Chapter 21. string类和字符串流处理的深入剖析
@@ -6714,3 +6716,43 @@ stringstream一般用于string和int类型相互转换.
 	4.如果<2>和<3>都保留:则输出正确.因为ss.str("")将流清空(使读写指针回到0的位置),ss.clear()使得ss可
 		以接收新的输入.
 	PS:如果要重复使用stringstream,则ss.str("")和ss.clear()一起使用,避免出错.
+
+**2.字符串转数字**
+
+	#include <iostream>
+	#include <string>
+	#include <sstream>
+	#include <stdint.h>	//可以使用uint8_t, uint64_t, uint32_t等格式
+	#include <algorithm>	//使用transform函数需要包含的头文件
+	using namespace std;
+	
+	uint64_t string_to_int(string str)
+	{
+		uint64_t retval;
+		if ((str.substr(0, 2)=="0x") || (str.substr(0, 2)=="0X")) {
+			//indicate the string is hex number.取前两个字符进行分析
+			stringstream ss;
+			transform(str.begin(), str.end(), str.begin(), ::tolower);
+			/*
+				将所有字母转换为小写.
+				para1:起始位置,是一个iterator;
+				para2:结束位置,一个iterator;
+				para3:存放的位置,一个iterator(此处存放在原来的位置);
+				::tolower:转换为小写.转换为大写"::toupper",也是可以的.
+			*/
+			ss << hex << str;	//以16进制输出到ss(类似cout << hex ...)
+			ss >> retval;	//输入到retval
+		} else { // assume it is decimal number.其他时候假设为10进制
+			istringstream iss(str);
+			if (!(iss >> retval))	//输入失败返回null,此时赋值为0.
+				retval = 0;
+		}
+		return retval;
+	}
+	
+	int main()
+	{
+		cout << "transform \"0x34\" " << showbase << hex << string_to_int("0x34") << endl;
+		cout << "transform \"34\" " << dec << string_to_int("34") << endl;
+		return 0;
+	}
