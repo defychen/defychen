@@ -6651,9 +6651,292 @@ priority_queue按序插入元素和在头部删除元素.使用vector和deque实
 
 ***
 
-## Chapter 16.
+## Chapter 16.标准库算法
 
+### 16.1 fill, fill_n, generate和generate_n函数
 
+	#include <iostream>
+	#include <algorithm>	//包含标准库算法的头文件
+	#include <array>
+	#include <iterator>
+	using namespace std;
+	
+	char nextLetter();
+	
+	int main()
+	{
+		array<char, 10> chars;
+		ostream_iterator<char> output(cout, " ");
+		fill(chars.begin(), chars.end(), '5');
+		/*
+			fill/fill_n:把容器中某个范围的元素设置为一个指定的值.
+			fill(chars.begin(), chars.end(), '5'):把从chars.begin()到chars.end()(不包括)
+			之间的每一个元素都设置为字符'5'.
+			此处不能为chars.cbegin()/chars.cend():因为const是不能修改元素值.
+		*/
+		cout << "chars after filling with 5s:\n";
+		copy(chars.cbegin(), chars.cend(), output);
+	
+		cout << "\n\nchars after filling five elements with As:\n";
+		fill_n(chars.begin(), 5, 'A');
+		/*
+			fill_n(chars.begin(), 5, 'A'):把从chars.begin()开始的5个元素设置为字符'A'.
+			此处不能为chars.cbegin():因为const是不能修改元素值.
+		*/
+		copy(chars.cbegin(), chars.cend(), output);
+	
+		generate(chars.begin(), chars.end(), nextLetter);
+		/*
+			generate(chars.begin(), chars.end(), nextLetter):把从chars.begin()到chars.end()
+			(但不包括)之间的元素设置为依次调用nextLetter函数的结果.
+			para3函数无参数,返回值为容器中元素值的类型.
+			nextLetter()函数定义了一个初始化为'A'的static局部变量letter,每次调用letter会递增,返回
+			递增前的旧值.
+		*/
+		cout << "\n\nchars after generating letters A-J:\n";
+		copy(chars.cbegin(), chars.cend(), output);
+	
+		generate_n(chars.begin(), 5, nextLetter);
+		/*
+			generate_n(chars.begin(), 5, nextLetter):把从chars.begin()开始的5个元素设置为依次
+			调用nextLetter函数的结果.
+		*/
+		cout << "\n\nchars after generating K-O for the"
+			<< " first five elements:\n";
+		copy(chars.cbegin(), chars.cend(), output);
+		cout << endl;
+	}
+	
+	char nextLetter()
+	{
+		static char letter = 'A';
+		return letter++;
+	}
+
+### 16.2 equal, mismatch和lexicographical_compare函数
+
+	#include <iostream>
+	#include <algorithm>
+	#include <array>
+	#include <iterator>
+	using namespace std;
+	
+	int main()
+	{
+		const size_t SIZE = 10;
+		array<int, SIZE> a1 = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+		array<int, SIZE> a2(a1);
+		array<int, SIZE> a3 = {1, 2, 3, 4, 1000, 6, 7, 8, 9, 10};
+		ostream_iterator<int> output(cout, " ");
+	
+		cout << "a1 contains: ";
+		copy(a1.cbegin(), a1.cend(), output);
+		cout << "\na2 contains: ";
+		copy(a2.cbegin(), a2.cend(), output);
+		cout << "\na3 contains: ";
+		copy(a3.cbegin(), a3.cend(), output);
+		
+		bool result = equal(a1.cbegin(), a1.cend(), a2.cbegin());
+		/*
+			equal(a1.cbegin(), a1.cend(), a2.cbegin()):比较两个序列是否相等.
+			para1和para2指定序列1的起始和结束; para3:指定序列2的起始.
+			两个序列完全相同(长度、字母)返回true,否则返回false.
+		*/
+		cout << "\na1 " << (result ? "is" : "is not")
+			<< " equal to a2.\n";
+	
+		result = equal(a1.cbegin(), a1.cend(), a3.cbegin());
+		cout << "a1 " << (result ? "is" : "is not")
+			<< " equal to a3.\n";
+	
+		auto location = mismatch(a1.cbegin(), a1.cend(), a3.cbegin());
+		/*
+			mismatch(a1.cbegin(), a1.cend(), a3.cbegin()):指出两个序列第一个不匹配元素所在的位置.
+			返回一个迭代器的pair对象.此处使用auto让编译器推断这个pair对象location的类型.
+			location.first:表示不匹配的元素在第一个序列中的位置,*location.first:获取元素值;
+			location.seconde:表示不匹配的元素在第一个序列中的位置,*location_second:获取元素值;
+			location.first-a1.cbegin():在第一个序列中计算不匹配元素与起始元素之间的元素个数.
+		*/
+		cout << "\nThere is a mismatch between a1 and a3 at location "
+			<< (location.first - a1.cbegin()) << "\nwhere a1 contains "
+			<< *location.first << " and a3 contains " << *location.second
+			<< "\n\n";
+	
+		char c1[SIZE] = "HELLO";
+		char c2[SIZE] = "BYE BYE";
+		result = lexicographical_compare(begin(c1), end(c1), begin(c2), end(c2));
+		/*
+			lexcographical_compare(begin(c1), end(c1), begin(c2), end(c2)):此处比较两个字符
+			数组的内容.
+			para1,para2:序列1的起始和结束; para3,para4:序列2的起始和结束.
+			如果序列1的元素比序列2的元素小,返回true;如果大则返回false.
+			lexicographical_compare():算法通常用于按照字典书序排列序列.
+		*/
+		cout << c1 << (result ? " is less than " :
+			" is greater than or equal to ") << c2 << endl;
+	}
+
+### 16.3 remove, remove_if, remove_copy和remove_copy_if
+
+	#include <iostream>
+	#include <algorithm>
+	#include <array>
+	#include <iterator>
+	using namespace std;
+	
+	bool greater9(int);
+	
+	int main()
+	{
+		const size_t SIZE = 10;
+		array<int, SIZE> init = {10, 2, 10, 4, 16, 6, 14, 8, 12, 10};
+		ostream_iterator<int> output(cout, " ");
+	
+		array<int, SIZE> a1(init);
+		cout << "a1 before removing all 10s:\n";
+		copy(a1.cbegin(), a1.cend(), output);
+	
+		auto newLastElement = remove(a1.begin(), a1.end(), 10);
+		/*
+			remove(a1.begin(), a1.end(), 10):删除所有值为10的元素.
+			返回一个迭代器,定位在最后一个未被删除的元素之后的位置上.
+			因此,从起始到该位置的元素是正确的.但之后的元素是不确定的值.
+		*/
+		cout << "\na1 after removing all 10s:\n";
+		copy(a1.begin(), newLastElement, output);	//输出2 4 16 6 14 8 12
+		/*
+			copy(a1.begin(), a1.end(), output);
+			此时输出:2 4 16 6 14 8 12(后面3个值是不确定的值)
+		*/
+	
+		array<int, SIZE> a2(init);
+		array<int, SIZE> c = {0};
+		cout << "\na2 before removing all 10s and copying:\n";
+		copy(a2.cbegin(), a2.cend(), output);
+		remove_copy(a2.cbegin(), a2.cend(), c.begin(), 10);
+		/*
+			把删除元素值为10的其他元素拷贝到c数组中,从c.begin()开始的位置.
+			返回值为最后一个复制元素之后的位置上.
+		*/
+		cout << "\nc after removing all 10s from a2:\n";
+		copy(c.cbegin(), c.cend(), output); //结果为:2 4 16 6 14 8 12 0 0 0
+	
+		array<int, SIZE> a3(init);
+		cout << "\n\na3 before removing all elements greater than 9:\n";
+		copy(a3.cbegin(), a3.cend(), output);
+	
+		newLastElement = remove_if(a3.begin(), a3.end(), greater9);
+		/*
+			remove_if(a3.begin(), a3.end(), greater9):将a3.begin()到a3.end()之间的元素作用在函数
+			greater9(接收一个元素作为参数),如果返回true则删除,返回false则保留.此处为删除所有大于9的元素.
+			返回一个迭代器,定位在最后一个未被删除的元素之后的位置上.
+			因此,从起始到该位置的元素是正确的.但之后的元素是不确定的值.
+		*/
+		cout << "\na3 after removing all elements greater than 9:\n";
+		copy(a3.begin(), newLastElement, output); //结果为:2 4 6 8
+	
+		array<int, SIZE> a4(init);
+		array<int, SIZE> c2 = {0};
+		cout << "\na4 before removing all elements"
+			<< "\ngreater than 9 and copying:\n ";
+		copy(a4.cbegin(), a4.cend(), output);
+	
+		remove_copy_if(a4.cbegin(), a4.cend(), c2.begin(), greater9);
+		/*
+			remove_copy_if(a4.cbegin(), a4.cend(), c2, greater9):将a4.begin()到a4.end()之间的
+			元素作用在函数greater9(接收一个元素作为参数),如果返回true则删除,返回false则保留.并将保留拷
+			贝到c2.begin()中.
+			返回一个迭代器,定位在最后一个未被删除的元素之后的位置上.
+			因此,从起始到该位置的元素是正确的.但之后的元素是不确定的值.
+		*/
+		cout << "\nc2 after removing all elements"
+			<< "\ngreater than 9 from a4:\n ";
+		copy(c2.cbegin(), c2.cend(), output); //结果为:2 4 6 8 0 0 0 0 0 0 
+		cout << endl;
+	}
+	
+	bool greater9(int x)
+	{
+		return x > 9;
+	}
+
+### 16.4 replace, replace_if, replace_copy和replace_copy_if
+
+	#include <iostream>
+	#include <algorithm>
+	#include <array>
+	#include <iterator>
+	using namespace std;
+	
+	bool greater9(int);
+	
+	int main()
+	{
+		const size_t SIZE = 10;
+		array<int, SIZE> init = {10, 2, 10, 4, 16, 6, 14, 8, 12, 10};
+		ostream_iterator<int> output(cout, " ");
+	
+		array<int, SIZE> a1(init);
+		cout << "a1 before replacing all 10s:\n";
+		copy(a1.cbegin(), a1.cend(), output);
+	
+		replace(a1.begin(),a1.end(), 10, 100);
+		/*
+			replace(a1.begin(),a1.end(), 10, 100):在a1.begin()到a1.end()范围内将所有元素值10替换
+			为100.
+		*/
+		cout << "\na1 after replacing 10s with 100s:\n";
+		copy(a1.cbegin(), a1.cend(), output); //结果为:100, 2, 100, 4, 16, 6, 14, 8, 12, 100
+	
+		array<int, SIZE> a2(init);
+		array<int, SIZE> c1;
+		cout << "\na2 before replacing all 10s and copying:\n";
+		copy(a2.cbegin(), a2.cend(), output);
+		replace_copy(a2.cbegin(), a2.cend(), c1.begin(), 10, 100);
+		/*
+			replace_copy(a2.cbegin(),a2.cend(), c1.begin(), 10, 100):在a2.cbegin()到a2.cend()
+			范围所有元素值为10的替换为100,拷贝到c1(a2元素值是保持不变的).位置从c1.begin()开始.
+		*/
+		cout << "\nc after replacing all 10s in a2:\n";
+		copy(c1.cbegin(), c1.cend(), output); //结果为:100, 2, 100, 4, 16, 6, 14, 8, 12, 100
+	
+		array<int, SIZE> a3(init);
+		cout << "\n\na3 before replacing values greater than 9:\n";
+		copy(a3.cbegin(), a3.cend(), output);
+	
+		replace_if(a3.begin(), a3.end(), greater9, 100);
+		/*
+			replace_if(a3.begin(),a3.end(), greater9, 100):在a3.begin()到a3.end()范围所有元素值
+			大于9的替换为100.
+			a3.begin()到a3.end()所有元素会作用在greater9函数上(接收一个元素作为参数).返回true表示该
+			值被替换为100;返回false则不变.
+		*/
+		cout << "\na3 after replacing all values greater than 9 with 100s:\n";
+		copy(a3.cbegin(), a3.cend(), output); //结果为:100, 2, 100, 4, 100, 6, 100, 8, 100, 100
+	
+		array<int, SIZE> a4(init);
+		array<int, SIZE> c2;
+		cout << "\na4 before replacing all values "
+			<< "\ngreater than 9 and copying:\n ";
+		copy(a4.cbegin(), a4.cend(), output);
+	
+		replace_copy_if(a4.cbegin(), a4.cend(), c2.begin(), greater9, 100);
+		/*
+			replace_if(a4.cbegin(),a4.cend(), c2.begin(), greater9, 100):在a4.cbegin()到
+			a4.cend()范围所有元素值大于9的替换为100,拷贝到c2(a4元素值保持不变),c2.begin()指定起始位置.
+			a4.cbegin()到a4.cend()所有元素会作用在greater9函数上(接收一个元素作为参数).返回true表示该
+			值被替换为100;返回false则不变.
+		*/
+		cout << "\nc2 after replacing all values"
+			<< "\ngreater than 9 in a4:\n ";
+		copy(c2.cbegin(), c2.cend(), output); //结果为:100, 2, 100, 4, 100, 6, 100, 8, 100, 100
+		cout << endl;
+	}
+	
+	bool greater9(int x)
+	{
+		return x > 9;
+	}
 
 ***
 
