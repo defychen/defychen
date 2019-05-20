@@ -6940,6 +6940,73 @@ priority_queue按序插入元素和在头部删除元素.使用vector和deque实
 
 ***
 
+## Chapter 17. 异常处理深入剖析
+
+### 17.1 实例:处理除数为0的异常处理
+
+**1.DivideByZeroException.h定义**
+
+	#include <stdexcept>
+	/*
+		runtime_error标准异常库类在头文件<stdexcept>中定义,是C++用于描述运行时错误的标准基类.
+		runtime_error派生于exception类(在头文件<exception>中定义).
+	*/
+
+	class DivideByZeroException : public std::runtime_error
+	{	//表示DivideByZeroException以public形式派生于runtime_error
+	public:
+		DivideByZeroException()
+			: std::runtime_error("attempted to divide by zero"){}
+		/*
+			所有异常类的基类是exception类,含有一个virtual函数what(),返回一个异常对象的错误信息.
+			此处在构造函数中将字符串传递给基类(runtime_error),在对象中调用what()函数会显示
+				该字符串.
+		*/
+	};
+
+**2.测试程序**
+
+	#include <iostream>
+	#include "DivideByZeroException.h"
+	using namespace std;
+	
+	double quotient(int numerator, int denominator)
+	{
+		if (denominator == 0)
+			throw DivideByZeroException();
+		//除数为0则抛出DivideByZeroException()对象,即抛出异常.后续的代码不会再继续执行.
+	
+		return static_cast<double>(numerator) / denominator;
+	}
+	
+	int main()
+	{
+		int number1;
+		int number2;
+	
+		cout << "Enter two integers (end-of-file to end): ";
+	
+		while (cin >> number1 >> number2) {
+			try {	//将可能出现异常的代码放在try语句块中,用于异常处理.
+				double result = quotient(number1, number2);
+				cout << "The quotient is: " << result << endl;
+			} catch(DivideByZeroException &divideByZeroException) {
+				//捕获异常以catch开始,括号中是一个异常类型对象的引用(避免复制).
+				cout << "Exception occurred: "
+					<< divideByZeroException.what() << endl;
+				/*
+					divideByZeroException.what():异常对象的what函数,用于显示异常信息.
+				*/
+			}
+	
+			cout << "\nEnter two integers (end-of-file to end): ";
+		}
+	
+		cout << endl;
+	}
+
+***
+
 ## Chapter 21. string类和字符串流处理的深入剖析
 
 ### 21.12 字符串流处理
