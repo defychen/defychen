@@ -987,6 +987,65 @@ C语言发生函数调用错误时(e.g.打开文件失败),全局变量errno(int
 
 ## Chapter 31. 内存管理
 
+内存管理相关函数位于<stdlib.h>头文件中.
+
+### 31.1 内存管理函数
+
+**1.calloc()**
+
+	void *calloc(int num, int size):分配num * size个字节长度的内存空间,且内个字节被初始化为0.
+
+**2.malloc()**
+
+	void *malloc(int num):在堆区分配num个字节大小的内存空间,值是未知的.因此一般需要进行memset()操作.
+
+**3.realloc()**
+
+	void *realloc(void *address, int newsize):address指向的内存会被释放,重新分配newsize个字节空间,
+	返回新的空间的地址.address指向的内存内容也会拷贝到新的空间中.
+
+**4.free()**
+
+	void free(void *address):释放address指向的内存块(即上述函数动态分配的内存空间).
+
+### 31.2 实例
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <string.h>
+	
+	int main()
+	{
+		char name[100];
+		char *description;
+	
+		strcpy(name, "Defy Chen");
+		description = (char *)malloc(30 * sizeof(char));
+		if (!description) {
+			fprintf(stderr, "Error: unable to allocate required memory\n");
+		} else {
+			strcpy(description, "Defy Chen a DPS student.");
+		}
+	
+		description = (char *)realloc(description, 100 * sizeof(char));
+		/*
+			realloc():重新分配内存,将内存扩展到para2指定的大小.
+			para1:旧内存的指针(地址); para2:扩展到新内存的大小.
+			retval:返回新内存的void *.
+			PS:realloc()会将旧内存中的数据拷贝到新内存.
+		*/
+		if (!description) {
+			fprintf(stderr, "Error: unable to allocate required memory\n");
+		} else {
+			strcat(description, "He is in class 10th.");
+		}
+	
+		printf("Name = %s\n", name);
+		printf("Description: %s\n", description);
+	
+		free(description);
+	}
+
 ## Chapter 32. 命令行参数
 
 ## Chapter 33. 排序算法
