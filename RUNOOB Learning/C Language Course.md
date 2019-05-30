@@ -1048,6 +1048,39 @@ C语言发生函数调用错误时(e.g.打开文件失败),全局变量errno(int
 
 ## Chapter 32. 命令行参数
 
+命令行参数使用main(int argc, char *argv[])函数参数来处理.
+
+	int main(int argc, char *argv[])
+	/*
+		argc:表示传入参数的个数(至少为1,因为在执行时程序名为第一个参数,即argv[0]);
+		argv[]:指针数组(数组中放的是char *).指向传递给程序的每一个参数.如果传递的是整数,可以将整数字符
+		串转成整数.
+		argv[0]:存放程序名; argv[1]:存放传递的第一个参数(字符串).
+	*/
+
+**实例**
+
+	#include <stdio.h>
+
+	int main(int argc, char *argv[])
+	{
+		printf("Program name: %s\n", argv[0]);	//打印出程序名
+
+		if (argc == 2) {	//传递了一个参数
+			printf("The argument supplied is %s\n", argv[1]);	//打印出第一个参数
+		} else {
+			printf("Too many arguments supplied.\n");	//提供的参数过多
+		} else {
+			printf("One argument expected.\n");	//期待传递一个参数
+		}
+	}
+
+	/*
+		编译出:a.out
+		执行:./a.out "testing1 testing2"		//传递一个空格分隔的参数,参数需要包含在双引号("")中.
+		结果为:The argument supplied is testing1 testing2
+	*/
+
 ## Chapter 33. 排序算法
 
 ## Chapter 34. 语言实例
@@ -1059,6 +1092,53 @@ C语言发生函数调用错误时(e.g.打开文件失败),全局变量errno(int
 # 2. C标准库
 
 ## Chapter 1. <assert.h>
+
+### 1.1 assert定义
+
+assert宏(是一个宏,虽然看上去像是一个函数)定义在<assert.h>中.
+
+	#include <assert.h>
+	void assert(int expression);
+	/*
+		计算表达式expression的值.如果为真,直接略过;为假(即为0),先向stderr打印一条出错消息,然后通过
+		调用abort来终止程序运行.
+	*/
+
+实例:
+
+	#include <stdio.h>
+	#include <assert.h>
+	
+	int main()
+	{
+		int a;
+		printf("Please input an integer:");
+		scanf("%d", &a);
+		assert(a >= 5);	//输入的值小于5,则会出现异常.
+		printf("Integer number: %d\n", a);
+	}
+	/*
+		输入"<5"的数,则会出现:
+		Please input an integer:3
+		Assertion failed: a >= 5, file g:\repository\vs develop\c_program_introduction\test
+		\test\8.cpp, line 9
+	*/
+
+### 1.2 assert的使用规则
+
+**1.assert的开关**
+
+由于assert()频繁调用会极大的影响程序的性能,增加额外的开销,因此现在用的已经比较少了.
+
+	通常在Debug版本中assert的检查是开启的,在Release版本中检查是关闭的.关闭方法:
+	#include <stdio.h>
+	#define NDEBUG
+	//该宏用于禁用assert的调用,所有的assert检查都会去掉,用于release版本.必须在#include <assert.h>之前
+	#include <assert.h>
+
+**2.用于**
+
+
 
 ## Chapter 2. <ctype.h>
 
