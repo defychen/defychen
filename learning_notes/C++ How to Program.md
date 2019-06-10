@@ -7106,3 +7106,20 @@ stringstream一般用于string和int类型相互转换.
 		cout << "transform \"34\" " << dec << string_to_int("34") << endl;
 		return 0;
 	}
+
+***
+
+## Chapter 22. 编程问题记录
+
+### 22.1 uint8_t通过cout只能打印ascii字符
+
+C++中的uint8_t变量通过cout不能打印出数字,只能打印出ascii码字符
+
+	C++中的uint8_t是unsigned char的typedef,使用cout打印时实际是输出变量的ascii码字符,而不是值;
+	解决办法:将uint8_t转换成unsigned就可以打印出数字了.
+
+### 22.2 从某个数据中提取hi->low之间的bit
+
+	#define get_field_value(data, hi, low)	(((data>>low)) & ((1<<((hi)-(low)+1))-1))
+	e.g. get_field_value(0x60, 7, 5)	//提取出5, 6bit的值,结果为:0b11
+

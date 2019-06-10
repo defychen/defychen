@@ -34,9 +34,38 @@
 	sed -i '49c CONFIG_POSIX_MQUEUE=y' linux-m3755-demo-new-kernel.config		/*打开消息队列的宏*/
 	sed -i '/CONFIG_POSIX_MQUEUE/c CONFIG_POSIX_MQUEUE=y' linux-m3755-demo-new-kernel.config /*最好的办法*/
 	/*修改ali corp的配置:*/
-	sed -i '/CONFIG_POSIX_MQUEUE/c CONFIG_POSIX_MQUEUE=y' board/ali/c3922-demo/linux-m3755-demo-new-kernel.config
+	sed -i '/CONFIG_POSIX_MQUEUE/c CONFIG_POSIX_MQUEUE=y' board/ali/c3922-demo/linux-m3755-
+	demo-new-kernel.config
 
 ## 2.dd命令
+
+### 2.1 dd命令详解
+
+dd命令用于将原始块写入到目标块.
+
+**1.命令解析**
+
+	dd if=/dev/zero bs=1024 count=1000000 of=/root/1Gb.file
+	/*
+		if:输入文件名./dev/zero:无限输入设备,该设备可以无穷尽的输出0;
+		bs:block size,块大小(此处为1024B);
+		count:块的数量(此处为1000000,近似1M);
+		of:输出文件名,写入的目标块(此处为写成一个1Gb.file的块文件).
+	*/
+
+**2.实例---用dd命令测试硬盘的最佳块大小**
+
+	dd if=/dev/zero bs=1024 count=1000000 of=/root/1Gb.file
+		//测试以1024块大小写入1Gb文件的速度.执行的时候会显示一个速度
+	dd if=/dev/zero bs=2048 count=500000 of=/root/1Gb.file
+		//测试以2048块大小写入1Gb文件的速度.执行的时候会显示一个速度
+	dd if=/dev/zero bs=4096 count=250000 of=/root/1Gb.file
+		//测试以4096块大小写入1Gb文件的速度.执行的时候会显示一个速度
+	dd if=/dev/zero bs=8192 count=125000 of=/root/1Gb.file
+		//测试以8192块大小写入1Gb文件的速度.执行的时候会显示一个速度
+	最终通过比较速度,可以得到最佳块大小.
+
+### 2.2 将特定的文件目录烧写到特定的块
 
 烧写文件(kernel,rootfs等等)到特定的区块.
 
@@ -62,6 +91,12 @@
 	dd if=./main_bin.ubo of=/dev/mtdblock4	//if:需要烧写的文件;of:烧写的目标区块.
 
 **step4 烧写完毕，重启:reboot**
+
+### 2.3 dd与cp的区别
+
+	1.dd用于对块进行操作,cp则是对文件进行操作;
+	2.dd是将原始数据按照数据源的格式原封不动的拷贝到目的地,cp则是将文件和目录拷贝到目的地后按照目的地的
+		格式排列新数据.因此在块的启动文件内容,只能用dd,不能用cp.
 
 ## 3. tree命令
 
@@ -92,6 +127,9 @@ GNU zip---gzip(gz)和bzip2(bz2)两种压缩格式，压缩比:gzip>bzip2
 	3.tar.xz压缩包解压:
 	tar -xvJf qemu-2.8.0.tar.xz	/*x:解压;v:列出解压出来的文件;J:xz格式;f:后面接文件名*/
 	tar -xvJf qemu-2.8.0.tar.xz //解压打某目录
+	4.*.zip压缩包解压:
+	unzip -d sourceInsight_downcc.zip ./		//解压*.zip文件到当前目录下
+		帮助方法:unzip --help
 
 创建压缩包的方法:
 
@@ -102,6 +140,10 @@ GNU zip---gzip(gz)和bzip2(bz2)两种压缩格式，压缩比:gzip>bzip2
 	tar -cvjf test.tar.bz2 ./test/	/*将test所有文件创建成为一个test.tar.bz2的压缩包*/
 	3.创建tar.xz压缩包:
 	tar -cvJf test.tar.xz ./test/	/*将test所有文件创建成为一个test.tar.xz的压缩包*/
+	4.创建*.zip压缩包:
+	zip test.zip test.jpng test.png	/*将test.png和test.jpg创建成为一个test.zip压缩包*/
+	zip -q -r data.zip /home/data	//将/home/data下面的所有的文件打包压缩到data.zip
+		// -q:不显示指令执行过程; -r:递归处理
 
 ## 6.重定向
 
@@ -549,5 +591,27 @@ apt-get(Advanced Package Tool:高级安装工具):linux上的软件包管理器.
 	shutdown -h 20:30	//20:30准时关机
 	shutdown -r now		//马上重启
 	shutdown -r 20:30	//20:30准时重启
+
+## 32. /dev/null和/dev/zero的区别
+
+### 32.1 /dev/null
+
+/dev/null:是一个无底洞,可以向该设备输出任何数据,所有写入的内容永远丢失,读是什么也读不到;
+
+	1.禁止标准输出:
+		cat $filename > /dev/null	//将cat的标准输出到/dev/null
+	2.禁止标准错误输出:
+		rm $badname 2> /dev/null	//将不存在文件删除出现的错误输出到/dev/null
+	3.禁止标准输出和错误输出:
+		cat $filename &> /dev/null	//将标准输出和错误输出都输出到/dev/null
+
+### 32.2 /dev/zero
+
+/dev/zero:是一个伪文件,不断产生null的流(二进制空流).写入数据会直接丢失.主要用于创建一个指定长度的空间.
+
+	dd if=/dev/zero of=/dev/1Gb.file bs=1024 count=1000000
+	//创建一个1Gb的文件,文件内容全为二进制空流(0).
+
+	
 
 ## 13. wget命令

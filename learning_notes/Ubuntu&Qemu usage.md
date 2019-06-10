@@ -176,6 +176,37 @@
 	2.uname -a				//也会显示当前Linux的版本,还有当前用户名
 	3.lsb_release -a			//会显示当前Ubuntu版本"Ubuntu 18.04.2 LTS"
 
+## 11. rar/unrar工具的安装
+
+如果需要解压的包为.rar格式,则需要使用unrar命令:
+
+	sudo apt-get install rar unrar
+
+rar/unrar命令的使用:
+
+	1.rar创建一个*.rar包:
+	rar a test.rar test.jpg test.png	//将test.jpg和test.png压缩成一个rar包
+	2.unrar解压一个*.rar包:
+	unrar e test.rar	//解压在当前目录
+	unrar x test.rar test	//解压到test目录下
+	3.rar和unrar的使用帮助:
+	rar -?
+	unrar -?
+
+## 12. wine的安装及使用
+
+### 12.1 安装wine
+
+	apt-get install wine64	//安装64-bit的wine.一般还需要安装wine32
+	dpkt --add-architecture i386 	//添加i386体系结构
+	apt-get upgrade	//更新包
+	apt-get install wine32
+	
+
+### 12.2 使用
+
+	wine *.exe
+
 ***
 
 # 2. Qemu usage
@@ -330,7 +361,7 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 
 	cd /root
 	dd if=/dev/zero of=a9rootfs.ext3 bs=1M count=32
-	mkfs.ext3 a9rootfs.ext4
+	mkfs.ext3 a9rootfs.ext3
 	mkdir tmpfs
 	mount -t ext3 a9rootfs.ext3 tmpfs/ -o loop	//将a9rootfs.ext3(为一个文件系统)挂载到tmpfs下
 	cp -r rootfs/* tmpfs/
