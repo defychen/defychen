@@ -1,8 +1,173 @@
 # Ubuntu & Qemu usage
 
-# 1. Ubuntu 16.04 usage
+# Chapter 1. Ubuntu 18.04工具安装
 
-## 1. 忘记root密码解决办法
+## 1.1 vim软件的安装
+
+	sudo apt-get install vim
+	echo $?		//返回0表示软件安装成功;非0表示出现了问题.
+
+## 1.2 检查软件更新情况并将软件进行更新
+
+	1.sudo apt-get update
+	/*
+		更新/etc/apt/sources.list和/etc/apt/sources.list.d中列出的源的地址.这样才能获取到最新的
+		软件包.
+	*/
+	2.sudo apt-get upgrade
+	/*
+		升级已安装的所有软件包,将本地的软件版本与update文件更新的版本进行对比从而进行相关升级.因此,执行
+		upgrade之前一定要执行update,这样才能保证更新到最新.
+	*/
+
+## 1.3 "net-tools"安装
+
+**1.问题**
+
+刚安装的linux可能在执行"ifconfig"时,没有这个命令.报如下的错误:
+
+	Comand "ifconfig" not found, but can be installed with:
+		apt install net-tools
+	PS:即没有ifconfig命令.
+
+**2.解决**
+
+	apt install net-tools
+
+## 1.4 git安装
+
+	sudo apt-get install git
+
+注意点:
+	1.查看git的版本:
+	git --version
+	2.sudo apt-get下载的文件的目录:
+		/var/cache/apt/archives		//但是使用"sudo apt-get install git"没有发现文件
+	3.文件下载的目录可以在"/etc/apt/source.list"中指定  --->还没有发现真正的用途
+
+## 1.5 gcc安装及版本切换
+
+### 1.5.1 自动下载安装gcc
+
+	sudo apt-get install gcc-arm-linux-gnueabi
+	/*
+		一般会下载最新版本gnu交叉编译工具,最新版本gnu对Linux也是有版本支持的.
+		本人安装的18.04版本的ubuntu自动下载的的gcc版本为"version 7.4.0",不支持3.16版本的linux
+		(会出现很多error),需要使用4.x版本的linux.
+	*/
+
+### 1.5.2 手动安装gcc及版本切换
+
+主要针对需要不同版本的gcc,可以切换gcc版本.
+
+**1.gcc下载地址**
+
+[arm-linux-gcc历史版本下载地址](https://releases.linaro.org/components/toolchain/binaries/)
+
+	Linaro的官网(https://www.linaro.org/downloads/)--->拉到下面的"Linaro Toolchain"--->
+		点击"GNU cross-toolchain binary archives"--->弹出页面中可以选择历史版本.
+
+**2.版本切换方法**
+
+	//Ubuntu 18.04.2 LTS默认会使用gcc version 7.3.0.如果要切换为4.9.4的版本
+	1.下载4.9.4的gcc版本
+		网址"https://releases.linaro.org/components/toolchain/binaries/"--->选择"4.9-2017.01"
+		--->选择"arm-linux-gnueabi"--->选择"gcc-linaro-4.9.4-2017.01-i686_arm-linux-
+			gnueabi.tar.xz"
+	2.解压
+		tar -xvJf gcc-linaro-4.9.4-2017.01-i686_arm-linux-gnueabi.tar.xz
+		mv gcc-linaro-4.9.4-2017.01-i686_arm-linux-gnueabi arm-linux-gcc arm-linux-gcc
+		mv arm-linux-gcc /home/defychen/
+		PS:gcc的编译器在目录"/home/defychen/arm-linux-gcc/bin/"
+	3.修改.bashrc/profile
+		1.仅在当前目录下有效方法:
+			1.打开/root/.bashrc(root用户)和/home/defychen/.bashrc(普通用户)文件,增加下面信息:
+				export PATH=/home/defychen/arm-linux-gcc/bin:$PATH
+				//放在PATH环境变量的前面,可以保证肯定有效;放在后面如果PATH变量中有gcc版本,则后面的不会用
+			2.让路径生效
+				source /root/.bashrc
+				source /home/defychen/.bashrc
+		2.开机就有效(一直有效)方法:
+			在/etc/profile中写入:
+				export PATH=/home/defychen/arm-linux-gcc/bin:$PATH
+				source /etc/profile	//如果开机,会先扫描该文件.并使能该路径
+
+**3.gcc版本查看**
+
+终端输入:
+
+	arm-linux-gnueabi-gcc -v
+	arm-linux-gnueabi-gcc --version
+
+## 1.6 ubuntu版本查看
+
+	1.cat /proc/version		//可以显示当前Linux的版本及gcc的版本信息
+	2.uname -a				//也会显示当前Linux的版本,还有当前用户名
+	3.lsb_release -a			//会显示当前Ubuntu版本"Ubuntu 18.04.2 LTS"
+
+## 1.7 rar/unrar工具的安装
+
+如果需要解压的包为.rar格式,则需要使用unrar命令:
+
+	sudo apt-get install rar unrar
+
+rar/unrar命令的使用:
+
+	1.rar创建一个*.rar包:
+	rar a test.rar test.jpg test.png	//将test.jpg和test.png压缩成一个rar包
+	2.unrar解压一个*.rar包:
+	unrar e test.rar	//解压在当前目录
+	unrar x test.rar test	//解压到test目录下
+	3.rar和unrar的使用帮助:
+	rar -?
+	unrar -?
+
+## 1.8 wine的安装及使用
+
+### 1.8.1 安装wine
+
+	apt-get install wine64	//安装64-bit的wine.一般还需要安装wine32
+	dpkt --add-architecture i386 	//添加i386体系结构
+	apt-get upgrade	//更新包
+	apt-get install wine32
+
+### 1.8.2 使用wine
+
+	wine *.exe
+
+## 1.9 python的安装
+
+### 1.9.1 python的安装
+
+**1.安装python2.x**
+
+	apt install python		//安装python2
+	启动方法: python
+
+**2.安装python3.x**
+
+	apt install python3		//安装python3
+	启动方法: python3
+
+### 1.9.2 python的pip工具的安装
+
+	apt install python-pip
+
+## 1.10 linux源码下载地址
+
+[国内下载地址](http://ftp.sjtu.edu.cn/sites/ftp.kernel.org/pub/linux/kernel/)
+
+	国内下载地址速度快很多.
+
+[官网地址](https://www.kernel.org/pub/linux/kernel/)
+
+	官网下载很慢.
+
+***
+
+# Chapter 2. Ubuntu 18.04问题方法
+
+## 2.1 忘记root密码解决办法
 
 **方法 1**
 
@@ -18,7 +183,7 @@
 
 用户不具备sudo权限,需要进入GRUB修改kernel镜像启动参数,此处暂时略.
 
-## 2. root用户和普通用户的切换
+## 2.2 root用户和普通用户的切换
 
 1.切换到root用户
 
@@ -29,25 +194,7 @@
 
 	su defychen		//切换到defychen用户(defychen为普通用户名).
 
-## 3. vim软件的安装
-
-	sudo apt-get install vim
-	echo $?		//返回0表示软件安装成功;非0表示出现了问题.
-
-## 4. 检查软件更新情况并将软件进行更新
-
-	1.sudo apt-get update
-	/*
-		更新/etc/apt/sources.list和/etc/apt/sources.list.d中列出的源的地址.这样才能获取到最新的
-		软件包.
-	*/
-	2.sudo apt-get upgrade
-	/*
-		升级已安装的所有软件包,将本地的软件版本与update文件更新的版本进行对比从而进行相关升级.因此,执行
-		upgrade之前一定要执行update,这样才能保证更新到最新.
-	*/
-
-## 5. 关于Ubuntu中出现"Could not get lock /var/lib/dpkg/lock"解决方案
+## 2.3 关于Ubuntu中出现"Could not get lock /var/lib/dpkg/lock"解决方案
 
 **1.问题**
 
@@ -94,122 +241,46 @@
 	1.再次执行"apt install python-pip"	//如果安装python pip
 	2.执行"apt-get install gcc-arm-linux-gnueabi"	//安装交叉编译工具链
 
-## 6. 安装"net-tools"
+## 2.4 Ubuntu 18.04无法连接到WiFi的解决方案
 
-**1.问题**
+Ubuntu18.04安装后可能会出现找不到Wifi,不能连接到Wifi.
 
-刚安装的linux可能在执行"ifconfig"时,没有这个命令.报如下的错误:
+### 2.4.1 插入网线,使用DSL宽带拨号上网
 
-	Comand "ifconfig" not found, but can be installed with:
-		apt install net-tools
-	PS:即没有ifconfig命令.
+因为需要联网下载一些东西:
 
-**2.解决**
+**1.创建一个连接点**
 
-	apt install net-tools
+	1.点击桌面左边的"文件"菜单(一个图标),打开一个类似Windows资源管理器的东西;
+	2.选择"其他位置",出现"计算机",依次点选"计算机"->usr->share->applications->
+		选择"Network Connections",弹出"网络连接窗口";
+	3.点击"以太网"->点击左下角的"+",增加一个以太网连接,出现的选择连接类型:选择"DSL/PPPoE",点击创建.
+		弹出一个"编辑DSL连接"的窗口;
+	4.在"DSL/PPPoE"页面中填写以下设置:
+		Parent interface:选择网卡"enp3s0"--->Ubuntu 18.04网卡变成了enp3s0
+		PPP界面:不填写
+		用户名:输入网络的账户(e.g.1001)
+		服务:不填写
+		密码:输入网路的密码(e.g.21004)		
+	  在"常规"页面中勾选前两个选项:
+		1.勾选"可用时自动链接到这个网络";
+		2.勾选"所有用户都可以连接到这个网络"
+	5.点击保存即可.
 
-## 7. 安装git
+**2.连接到网络**
 
-	sudo apt-get install git
+第一步设置好之后右上角就会出现"有线连接"的标识,但是带一个问号.
 
-注意点:
-	1.查看git的版本:
-	git --version
-	2.sudo apt-get下载的文件的目录:
-		/var/cache/apt/archives		//但是使用"sudo apt-get install git"没有发现文件
-	3.文件下载的目录可以在"/etc/apt/source.list"中指定  --->还没有发现真正的用途
+	打开ubuntu的设置->选择"网络":
+		在"有线连接"下面会显示"已连接-100Mb/秒",点击该行右边的"设置"选项->在弹出的"有线"窗口中->
+		在详细信息页面中去掉"自动连接"选项->点击应用.
+		在"蓝牙"下面的"PPP"变得打开.此时也会自动连上宽带.
 
-## 8. linux源码下载地址
-
-[国内下载地址](http://ftp.sjtu.edu.cn/sites/ftp.kernel.org/pub/linux/kernel/)
-
-	国内下载地址速度快很多.
-
-[官网地址](https://www.kernel.org/pub/linux/kernel/)
-
-	官网下载很慢.
-
-## 9. gcc下载地址及版本切换
-
-**1.gcc下载地址**
-
-[arm-linux-gcc历史版本下载地址](https://releases.linaro.org/components/toolchain/binaries/)
-
-	Linaro的官网(https://www.linaro.org/downloads/)--->拉到下面的"Linaro Toolchain"--->
-		点击"GNU cross-toolchain binary archives"--->弹出页面中可以选择历史版本.
-
-**2.版本切换方法**
-
-	//Ubuntu 18.04.2 LTS默认会使用gcc version 7.3.0.如果要切换为4.9.4的版本
-	1.下载4.9.4的gcc版本
-		网址"https://releases.linaro.org/components/toolchain/binaries/"--->选择"4.9-2017.01"
-		--->选择"arm-linux-gnueabi"--->选择"gcc-linaro-4.9.4-2017.01-i686_arm-linux-
-			gnueabi.tar.xz"
-	2.解压
-		tar -xvJf gcc-linaro-4.9.4-2017.01-i686_arm-linux-gnueabi.tar.xz
-		mv gcc-linaro-4.9.4-2017.01-i686_arm-linux-gnueabi arm-linux-gcc arm-linux-gcc
-		mv arm-linux-gcc /home/defychen/
-		PS:gcc的编译器在目录"/home/defychen/arm-linux-gcc/bin/"
-	3.修改.bashrc/profile
-		1.仅在当前目录下有效方法:
-			1.打开/root/.bashrc(root用户)和/home/defychen/.bashrc(普通用户)文件,增加下面信息:
-				export PATH=/home/defychen/arm-linux-gcc/bin:$PATH
-				//放在PATH环境变量的前面,可以保证肯定有效;放在后面如果PATH变量中有gcc版本,则后面的不会用
-			2.让路径生效
-				source /root/.bashrc
-				source /home/defychen/.bashrc
-		2.开机就有效(一直有效)方法:
-			在/etc/profile中写入:
-				export PATH=/home/defychen/arm-linux-gcc/bin:$PATH
-				source /etc/profile	//如果开机,会先扫描该文件.并使能该路径
-
-**3.gcc版本查看**
-
-终端输入:
-
-	arm-linux-gnueabi-gcc -v
-	arm-linux-gnueabi-gcc --version
-
-## 10. ubuntu版本查看
-
-	1.cat /proc/version		//可以显示当前Linux的版本及gcc的版本信息
-	2.uname -a				//也会显示当前Linux的版本,还有当前用户名
-	3.lsb_release -a			//会显示当前Ubuntu版本"Ubuntu 18.04.2 LTS"
-
-## 11. rar/unrar工具的安装
-
-如果需要解压的包为.rar格式,则需要使用unrar命令:
-
-	sudo apt-get install rar unrar
-
-rar/unrar命令的使用:
-
-	1.rar创建一个*.rar包:
-	rar a test.rar test.jpg test.png	//将test.jpg和test.png压缩成一个rar包
-	2.unrar解压一个*.rar包:
-	unrar e test.rar	//解压在当前目录
-	unrar x test.rar test	//解压到test目录下
-	3.rar和unrar的使用帮助:
-	rar -?
-	unrar -?
-
-## 12. wine的安装及使用
-
-### 12.1 安装wine
-
-	apt-get install wine64	//安装64-bit的wine.一般还需要安装wine32
-	dpkt --add-architecture i386 	//添加i386体系结构
-	apt-get upgrade	//更新包
-	apt-get install wine32
-	
-
-### 12.2 使用
-
-	wine *.exe
+### 2.4.2 
 
 ***
 
-# 2. Qemu usage
+# 3. Qemu usage
 
 Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备(e.g.Qemu模拟出一台能够独立运行操作系统的虚拟机,虚拟机认为自己在和硬件打交道,但其实是和Qemu模拟出来的硬件打交道,Qemu再将这些指令转译给真正的硬件).
 
@@ -217,7 +288,7 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 	拟化工作.因为KVM是硬件辅助的虚拟化技术,主要负责比较繁琐的CPU和内存虚拟化,而Qemu则负责I/O虚拟化,两者
 	合作各自发挥优势,相得益彰.
 
-## 1. 在Ubuntu系统搭建Qemu模拟ARM
+## 3.1 在Ubuntu系统搭建Qemu模拟ARM
 
 环境:
 
@@ -226,7 +297,7 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 	Qemu:2.8
 	目标系统:以Versatile Express-A9开发板搭建环境
 
-### 1.1 Qemu的下载、编译、安装
+### 3.1.1 Qemu的下载、编译、安装
 
 **1.下载Qemu**
 
@@ -267,7 +338,7 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 	3.安装
 		make install	//会安装到系统的"/usr/local/bin/qemu-system-arm"的位置
 
-### 1.2 linux内核编译(在Qemu上运行)
+### 3.1.2 linux内核编译(在Qemu上运行)
 
 **1.下载并安装gnu交叉编译工具**
 
@@ -280,9 +351,9 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 
 **2.内核下载**
 
-可以参考前面"Ubuntu 16.04 usage"中的"8. linux源码下载地址":
+可以参考前面"1.10 linux源码下载地址"地址进行下载:
 
-	本人下载的地址为:https://mirrors.edge.kernel.org/pub/linux/kernel/v4.x/
+	本人下载的地址为:http://ftp.sjtu.edu.cn/sites/ftp.kernel.org/pub/linux/kernel/v4.x/
 	下载的版本为:linux-4.8.tar.gz		//因为最新的gnu交叉编译工具仅支持4.x之后的版本的
 
 **3.解压、配置、编译**
@@ -295,7 +366,7 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 		cd linux-4.8
 	2.配置
 		export CROSS_COMPILE=arm-linux-gnueabi-
-		export ARM=arm
+		export ARCH=arm
 		make vexpress_defconfig		//所有的config文件放在./arch/arm/configs/目录下
 	3.编译
 		make -j2
@@ -306,7 +377,7 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 				编译好的dtb会在:./arch/arm/boot/dts/vexpress-v2p-ca9.dtb
 		*/
 
-### 1.3 根文件系统的制作
+### 3.1.3 根文件系统的制作
 
 **1.busybox的下载、解压**
 
@@ -367,7 +438,7 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 	cp -r rootfs/* tmpfs/
 	sudo umount tmpfs	//卸载
 
-### 1.4 运行虚拟机
+### 3.1.4 运行虚拟机
 
 在终端输入:
 

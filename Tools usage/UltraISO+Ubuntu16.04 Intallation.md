@@ -34,6 +34,9 @@
 
 ![](images/UltraISO_writing_operation.png)
 
+	PS:写入方式以"USB-HDD+"安装的时候会报错(failed to load ldlinux.c32),改成"RAW",其他不用去选择可以
+	安装成功.所以这里写入方式需要改成"RAW".第5步也直接跳过.
+
 5.点击"便捷启动"->选择"写入新的驱动器引导扇区"->选择"Syslinux".
 
 ![](images/UltraISO_syslinux.png)
@@ -49,3 +52,10 @@
 参考:[U盘启动安装Ubuntu16.04详解](https://blog.csdn.net/lingyunxianhe/article/details/81415675).
 
 此处略.
+
+## 5.格式化U盘
+
+上述安装完Ubuntu后,U的格式会被污染、大小会被占用(windows显示时会出现没有空间).可以重新被格式化.方法如下:
+
+	打开UltraISO软件->直接点击"启动"菜单(不能打开某个光盘)->选择"写入硬盘映像"->在弹出的"写入硬盘映像"
+	窗口中直接点击"写入"按钮(都使用默认值)即可进行格式化,恢复到原来的大小.
