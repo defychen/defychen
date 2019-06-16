@@ -276,7 +276,50 @@ Ubuntu18.04安装后可能会出现找不到Wifi,不能连接到Wifi.
 		在详细信息页面中去掉"自动连接"选项->点击应用.
 		在"蓝牙"下面的"PPP"变得打开.此时也会自动连上宽带.
 
-### 2.4.2 
+### 2.4.2 更改软件源
+
+	点击桌面左下角的"显示应用程序"->选择"软件和更新"->在"Ubuntu软件"的页面中更改"下载自"的站点为合适的
+	站点(本人选择"其他站点"->中国->mirros.huaweicloud.com)->系统可能会自动更新索引,让其更新即可.
+
+### 2.4.3 添加附加驱动
+
+	同样在"软件和更新"里->切换到"附加驱动"选项卡->据说能搜到对应的无线网卡(我的没有,只有网卡驱动会
+	在一段时间之后出现,没有也没关系,该步跳过即可).
+	PS:需要注意BIOS是否位于UEFI且开启了secure boot,必须把secure boot关掉,因为专用驱动是闭源的.而
+	ubuntu是开源的,开源组织认为"闭源系统是不安全的",所以闭源的软件在开启secure boot的时候是不能启用的.
+	--->acer笔记本关闭secure boot方法:
+		1.F2进入到BIOS;
+		2.切换到"Security",然后按"↓"箭头,选择"Set Supervisor Password",设置管理员密码(也是超级用户
+		密码),该密码今后在进入BIOS时需要输入.我设置了acer的密码为"123456";
+		3.然后切换到"Boot",按键盘的按"↓"箭头选择Secure Boot,回车在弹出的界面中点击Disabled;
+			--->但是我的acer电脑没有secure boot这个选项...
+		4.保存退出.
+		PS:我没有设置成功secure boot也没有关系.可以跳过该步. 
+
+### 2.4.4 安装bcmwl-kernel-source
+
+2.4.3步可能执行不成功.在终端(调出终端窗口快捷键:Ctrl+Alt+T)执行下面的命令:
+
+	sudo apt-get update
+	sudo apt-get install bcmwl-kernel-source
+	/*
+	用于安装无线网卡驱动,网卡属于Broadcom,查看所有的pci设备(包括无线网卡):
+		lspci	//显示pci设备
+		如果出现"Ethernet Controller:: Broadcom Limited Netlink BCM57780 Gigabit Ethernet PCIe
+			...",即表示网卡属于Broadcom.
+	即属于Broadcom的网卡可用该方法安装驱动.
+	*/
+
+这步执行完成后,可能等很长时间就有了Wifi标识.
+
+### 2.4.5 在/etc/modprobe.d/blacklist.con加入命令(我加入了,但是后面又注释掉了)
+
+	1.打开blacklist.conf
+		sudo vim /etc/modprobe.d/blacklist.conf
+	2.在最后一行加入下面的命令
+		blacklist acer-wmi	//加上之后,我后面又注视掉才成功.
+	
+PS:总结起来,"2.4.4"步最重要.执行完等5-6分钟应该就有Wifi标识了.
 
 ***
 
@@ -447,3 +490,7 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 		"root=/dev/mmcblk0 console=ttyAMA0" -sd a9rootfs.ext3
 
 启动之后即可进入到终端(只运行内核和根文件系统),boot后续增加.
+
+### 3.1.5 退出虚拟机
+
+	先按Ctrl+A,然后再按X.就会出现"QEMU: Terminated",退出qemu.
