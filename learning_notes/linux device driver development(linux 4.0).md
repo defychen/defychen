@@ -495,24 +495,60 @@ linux内存管理:
 
 **3.虚拟文件系统(VFS)**
 
-	1)进程调度:处于系统的中心位置,内核中使用task_struct(位于./include/linux/sched.h定义)描述进程.
-	2)内存管理:控制多个进程安全地共享主内存区域.
-	3)虚拟文件系统:隐藏各种硬件的具体细节,为应用程序操作具体设备提供统一的接口.而且独立于各个具体的文件系统,
-	对各种文件系统(ext2、FAT等)进行抽象.
-	4)网络接口:包括网络协议(负责实现网络传输协议)和网络驱动程序(负责与网络硬件设备通信).上层应用程序统一使用套接字接口.
-	5)进程间通信:信号量、共享内存、消息队列(System V IPC)、管道、UNIX域套接字等.
+![](images/linux_vfs.png)
 
-### 3.2 linux内核编译及加载
+	1.用户空间(应用程序):调用open/read/write/close函数;
+	2.vfs层:调用filp_open, vfs_read, vfs_write, filp_close函数--->read/write进入内核态实际执行的是
+		sys_read/sys_write,然后再执行到vfs_read/vfs_write等;
+	PS:需要进一步深入.
 
-./configs/xxx_defconfig:为某电路板提供默认配置,"make xxx_defconfig"为xxx开发板配置内核.
+**4.网络接口**
 
-Kconfig(配置文件):提供界面中的配置选项.
+linux中网络接口分为网络协议和网络驱动程序.
 
-"make xxx_defconfig"和"make menuconfig"均会写入一个".config"配置文件中.该配置文件记录哪些被编译进内核，哪些被编译为模块.
+	1.网络协议:负责实现每一种可能的网络传输协议;
+	2.网络设备驱动程序负责与硬件设备通信.
 
-**运行make menuconfig时,首先分析与体系结构对应的./arch/xxx/Kconfig文件(xxx为传入的ARCH参数).该Kconfig文件包含一些与体系结构相关的配置项和配置菜单,还通过source语句引入一系列的Kconfig(e.g.source "net/Kconfig"),这样一层一层的引入形成menuconfig的菜单结构.**
+linux内核支持的协议栈种类多,包括Internet、Unix、CAN、NFC、Bluetooth、WiMAX、IrDA等.但上层的应用程序统一使用套接字接口.
 
-### 3.3 Kconfig和Makefile
+![](images/linux_internet_architecture.png)
+
+**5.进程间通信**
+
+进程间通信包括:信号量、共享内存、消息队列(System V中的IPC)、管道、UNIX域套接字等.
+
+### 3.3 linux内核编译及加载
+
+#### 3.3.1 linux内核的编译
+
+	1.arch/arm/configs/xxx_defconfig:为某电路板提供默认配置;
+	2.export CROSS_COMPILE=arm-linux-gnueabi-	//导出交叉编译工具
+	3.export ARCH=arm		//导出架构
+	4.make xxx_defconfig为xxx开发板配置内核.
+	5.make zImage	//编译内核(编译应该直接:make -j2就可以了,此处这样不确定行不行?)
+	6.make modules	//编译可动态加载模块(不确定行不行?)
+	PS:编译之后各文件位置:
+		1.未压缩的内核映像vmlinux和内核符号表文件System.map位于源代码的根目录(即./);
+		2.压缩的内核映像zImage位于arch/arm/boot/zImage;
+		3.内核模块在内核各对应的目录中.
+
+**linux配置系统组成**
+
+	1.Makefile:定义linux内核的编译规则;
+	2.Kconfig(配置文件):给用户提供配置选择的功能;
+	3.配置工具:包括配置命令解释器和配置用户界面(字符界面和图形界面等).配置工具使用的脚本语言包括:
+		Tcl/TK/Perl等.
+
+make xxx_defconfig和make menuconfig均会写入一个.config配置文件中.该配置文件记录哪些被编译进内核,哪些被编译为模块.
+
+**linux menuconfig菜单结构分析:**
+
+	运行make menuconfig时,首先分析与体系结构对应的./arch/xxx/Kconfig文件(xxx为传入的ARCH参数):
+		1.该Kconfig文件包含一些与体系结构相关的配置项和配置菜单;
+		2.通过source语句引入一系列的Kconfig(e.g.source "net/Kconfig");
+		3.这样一层一层的引入形成linux menuconfig的菜单结构.**
+
+#### 3.3.2 Kconfig和Makefile
 
 **Kconfig:提供界面中的配置选项.**
 
