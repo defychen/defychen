@@ -550,7 +550,7 @@ make xxx_defconfig和make menuconfig均会写入一个.config配置文件中.该
 
 #### 3.3.2 Kconfig和Makefile
 
-**Kconfig:提供界面中的配置选项.**
+**1.Kconfig:提供界面中的配置选项.**
 
 	config TTY_PRINTK	/*提供给Makefile中的编译项,Makefile中会自动变为"CONFIG_TTY_PRINTK"*/
 		tristate "TTY driver to output user messages via printk"
@@ -559,25 +559,43 @@ make xxx_defconfig和make menuconfig均会写入一个.config配置文件中.该
 			tristate:三态(编译入内核(Y),不编译(N),编译为模块(M));bool:两态(编译入内核(Y),不编译(N));
 			上述的提示信息也可以使用如下格式代替:
 				tristate
-				prompt "TTY driver to output user messages via printk"
+				prompt "TTY driver to output user messages via printk"	//使用prompt作为提示
+			PS:除了tristate(三态),还有bool(两态,Y/N),其他的string/hex/int不常用---略.
 		*/
-		depends on EXPERT && TTY	/*依赖项*/
-		default n	/*默认值*/
-		---help---	/*后面全为帮助信息*/
-		....
+		depends on EXPERT && TTY
+		/*
+			depends on EXPERT && TTY--->表示多重依赖,同时依赖EXPERT和TTY.只有两个都选中,
+				该选项才会出现.
+			bool实例:
+				depends on BAR
+				bool "foo"		//提示
+				default			//默认是选中的
+			上述bool实例也可以写成:
+				bool "foo" if BAR	//使用if表示依赖关系
+				default if BAR
+		*/
+		default n	/*默认值,用户如果不设置就使用默认值.此处为不编译.*/
+		---help---
+			....	//必须缩进
+		/*
+			(help)---help---:表示后面的为帮助信息."help"和"---help---"无区别,只是为了好看
+				使用"---help---".
+		*/
 
-**Makefile中编译项为:**
+**2.Makefile:指定编译规则.**
 
 	obj-$(CONFIG_TTY_PRINTK)	+= ttyprintk.o 
-	/*CONFIG_TTY_PRINTK配置为"Y/M",等同于"obj-y/obj-m",则会编译"ttyprintk.c",分别为"编译进内核"或生成模块
-	"ttyprintk.ko";如果配置为"N",等同于obj-n,不编译ttyprintk.c*/
+	/*
+		CONFIG_TTY_PRINTK配置为"Y/M",等同于"obj-y/obj-m",则会编译"ttyprintk.c",分别为"编译进内核"
+			或生成模块"ttyprintk.ko";如果配置为"N",等同于obj-n,不编译ttyprintk.c.
+	*/
 
-**内核中的Makefile语法:**
+内核中的Makefile语法:
 
 1)目标定义:
 	
 	obj-y += foo.o	/*由foo.c或foo.s编译得到foo.o并链接进内核(无条件编译)*/
-	obj-m += foo.o	/*foo.c作为模块编译, 而obj-n表示不编译*/
+	obj-m += foo.o	/*foo.c作为模块编译,而obj-n表示不编译*/
 
 2)多文件模块定义:
 
@@ -585,32 +603,123 @@ make xxx_defconfig和make menuconfig均会写入一个.config配置文件中.该
 	
 	obj-$(CONFIG_EXT2_FS) += ext2.o
 	ext2-y := balloc.o dir.o file.o fsync.o ialloc.o ... 
-	/*模块名字ext2,由balloc.o dir.o file.o...等等链接生成ext2.o,并最终编译进内核或成为"ext2.ko"模块文件*/
+	/*
+		模块名字ext2,由balloc.o dir.o file.o...等多个目标文件链接生成ext2.o,并最终编译进内核或成为
+		"ext2.ko"模块文件
+	*/
 	ext2-$(CONFIG_EXT2_FS_POSIX_ACL) += acl.o	
-	/*如果CONFIG_EXT2_FS_POSIX_ACL被选择,将编译acl.c得到acl.o并链接进ext2.o*/
+	/*
+		如果CONFIG_EXT2_FS_POSIX_ACL被选择,将编译acl.c得到acl.o并链接进ext2.o.
+	*/
 
-**菜单结构:**
+3)目录层次的迭代
 
-	menu "Network device support"	/*menu和endmenu之间的都会成为"Network device support"下的子菜单*/
+	obj-$(CONFIG_EXT2_FS) += ext2/
+	/*
+		当CONFIG_EXT2_FS的值为y或m时,kbuild将会把ext2目录列入向下迭代的目标中.
+	*/
+
+**3.菜单结构**
+
+	menu "Network device support"
 		depends on NET	/*且会继承依赖关系(menu一般仅仅是一个菜单名,没有对应真实的配置选项)*/
 	config NETDEVICES	/*子菜单*/
 		...
 	endmenu
+	/*
+		menu和endmenu之间构成菜单结构.
+		1.menu后面的提示"Network device support"是一个主菜单,没有对应真实的配置选项,也没有3/2种状态;
+		2.处于menu和endmenu之间的所有配置选项都是该菜单的子菜单,也会继承父菜单的依赖关系.
+			e.g.上述中的主菜单对NET的依赖会加到配置选项"NETDEVICES"的依赖列表中.
+	*/
+	PS:除了"menu...endmenu"这种形成菜单外;依赖关系也有可能形成菜单.
 
-除了"menu...endmenu"这种形成菜单外;依赖关系也有可能形成菜单.
+choice...endchoice定义选择群菜单方法:
 
-	General setup--->位于./init/Kconfig(可以通过make menuconfig中的help找到位置)
-
-choice...endchoice定义选择群菜单:
-	
+	1.定义方法
+	choice
+	depends on FB_S3C_VGA
+	prompt "Select VGA Resolution for S3C Framebuffer"	//提示
+	default FB_S3C_VGA_1024_768
+	config FB_S3C_VGA_1024_768
+		bool "1024*768@60Hz"
+		---help---
+		TBA
+	config FB_S3C_VGA_640_480
+		bool "640*480@60Hz"
+		---help---
+		TBA
+	endchoice
+	2.显示效果
 	"选择群菜单"点开之后是下面这种效果:
-	(X)Gzip
-	()LZMA
-	()XZ
-	()LZO
-	()LZ4
+		(*)1024*768@60Hz	//默认选中
+		()640*480@60Hz
 
-**驱动写好后,Kconfig和Makefile需要的操作:**
+**4.实例---在drivers下添加一个test目录**
+
+1.test driver的树形目录结构
+
+	|-- test
+		|-- cpu		//test目录下有一个cpu的目录
+			|-- cpu.c
+			|-- Makefile
+		|-- test.c
+		|-- test_client.c
+		|-- test_ioctl.c
+		|-- test_proc.c
+		|-- test_queue.c
+		|-- Makefile
+		|-- Kconfig
+
+2.Kconfig的添加
+
+	1.在test目录下的Kconfig内容:
+		#
+		# TEST driver configuration
+		#
+		menu "TEST Driver"
+		comment " TEST Driver"
+		
+		config CONFIG_TEST
+			bool "TEST support"
+		
+		config CONFIG_TEST_USER
+			tristate "TEST user-space interface"
+			depends on CONFIG_TEST
+		endmenu
+	2.使能test下的Kconfig
+		在arch/arm/Kconfig文件最后添加:
+			source "drivers/test/Kconfig"	//会引用到test目录下的Kconfig
+
+3.Makefile的添加
+
+	1.test目录下的Makefile内容:
+		# drivers/test/Makefile
+		#
+		# Makefile for the TEST.
+		#
+		obj-$(CONFIG_TEST) += test.o test_queue.o test_client.o
+		/*
+			选中CONFIG_TEST配置项,就变成:
+				obj-y += test.o test_queue.o test_client.o--->会编译进内核.
+			如果编译成模块一般写成:
+				obj-$(CONFIG_TEST) += test_module.o	//会得到一个模块的文件名,为test_module.ko
+				test_module-y := test.o test_queue.o test_client.o
+		*/
+		obj-$(CONFIG_TEST_USER) += test_ioctl.o
+		/*
+			此处CONFIG_TEST_USER为三态,说明test_ioctl.o不依赖其他模块.可单独编译成模块加载.
+		*/
+		obj-$(CONFIG_PROC_FS) += test_proc.o
+		//CONFIG_PROC_FS没有放在menu...endmenu中.
+	2.cpu目录下的Makefile内容:
+		# drivers/test/cpu/Makefile
+		# 
+		# Makefile for the TEST CPU
+		#
+		obj-$(CONFIG_TEST_CPU) += cpu.o
+	3.在test的父目录的Makefile内容增加:
+		obj-$(CONFIG_TEST) += test/		//加入该行,使得在编译内核时能进入到test目录
 
 1)Kconfig
 
@@ -631,41 +740,116 @@ Kconfig在某个目录下编辑好后,需要在./arch/arm/Kconfig中添加:
 		/*在"drivers/alidrivers/modules/Kconfig"中添加,包括了alirpc下面的Kconfig*/
 	/*(drivers/alidrivers/modules/aliprc/Kconfig)中描述alixxx的菜单信息*/---因为这些都会依赖rpc模块
 	
-
 2)Makefile
 
 	obj-y += alidrivers/modules/	
-	/*在"./drivers/Makefile"中添加,强制(无条件)进入该目录"alidrivers/modules/"*/
+	/*
+		在"./drivers/Makefile"中添加,强制(无条件)进入该目录"alidrivers/modules/"
+	*/
 	obj-$(CONFIG_ALI_DSC) += alidsc/	
-	/*在"./drivers/alidrivers/modules/Makefile"中添加,根据"$(CONFIG_ALI_DSC)"决
-	定是否进入"alidsc/"目录.*/
-	obj-$(CONFIG_ALI_DSC) += alidsc.o	/*在"./modules/alidsc"中添加具体的编译命令*/
+	/*
+		在"./drivers/alidrivers/modules/Makefile"中添加,根据"$(CONFIG_ALI_DSC)"决定是否进
+		入"alidsc/"目录.
+	*/
+	obj-$(CONFIG_ALI_DSC) += alidsc.o
+	/*在"./modules/alidsc"中添加具体的编译命令*/
 
 ### 3.4 Linux内核引导
 
-SoC内嵌bootrom,一上电bootrom即运行,其他CPU进入WFI状态等待CPU0唤醒.CPU0中的bootrom会引导bootloader(在ROM中),bootloader引导kernel,在kernel启动阶段CPU0发出中断唤醒其他CPU运行.
+linux内核引导流程:
 
-内核镜像zImage包括解压算法和被压缩的内核,bootloader引导kernel时利用解压算法解压zImage解出kernel进行引导.
+	1.SoC内嵌bootrom(每个CPU都有一份bootrom),一上电运行所有CPU中的bootrom(初始化一些堆栈信息?);
+	2.CPU0中的bootrom会去引导bootloader(在SD/eMMC/Nand/等上),其他CPU(非CPU0)则进入WFI状态等待CPU0
+		唤醒;
+	3.CPU0中的bootloader紧接着引导linux kernel,在linux kernel启动阶段CPU0会发出中断唤醒其他CPU运行;
+	4.CPU0导致用户空间的init程序被调用,init程序再派生其他进程.接着CPU0和CPU1共同担负这些负载,进行负载
+		均衡.
+
+linux内核引导流程图:
+
+![](images/linux_boot_flow.png)
+
+**zImage(内核镜像)解析**
+
+	1.zImage(内核镜像)由没有压缩的解压算法和被压缩的内核组成;
+	2.bootloader跳到zImage后,利用zImage自身的解压逻辑把压缩的内核解压出来,再进行下一步的kernel运行.
 
 ### 3.5 Linux下的C编码特点
 
-**Linux编码风格**
+#### 3.5.1 Linux编码风格
 
-1)命名:下划线为主
+**1.Windows的编码风格**
 
-	#define PI 3.1415926
-	int min_value, max_value;	/*变量名下划线分割*/
-	void send_data(void);	/*函数名下划线分割*/
+	#define PI 3.1415926		//大写字母表示宏
+	int minValue, maxValue;		//变量:第一个单词全小写,其后单词首字母大写.
+	void SendData(void);		//函数:所有单词的首字母大写
 
-2)"{}"使用:
+**2.linux的编码风格**
+
+1.命名:下划线间隔
+
+		#define PI 3.1415926		//大写字母表示宏
+		int min_value, max_value;	//变量:下划线分隔单词(单词均小写)
+		void send_data(void);		//函数:下划线分隔单词(单词均小写)
+
+2.缩进
+
+		使用TAB进行缩进
+
+3."{}"使用原则
 	
-	(1)结构体、if/for/while/switch "{"不另起一行, 如果只有一句不要加"{}"
-	(2)if...else, else语句不另起一行
-	(3)函数另起一行
-	(4)switch...case对齐
-	(5)空格使用"for ( i = 0; i < 10; i++ ) {"
+	1.结构体、if/for/while/switch语句:"{"不另起一行:
+		结构体:
+			struct var_data {	//"{"不另起一行
+				int len;
+				char data[0];
+			};
+		if:
+			if (a == b) {
+				a = c;
+				d = a;
+			}
+		for:
+			for (i = 0; i < 10; i++) {
+				a = c;
+				d = a;
+			}
+	2.如果if,for循环只有一句,不要加"{}":
+		for (i = 0; i < 10; i++)
+			a = c;		//只有一行,不要加"{}"
+	3.if...else,else语句不另起一行:
+		if (x == y) {
+			...
+		} else if (x > y) {	//此处不另起一行
+			...
+		} else {
+			...
+		}
+	4.函数另起一行:
+		int add(int a, int b)
+		{
+			return a + b;
+		}
+	5.switch和case对齐:
+		switch (suffix) {
+		case 'G':
+		case 'g':	//case顶端和switch对齐
+			mem <<=30;
+			break;
+		...
+		default:
+			break;
+		}
+	6.空格使用:
+		for ( i = 0; i < 10; i++ ) {	//注意for中的一些空格
+			...
+		}
 
-**GNU C**
+**3.linux代码风格检查**
+
+内核下的scripts/checkpatch.pl可以检查代码风格是否符合linux coding style.
+
+#### 3.5.2 GNU C与ANSI C
 
 linux用的C编译器为GNU C编译器.
 
