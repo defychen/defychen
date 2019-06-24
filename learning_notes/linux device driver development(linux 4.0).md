@@ -851,36 +851,150 @@ linux内核引导流程图:
 
 #### 3.5.2 GNU C与ANSI C
 
-linux用的C编译器为GNU C编译器.
+linux用的C编译器为GNU C编译器.GNU C编译器对标准C语言进行了一系列扩展,以增强标准C的功能.
 
-**(1)可变参数宏(宏可接受可变数目的参数)**
+**1.零长度和变量长度的数组**
+
+	1.零长度数组
+		1.零长度数组定义
+		struct var_data {
+			int len;
+			char data[0];	//表示数组含有0个元素,不占用任何的空间(即不会分配任何的内存空间)
+		};
+		/*
+			该结构体的长度为: sizeof(struct var_data) = sizeof(int) = 4-->零长度数组不占用空间
+		*/
+		2.如果struct var_data的数据域(即data)就保存在struct var_data紧接着的内存区域中,通过以下方式
+			可以遍历这些数据:
+		struct var_data s;
+		...
+		int i;
+		for (i = 0; i < s.len; i++) {
+			printf("%02x", s.data[i]);	//遍历紧接着的内存的数据
+		}
+	2.变量长度数组(使用1个变量来定义数组)
+		int main(int argc, char *argv[])
+		{
+			int i, n = argc;
+			double x[n];	//n为一个传进来的变量,可通过该变量定义一个数组
+
+			for (i = 0; i < n; i++)
+				x[i] = i;
+			return;
+		}
+
+**2.case范围**
+
+GNU C支持case x...y语法:
+
+	switch (ch) {
+	case '0'...'9':
+		/*
+			等价于标准C中的:
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+				case '8':
+				case '9':
+		*/
+		c -= '0';
+		break;
+	case 'a'...'f':
+		c -= 'a' - 10;
+		break;
+	case 'A'...'F':
+		c -= 'A' - 10;
+		break;
+	}
+
+**3.语句表达式**
+
+GNU C将包含在小括号中的复合语句看成是一个表达式,称为语句表达式.
+
+	#define min_t(type, x, y) \
+		({ type __x = (x); type __y = (y); __x < __y ? __x : __y;})
+	/*
+		1.大括号包含的复合语句包含在一对小括号中,GNU C看成一个表达式;
+		2.type表示类型的泛指,调用该宏时可以传入int/double/float等类型;
+		相比于标准C不会产生副作用:
+			#define min(x, y) ((x) < (y) ? (x) : (y))
+		如果是以下调用:
+			mint(++ia, ++ib)会展开为((++ia) < (++ib) ? (++ia) : (++ib)),此时传入的宏参数会增加两次.
+			而min_t则不会有副作用,因为重新定义了__x和__y两个局部变量.
+	*/
+	int ia, ib, mini;
+	float fa, fb, minf;
+	mini = min_t(int, ia, ib);	//type泛指,接收int
+	minf = min_t(float, fa, fb);
+
+**4.typeof关键字**
+
+typeof(x)可以获得x的类型.利用typeof重新定义min这个宏:
+
+	#define min(x, y) ({	\
+		const typeof(x) _x = (x);	\
+		/*
+			typeof(x):获得x的类型,并声明一个局部变量_x,初始化为x.
+		*/
+		const typeof(y) _y = (y);	\
+		(void) (&_x == &_y);		\	//用于检查_x和_y的类型是否一致.
+		_x < _y ? _x : _y;			\
+	})
+
+**5.可变参数宏**
+
+接受可变数目的参数.
 
 	#define pr_debug(fmt, arg...) \
-				printk(fmt, ##arg)	/*"##"为了处理arg不代表任何参数的情况,GNU C预处理器会丢弃前面的逗号*/
+				printk(fmt, ##arg)
+		/*
+			arg前面的"##"为了处理arg不代表任何参数的情况,GNU C预处理器会丢弃前面的逗号.
+		*/
+	调用:
+		1.pr_debug("%s:%d", __func__, __LINE__);
+		会被展开为:
+			printk("%s:%d", __func__, __LINE__);
+		2.pr_debug("success!\n");	//arg不带任何参数
+		会被正确展开为:
+			printk("success!\n");
 
-**(2)结构体初始化**
+**6.结构体初始化**
 
-	struct file_operations ext2_file_operations = {
-		.llseek			= generic_file_llseek,
-		...	
-	};
-
+	//声明一个struct file_operations结构体变量xxx_fops,并进行初始化:
 	struct file_operations xxx_fops = {
 		.owner = THIS_MODULE,
 		.open = xxx_open,
+		/*
+			.open = xxx_open,
+			open为结构体struct file_opeartions一个函数指针:
+				struct file_operations {	//该结构体位于:./include/linux/fs.h中
+					...
+					int (*open)(struct inode *, struct file *);
+					...
+				};
+			即为:
+				.open = 函数名(函数名也是函数指针)--->切记:后面是一个","而不是";"
+		*/
 		.close = xxx_close,
 		.release = xxx_release,
-		.unlocked_iotctl = xxx_ioctl,
+		.unlocked_ioctl = xxx_ioctl,
 	};
 
-**(3)当前函数名"__func__"**
+**7.当前函数名**
+
+__FUNCTION__:保存函数在源码中的名字;__PRETTY_FUNCTION__:保存带语言特色的函数名字.C99支持__func__宏,linux编程推荐使用__func__.
 
 	void example(void)
 	{
-		printf("This is a function: %s", __func__);
+		printf("This is a function: %s", __func__);	//会显示函数名:example
 	}
 
-**(4)特殊属性声明**
+**8.特殊属性声明**
 
 作用于函数、变量和类型,以便手动优化代码和定制代码检查(方法"__attribute__((noreturn/format/section/aligned/packed))",一般在声明后面添加).
 
