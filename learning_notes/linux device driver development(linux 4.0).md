@@ -946,7 +946,44 @@ typeof(x)可以获得x的类型.利用typeof重新定义min这个宏:
 		_x < _y ? _x : _y;			\
 	})
 
-**5.可变参数宏**
+**5.按某对齐向上/下取整,整除向上/下取整及两数取大/小的实现**
+
+1.__extension__:GCC对标准C语言进行了扩展,当用到扩展功能时,GCC编译器会提出警告.使用__extension__关键字可以告诉GCC不要提出警告.
+
+2.__typeof__:得到某个变量的类型(e.g.__typeof__(x):得到x的类型.与typeof相同).
+
+	1.x按y对齐,并向上取整(超出了就入)
+		#define roundup(x, y) __extension__ ({ \
+				const __typeof__(x) __x = (x); \	//定义一个与x类型相同的局部变量__x并初始化为x.
+				const __typeof__(y) __y = (y); \	//定义一个与x类型相同的局部变量__y并初始化为y.
+				((__x + __y - 1) / __y) * __y;})
+		调用:
+			int round_up_val = roundup(4, 5);
+			//会将4,5的值代入,最后计算得到8并赋值给round_up_val.
+	2.x按y对齐,并向下取整(四舍五入)
+		#define rounddown(x, y) __extension__ ({ \
+				__typeof__(x) __x = (x); \
+				__typeof__(y) __y = (y); \
+				__x - (__x % __y);})
+	3.x/y整除向上取整
+		#define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
+		/*位于./include/linux/kernel.h中*/
+	4.x/y整除向下取整
+		略.	//正常就是向下取整.
+	5.x,y取较大值
+		#define max(x, y) __extension__ ({ \
+				__typeof__(x) __x = (x); \
+				__typeof__(y) __y = (y); \
+				(void)(&__x == &__y); \		//检查参数__x和__y的类型是否相同.
+				__x < __y ? __y : x;})
+	6.x,y取较小值
+		#define min(x, y) __extension__ ({ \
+				__typeof__(x) __x = (x); \
+				__typeof__(y) __y = (y); \
+				(void)(&__x == &__y); \		//检查参数__x和__y的类型是否相同.
+				__x < __y ? __x : __y;})
+
+**6.可变参数宏**
 
 接受可变数目的参数.
 
@@ -963,7 +1000,7 @@ typeof(x)可以获得x的类型.利用typeof重新定义min这个宏:
 		会被正确展开为:
 			printk("success!\n");
 
-**6.结构体初始化**
+**7.结构体初始化**
 
 	//声明一个struct file_operations结构体变量xxx_fops,并进行初始化:
 	struct file_operations xxx_fops = {
@@ -985,7 +1022,7 @@ typeof(x)可以获得x的类型.利用typeof重新定义min这个宏:
 		.unlocked_ioctl = xxx_ioctl,
 	};
 
-**7.当前函数名**
+**8.当前函数名**
 
 __FUNCTION__:保存函数在源码中的名字;__PRETTY_FUNCTION__:保存带语言特色的函数名字.C99支持__func__宏,linux编程推荐使用__func__.
 
@@ -994,78 +1031,44 @@ __FUNCTION__:保存函数在源码中的名字;__PRETTY_FUNCTION__:保存带语�
 		printf("This is a function: %s", __func__);	//会显示函数名:example
 	}
 
-**8.特殊属性声明**
+**9.特殊属性声明**
 
-作用于函数、变量和类型,以便手动优化代码和定制代码检查(方法"__attribute__((noreturn/format/section/aligned/packed))",一般在声明后面添加).
+作用于函数、变量和类型,以便手动优化代码和定制代码检查的方法:
 
-存在多个属性,以逗号","分隔.
+	格式为:
+		__attribute__((noreturn/format/unused/section/aligned/packed))	//一般在声明后面添加
 
-	noreturn:作用于函数,函数不返回.
+如果存在多个属性,则以逗号","分隔.
+
+	1.noreturn:作用于函数,表示函数不返回.
 		void do_exit(long error_code) __attribute__((noreturn));
-	unused:作用于函数和变量,表示可能不会用到,避免编译器产生警告信息.
+	2.unused:作用于函数和变量,表示可能不会用到,避免编译器产生警告信息.
 		__attribute__((unused)) int a = 0;
-		static __attribute__ ((unused)) int b = 0;
-	aligned:作用于变量、结构体、联合体,指定对齐方式.e.g.__attribute__((aligned(4)))
+		static __attribute__((unused)) int b = 0;
+	3.aligned:作用于变量、结构体、联合体,指定对齐方式.
 		struct example_struct {
 			char a;
 			int b;
 			long c;
-		}__attribute__((aligned(4)));	//表示该结构体4字节对齐.因此此处总共占用16字节.
-	packed:用于变量或结构体成员时表示使用最小可能的对齐,用于枚举、结构体或联合体时表示使用最小的内存.
-	其实都是使用最小内存.
+		}__attribute__((aligned(4)));
+		/*
+			表示该结构体4字节对齐.结构体中每个成员最少占用4字节,因此此处总共占用16(4+4+8)字节.
+		*/
+	4.packed:用于变量或结构体成员时表示使用最小可能的对齐--->使用较多;
+			 用于枚举、结构体或联合体时表示使用最小的内存--->不确定哪里用.
 		struct example_struct {
 			char a;
 			int b;
 			long c;
-		}__attribute__((packed));	//使用最小对齐.此处应该为4byte对齐,占用大小为16 byte.
+		}__attribute__((packed));	//使用最小对齐(即1Byte).此处总共占用大小为9(1+4+4)byte.
 
-**(5)内建函数"__builtin"开始**
+__attribute__((format(printf, x, y)))的使用:
 
-Linux内核编程中常用likely()和unlikely()底层调用的likely_notrace()、unlikely_notrace()就是基于__builtin_excep(EXP, C)实现的.
-
-likely()和unlikely()主要用于提高CPU性能,尽可能不执行跳转.
-
-	if (likely(x))	//表示x(变量或表达式)为真的可能性比较大.用于分支预测,可以提高CPU性能.
-	if (unlikely(x))	//表示x(变量或表达式)为假的可能性比较大.用于分支预测,可以提高CPU性能.
-
-likely()和unlikely()内部实现:
-
-	/*	__builtin_expect()是gcc(version >= 2.96)提供的,目的是将"分支转移"的信息提供给编译器.
-		这样编译器可以对代码进行优化,以减少指令跳转带来的性能下降.
-	*/
-	#define likely(x) __builtin_expect((x), 1)		//表示x的值为真的可能性更大.
-	#define unlikely(x) __builtin_expect((x), 0)	//表示x的值为假的肯能性更大.
-
-	//还有一种用法:
-	#define likely(x) __builtin_expect(!!(x), 1)
-		//"!!"是将x转换成bool型,此时也表示为true的可能性比较大.
-	#define unlikely(x) __builtin_expect(!!(x), 0)
-		//"!!"是将x转换成bool型,此时也表示为false的可能性比较大.
-
-如果编译时使用"-ansi-pedantic"编译选项,会不使用GNU C扩展语法，容易报错.一般不这么使用.
-
-do{}while(0)主要用于宏，目的是保证宏定义的使用者能无编译错误的使用宏.
-
-	#define SAFE_FREE(p) do{free(p); p=NULL;} while(0)	//定义宏时,后面是没有分号";"
-	
-	if (NULL != p)
-		SAFE_FREE(p);
-	else
-		...	/*do something*/
-
-	//会被展开为:
-	if (NULL != p)
-		do{free(p); p=NULL;}while(0);	//就不会有任何的编译错误
-	else
-		.../*do something*/
-
-**(6)__attribute__((format(printf, x, y)))的使用**
-
-是编译器检查函数调用与函数声明的各参数的格式化字符串是否匹配.
+编译器检查函数调用与函数声明的各参数的格式化字符串是否匹配.
 
 	format(archetype, string-index, first-to-check)
 	/*
-		archetype:指定风格(e.g.print, scanf).一般使用printf即输出结果.
+		archetype:指定风格(e.g.printf, scanf).一般使用printf即输出结果.
 		string-index:指定检查函数的第几个参数表示格式化字符串.
 		first-to-check:指定从函数的第几个参数开始进行格式化字符串的检查.
 	*/
@@ -1075,14 +1078,15 @@ do{}while(0)主要用于宏，目的是保证宏定义的使用者能无编译�
 	#include <stdio.h>
 	#include <stdarg.h>
 
-	#define __formatted_print __attribute__((format(print, 1, 2)))
+	#define __formatted_print __attribute__((format(printf, 1, 2)))
 		//表示检查函数的第一个参数作为格式化字符串,从第二个参数开始检查是否符合格式化的形式.
 
-	__formatted_print void TRACE(const char *fmt, ...) //第一个参数为格式化,第二个参数为需要检查的参数
+	__formatted_print void TRACE(const char *fmt, ...)
 	{
+		//第一个参数为格式化,第二个参数为需要检查的参数
 		va_list ap;
 		va_start(ap, fmt);
-		(void)printf(fmt, ap);
+		(void)vprintf(fmt, ap);
 		va_end(ap);
 	}
 
@@ -1097,45 +1101,73 @@ do{}while(0)主要用于宏，目的是保证宏定义的使用者能无编译�
 		结果为:
 		test.c: In function ‘main’:
 		test.c:21:2: warning: format ‘%d’ expects argument of type ‘int’, but argument 2 has type
-		‘char *’ [-Wformat=]
+		'char *' [-Wformat=]
 		  TRACE("iValue = %d\n", "test");
 		  ^
 		gcc: warning: test: linker input file unused because linking not done
 	*/
 
-**(7)按某对齐向上/下取整,整除向上/下取整及两数取大/小的实现**
+**10.内建函数--->以"__builtin"开始**
 
-1.__extension__:GCC对标准C语言进行了扩展,当用到扩展功能时,GCC编译器会提出警告.使用__extension__关键字可以告诉GCC不要提出警告.
+Linux内核编程中常用likely()和unlikely()底层调用的likely_notrace()、unlikely_notrace()就是基于__builtin_expect(EXP, C)实现的.
 
-2.__typeof__:得到某个变量的类型(e.g.__typeof__(x):得到x的类型.与typeof相同).
+likely()和unlikely()主要用于提高CPU性能,尽可能不执行指令跳转.
 
-	1.x按y对齐,并向上取整(超出了就入)
-		#define roundup(x, y) __extension__ ({ \
-				const __typeof__(x) __x = (x); \	//定义一个与x类型相同的局部变量__x并初始化为x.
-				const __typeof__(y) __y = (y); \	//定义一个与x类型相同的局部变量__y并初始化为y.
-				((__x + __y - 1) / __y) * __y;})
-	2.x按y对齐,并向下取整(四舍五入)
-		#define rounddown(x, y) __extension__ ({ \
-				__typeof__(x) __x = (x); \
-				__typeof__(y) __y = (y); \
-				__x - (__x % __y);})
-	3.x/y整除向上取整
-		#define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
-		/*位于./include/linux/kernel.h中*/
-	4.x/y整除向下取整
-		略.
-	5.x,y取较大值
-		#define max(x, y) __extension__ ({ \
-				__typeof__(x) __x = (x); \
-				__typeof__(y) __y = (y); \
-				(void)(&__x == &__y); \		//检查参数__x和__y的类型是否相同.
-				__x < __y ? __y : x;})
-	6.x,y取较小值
-		#define min(x, y) __extension__ ({ \
-				__typeof__(x) __x = (x); \
-				__typeof__(y) __y = (y); \
-				(void)(&__x == &__y); \		//检查参数__x和__y的类型是否相同.
-				__x < __y ? __x : __y;})
+	if (likely(x))		//表示x(变量或表达式)为真的可能性比较大.用于分支预测,可以提高CPU性能.
+	if (unlikely(x))	//表示x(变量或表达式)为假的可能性比较大.用于分支预测,可以提高CPU性能.
+
+likely()和unlikely()内部实现:
+
+	/*
+		__builtin_expect()是gcc(version >= 2.96)提供的,目的是将"分支转移"的信息提供给编译器.
+			这样编译器可以对代码进行优化,以减少指令跳转带来的性能下降.
+	*/
+	#define likely(x) __builtin_expect((x), 1)		//表示x的值为真的可能性比较大.
+	#define unlikely(x) __builtin_expect((x), 0)	//表示x的值为假的可能性比较大.
+
+	//还有一种用法:
+	#define likely(x) __builtin_expect(!!(x), 1)
+		//"!!"是将x转换成bool型,表示为true的可能性比较大.
+	#define unlikely(x) __builtin_expect(!!(x), 0)
+		//"!!"是将x转换成bool型,表示为false的可能性比较大.
+
+如果编译时使用"-ansi-pedantic"编译选项,则会告诉编译器不使用GNU C扩展语法,容易报错.一般不这么使用.
+
+#### 3.5.3 do {} while(0)语句
+
+do{} while(0)主要用于宏,目的是保证宏定义的使用者能无编译错误的使用宏.
+
+	#define SAFE_FREE(p) do{free(p); p=NULL;} while(0)	//定义宏时,后面是没有分号";"
+	
+	if (NULL != p)
+		SAFE_FREE(p);
+	else
+		...	/*do something*/
+
+	//会被展开为:
+	if (NULL != p)
+		do{free(p); p=NULL;}while(0);
+		/*
+			不会有任何的编译错误.
+			do{} while(0);	--->后面是由分号";".
+		*/
+	else
+		.../*do something*/
+
+#### 3.5.4 goto语句
+
+linux内核源代码中对goto应用非常广泛,但一般只用于错误处理(e.g.注销驱动程序、资源释放等,与正常的注册、资源申请顺序相反).
+
+	if (register_a() != 0)
+		goto err;
+	if (register_b() != 0)
+		goto err1;
+	...
+
+	err1:
+		unregister_a();
+	err:
+		return ret;
 
 ### 3.6 工具链
 
@@ -1143,7 +1175,8 @@ do{}while(0)主要用于宏，目的是保证宏定义的使用者能无编译�
 
 ARM linux工具链解析:
 	
-	arm-linux-gnueabihf-gcc /*hf:硬浮点(用于加速编译);abi:(application binary interface)应用程序二进制接口.*/
+	arm-linux-gnueabihf-gcc
+	/*hf:硬浮点(用于加速编译);abi:(application binary interface)应用程序二进制接口.*/
 
 公司一般通过"SSH"连接客户端与服务器.
 
