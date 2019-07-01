@@ -1184,42 +1184,217 @@ ARM linux工具链解析:
 
 ## Chapter 4 Linux内核模块
 
-内核模块通过(insmod/lsmod/rmmod)进行模块加载/查看/卸载等操作.
+### 4.1 linux内核模块简介
 
-"/proc/modules"保存insmod加载的模块信息(cat /proc/modules查看),"lsmod"查看时即是调用该文件.
+#### 4.1.1 linux内核模块特点
 
-**"/sys/modules"目录下保存了所有已加载的驱动模块的信息,每个模块都有一个目录.**
+	1.模块本身不被编译入内核映像,从而可以控制内核的大小;
+	2.模块一旦被加载,就和内核中的其他部分完全一样.
 
-modprobe/modprobe -r filename:加载/卸载模块时会同时加载/卸载其依赖模块,比insmod/rmmod功能更强大.
+一个简单的内核模块实例:
 
-"modinfo 模块名.ko:获得编译之后的模块信息(author、description、depends等等).应该在linux服务器上(也就是编译的地方),板子端是查看不到的."
+	#include <linux/init.h>
+	#include <linux/module.h>
 
-**内核模块许可证(licnese)包括"GPL"、"GPL v2"、"GPL and addtional rights"、"Dual BSD/GPL"、"Dual MPL/GPL",常用的为"GPL v2".**
+	static int __init hello_init(void)
+	{
+		printk(KERN_INFO "Hello World Enter!\n");
+		return 0;
+	}
 
-linux errno位置:
+	static void __exit hello_exit(void)
+	{
+		printk(KERN_INFO "Hello World exit!\n");
+	}
 
-1-34号在./include/uapi/asm-generic/errno-base.h
+	module_init(hello_init);
+	module_exit(hello_exit);
+	
+	MODULE_AUTHOR("Defy");
+	MODULE_LICENSE("GPL v2");
+	MODULE_DESCRIPTION("A simple hello world module");
+	MODULE_ALIAS("a simplest module");
 
-35-133号在./include/uapi/asm-generic/errno.h
+#### 4.1.2 内核模块的加载/查看/卸载
 
-512-529号在./include/linux/errno.h
+**1.使用insmod/lsmod/rmmod操作**
 
-**标识为"__init"的函数如果编译进内核以及定义为"__initdata"的数据，只会在初始化阶段存在,初始化完成后就会释放它们占用的内存.**
+1.insmod命令
 
-**标识为"__exit"的函数如果模块被编译进内核会直接忽略(模块被内置，就不会卸载它了).退出阶段才用的数据可以用"__exitdata"标识.**
+	insmod hello.ko	//加载内核模块
 
-### 模块参数及导出符号
+2.lsmod命令
 
-**模块参数**
+获得系统中已加载的所有模块及模块间的依赖关系.
 
-用于向模块传递参数(e.g.insmod xxx.ko args=xxx)
+		lsmod		//结果如下:
+		Module			Size	Used by
+		hello			9  472	0
+		nls_iso8859_1	12 032	1
+		nls_cp437		13 696	1
+		...
+
+lsmod命令实际上是读取并分析"/proc/modules"文件,例如:
+
+	cat /proc/modules
+	hello 12393 0 - Live 0xe67a2000 (OF)
+	nls_utf8 12493 1 - Live 0xe6783000
+	...
+
+/sys/module目录下保存了所有已加载模块的信息,每个模块都有一个目录.
+
+	在加载hello.ko后,/sys/module目录下就多了个/sys/module/hello目录.
+	/sys/module/hello目录下还有像"refcnt"文件和"sections"目录,可通过"tree -a"查看到目录树信息.
+
+3.rmmod
+
+	rmmod hello.ko	//卸载内核模块
+
+**2.使用modprobe/modprobe -r/modinfo操作**
+
+1.modprobe
+
+	modprobe hello.ko	//在加载模块时,会同时加载该模块所依赖的其他模块.
+
+2.modprobe -r
+
+	modprobe -r hello.ko	//下载模块,同时卸载其依赖关系.
+	/*
+		魔窟的依赖关系是由存放在/lib/modules/<kernel-version>/modules.dep文件描述,在整体编译内核
+		时由depmod工具生成,格式如下:
+		kernel/lib/cpu-notifier-error-inject.ko: kernel/lib/notifier-error-inject.ko
+			//前一个依赖于后一个
+		...
+	*/
+
+3.modinfo
+
+	modinfo hello.ko	//获得模块的信息(e.g.作者、模块说明、所支持的参数以及verimagic等信息).
+	filename: ...
+	aliasa: ...
+	description: ...
+	...
+	// 应该在linux服务器上(也就是编译的地方),板子端是查看不到的.
+
+### 4.2 linux内核模块程序结构
+
+linux内核模块主要由以下几部分组成:
+
+**1.模块加载函数**
+
+	module_init(init_func);	//由类似module_init指定的函数指针,完成模块的初始化
+
+**2.模块卸载函数**
+
+	module_exit(exit_func);	//由类似module_exit指定的函数指针,完成模块的卸载
+
+**3.模块许可证(LICENSE)声明**
+
+许可证(LICENSE)声明描述内核模块的许可权限.如果不声明LICENSE,模块被加载时,将收到内核被污染(Kernel Tainted)的警告.
+
+	linux内核模块领域,可接受的LICENSE包括:
+	"GPL"、"GPL v2"、"GPL and addtional rights"、"Dual BSD/GPL"、"Dual MPL/GPL"、"Proprietary"
+	(Proprietary存在争议).--->常用的为"GPL v2".
+		e.g. MODULE_LICENSE("GPL v2");	//声明模块采用GPL v2.
+
+**4.模块参数(可选)**
+
+模块参数是模块被加载时可以传递给它的值,本身对应模块内部的全局变量.
+
+	insmod book.ko book_name='GoodBook'	//表示传递了一个模块参数book_name
+
+**5.模块导出符号(可选)**
+
+内核模块可以导出的符号(symbol--->可为函数或变量).导出的符号,其他模块可以直接使用本模块的变量或函数.
+
+	int add_integer(int a, int b)
+	{
+		return a + b;
+	}
+	EXPORT_SYMBOL_GPL(add_integer);	//导出add_integer.其他模块可以直接调用到该函数.
+
+**6.模块作者等信息声明(可选)**
+
+	MODULE_AUTHOR("Defy");
+	MODULE_DESCRIPTION("A simple hello world module");
+
+### 4.3 模块加载函数
+
+模块加载函数以"module_init(func_name)"的形式被指定.成功返回0,失败返回错误编码.
+
+**1.错误编码信息**
+
+	linux errno位置:
+		1-34号在./include/uapi/asm-generic/errno-base.h
+		35-133号在./include/uapi/asm-generic/errno.h
+		512-529号在./include/linux/errno.h
+
+PS:可以使用perror(errno)将错误编码转成有意义的错误信息字符串.
+
+**2.__init**
+
+	1.__init函数
+		标识为__init的函数如果编译进内核会成为内核镜像的一部分,在链接时会放在.init.text段.
+		#define __init		__attribute__((__section__(".init.text")))
+	2.__initdata(数据)
+		static int hello_data __initdata = 1;	// __initdata的声明
+
+		static int __init hello_init(void)
+		{
+			printk(KERN_INFO "Hello, world %d\n", hello_data);
+			return 0;
+		}
+		module_init(hello_init);
+	PS:定义为__init的函数或__initdata的数据表示:只在内核初始化阶段使用的函数或数据,内核初始化完成后,
+		他们所占用的内存就会被释放掉.
+
+### 4.4 模块卸载函数
+
+	static void __exit hello_exit(void)
+	{
+		printk(KERN_INFO "Goodbye, world\n");
+	}
+
+**1.__exit**
+
+	定义为"__exit"的函数或__exitdata的数据表示:只在退出阶段才会使用的函数或数据.
+	PS:如果模块被编译进内核会被直接忽略--->模块被内置,就不会被卸载了.
+
+### 4.5 模块参数
+
+用于向模块传递参数(e.g.insmod xxx.ko 参数名=参数值)
+
+**1.模块参数**
+
+模块参数定义:
 
 	static char *book_name = "Linux Device Driver";
-	module_param(book_name, charp, S_IRUGO);	/*module_param:表明是模块参数(charp:字符指针)*/
+	module_param(book_name, charp, S_IRUGO);
+	/*
+		module_param(参数名,参数类型,参数读/写权限):
+			参数名:即为变量名;
+			参数类型:包括byte,short,ushort,int,uint,long,ulong,charp(字符指针),bool或invbool
+				(布尔的反)等.在模块被编译时会将module_param中声明的参数类型与变量定义的类型进行比较,
+				判断是否一致.
+			参数读/写权限:S_IRUGO
+		PS:如果是数组可以:
+			module_param_array(数组名,数组类型,数组长,参数读/写权限);
+			使用insmod或modprobe命令时,使用逗号分隔输入的数组元素.
+	*/
 	static int book_num = 4000;
-	module_param(book_num, int, S_IRUGO);	/*module_param(变量名, 变量类型, 参数读/写权限)*/
+	module_param(book_num, int, S_IRUGO);
 
-	/*实例:*/
+模块参数其他:
+
+	模块被加载后,在/sys/module/目录下将会出现一个以模块名命名的目录:
+		1)当"参数读/写权限"为0时,表示此参数不存在sysfs文件系统下的文件节点;
+		2)当"参数读/写权限"不为0时,在/sys/module/目录下还有一个parameter目录,其中包含一系列的以参数名
+		命名的文件节点:
+			1.查看这些文件的权限值即为传入module_param()的"参数读/写权限";
+			2.文件的内容即为参数的值.
+
+**2.实例**
+
 	#include <linux/init.h>
 	#include <linux/module.h>
 	
@@ -1248,41 +1423,122 @@ linux errno位置:
 	MODULE_DESCRIPTION("A simple Module for Testing module param");
 	MODULE_VERSION("V0.0.1");
 
-	//传递模块参数:
-	insmod book.ko book_name=GookBook" book_num=5000
-	//此时可以输出用户传递的参数.
+	1.不传递模块参数(使用默认值):
+		insmod book.ko
+	  查看"/var/log/messages"日志文件,查看到内核的输出:
+		tail -n 2 /var/log/messages		//模块参数的输出为默认值
+	2.传递模块参数:
+		insmod book.ko book_name='GookBook' book_num=5000
+		//查看内核的输出
+		tail -n 2 /var/log/messages		//此时模块参数的输出为传递的值
+	3./sys/module/book/parameters目录:查看模块参数的信息
+		cd /sys/module/book/parameters
+		tree	--->会显示:
+		.
+		|----book_name
+		|----book_num
+		通过:cat book_name和cat book_num可以查看他们的内容.
 
-模块参数传进模块为一个全局变量,整个模块中都可以引用.同时在"/sys/modules/para"会有模块的参数目录
+### 4.6 导出符号
 
-**导出符号**
+**1.查看导出的内核符号表**
 
-导出符号可以被其他模块使用,只需使用前声明下.
+linux的/proc/kallsyms文件对应着内核符号表,记录了符号以及符号所在的内存地址.
 
-	EXPORT_SYMBOL(符号名);	/*可以导出函数名e.g.EXPORT_SYMBOL(func_name);*/
-	EXPORT_SYMBOL_GPL(符号名);	/*符合GPL许可的模块*/
+	cat /proc/kallsyms	//查看内核符号表
 
-**查看导出的符号**
+**2.导出符号表方法**
 
-	cat /proc/kallsyms---导出的符号在"kallsyms"文件中
+导出符号就可以被其他模块使用.导出方法如下:
+
+	EXPORT_SYMBOL(符号名);
+	/*
+		导出符号名.
+		e.g.EXPORT_SYMBOL(func_name);--->导出函数名func_name,其他内核模块可以直接调用func_name函数.
+	*/
+	EXPORT_SYMBOL_GPL(符号名);	/*导出符合GPL许可的内核符号.--->常用.*/
+
+**3.实例**
+
+	#include <linux/init.h>
+	#include <linux/module.h>
+
+	int add_integer(int a, int b)
+	{
+		return a + b;
+	}
+	EXPORT_SYMBOL_GPL(add_integer);	//导出函数名add_integer(即函数指针,其他模块可直接调用)
+
+	int sub_integer(int a, int b)
+	{
+		return a - b;
+	}
+	EXPORT_SYMBOL_GPL(sub_integer);	//导出函数名sub_integer(即函数指针,其他模块可直接调用)
+	MODULE_LICENSE("GPL v2");
+
+	PS:从/proc/kallsyms文件中可以找到add_integer/sub_integer等相关信息(有多个).
+
+### 4.7 模块声明及描述
+
+	MODULE_AUTHOR("Defy");		//模块作者
+	MODULE_DESCRIPTION("xxx");	//模块的描述信息
+	MODULE_VERSION("v0.1");		//模块版本信息
+	...(其他)
+
+### 4.8 模块的编译
+
+Makefile文件(待完善).
+
+	KVERS = $(shell uname -r)
+
+	# Kernel modules
+	obj-m += hello.o
+
+	#EXTRA_CFALGS=-g -O0
+
+	build: kernle_modules
+
+	kernel_modules:
+		make -C /lib/modules/$(KVERS)/build M-$(CURDIR) mdoules
+	
+	clean:
+		make -C /lib/modules/$(KVERS)/build M=-$(CURDIR) clean
 
 ***
 
 ## Chapter 5 Linux文件系统与设备文件
 
-### 5.1 linux文件系统操作
+### 5.1 linux文件操作
 
-**系统调用**
+#### 5.1.1 系统调用
 
-1)创建
+**1.创建文件**
 
-	int creat(const char *filename, mode_t mode);	/*filename:创建的文件名;mode:权限(S_I"R/W/X""USR/GRP/OTH"或者S_IRWX"U/G/O")*/
-	/*由于filename没有路径可以指定,一般用的比较少*/
+	int creat(const char *filename, mode_t mode);
+	/*
+		filename:创建的文件名;
+		mode:权限(S_I"R/W/X""USR/GRP/OTH"或者S_IRWX"U/G/O");
+		PS:由于filename没有路径可以指定,一般用的比较少.
+	*/
 
-2)打开
+**2.打开**
 
-	int open(const char *pathname, int flags);	/*pathname:文件名(含路径);flags:标志(O_RDONLY、O_WRONLY、O_RDWR、O_NONBLOCK等)*/
-	int open(const char *pathname, int flags, mode_t mode); 
-	/*针对flags标志为:O_CREAT,融合了create(创建)函数.
+	有两种方法:
+	1.int open(const char *pathname, int flags);
+	/*
+		pathname:文件名(含路径);
+		flags:打开方式:
+			O_RDONLY:只读方式打开;
+			O_WRONLY:只写方式打开;
+			O_RDWR:读写方式打开;
+			O_APPEND:追加方式打开;
+			O_CREAT:创建一个文件;
+			O_EXEC:如果使用了O_CREAT而且文件已经存在,则会发生一个错误;
+			O_NONBLOCK:非阻塞方式打开;
+			O_TRUNC:如果文件已经存在,则删除文件内容.
+	*/
+	2.int open(const char *pathname, int flags, mode_t mode); 
+	/*
 		mode:表示文件的访问权限.这样设置之后,后续不需要执行chmod命令更改权限.
 	*/
 	
