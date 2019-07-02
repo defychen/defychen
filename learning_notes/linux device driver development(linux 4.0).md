@@ -1539,7 +1539,31 @@ Makefile文件(待完善).
 	*/
 	2.int open(const char *pathname, int flags, mode_t mode); 
 	/*
-		mode:表示文件的访问权限.这样设置之后,后续不需要执行chmod命令更改权限.
+		mode:表示文件的访问权限.这样设置之后,后续不需要执行chmod命令更改权限.mode的值如下:
+			S_IRUSR:用户可读;
+			S_IWUSR:用户可写;
+			S_IXUSR:用户可执行;
+			S_IRWXU:用户可读、写、执行;
+			S_IRGRP:组可读;
+			S_IWGRP:组可写;
+			S_IXGRP:组可执行;
+			S_IRWXG:组可读、写、执行;
+			S_IROTH:其他人可读;
+			S_IWOTH:其他人可写;
+			S_IXOTH:其他人可执行;
+			S_IRWXO:其他人可读、写、执行;
+			S_ISUID:设置用户执行ID--->设置用户ID也可以用1表示,不设置用0表示;
+			S_ISGID:设置组的执行ID--->设置组ID也可以用1表示,不设置用0表示;
+		e.g.如果创建一个文件,属性为:
+				用户可读、写、执行,组没有权限,其他人可读、执行,设置用户ID,不设置组ID,则:
+			open("test", O_CREAT, 10705);
+				10705:
+					第一个位用户ID(=1表示设置用户ID);
+					第二位组ID(=0不设置组ID);
+					第三位用户权限(7->可读,可写,可执行);
+					第四位组权限(0->组没有权限);
+					第5位其他人的权限(5->1可读,可执行)
+			上述等价于:open("test", O_CREAT, S_IRWXU | S_IROTH | S_IXOTH | S_ISUID);
 	*/
 	
 	char dev_name[128] = {"/dev/dsc0"};
@@ -1549,27 +1573,32 @@ Makefile文件(待完善).
 	{
 		/*print some error message...*/
 	}
+**3.读写**
 
-3)读写
+	int read(int fd, void *buf, size_t length);
+		/*从fd读length(length:以字节为单位)个字节读到buf缓冲区,返回实际读取的字节数*/
+	int write(int fd, const void *buf, size_t length);
+		/*将length个字节数据从buf写到fd,返回实际写入的字节数*/	
 
-	int read(int fd, void *buf, size_t length); /*从fd读length(以字节(size_t)为单位)个字节读到buf缓冲区,
-		返回实际读取的字节数*/
-	int write(int fd, const void *buf, size_t length); /*将length字节数据从buf写到fd,返回实际写入的字节数*/	
+**4.定位**
 
-4)定位
+	int lseek(int fd, offset_t offset, int whence);
+	/*
+		offset:偏移量(其实为int型);
+		whence:定位位置,可为下列值:
+			SEEK_SET(0):文件开头(offset相对文件开头偏移);
+			SEEK_CUR(1):文件读写指针当前位置(offset相对当前位置);
+			SEEK_END(2):文件末尾(offset相对文件末尾);
+		retval:返回值为文件读写指针相对文件头的位置
+	*/
+	e.g.取得文件的长度:
+		file_length = lseek(fd, 0, SEEK_END);
 
-	int lseek(int fd, offset_t offset, int whence);	/*offset:偏移量(其实为int型);返回值为文件读写指针相对文件头的位置*/
-	whence取值:
-	SEEK_SET(0):文件开头(offset相对文件开头偏移)
-	SEEK_CUR(1):文件读写指针当前位置(offset相对当前位置)
-	SEEK_END(2):文件末尾(offset相对文件末尾)
-	/*取得文件的长度:file_length = lseek(fd, 0, SEEK_END);*/
-
-5)关闭
+**5.关闭**
 
 	close(fd);
 
-**实例:Linux文件操作用户空间编程(使用系统调用)**
+**6.实例---linux文件操作用户空间的编程(使用系统调用)**
 
 	#include <sys/types.h>
 	#include <sys/stat.h>
@@ -1585,15 +1614,9 @@ Makefile文件(待完善).
 
 		fd = open("hello.txt", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 		/*
-		创建并打开文件,用户可读、可写.
-		PS:创建文件:open("test", O_CREAT, 10705);
-			10705:
-				第一个位用户ID(=1表示设置用户ID);
-				第二位组ID(=0不设置组ID);
-				第三位用户权限(7->可读,可写,可执行);
-				第四位组权限(0->组没有权限);
-				第5位其他人的权限(5->101(可读,可执行))
-		上述等价于:open("test", O_CREAT, S_IRWXU | S_IROTH | S_IXOTH | S_ISUID);
+			创建并打开文件,用户可读、可写.
+			等价于:
+				fd = open("hello.txt", O_CREAT | O_RDWR, 600);
 		*/
 		if (fd > 0) {
 			write(fd, "Hello world", strlen("Hello world")); //strlen():求字符串长度
@@ -1601,17 +1624,17 @@ Makefile文件(待完善).
 		}
 
 		fd = open("hello.txt", O_RDWR);
-		len = read(fd, str, LENGTH);	//目标读取LENGTH长度,返回实际读取的长度
-		str[len] = '\0';	//结尾必须添加上'\0'.
+		len = read(fd, str, LENGTH);	//读取LENGTH长度的字节,返回实际读取的长度
+		str[len] = '\0';	//结尾必须添加上'\0'(结束符).
 		printf("%s\n", str);
 		close(fd);
 	}
 
-**C库函数操作**
+#### 5.1.2 C库函数--->推荐使用
 
 C库函数的文件操作独立于具体的操作系统平台,即在DOS, Windows, Linux或VxWorks都是一样的函数.
 
-1.创建和打开
+**1.创建和打开**
 
 	FILE *fopen(const char *path, const char *mode);
 	/*
@@ -1621,33 +1644,37 @@ C库函数的文件操作独立于具体的操作系统平台,即在DOS, Windows
 			w, wb:只写方式打开,不存在会创建;
 			a, ab:追加方式打开,不存在会创建;
 			w+, w+b:以读写方式打开.不存在会创建.
-		retval:返回FILE的指针.后续可以进行如下的判断:
+		retval:成功返回FILE的指针,失败返回NULL.后续可以进行如下的判断:
 			if (fd) //表示打开成功
 	*/
-	PS:linux不区分二进制文件和文本文件.因此"rb/wb"和"r/w"在linux是一样的功能.
+	PS:linux不区分二进制文件和文本文件.因此"rb/wb"和"r/w"在linux中是一样的功能.
 
-2.读写
+**2.读写**
 
-	int fgetc(FILE *stream); //从stream中读取一个字符并将字符返回
-	int fputc(int c, FILE *stream); //向stream中写入一个字符c
-	char *fgets(char *s, int n, FILE *stream); //从stream中读取n个字符,并存放到s这个字符串中.
-	int fputs(const char *s, FILE *stream); //将s所指向的字符串写入到stream中
+	int fgetc(FILE *stream); 
+		//从stream中读取一个字符并将字符返回
+	int fputc(int c, FILE *stream);
+		//向stream中写入一个字符c
+	char *fgets(char *s, int n, FILE *stream);
+		//从stream中读取n个字符,并存放到s这个字符串buffer中.
+	int fputs(const char *s, FILE *stream);
+		//将buffer s所包含的字符串写入到stream中
 	size_t fread(void *ptr, size_t size, size_t n, FILE *stream);
-		//从stream中读取n个字段(每个字段大小为size)到ptr所指向的数组中.返回实际已读取的字段数
+		//从stream中读取n个字段(每个字段大小为size)到ptr所指向的buffer中.返回实际已读取的字段数
 	size_t fwrite(const void *ptr, size_t size, size_t n, FILE *stream);
-		//从ptr所指向的数组中将n个字段(每个字段大小为size)写入到stream中.返回实际写入的字段数.
+		//从ptr所指向的buffer中将n个字段(每个字段大小为size)写入到stream中.返回实际写入的字段数.
 
-3.定位
+**3.定位**
 
-	int fgetpos(FILE *stream, fpos_t *pos); //获取文件的位置.
-	int fsetpos(FILE *stream, const fpos_t *pos); //设置文件的位置
-	int fseek(FILE *stream, long offset, int whence); //对文件进行相关的定位操作.
+	int fgetpos(FILE *stream, fpos_t *pos); 		//获取文件的位置.
+	int fsetpos(FILE *stream, const fpos_t *pos);	//设置文件的位置
+	int fseek(FILE *stream, long offset, int whence);	//对文件进行相关的定位操作.
 
-4.关闭
+**4.关闭**
 
 	int fclose(FILE *stream);
 
-**C库函数实例**
+**5.实例---使用C库函数**
 
 	#include <stdio.h>
 	#define LENGTH 100
@@ -1671,19 +1698,65 @@ C库函数的文件操作独立于具体的操作系统平台,即在DOS, Windows
 		return 0;
 	}
 
-### 5.2 Linux文件系统
+### 5.2 linux文件系统
 
-**Linux文件系统目录结构**
+#### 5.2.1 linux文件系统目录结构**
 
-/dev:该目录为系统中包含的设备文件(即设备节点),应用程序通过对该目录下的文件进行读写、控制、访问实际的设备.
+**1./bin**
 
-/proc:进程、内核信息(CPU、硬盘分区、内存信息等)放置在该目录.proc目录为伪文件系统proc(不是真正的文件系统)的挂载目录,proc文件系统存在于内存中.而其他的文件系统放置在Flash上,会挂载在根目录"/".
+	基本命令(e.g.ls, cp, mkdir等).该目录下的所有文件都是可执行的.
 
-cat /proc/devices:获知系统中注册的设备(字符设备和块设备)
+**2./sbin**
 
-/sys:sysfs文件系统映射到该目录,linux设备驱动模型中的总线、驱动、设备在该目录下有对应的节点.
+	系统命令(e.g.modprobe, hwclock, ifconfig等).大多为系统管理命令.该目录下的所有文件都是可执行的.
 
-**linux文件系统与设备驱动**
+**3./dev**
+
+	设备文件存储目录(即设备节点).应用程序通过对该目录下的文件进行读写、控制以访问实际的设备.
+
+**4./etc**
+
+	系统配置文件目录(一些服务器的配置文件也在这里).e.g.用户账号和密码配置文件,busybox启动脚本就在该目录下.
+
+**5./lib**
+
+	系统库文件存放目录.
+
+**6./mnt**
+
+	存放挂载存储设备的挂载目录(e.g.cdrom目录).
+
+**7./opt**
+
+	可选目录.有些软件包会被安装在这里.
+
+**8./proc**
+
+	操作系统运行时进程及内核信息(e.g.CPU、硬盘分区、内存信息等)放置在该目录.
+	/proc目录为伪文件系统proc(不是真正的文件系统)的挂载目录,proc文件系统存在于内存中.
+	其他的文件系统一般放置在Flash上,会挂载在根目录"/".
+
+	PS:
+		cat /proc/devices:获知系统中注册的设备(字符设备和块设备)
+
+**9./tmp**
+
+	程序运行时存放临时文件目录.
+
+**10./usr**
+
+	存放用户程序的目录(e.g.用户命令、用户库等).
+
+**11./var**
+
+	该目录的内容经常变动(e.g./var/log目录就用来存放系统日志).
+
+**12./sys**
+
+	sysfs文件系统映射到该目录.linux设备驱动模型中的总线、驱动和设备在sysfs文件系统中有对应的节点.
+	当内核检测到在系统中出现新设备后,内核会在sysfs文件系统中为该新设备生成一个新的目录.
+
+#### 5.2.2 linux文件系统与设备驱动
 
 应用程序与VFS之间的接口是系统调用;VFS与文件系统(ext2/fat/btrfs等)、设备文件(/dev/ttyS1、/dev/sdb1、/dev/dsc0等)、特殊文件系统(/proc、/sys等)--(这些属于同一层次)之间的接口是file_operations结构体成员函数.
 
