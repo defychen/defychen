@@ -1758,29 +1758,96 @@ C库函数的文件操作独立于具体的操作系统平台,即在DOS, Windows
 
 #### 5.2.2 linux文件系统与设备驱动
 
-应用程序与VFS之间的接口是系统调用;VFS与文件系统(ext2/fat/btrfs等)、设备文件(/dev/ttyS1、/dev/sdb1、/dev/dsc0等)、特殊文件系统(/proc、/sys等)--(这些属于同一层次)之间的接口是file_operations结构体成员函数.
+**1.文件系统与设备驱动之间的关系**
 
-字符设备上层没有文件系统(e.g.ext2),因此字符设备的file_operations由自己的设备驱动提供,像块设备由于文件系统中实现了file_operations,因此设备驱动层看不到file_operations.
+![](images/relationship_between_fs_device_driver.png)
 
-**file结构体**
+	1.应用程序与VFS(虚拟文件系统)之间的接口是系统调用;
+	2.VFS与文件系统(ext2/fat/btrfs等)、设备文件(/dev/ttyS1、/dev/sdb1、/dev/dsc0等)、特殊文件
+	系统(/proc、/sys等)--(这些属于同一层次)之间的接口是file_operations结构体成员函数;
+	3.字符设备上层没有文件系统(e.g.ext2),因此字符设备的file_operations由自己的设备驱动提供;
+	4.块设备有两种途径:
+		1.像字符设备一样,直接访问裸设备,走kernel实现的统一的def_blk_fops这个file_operations(源代码
+		位于fs/block_dev.c) e.g.dd if=/dev/sbd1 of=sbd1.img将/dev/sbd1裸分区复制到sbd1.img,内核
+		走的就是def_blk_fops这个file_operations;
+		2.通过文件系统(e.g.ext2)来访问块设备:file_operations的实现位于该文件系统中,文件系统将针对文件
+		的读写转换为块设备原始扇区的读写.此时块设备驱动提供接口给文件系统;
+	5.ext2、fat、btrfs等文件系统中实现了针对VFS的file_operations,因此设备驱动层看不到file_operations
+	的存在.
 
-struct file打开文件时创建，然后传递给对文件进行操作的函数(e.g. read/write/ioctl)
+**2.file结构体**
 
-struct file结构体中的私有数据指针"private_data",用以指向私有数据结构体(此结构体必须包括设备结构体的指针).
+file结构体代表一个打开的文件,应用程序每个打开的文件在内核空间都有一个关联的struct file.由内核在打开文件时创建,并传递给在文件上进行操作的任何函数.在文件被关闭时内核释放struct file.struct file的指针通常被命名为file或filp(file pointer--->较为常用).
 
-判断文件打开是以阻塞方式还是非阻塞方式:
+	struct file {
+	union {
+		struct llist_node		fu_llist;
+		struct rcu_head			fu_rcuhead;		
+	};
+	...
+	unsigned int		f_flags;	/* 文件标志,e.g. O_RDONLY, O_NONBLOCK, O_SYNC等 */
+	fmode_t				f_mode;		/* 文件读/写模式, FMODE_READ和FMODE_WRITE */
+	...
+	loff_t				f_pos;		/* 当前读写位置 */
+	...
+	void		*private_data;	/*文件私有数据,大多数指向设备驱动中自定义的用于描述设备的结构体 */
+	} __attribute__((aligned(4)));
+
+内核中判断文件是以阻塞方式还是非阻塞方式打开设备文件:
 
 	if (file->f_flags & O_NONBLOCK)		/*非阻塞*/
 		pr_debug("open: non-blocking\n");
 	else
 		pr_debug("open: blocking\n");	/*阻塞*/
 
-**inode**
+**3.inode**
 
-inode是linux管理文件系统的最基本单位,也是文件系统连接任何子目录、文件的桥梁.
+VFS inode包含文件访问权限、属主、组、大小、生成时间、访问时间、最后修改时间等信息.是linux管理文件系统的最基本单位,也是文件系统连接任何子目录、文件的桥梁.
 
-	/*从节点(inode)获得设备结构体的首地址*/	
+	struct inode {
+		...
+		umode_t i_mode;		/* inode的权限 */
+		uid_t i_uid;		/* inode拥有者的id */
+		gid_t i_gid;		/* inode所属的群组id */
+		dev_t i_rdev;		/* 若是设备文件,该字段记录设备的设备号 */
+		loff_t i_size;		/* inode所代表的文件大小 */
+
+		struct timespec i_atime;	/* inode最近一次的存取时间 */
+		struct timespec i_mtime;	/* inode最近一次的修改时间 */
+		struct timespec i_ctime;	/* inode的产生时间 */
+		...
+		union {
+			struct pipe_inode_info *i_pipe;
+			struct block_device *i_bdev; /* 若是块设备,为其对应的block_device结构体指针 */
+			struct cdev *i_cdev; /* 若是字符设备,为其对应的cdev结构体指针 */
+		};
+		...
+	};
+
+inode的使用:
+
+	1.从节点(inode)获得设备结构体的首地址	
 	dev = container_of(inode->i_cdev, struct light_cdev, cdev);	/*i_cdev:cdev的首地址.*/
+	2.inode获得主设备号和次设备号
+		unsigned int imajor(struct inode *inode);
+		unsigned int iminor(struct inode *inode);
+
+**4.系统中设备查看**
+
+	1.查看/proc/devices文件可以获知系统中注册的设备
+		cat /proc/devices
+		Character devices:
+			1 mem
+			2 pty
+			...
+	2.查看/dev目录可以获知系统中包含的设备文件
+		ls -l /dev
+		crw-rw---	1 root	uucp	4, 64 jan 30 2xxx /dev/ttyS0	//4,64分表表示主、次设备号
+
+**5.主次设备号**
+
+	主设备号代表一类设备,次设备号表示多个同类设备下使用某驱动的设备的序号,序号(次设备号)一般从0开始.
+	内核的./Documentations/devices.txt描述了Linux设备号的分配情况.
 
 ### 5.3 udev用户空间设备管理
 
