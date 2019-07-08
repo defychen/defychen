@@ -1851,24 +1851,105 @@ inode的使用:
 
 ### 5.3 udev用户空间设备管理
 
-**devfs**
+#### 5.3.1 udev与devfs的区别
 
-linux 2.4内核中,devfs作为对设备进行管理的文件系统(虚拟文件系统).挂载于/dev目录下,管理该目录下的所有设备.由于存在众多缺点(e.g.运行内核空间),后来没被再使用.
+**1.devfs(设备文件系统)**
 
-**sysfs**
+linux 2.4内核中,devfs作为对设备进行管理的文件系统(设备文件系统).挂载于/dev目录下,管理该目录下的所有设备.由于存在众多缺点(主要是运行内核空间),后来没被再使用.
 
-linux 2.6以后的内核中,sysfs作为对设备进行管理的文件系统(虚拟文件系统).挂载与/sys目录下.sysfs是为了展示设备驱动模型中各组件(设备、总线、类等)的层次关系.sysfs可以被user space读写,而udev作为一个工具,利用sysfs提供的信息对dev进行相关的操作.
+**2.udev**
 
-linux使用struct bus_type、struct device_driver、struct device来描述总线、驱动、设备,位于"./include/linux/device.h".
+udev完全工作在用户态,利用设备加入或移除时内核所发送的热插拔事件(Hotplug Event)来工作.
 
-	//使用的时候:
-	#include <linux/device.h>
+1.针对热插拔设备的udev
 
-struct device_driver和struct device依附于struct bus_type,都包含有struct bus_type指针.struct bus_type中的match()函数将两者进行匹配.一旦匹配上之后,xxx_driver的probe()函数就会执行(xxx:总线名.e.g.platform、pci、i2c、spi、usb、see).
+在热插拔时,设备的详细信息会由内核通过netlink套接字发送出来,发出的事情叫uevent.udev的设备命名策略、权限控制和事件处理都是在用户态下完成的,它利用从内核收到的信息来进行创建设备文件节点等工作.
 
-**udev**
+	//netlink的使用范例
+	#include <linux/netlink.h>
+
+	static void die(char *s)
+	{
+		write(2, s, strlen(s));
+		exit(1);
+	}
+
+	int main(int argc, char *argv[])
+	{
+		struct sockaddr_nl nls;
+		struct pollfd pfd;
+		char buf[512];
+
+		// open hotplug event netlink socket
+		memset(&nls, 0, sizeof(struct sockaddr_nl));
+		nls.nl_family = AF_NETLINKE;
+		nls.nl_pid = getpid();
+		nls.nl_groups = -1;
+
+		pfd.events = POLLIN;
+		pfd.fd = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_KOBJECT_UEVENT);
+		if (pfd.fd == -1)
+			die("Not root\n");
+
+		// Listen to netlink socket
+		if (bind(pfd.fd, (void *)&nls, sizeof(struct sockaddr_nl)))
+			die("Bind failed\n");
+
+		while (-1 != poll(&pfd, 1, -1)) {
+			int i, len = recv(pfd.fd, buf, sizeof(buf), MSG_DONTWAIT);
+			if (len == -1)
+				die("recv\n");
+
+			// print data to stdout
+			i = 0;
+			while (i < len) {
+				printf("%s\n", buf + i);
+				i += strlen(buf + i) + 1;
+			}
+		}
+		die("poll\n");
+		return 0;
+	}
+
+	/*
+	编译并运行上述代码,把Apple Facetime HD Camera USB摄像头插入Ubuntu,程序会dump出一些信息.
+	udev就是采用上面这种方式接受netlink消息,并根据它的内容和用户设备给udev的规则做匹配来进行工作的.
+	*/
+
+2.针对冷插拔设备的udev
+
+冷插拔设备在开机时就存在,在u已经dev启动前已经被插入.对于冷插拔的设备,linux内核提供了sysfs下面一个uevent节点,可以往该节点写一个"add",导致内核重新发送netlink,之后udev就可以收到冷插拔的netlink消息了.
+
+	运行上述代码程序,手动往/sys/module/psmouse/uevent写一个"add",程序也会dump出来一些信息.
+
+#### 5.3.2 sysfs文件系统与linux设备模型
+
+linux 2.6以后的内核中,sysfs作为对设备进行管理的文件系统(与proc/devfs/devpty同类别的文件系统,sysfs是一个虚拟文件系统).挂载与/sys目录下.
+
+	1.sysfs展示了设备驱动模型中各组件(设备、总线、类等)的层次关系,顶级目录包括:block,bus,dev,devices,
+		class,fs,kernel,power和firmware等;
+		block:包含所有的块设备;
+		devices:包含系统所有的设备,并根据设备连接的总线类型组织成层次结构;
+		bus:包含系统中所有的总线类型;
+		class:包含系统中的设备类型(e.g.网卡设备、声卡设备、输入设备等);
+	2.sysfs可以被user space读写,而udev作为一个工具,利用sysfs提供的信息对dev进行相关的操作.
+
+linux使用struct bus_type、struct device_driver、struct device来描述总线、驱动、设备,位于"./include/linux/device.h".使用的时候"#include <linux/device.h>"--->结构体定义参照linux源码
+
+	1.struct device_driver和struct device依附于struct bus_type,都包含有struct bus_type指针;
+	2.linux内核中,设备和驱动是分开注册的;
+	3.struct bus_type中的match()函数负责将设备和驱动进行匹配.一旦匹配上之后,xxx_driver的probe()函数
+		就会被执行(xxx:总线名.e.g.platform、pci、i2c、spi、usb等);
+	4.一些attribute不明白是干嘛的--->略.
+
+#### 5.3.3 udev的相关说明--->需要继续深入
 
 udev是一种工具(运行在用户空间),根据系统中的硬件设备状况更新设备文件(即/dev下的设备文件),e.g.动态建立/删除设备文件.
+
+	//udev工作过程:
+	1.当内核检测到系统中出现了新设备后,内核会通过netlink套接字发送uevent;
+	2.udev获取内核发送的消息,进行规则的匹配(匹配的事务包括SUBSYSTEM、ACTION、attribute、内核提供的名
+		称(通过KERNEL=)以及其他的环境变量).
 
 udev有自己的规则去更新/dev下的设备文件(e.g.windows连接usb转串口设备时,udev在设备管理器中显示为:usb-serial,可以认为是udev规则作用的结果..)
 
@@ -1911,7 +1992,8 @@ cdev_alloc():动态申请cdev内存(无论什么内存申请,单位都是字节)
 
 	struct cdev *cdev_alloc(void);	
 	/*其源代码中使用到了
-	struct cdev *p = kzalloc(sizeof(struct cdev), GFP_KERNEL); /*kzalloc结合kmalloc申请内核内存和memset初始化*/
+	struct cdev *p = kzalloc(sizeof(struct cdev), GFP_KERNEL);
+		/*kzalloc结合kmalloc申请内核内存和memset初始化*/
 	kzalloc返回(void *)的指针--指向分配的内存(单位为字节)
 	*/
 
