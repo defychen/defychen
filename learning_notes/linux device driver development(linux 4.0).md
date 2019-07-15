@@ -1961,7 +1961,7 @@ udev需要sysfs、tmpfs的支持,sysfs为udev提供设备入口和uevent通道,t
 
 ### 6.1 Linux字符设备驱动结构
 
-**cdev结构体**
+#### 6.1.1 cdev结构体
 
 cdev结构体用于描述一个字符设备:
 
@@ -1974,45 +1974,62 @@ cdev结构体用于描述一个字符设备:
 		unsigned int count;
 	};
 
+**1.dev_t--->设备号**
+
 dev_t dev用于描述设备号(32 bit)
 
 	MAJOR(dev_t dev);	/*获得主设备号(12bit)*/
 	MINOR(dev_t dev);	/*获得次设备号(20bit)*/
 	MKDEV(int major, int minor);	/*利用主设备号和次设备号生成dev_t(设备号)*/
 
+**2.cdev_init()**
+
 cdev_init():初始化cdev成员,并建立cdev和file_operations之间的联系
 	
-	void cdev_init(struct cdev *, struct file_operations *);
+	void cdev_init(struct cdev *cdev, struct file_operations *fops);
 	/*
 		para1:struct cdev的结构体指针;
 		para2:struct file_operations结构体指针.
 	*/
 
-cdev_alloc():动态申请cdev内存(无论什么内存申请,单位都是字节)--->一般不用.
+**3.cdev_alloc()**
 
-	struct cdev *cdev_alloc(void);	
+cdev_alloc():动态申请cdev内存.不需要指定大小,自动申请大小为sizeof(struct cdev).(无论什么内存申请,单位都是字节)--->一般不用.
+
+	struct cdev *cdev_alloc(void);
 	/*其源代码中使用到了
-	struct cdev *p = kzalloc(sizeof(struct cdev), GFP_KERNEL);
-		/*kzalloc结合kmalloc申请内核内存和memset初始化*/
-	kzalloc返回(void *)的指针--指向分配的内存(单位为字节)
+		struct cdev *p = kzalloc(sizeof(struct cdev), GFP_KERNEL);
+			/*kzalloc结合kmalloc申请内核内存和memset初始化*/
+		kzalloc返回(void *)的指针--指向分配的内存.
 	*/
 
-cdev_add():添加一个cdev设备,也就是将cdev设备添加到一个链表中.
+**4.cdev_add()**
+
+cdev_add():添加一个cdev设备,也就是将cdev设备添加到一个链表中,完成字符设备的注册.
 
 	int cdev_add(struct cdev *, dev_t, unsigned);
 	/*
-		para1:struct cdev结构体;
+		para1:struct cdev结构体指针;
 		para2:设备号;
-		para2:次设备号的数目(一般为1);
+		para3:次设备号的数目(一般为1);
 		retval:成功返回0,失败返回非0值.
 		*/
 	/*e.g. cdev_add(&dev->cdev, devno, 1);*/
 
-cdev_del():删除一个cdev设备,在注销时调用
+**5.cdev_del()**
+
+cdev_del():删除一个cdev设备,在注销设备时调用(即模块卸载函数中).
 
 	void cdev_del(struct cdev *);
+	/*
+		para:struct cdev结构体指针.
+	*/
 
-**分配和释放设备号**
+#### 6.1.2 分配和释放设备号
+
+**1.register_chrdev_region()**
+
+静态申请设备号的情况(即设备号已知的情况)--->容易与别的设备产生设备号冲突,一般不用.
 
 	int register_chrdev_region(dev_t from, unsigned count, const char *name);
 	/*
@@ -2021,86 +2038,172 @@ cdev_del():删除一个cdev设备,在注销时调用
 		para3:设备名字.
 		缺点:设备号需要传递进去,因此需要提前定义好.容易和别的设备产生设备号冲突.
 	*/
+
+**2.alloc_chrdev_region()**
+
+动态申请未被占用的设备的情况,会自动避开设备号重复的冲突--->使用较多.
+
 	int alloc_chrdev_region(dev_t *dev, unsigned baseminor, unsigned count, const char *name);
 	/*
-		//动态申请设备号
-		para1:存放申请到的设备号;
+		para1:存放申请到的设备号--->传出来的值;
 		para2:次设备号(一般从0开始),需要传进去;
 		para3:次设备的数量(一般为1);
 		para4:设备名字.
 	*/
 
+**3.unregister_chrdev_region()**
+
+释放申请到的设备号.
+
 	void unregister_chrdev_region(dev_t from, unsigned count);
 	/*
-		//释放申请得到的设备号
 		para1:申请得到的设备号;
 		para2:次设备数量(一般为1);
 	*/
 
-**字符设备注册/注销顺序**
+#### 6.1.3 字符设备注册/注销总结
 
-	//字符设备注册
-	1.申请设备号:alloc_chrdev_region(dev_t *dev, unsigned basemonior, 
-		unsigned count, const char *name);
-	2.字符设备初始化:cdev_init(struct cdev *, struct file_operations *);
-	3.注册字符设备:cdev_add(struct cdev *, dev_t, unsigned);
-	4.创建设备节点:struct device *device_create(struct class *class, struct device *parent, 
+**1.字符设备注册**
+
+	1.申请设备号
+		alloc_chrdev_region(dev_t *dev, unsigned basemonior, unsigned count, const char *name);
+	2.字符设备初始化
+		cdev_init(struct cdev *, struct file_operations *);
+	3.注册字符设备
+		cdev_add(struct cdev *, dev_t, unsigned);
+	4.创建设备节点
+		struct device *device_create(struct class *class, struct device *parent, 
 					dev_t devt, void *drvdata, const char *fmt, ...);
-	/*
-		para1:struct class---设备类.在这之前需要先创建struct class(设备类)(可以在init的时候创建)
-			e.g.struct class *g_bsf_class = NULL;
-				g_bsf_class = class_create(THIS_MODULE, BSF_DRVNAME);
-		para2:父设备;
-		para3:设备号;
-		para4:设备的数据(为自定义设备结构体);
-		para5:在/dev下显示的设备节点名字(e.g.para5为dsc0)
-			--->只是在/dev下显示的名字,"/dev"不会作为para5参数的一部分.
-		retval:struct device *设备结构体指针.
-	*/
+		/*
+			para1:struct class---设备类.在这之前需要先创建struct class(设备类)(可以在init的时候创建)
+				e.g.struct class *g_bsf_class = NULL;
+					g_bsf_class = class_create(THIS_MODULE, BSF_DRVNAME);
+			para2:父设备;
+			para3:设备号;
+			para4:设备的数据(为自定义设备结构体);
+			para5:在/dev下显示的设备节点名字(e.g.para5为dsc0)
+				--->只是在/dev下显示的名字,"/dev"不会作为para5参数的一部分.
+			retval:struct device *设备结构体指针.
+		*/
 	
-	//字符设备注销
-	1.卸载设备节点:device_destroy(struct class *class, dev_t devt);
-	/*
-		para1:设备类;
-		para2:设备号;
-	*/
-	2.删除字符设备:cdev_del(struct cdev *cdev);
-	3.释放设备号:unregister_chrdev_region(dev_t from, unsigned count);
-	4.删除设备类:class_destroy(struct class *class);
+**2.字符设备注销**
 
-**file_operations结构体**
+	1.卸载设备节点
+		device_destroy(struct class *class, dev_t devt);
+		/*
+			para1:设备类;
+			para2:设备号;
+		*/
+	2.删除字符设备
+		cdev_del(struct cdev *cdev);
+	3.释放设备号
+		unregister_chrdev_region(dev_t from, unsigned count);
+	4.删除设备类
+		class_destroy(struct class *class);
 
-1)unlocked_ioctl():一般使用".unlocked_ioctl = xxx_ioctl,"赋值.提供设备相关控制cmd(命令)的实现.成功返回非负值.
+#### 6.1.4 file_operations结构体
 
-2)mmap():将设备内存(内核空间)映射到进程的虚拟地址空间(用户空间).建立内核空间到用户空间(即进程)的虚拟地址空间的映射(即设备内存到用户内存的映射).映射成功后,用户对这段内存的操作直接反应到内核空间(设备内存),同样内核空间对这段内存的操作也直接反应到用户空间.应用程序访问这段内存无需进行内存拷贝,针对需要大量数据传输的操作效率非常高.
+**1.struct file_operations定义如下:**
 
-进程在mmap映射过程中的文件内容的改变不会立即写回到磁盘文件中,写回操作是在调用munmap()后才执行,可以通过调用msync()来实现同步.-----一般用的较少.
+	struct file_operations {
+		struct module *owner;
+		loff_t (*llseek)(struct file *, loff_t, int);
+		ssize_t (*read)(struct file *, char __user *, size_t, loff_t *);
+		ssize_t (*write)(struct file *, const char __user *, size_t, loff_t *);
+		ssize_t (*aio_read)(struct kiocb *, struct iovec *, unsigned long, loff_t);
+		ssize_t (*aio_write)(struct kiocb *, const struct iovec *, unsigned long, loff_t);
+		...
+		long (*unlocked_ioctl)(struct file *, unsigned int, unsigned long);
+		...
+		int (*mmap)(struct file *, struct vm_area_struct *);
+		int (*open)(struct inode *, struct file *);
+		...
+		int (*release)(struct inode *, struct file *);
+		...
+	};
 
-用户空间的mmap & mnumap:
+**2.llseek()**
 
+用来修改一个文件的当前读写位置,并将新位置返回.在出错时,返回一个负值.
+
+	loff_t (*llseek)(struct file *, loff_t, int);
+
+**3.read()**
+
+用来从设备中读取数据,成功返回读取的字节数,出错返回一个负值(返回0时表示end-of-file(EOF)).
+
+	ssize_t (*read)(struct file *, char __user *, size_t, loff_t *);
+
+用户空间调用该函数的方式:
+
+	1.系统调用方式
+		ssize_t read(int fd, void *buf, size_t count);
+	2.库函数方式
+		size_t fread(void *ptr, size_t size, size_t n, FILE *stream);
+
+**4.write()**
+
+用来向设备写入数据,成功返回写入的字节数,出错返回一个负值(返回0时表示end-of-file(EOF)).
+
+	ssize_t (*write)(struct file *, const char __user *, size_t, loff_t *);
+
+用户空间调用该函数的方式:
+
+	1.系统调用方式
+		ssize_t write(int fd, const void *buf, size_t count);
+	2.库函数方式
+		size_t fwrite(const void *ptr, size_t size, size_t n, FILE *stream);
+
+**5.unlocked_ioctl()**
+
+提供设备相关控制cmd(命令)的实现.成功返回非负值.一般使用".unlocked_ioctl = xxx_ioctl;"赋值.
+
+	long (*unlocked_ioctl)(struct file *, unsigned int, unsigned long);
+
+用户空间调用该函数的方式:
+
+	1.fcntl调用:
+		int fcntl(int fd, int cmd, .../* arg */);
+	2.ioctl调用
+		int ioctl(int fd, int cmd, ...);
+
+**6.mmap()**
+
+将设备内存(内核空间)映射到进程的虚拟地址空间(用户空间).建立内核空间到用户空间(即进程)的虚拟地址空间的映射(即设备内存到用户内存的映射).映射成功后,用户对这段内存的操作直接反应到内核空间(设备内存),同样内核空间对这段内存的操作也直接反应到用户空间.应用程序访问这段内存无需进行内存拷贝,针对需要大量数据传输的操作效率非常高.
+
+	int (*mmap)(struct file *, struct vm_area_struct *);
+
+用户空间调用该函数的方式:
+
+	1.mmap用户空间调用:
 	void *mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
-	/*各参数说明:
-	para1:起始地址,一般为NULL(即为0),表示由内核来指定该内存地址
-	para2:要映射内存区域的大小
-	para3:内存保护标志(PROT_EXEC(页内容可以被执行)、PROT_READ(页内容可以被读取)、PROT_WRITE()页可以被写入、
-		PROT_NONE(页不可以被访问))
-	para4:指定映射对象的类型,映射选项和映射页是否可以共享.使用"MAP_SHARED"居多,允许其他映射该文件的进程共享.
-	para5:文件描述符号(open的返回),即具体调用哪一个设备的mmap.
-	para6:偏移,该值必须为PAGE_SIZE的整数倍(不能应用于page不对齐的情况).
-		1.当应用mmap实现进程间通信(通过映射一个普通文件实现共享内存通信),此时para6为0;
-		2.当应用mmap实现将物理地址映射到用户空间的虚拟地址实现对设备寄存器等的操作,需要
-			1)para6为真实的物理地址(需要addr & (PAGE_SIZE-1),即page对齐);
-			2)fd为打开的"/dev/mem"返回的fd./dev/mem含有所有物理地址的全映像(即:0-0xffff_ffff).
-			一般将/dev/mem映射好,通过在进程空间中读写映射后的虚拟地址,可实现在用户空间读写物理寄存器地址.
-	retval:成功时返回被映射区的指针,失败时,返回MAP_FAILED(其值为(void *)-1)
+	/*参数说明:
+		para1:起始地址,一般为NULL(即为0),表示由内核来指定该内存地址
+		para2:要映射内存区域的大小
+		para3:内存保护标志(PROT_EXEC(页内容可以被执行)、PROT_READ(页内容可以被读取)、PROT_WRITE
+			(页可以被写入)、PROT_NONE(页不可以被访问))
+		para4:指定映射对象的类型,映射选项和映射页是否可以共享.使用"MAP_SHARED"居多,允许其他映射该文
+			件的进程共享.
+		para5:文件描述符号(open的返回),即具体调用哪一个设备的mmap.
+		para6:偏移,该值必须为PAGE_SIZE的整数倍(不能应用于page不对齐的情况).
+			1.当应用mmap实现进程间通信(通过映射一个普通文件实现共享内存通信),此时para6为0;
+			2.当应用mmap实现将物理地址映射到用户空间的虚拟地址实现对设备寄存器等的操作,需要
+				1)para6为真实的物理地址(需要addr & (PAGE_SIZE-1),即page对齐);
+				2)fd为打开的"/dev/mem"返回的fd./dev/mem含有所有物理地址的全映像(即:0-0xffff_ffff).
+		retval:成功时返回被映射区的指针,失败时,返回MAP_FAILED(其值为(void *)-1)
+		PS:一般将/dev/mem映射好,通过在进程空间中读写映射后的虚拟地址,可实现在用户空间读写物理寄存器地址.
 	*/
-
-	int munmap(void *start, size_t length) /*start:起始地址；length:大小*/
+	2.munmap用户空间调用:
+	int munmap(void *start, size_t length)
 	/*
 		para1:mmap返回的映射区的指针;
 		para2:mmap映射的大小;
 		retval:成功返回0,失败返回-1.
 	*/
+
+进程在mmap映射过程中的文件内容的改变不会立即写回到磁盘文件中,写回操作是在调用munmap()后才执行,可以通过调用msync()来实现同步.-----一般用的较少.
+
+mmap的实例---进程中通过mmap实现进程间通信
 
 	/*********进程中通过mmap实现进程间通信**********/
 	1.write.c程序:
@@ -2132,21 +2235,22 @@ cdev_del():删除一个cdev设备,在注销时调用
 	{
 	    struct STU *pm;//STU结构体指针
 	    int fd, i = 0;
-	    if(argc < 2){
+	    if(argc < 2) {
 	        printf("args error\n");
 	        exit(1);
 	    }
 	
 	    fd = open(argv[1], O_RDWR | O_CREAT, 0777); //打开一文件
-	    if(fd < 0){
+	    if(fd < 0) {
 	        sys_err("open", 1);
 	    }
 	
-	    if(lseek(fd, MAPLEN - 1, SEEK_SET) < 0){//文件偏移至分配的内存地址末端
+	    if(lseek(fd, MAPLEN - 1, SEEK_SET) < 0) {
+			//文件偏移至分配的内存地址末端
 	        sys_err("lseek", 3);
 	    }
 	
-	    if(write(fd, "\0", 1) < 0){  //末端赋值为'\0'
+	    if(write(fd, "\0", 1) < 0) { //末端赋值为'\0'
 	        sys_err("write", 4);
 	    }
 	    /*将文件映射至进程的地址空间*/
@@ -2241,6 +2345,7 @@ cdev_del():删除一个cdev设备,在注销时调用
 
 内核驱动中的mmap使用:
 	
+	1.内核中mmap的使用
 	.mmap = xxx_mmap,	/*file_operations中*/
 	static int xxx_mmap(struct file *filp, struct vma_area_struct *vma) /*驱动中的实现*/
 	{
@@ -2256,44 +2361,50 @@ cdev_del():删除一个cdev设备,在注销时调用
 		para2:虚拟地址起始地址
 		para3:物理地址(page>>PAGE_SHIFT---内核中定义的宏.PAGE_SHIFT为12.即4k对齐.)
 		para4:映射空间大小,单位为字节
-		para5:给vma要求的"protection".一般直接使用vma->vm_page_prot.如果要求用户空间读数据时不经过cache可以:
-		vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);再传入vma->vm_page_prot.
+		para5:给vma要求的"protection".一般直接使用vma->vm_page_prot.如果要求用户空间读数据时不
+		经过cache可以:
+			vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);再传入vma->vm_page_prot.
 		*/
 	}
-
-I/O内存(内核内存)被映射到用户空间时需要是nocached的,因此需要设置nocached标志.
-
+	2.I/O内存的使用须知
+	PS:I/O内存(内核内存)被映射到用户空间时需要是nocached的,因此需要设置nocached标志.
 	/*给vma的vma_page_prot设置nocached标志*/
 	vma->vma_page_prot = pgprot_nocached(vma->vma_page_prot);	/*pgprot_nocached是一个宏*/
-	...
-
-pgprot_nocached()是禁止了相关页的cache和写缓冲(write buffer).ARM的写缓冲是一个非常小的FIFO存储器,位于CPU和主存之间,只作用于写主存.
+	3.PS
+	pgprot_nocached()是禁止了相关页的cache和写缓冲(write buffer).ARM的写缓冲是一个非常小的FIFO存
+	储器,位于CPU和主存之间,只作用于写主存.
 
 mmap()内存映射在显示、视频等设备中使用较多,可以减少用户空间和内核空间之间的内存拷贝,在其他设备中使用较少.
 
-3)select/poll调用(主要针对非阻塞I/O),应用在socket网络编程比较多(需要再看)
+**7.select/poll**
+
+select/poll调用(主要针对非阻塞I/O),应用在socket网络编程比较多(需要再看)
 
 非阻塞的I/O应用程序常会使用select(用户空间调用)、poll(内核空间)来查询是否可以对设备进行无阻塞的访问.
 
 select(用户空间):监控多个文件,如果没有一个文件满足(读/写)要求,select将会阻塞调用的进程.
 
-	int select(int maxfdp, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, const struct timeval *timeout);
+	int select(int maxfdp, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, 
+		const struct timeval *timeout);
 	/*
-	para1:需要检查的文件描述符个数(fd的数目),一般为后面三个fd_set中的最大值+1"max(readfds, writefds, exceptfds)+1"
-	para2:检查可读性的一组文件描述符集
-	para3:检查可写性的一组文件描述符集
-	para4:检查意外状态的文件描述符集(ps:错误不是意外状态)
-	para5:超时时间(NULL表示无限等待)
+		para1:需要检查的文件描述符个数(fd的数目),一般为后面三个fd_set中的最大值+1"max(readfds,
+			writefds, exceptfds)+1";
+		para2:检查可读性的一组文件描述符集;
+		para3:检查可写性的一组文件描述符集;
+		para4:检查意外状态的文件描述符集(ps:错误不是意外状态);
+		para5:超时时间(NULL表示无限等待)
 	*/
+	PS:
+	select中任何一个文件满足要求都将返回,正常返回满足要求的文件描述符个数;如果没有满足要求的将会阻塞
+		(进程睡眠)直到超时返回0、中断或出错返回-1.
 
-select中任何一个文件满足要求都将返回,正常返回满足要求的文件描述符个数;如果没有满足要求的将会阻塞(进程睡眠)直到超时返回0、中断或出错返回-1.
-
-fd_set的构造:
+select函数中fd_set的构造:
 
 	fd_set rds/wds/eds;
-	void FD_ZERO(fd_set *fdset); /*清空文件描述集*/	e.g.FD_ZERO(&rds);
-	void FD_SET(int fd, fd_set *fdset); /*添加fd到fdset中*/	e.g.FD_SET(fd, &rds);
-	void FD_ISSET(int fd, fd_set *fdset);	/*在调用select后使用它来检测fdset是否发生了变化(置位)*/	FD_ISSET(fd, &rds);
+	void FD_ZERO(fd_set *fdset);	/* 清空文件描述集.e.g.FD_ZERO(&rds) */
+	void FD_SET(int fd, fd_set *fdset);	/* 添加fd到fdset中.e.g.FD_SET(fd, &rds) */
+	void FD_ISSET(int fd, fd_set *fdset);
+		/* 在调用select后使用它来检测fdset是否发生了变化(置位).FD_ISSET(fd, &rds) */
 	void FD_CLR(int fd, fd_set *fdset); /*从fdset中清除掉fd*/
 
 poll(内核空间)
@@ -2303,17 +2414,82 @@ poll(内核空间)
 	unsigned int xxx_poll(struct file *filp, struct poll_table *wait)
 	{
 		...
-		poll_wait(filp, &engine->OutWq, wait);	/*将filp所代表的进程加入到poll_table等待列表(实际上为绑定到poll_table队列
-		元素),然后将poll_table等待队列元素添加到engine这个设备结构体的等待队列头部中,等待被唤醒*/
-		/*一旦其他的操作导致filp有动作(e.g.往filp中写入数据),将会唤醒engine->OutWq等待队列头部中的所有等待队列元素---即为包含
-		的所有进程.然后继续往下执行;如果没有被唤醒则会直到超时(select中的timeout设置的时间)*/
+		poll_wait(filp, &engine->OutWq, wait);
+		/*
+			1.将filp所代表的进程加入到poll_table等待列表(实际上为绑定到poll_table队列元素),然后
+			poll_table等待队列元素添加到engine这个设备结构体的等待队列头部中,等待被唤醒;
+			2.一旦其他的操作导致filp有动作(e.g.往filp中写入数据),将会唤醒engine->OutWq等待队列头部
+			中的所有等待队列元素---即为包含的所有进程.然后继续往下执行;如果没有被唤醒则会直到超时
+			(select中的timeout设置的时间).
+		*/
 	
 		if(have_data)	
-			mask |= POLLIN | POLLRDNORM;	/*have_data为真时,poll会返回mask,表明可读*/  /*可写为(POLLOUT | POLLWRNORM)*/
+			mask |= POLLIN | POLLRDNORM;
+			/* have_data为真时,poll会返回mask,表明可读.如果可写则为(POLLOUT | POLLWRNORM) */
 		return mask;
 	}
 
-poll函数实现了调用select而阻塞的进程可以被等待队列头部唤醒.**但不会将进程阻塞(因为进程没有睡眠)!!**
+poll函数实现了调用select而阻塞的进程可以被等待队列头部唤醒.但不会将进程阻塞(因为进程没有睡眠)!
+
+#### 6.1.5 copy_from_user()、copy_to_user()函数解析
+
+**1.copy_from_user()**
+
+用户空间--->内核空间.
+
+	unsigned long copy_from_user(void *to, const void __user *from, unsigned long count);
+	/*
+		完成用户空间缓冲区到内核空间的复制.
+		para1:内核空间buffer;
+		para2:用户空间buffer(使用const void __user表示用户空间的只读buffer);
+		para3:复制的字节数;
+		retval:返回不能被复制的字节数.复制成功返回0,失败返回负值.
+	*/
+
+**2.copy_to_user()**
+
+内核空间--->用户空间.
+
+	unsigned long copy_to_user(void __user *to, const void *from, unsigned long count);
+	/*
+		完成内核空间缓冲区到用户空间的复制.
+		para1:用户空间buffer(使用void __user表示用户空间的buffer);;
+		para2:内核空间buffer(使用const void 表示内核空间的只读buffer);
+		para3:复制的字节数;
+		retval:返回不能被复制的字节数.复制成功返回0,失败返回负值.
+	*/
+
+**3.get_user()**
+
+用户空间--->内核空间的简单类型的内存复制(简单类型包括:char, int, long等).
+
+	int val;	//内核空间整形变量
+	...
+	get_user(val, (int *)arg);
+	/*
+		arg:用户空间的地址--->(int *)arg:取用户空间地址的整形数据(4-Byte).
+		get_user:类似于赋值操作(val = (int *)arg).即用户空间传某地址,内核空间取某地址数据赋值给某变量.
+	*/
+
+**4.put_user()**
+
+内核空间--->用户空间的简单类型的内存复制(简单类型包括:char, int, long等).
+
+	int val;	//内核空间整形变量
+	...
+	put_user(val, (int *)arg);
+	/*
+		arg:用户空间的地址--->(int *)arg:对用户空间地址的整形数据进行赋值.
+		put_user:类似于赋值操作((int *)arg = val).即用户空间传某地址,内核空间将数据赋值到该地址.
+	*/
+	
+PS:无论是get_user/put_user,内核空间变量在前面,用户空间变量在后面(使用地址取内容操作得到变量).
+
+**5.access_ok()**
+
+	access_ok(type, addr, size);	//合法性检查,确定传入的缓冲区的确属于用户空间.
+
+### 6.2 globalmem虚拟设备实例
 
 **ioctl函数**
 
