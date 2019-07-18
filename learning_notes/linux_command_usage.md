@@ -622,6 +622,30 @@ apt-get(Advanced Package Tool:高级安装工具):linux上的软件包管理器.
 	dd if=/dev/zero of=/dev/1Gb.file bs=1024 count=1000000
 	//创建一个1Gb的文件,文件内容全为二进制空流(0).
 
-	
+## 33. readelf
+
+1.readelf -h
+
+读取可执行文件的elf文件头信息
+
+	readelf -h hello/hello.o/hello.so/hello.a/hello.debug
+	读出来之后,可以看到"Type"会不一样:
+		hello--->DYN(共享目标文件)
+		hello.o--->REL(可重定位文件)
+		hello.so--->DYN(共享目标文件)
+		hello.a--->REL(可重定位文件)
+		hello.debug--->DYN(共享目标文件)
+
+2.readelf -l
+
+显示程序头(段头)信息,没有就不显示.
+
+	readelf -l hello/hello.o/hello.so/hello.a/hello.debug
+	读出来之后,可以看到"Type"会不一样:
+		hello--->有程序头信息
+		hello.o--->无程序头信息
+		hello.so--->有程序头信息
+		hello.a--->无程序头信息
+		hello.debug--->有程序头信息
 
 ## 13. wget命令

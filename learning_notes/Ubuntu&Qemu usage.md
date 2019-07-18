@@ -55,6 +55,7 @@
 		本人安装的18.04版本的ubuntu自动下载的的gcc版本为"version 7.4.0",不支持3.16版本的linux
 		(会出现很多error),需要使用4.x版本的linux.
 	*/
+	sudo apt-get install g++-arm-linux-gnueabi	//安装g++
 
 ### 1.5.2 手动安装gcc及版本切换
 
@@ -98,6 +99,32 @@
 
 	arm-linux-gnueabi-gcc -v
 	arm-linux-gnueabi-gcc --version
+
+**4.g++编译实例---gcc类似的**
+
+1.源文件hello.cpp
+
+	#include <iostream>
+	using namespace std;
+	
+	int main(int argc, char *argv[])
+	{
+		cout << "hello world" << endl;
+		return 0;
+	}
+
+2.编译
+
+	1.编译出可执行程序
+		g++ hello.cpp -o hello
+	2.编译出带调试信息的可执行程序	
+		g++ -g hello.cpp -o hello.debug		//执行./hello.debug即可
+	3.仅编译,不链接(编译出目标文件.o)
+		g++ -c hello.cpp hello.o
+	4.编译出动态链接库(也叫共享库文件,即.so)--->由.o编译成.so
+		g++ -shared -fPCI -o hello.so hello.o
+	5.编译出静态库(即.a)--->由.o压缩成.a
+		ar -r hello.a hello.o
 
 ## 1.6 ubuntu版本查看
 
@@ -347,6 +374,8 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 [qemu 2.8下载地址](http://download.qemu-project.org/qemu-2.8.0.tar.xz)
 
 	下载下来的文件为:qemu-2.8.0.tar.xz
+	ubuntu下载方法:
+		wget http://download.qemu-project.org/qemu-2.8.0.tar.xz
 
 **2.下载并安装Qemu安装时所需要的工具软件包**
 
@@ -380,6 +409,20 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 		make
 	3.安装
 		make install	//会安装到系统的"/usr/local/bin/qemu-system-arm"的位置
+	4.查看qemu版本
+		qemu-img -V		//大写的"v",会显示"qemu-img version 2.8.0 xxx"
+		qemu-system-arm --version
+		/*
+			只能用"--version,单纯的"-v"不支持.显示结果为:
+			QEMU emulator version 2.8.0 xxx
+		*/
+	5.查看qemu支持的开发板
+		qemu-system-arm -M help
+		/*
+			会显示支持的开发板,其中包括:
+			vexpress-a15		ARM Versatile Express for Cortex-A15		//支持A15
+			vexpress-a9		ARM Versatile Express for Cortex-A9		//支持A9--->支持最好的一个
+		*/
 
 ### 3.1.2 linux内核编译(在Qemu上运行)
 
@@ -408,19 +451,41 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 		tar -xvzf linux-4.8.tar.gz
 		cd linux-4.8
 	2.配置
+		1.配置交叉编译器
 		export CROSS_COMPILE=arm-linux-gnueabi-
 		export ARCH=arm
-		make vexpress_defconfig		//所有的config文件放在./arch/arm/configs/目录下
+		/*
+			如果一般用arm架构,且交叉编译器一般不变,可:
+			进入linux源代码目录,修改顶层的Makefile(搜索CROSS_COMPILE):
+				...
+				# Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
+				ARCH			?= arm
+				//默认的为:ARCH			?= $(SUBARCH)
+				CROSS_COMPILE	?= arm-linux-gnueabi-
+				//默认的为:CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
+			PS:有时候修改了不行,只能用第一种export方法.
+		*/
+		2.配置编译参数
+		make vexpress_defconfig
+		/*
+			1.linux支持的arm开发板信息查看目录为:./arch/arm/
+				其中包括"mach-vexpress"--->为支持的vexpress-a9
+			2.linux支持的arm开发板的所有的config文件目录为:./arch/arm/configs/
+				其中包括"vexpress_defconfig",此处配置编译参数即选择该配置文件.
+
 	3.编译
-		make -j2
+		make -j2 	//2线程编译
 		/*
 			1.image:
 				编译好的image会在:./arch/arm/boot/zImage.
 			2.dtb:
 				编译好的dtb会在:./arch/arm/boot/dts/vexpress-v2p-ca9.dtb
+				PS:./arch/arm/boot/dts/下存放了linux支持的各种arm开发板的dts文件
 		*/
 
 ### 3.1.3 根文件系统的制作
+
+busybox:一个集成100多个linux常用命令和工具的软件,是一个特别适合制作嵌入式文件系统的软件工具.
 
 **1.busybox的下载、解压**
 
@@ -445,6 +510,12 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 		生成的根文件系统位于:./busybox-1.25.0/_install/,有"bin/linuxrc/sbin/usr"等.
 	*/
 
+配置其他选项(执行make menuconfig)时可能会出现"fatal error: curses.h:没有那个文件或目录":
+
+	原因:是因为ubuntu系统中缺少一个套间ncurses devel,将此套间安装即可.
+	解决方法:
+		apt-get install libncurses5-dev
+
 **3.制作根目录**
 
 1.创建必要的目录
@@ -463,34 +534,82 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 		/usr/arm-linux-gnueabi/lib/下面放的是编译器自带的lib文件
 	*/
 
-3.创建4个tty终端设备
+3.创建/dev下面的相关节点
 
 	cd rootfs/dev
-	mknod tty1 c 4 1
-	mknod tty2 c 4 2
-	mknod tty3 c 4 3
-	mknod tty4 c 4 4
+	1.创建4个tty终端设备(串口节点)
+		mknod tty1 c 4 1	//另一种:mknod -m 666 tty1 c 4 1--->效果是一样的.
+		mknod tty2 c 4 2
+		mknod tty3 c 4 3
+		mknod tty4 c 4 4
+	2.创建控制台节点
+		mknod console c 5 1	//另一种:mknod -m 666 console c 5 1--->效果是一样的.
+	3.创建null节点
+		mknod null c 1 3	//另一种:mknod -m 666 null c 1 3--->效果是一样的.
 
 4.生成32M大小的镜像,并拷贝文件系统树到镜像文件中
 
 	cd /root
-	dd if=/dev/zero of=a9rootfs.ext3 bs=1M count=32
-	mkfs.ext3 a9rootfs.ext3
-	mkdir tmpfs
-	mount -t ext3 a9rootfs.ext3 tmpfs/ -o loop	//将a9rootfs.ext3(为一个文件系统)挂载到tmpfs下
-	cp -r rootfs/* tmpfs/
-	sudo umount tmpfs	//卸载
+	1.生成一个a9rootfs.ext的镜像文件(32M大小)
+		dd if=/dev/zero of=a9rootfs.ext3 bs=1M count=32
+	2.格式化为ext3文件系统
+		mkfs.ext3 a9rootfs.ext3
+	3.创建挂载点,并进行挂载
+		mkdir tmpfs
+		mount -t ext3 a9rootfs.ext3 tmpfs/ -o loop	//将a9rootfs.ext3(ext3的文件系统)挂载到tmpfs下
+	4.拷贝所需的文件系统到挂载点
+		cp -r rootfs/* tmpfs/
+	5.卸载
+		sudo umount tmpfs	//卸载
+
+5.运行起来之后会出现"Can't run '/etc/init.d/rcS': No such file or directory"
+
+	解决方法:
+	1.在rootfs下面创建/etc/init.d/rcS文件:
+		cd rootfs
+		mkdir etc/init.d -p	//创建多级目录
+		cd etc/init.d/
+		touch rcS
+		chmod a+x rcS
+		gvim rcS
+	2.在rcS文件中写入:
+		echo "---------------------------------"
+		echo "  Welcome to A9 vexpress borad   "
+		echo "---------------------------------"
+		PS:这些内容在最后即将进入终端时会显示出来.
+	3.挂载a9rootfs.ext3(SD卡),将新的rcS文件拷贝进去
+		mount -t ext3 a9rootfs.ext3 tmpfs/ -o loop
+		cp ./rootfs/etc tmpfs/ -rf
+		umount tmpfs	//卸载
+	4.重启就不会再出现这个问题了.
 
 ### 3.1.4 运行虚拟机
+
+**1.运行方法**
 
 在终端输入:
 
 	qemu-system-arm -M vexpress-a9 -m 512M -kernel /root/linux-4.8/arch/arm/boot/zImage
-		-dtb /root/linux-4.8/arch/arm/boot/dts/vexpress-v2p-ca9.dtb -nographic -append
-		"root=/dev/mmcblk0 console=ttyAMA0" -sd a9rootfs.ext3
+	-dtb /root/linux-4.8/arch/arm/boot/dts/vexpress-v2p-ca9.dtb -nographic -append
+	"root=/dev/mmcblk0 console=ttyAMA0" -sd a9rootfs.ext3
+
+也可写成一个脚本(qemu.sh):
+
+	#!/bin/sh
+	qemu-system-arm -M vexpress-a9 -m 512M -kernel /root/linux-4.8/arch/arm/boot/zImage
+	-dtb /root/linux-4.8/arch/arm/boot/dts/vexpress-v2p-ca9.dtb -nographic -append
+	"root=/dev/mmcblk0 console=ttyAMA0" -sd a9rootfs.ext3
 
 启动之后即可进入到终端(只运行内核和根文件系统),boot后续增加.
 
 ### 3.1.5 退出虚拟机
 
+方法1--->这个方法可能不会奏效
+
 	先按Ctrl+A,然后再按X.就会出现"QEMU: Terminated",退出qemu.
+
+方法2--->这个方法肯定有效
+
+	另外打开一个终端,执行:
+		ps -a	//查看所有进程
+		kill qemu的PID	//qemu的PID是qemu-system-arm进程的PID.
