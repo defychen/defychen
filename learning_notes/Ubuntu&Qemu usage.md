@@ -16,8 +16,8 @@
 	*/
 	2.sudo apt-get upgrade
 	/*
-		升级已安装的所有软件包,将本地的软件版本与update文件更新的版本进行对比从而进行相关升级.因此,执行
-		upgrade之前一定要执行update,这样才能保证更新到最新.
+		升级已安装的所有软件包,将本地的软件版本与update文件更新的版本进行对比从而进行相关升级.因此,
+		执行upgrade之前一定要执行update,这样才能保证更新到最新.
 	*/
 
 ## 1.3 "net-tools"安装
@@ -358,7 +358,7 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 	拟化工作.因为KVM是硬件辅助的虚拟化技术,主要负责比较繁琐的CPU和内存虚拟化,而Qemu则负责I/O虚拟化,两者
 	合作各自发挥优势,相得益彰.
 
-## 3.1 在Ubuntu系统搭建Qemu模拟ARM
+## 3.1 在Ubuntu系统搭建Qemu模拟ARM(一)--->只运行内核和根文件系统
 
 环境:
 
@@ -498,7 +498,7 @@ busybox:一个集成100多个linux常用命令和工具的软件,是一个特别
 		tar -xvjf busybox-1.25.0.tar.bz2
 		cd busybox-1.25.0
 	方法2:使用命令行下载
-		wget http://www.busybox.net/downloads/busybox-1.25.0.tar.bz2 --no-check-certificate
+		wget https://www.busybox.net/downloads/busybox-1.25.0.tar.bz2 --no-check-certificate
 		//没试过,不知道行不行??
 
 **2.配置、编译**
@@ -613,3 +613,59 @@ busybox:一个集成100多个linux常用命令和工具的软件,是一个特别
 	另外打开一个终端,执行:
 		ps -a	//查看所有进程
 		kill qemu的PID	//qemu的PID是qemu-system-arm进程的PID.
+
+## 3.2 在Ubuntu系统搭建Qemu模拟ARM(二)--->u-boot启动kernel
+
+### 3.2.1 Qemu启动u-boot的制作
+
+**1.u-boot的下载、解压**
+
+[u-boot下载地址](http://ftp.denx.de/pub/u-boot)
+
+	方法1:打开上述网址选择"u-boot-2017.05.tar.bz2"进行下载
+		//Ubuntu 18.04下载的u-boot会放在/home/defychen/Downloads/u-boot-2017.05.tar.bz2
+		cp /home/defychen/Downloads/u-boot-2017.05.tar.bz2 /root
+		cd /root
+		tar -xvjf u-boot-2017.05.tar.bz2
+		cd u-boot-2017.05
+	方法2:使用命令行下载
+		wget http://ftp.denx.de/pub/u-boot/u-boot-2017.05.tar.bz2 --no-check-certificate
+		//试过,好像不行.需要再次确认.
+
+**2.配置、编译**
+
+	1.配置
+		1.配置交叉编译器
+		export CROSS_COMPILE=arm-linux-gnueabi-
+		export ARCH=arm
+		/*
+			如果一般用arm架构,且交叉编译器一般不变,可:
+			1.修改CROSS_COMPILE
+			进入u-boot源代码目录,修改顶层的Makefile(搜索CROSS_COMPILE):
+				...
+				# set default to nothing for native builds
+				ifeq ($(HOSTARCH),$(ARCH))
+				CROSS_COMPILE	?= arm-linux-gnueabi-
+				//默认的为:CROSS_COMPILE	?=
+				endif
+			2.修改ARCH
+			进入u-boot源代码目录,修改顶层的config.mk(搜索ARCH):
+				ARCH := arm
+				//默认的为:ARCH := $(CONFIG_SYS_ARCH:"%"=%)
+			PS:有时候修改了不行,只能用第一种export方法.
+		*/
+		2.配置编译参数
+		make vexpress_ca9x4_defconfig
+		/*
+			u-boot支持的开发板的所有的config文件目录为:./configs/
+				其中包括"vexpress_ca9x4_defconfig",此处配置编译参数即选择该配置文件.
+		*/
+
+	3.编译
+		make -j4 	//4线程编译
+		/*
+			u-boot:
+				编译好的u-boot会在:./u-boot.
+		*/
+
+**3.单独启动u-boot**
