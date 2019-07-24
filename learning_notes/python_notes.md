@@ -2429,13 +2429,31 @@ socket:表示打开了一个网络连接.
 
 ### 15.2 PIL库
 
+**1.pip**
+
 pip:python中安装第三方模块的包管理工具,通过它,就能安装编程时常用的一些模块.
+
+正常在安装python时选中"Install launcher for all users(recommanded)"会将pip安装上,直接安装PyCharm时可能没有安装pip.安装pip的方法如下:
+
+[pip下载地址](https://pypi.org/project/pip/#downloads)
+
+	1.从下载地址下载对应版本的pip(python 3.x下载最新即可);
+	2.解压出来到某一目录;
+	3.打开cmd窗口,切换到pip解压的目录.输入:
+		python setup.py install
+		//确保在命令行中python命令可用,如果不可用,需要添加到windows的环境变量PATH中.
+	4.将安装后的pip命令添加到windows的PATH中:
+		右键"我的电脑"->属性->高级系统设置->环境变量->在"系统变量"的Path后面添加:
+		xxx;G:\Programs (x86)\Python\Python3.7;;G:\Programs (x86)\Python\Python3.7\Scripts
+		//前面一个为Python程序的目录,后一个为pip程序(命令)的目录(安装后会在python的scripts目录中)
+		
+**2.PIL**
 
 PIL:Python Imaging Library.是Python平台的图像处理标准库.
 
 Pillow:基于PIL,处理Python 3.x的图形图像库.PIL只能处理到Python 2.x, Pillow模块能处理到Python 3.x.
 
-**图像的坐标表示**
+**3.图像的坐标表示**
 
 图像中左上角是坐标原点(0, 0),X轴是从左到右增长.Y轴是从上到下增长.
 
