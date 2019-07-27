@@ -5095,6 +5095,27 @@ para1:跳过的字符个数; para2:指定结束符.且会将结束符从流中�
 	fixed		//以定点小数形式显示浮点数
 	setfill('*')	//设置填充为"*"
 
+### 13.6 流的错误状态
+
+流包括iostream和fstream.
+
+	比如:istream的对象cin和ifstream的对象fin,相关的成员函数说明如下:
+		1.cin.eof():判断流是否遇到了文件尾.到文件尾返回true,否则返回false;
+		2.cin.bad():判断数据是否发生丢失错误.丢失了返回true,否则返回false.
+			发生丢失的错误不能修复,一般抛出异常:
+				if (in.bad())
+					throw runtime_error("IO error!");
+		3.cin.bad():判断流中发生格式错误.(e.g.程序要求输入整数,但是输入了非数字字符(比如"字符")).
+			发生格式错误时,错误字符不会丢失.一般处理如下:
+				if (in.bad) {
+					cerr << "data error, please retry: " << endl;
+					in.clear();	//清除错误状态.设置为good
+					in.ignore(100, '\n');	//忽略之后的100个字符,遇到'\n'结束.
+					continue;
+				}
+		4.cin.good():判断流没有错误.没有错误返回true,否则返回false.一般只有流是good才能进行后面的操作.
+		5.cin.clear():清除流的错误状态.
+
 ***
 
 ## Chapter 14 文件处理

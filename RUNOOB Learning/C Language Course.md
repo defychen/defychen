@@ -1136,11 +1136,430 @@ assert宏(是一个宏,虽然看上去像是一个函数)定义在<assert.h>中.
 	//该宏用于禁用assert的调用,所有的assert检查都会去掉,用于release版本.必须在#include <assert.h>之前
 	#include <assert.h>
 
-**2.用于**
-
-
-
 ## Chapter 2. <ctype.h>
+
+C标准库的ctype.h头文件提供了一些函数,用于测试和映射字符.这些函数接受int作为参数,该参数的值必须是EOF或表示为一个无符号字符(ASCII码中的字符即可).参数满足描述的条件则返回非0(即true),不满足描述的条件则返回0(即false).
+
+### 2.1 isalnum()函数
+
+**1.原型**
+
+	int isalnum(int c);
+	/*
+		检查所传的字符是否是字母或者数字.
+		para:要检查的字符,用整数表示的字符(e.g.'a');
+		retval:如果c是一个数字或字母,则返回非0(true);否则返回0(false).
+	*/
+
+**2.实例**
+
+	#include <stdio.h>
+	#include <ctype.h>
+
+	int main()
+	{
+		int var1 = 'd';	//字母
+		int var2 = '2';	//数字
+		int var3 = '\t';	//非字母和数字
+		int var4 = ' ';		//非字母和数字
+
+		if (isalnum(var)) {
+			printf("var1 = |%c| is number or character!\n", var1);
+		} else {
+			printf("var1 = |%c| is not number and character!\n", var1);
+		}
+		...	//其他类似
+	}
+
+### 2.2 isalpha()函数
+
+**1.原型**
+
+	int isalpha(int c);
+	/*
+		检查所传的字符是否是字母.
+		para:要检查的字符,用整数表示的字符(e.g.'a');
+		retval:如果c是一个字母,则返回非0(true);否则返回0(false).
+	*/
+
+**2.实例**
+
+	#include <stdio.h>
+	#include <ctype.h>
+
+	int main()
+	{
+		int var1 = 'd';	//字母
+		int var2 = '2';	//数字,非字母
+		int var3 = '\t';	//非字母和数字
+		int var4 = ' ';		//非字母和数字
+
+		if (isalpha(var)) {
+			printf("var1 = |%c| is a character!\n", var1);
+		} else {
+			printf("var1 = |%c| is not a character!\n", var1);
+		}
+		...	//其他类似
+	}
+
+### 2.3 iscntrl()函数
+
+**1.原型**
+
+	int iscntrl(int c);
+	/*
+		检查所传的字符是否是控制字符.
+			控制字符:即不可打印的字符.而可打印的字符是可以从键盘上输入的字符.
+		para:要检查的字符,用整数表示的字符(e.g.'a');
+		retval:如果c是一个控制字符,则返回非0(true);否则返回0(false).
+	*/
+
+**2.实例**
+
+	#include <stdio.h>
+	#include <ctype.h>
+
+	int main()
+	{
+		int i = 0, j = 0;
+		char str1[] = "all \a about \t programming";	//"\a"在键盘是不能输入的,是控制字符.
+		char str2[] = "Runoob \n tutorials";	//"\n"在键盘是不能输入的,是控制字符.
+
+		while (!iscntrl(str1[i])) {
+			putchar(str1[i]);
+			i++;
+		}
+
+		while (!iscntrl(str2[j])) {
+			putchar(str2[j]);
+			j++;
+		}
+		return 0;
+	}
+	//结果为:
+		all Runoob
+
+### 2.4 isdigit()函数
+
+**1.原型**
+
+	int isdigit(int c);
+	/*
+		检查所传的字符是否是十进制数字字符(即:0,1,2,3,4,5,6,7,8,9).
+		para:要检查的字符,用整数表示的字符(e.g.'1');
+		retval:如果c是一个数字,则返回非0(true);否则返回0(false).
+	*/
+
+**2.实例**
+
+	#include <stdio.h>
+	#include <ctype.h>
+
+	int main()
+	{
+		int var1 = 'h';	//字母
+		int var2 = '2';	//数字
+
+		if (isdigit(var1)) {
+			printf("var1 = |%c| is a number!\n", var1);
+		} else {
+			printf("var1 = |%c| is not a number!\n", var1);
+		}
+		...	//其他类似
+	}
+
+### 2.5 isgraph()函数
+
+**1.原型**
+
+	int isgraph(int c);
+	/*
+		检查所传的字符是否有图形表示法(即:除了空格以外的所有可打印的字符(可以从键盘上输入的字符)).
+		para:要检查的字符,用整数表示的字符(e.g.'1');
+		retval:如果c有图形表示法,则返回非0(true);否则返回0(false).
+	*/
+
+**2.实例**
+
+	#include <stdio.h>
+	#include <ctype.h>
+
+	int main()
+	{
+		int var1 = 'h';	//字母
+		int var2 = ' ';	//空格没有图形表示法
+
+		if (isgraph(var1)) {
+			printf("var1 = |%c| is a graph character!\n", var1);
+		} else {
+			printf("var1 = |%c| is not a graph character!\n", var1);
+		}
+		...	//其他类似
+	}
+
+实例---打印所有的图形字符
+
+	#include <stdio.h>
+	#include <ctype.h>
+
+	int main()
+	{
+		int i;
+		printf("All graph character in C program:\n");
+		for (i = 0; i < 127; ++i) {
+			if (isgraph(i))
+				printf("%c", i);
+		}
+		return 0;
+	}
+
+### 2.6 islower()函数
+
+**1.原型**
+
+	int islower(int c);
+	/*
+		检查所传的字符是否是小写字母(即:26个小写字母).
+		para:要检查的字符,用整数表示的字符(e.g.'a');
+		retval:如果c是一个小写字母,则返回非0(true);否则返回0(false).
+	*/
+
+**2.实例**
+
+	#include <stdio.h>
+	#include <ctype.h>
+
+	int main()
+	{
+		int var1 = 'h';	//小写字母
+		int var2 = 'H';	//大写字母
+		int var3 = '2';	//数字
+
+		if (islower(var1)) {
+			printf("var1 = |%c| is a lower character!\n", var1);
+		} else {
+			printf("var1 = |%c| is not a lower character!\n", var1);
+		}
+		...	//其他类似
+	}
+
+### 2.7 isprint()函数
+
+**1.原型**
+
+	int isprint(int c);
+	/*
+		检查所传的字符是否是可打印的(即:非控制字符,e.g.字母、数字均属于可打印;空格不属于可打印的).
+		para:要检查的字符,用整数表示的字符(e.g.'1');
+		retval:如果c是一个可打印的字符,则返回非0(true);否则返回0(false).
+	*/
+
+**2.实例**
+
+	#include <stdio.h>
+	#include <ctype.h>
+
+	int main()
+	{
+		int var1 = 'h';	//可打印字符
+		int var2 = 'H';	//可打印字符
+		int var3 = '2';	//可打印字符
+		int var4 = '\t';	//不可打印
+		int var5 = ' ';		//不可打印
+
+		if (isprint(var1)) {
+			printf("var1 = |%c| can be print!\n", var1);
+		} else {
+			printf("var1 = |%c| can't be print!\n", var1);
+		}
+		...	//其他类似
+	}
+
+### 2.8 ispunct()函数
+
+**1.原型**
+
+	int ispunct(int c);
+	/*
+		检查所传的字符是否是标点符号(即:除了字母、数字的其他的图形字符).
+		para:要检查的字符,用整数表示的字符(e.g.'/');
+		retval:如果c是一个标点符号,则返回非0(true);否则返回0(false).
+	*/
+
+**2.实例**
+
+	#include <stdio.h>
+	#include <ctype.h>
+
+	int main()
+	{
+		int var1 = 't';	//非标点符号
+		int var2 = '1';	//非标点符号
+		int var3 = '/';	//标点符号
+		int var5 = ' ';	//非标点符号(先得是图形符号)
+
+		if (ispunct(var1)) {
+			printf("var1 = |%c| can be print!\n", var1);
+		} else {
+			printf("var1 = |%c| can't be print!\n", var1);
+		}
+		...	//其他类似
+	}
+
+### 2.8 isspace()函数
+
+**1.原型**
+
+	int ispunct(int c);
+	/*
+		检查所传的字符是否空白字符,所有的空白字符如下:
+			' ':空格符;
+			'\t':水平制表符;
+			'\n':换行符;
+			'\v':垂直制表符;
+			'\f':换页符;
+			'\r':回车符.
+		para:要检查的字符,用整数表示的字符(e.g.' ');
+		retval:如果c是一个空白字符,则返回非0(true);否则返回0(false).
+	*/
+
+**2.实例**
+
+	#include <stdio.h>
+	#include <ctype.h>
+
+	int main()
+	{
+		int var1 = 't';	//非空白符
+		int var2 = '1';	//非空白符
+		int var5 = ' ';	//空白符号
+
+		if (isspace(var1)) {
+			printf("var1 = |%c| can be print!\n", var1);
+		} else {
+			printf("var1 = |%c| can't be print!\n", var1);
+		}
+		...	//其他类似
+	}
+
+### 2.10 isupper()函数
+
+**1.原型**
+
+	int isupper(int c);
+	/*
+		检查所传的字符是否是大写字母(即:26个大写字母).
+		para:要检查的字符,用整数表示的字符(e.g.'A');
+		retval:如果c是一个大写字母,则返回非0(true);否则返回0(false).
+	*/
+
+**2.实例**
+
+	#include <stdio.h>
+	#include <ctype.h>
+
+	int main()
+	{
+		int var1 = 'h';	//小写字母
+		int var2 = 'H';	//大写字母
+		int var3 = '2';	//数字
+
+		if (isupper(var1)) {
+			printf("var1 = |%c| is a lower character!\n", var1);
+		} else {
+			printf("var1 = |%c| is not a lower character!\n", var1);
+		}
+		...	//其他类似
+	}
+
+### 2.11 isxdigit()函数
+
+**1.原型**
+
+	int isxdigit(int c);
+	/*
+		检查所传的字符是否是十六进制数字字符(即:0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f).
+		para:要检查的字符,用整数表示的字符(e.g.'1');
+		retval:如果c是一个十六进制数字,则返回非0(true);否则返回0(false).
+	*/
+
+**2.实例**
+
+	#include <stdio.h>
+	#include <ctype.h>
+
+	int main()
+	{
+		int var1 = 'h';	//非十六进制数字
+		int var2 = 'f';	//十六进制数字
+
+		if (isxdigit(var1)) {
+			printf("var1 = |%c| is a number!\n", var1);
+		} else {
+			printf("var1 = |%c| is not a number!\n", var1);
+		}
+		...	//其他类似
+	}
+
+### 2.12 tolower()函数
+
+**1.原型**
+
+	int tolower(int c);
+	/*
+		将所传的字母转换为小写字母.
+		para:要转换的字符,用整数表示的字符(e.g.'A');
+		retval:如果c有对应的小写字母,则返回c的小写字母;否则c保持不变.
+	*/
+
+**2.实例**
+
+	#include <stdio.h>
+	#include <ctype.h>
+
+	int main()
+	{
+		int i = 0;
+		char str[] = "RUNOOB";
+		while (str[i]) {
+			putchar(tolower(str[i]));
+			i++;
+		}
+		return 0;
+	}
+	//结果为:
+		runoob
+
+### 2.13 toupper()函数
+
+**1.原型**
+
+	int toupper(int c);
+	/*
+		将所传的字母转换为大写字母.
+		para:要转换的字符,用整数表示的字符(e.g.'A');
+		retval:如果c有对应的大写字母,则返回c的小写字母;否则c保持不变.
+	*/
+
+**2.实例**
+
+	#include <stdio.h>
+	#include <ctype.h>
+
+	int main()
+	{
+		int i = 0;
+		char str[] = "runoob";
+		while (str[i]) {
+			putchar(toupper(str[i]));
+			i++;
+		}
+		return 0;
+	}
+	//结果为:
+		RUNOOB
+
+***
 
 ## Chapter 3. <errno.h>
 
