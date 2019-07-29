@@ -316,3 +316,241 @@ while (cin >> i)终止情况:
 ***
 
 ## Chapter 9. 顺序容器
+
+### 9.1 练习1
+
+vector/deque/list使用场景:
+
+	vector:适合于在尾部进行插入和删除操作,在其他位置则不适合;
+	deque:适合于在头、尾位置进行插入和删除操作;如果还需要进行频繁随机访问,则deque相比较于list更好;
+	list:适合于在任意位置进行快速插入和删除操作.
+
+### 9.2 练习2
+
+定义一个list对象,其元素类型为int的deque.
+
+	#include <list>
+	list<deque<int>> a;
+
+### 9.3 练习3
+
+编写函数,参数为两个vector<int>的迭代器和一个int值.在两个迭代器指定的范围中查找给定的值.
+
+	#include <iostream>
+	#include <vector>
+	using namespace std;
+	
+	bool search_vec(vector<int>::iterator beg, vector<int>::iterator end, int val)
+	{
+		for (; beg != end; beg++) {
+			if (*beg == val)
+				return true;
+		}
+		return false;
+	}
+	
+	int main()
+	{
+		vector<int> ivec = {1, 2, 3, 4, 5, 6, 7};
+	
+		cout << search_vec(ivec.begin(), ivec.end(), 3) << endl;
+		cout << search_vec(ivec.begin(), ivec.end(), 8) << endl;
+		return 0;
+	 }
+
+### 9.4 练习4
+
+与上题一样,但是返回一个迭代器指向找到的元素.
+
+	#include <iostream>
+	#include <vector>
+	using namespace std;
+	
+	vector<int>::iterator search_vec(vector<int>::iterator beg, vector<int>::iterator end,
+		int val)
+	{
+		for (; beg != end; beg++) {
+			if (*beg == val)
+				return beg;	//搜索成功,返回元素对应的迭代器
+		}
+		return end;	//搜索失败,返回尾后迭代器
+	}
+	
+	int main()
+	{
+		vector<int> ivec = {1, 2, 3, 4, 5, 6, 7};
+	
+		cout << search_vec(ivec.begin(), ivec.end(), 3) - ivec.begin() << endl;
+			//两个迭代器之间的差(等于元素相距的元素个数)--->结果为:2
+		cout << search_vec(ivec.begin(), ivec.end(), 8)  - ivec.begin() << endl;
+			////由于没找到,因为返回了ivec.end()--->因此结果为:7(元素总个数)
+		return 0;
+	 }
+
+### 9.5 练习5
+
+vector、deque与list迭代器的差异:
+
+	1.array,vector和deque的类模板是基于数组的,因此其元素在内存中是连续保存的.可以使用迭代器的大小比较
+		(类似指针的大小比较)来体现元素的前后关系.e.g.
+			vector<int>::iterator iter1 = vec.begin(), iter2 = vec.end();
+			while (iter1 < iter2)	//由于内存连续,这样使用没问题
+	2.list和forward_list是基于链表的,迭代器的大小(即指针大小)与元素的前后无直接关系.因此list/forwar_
+		list不支持<运算.只支持递增、递减、===即!=运算.e.g.
+			 list<int>::iterator iter1 = lst.begin(), iter2 = lst.end();
+			while (iter1 < iter2)	//不支持.
+
+### 9.6 练习6
+
+读取和写入list方法:
+
+	1.读取string的list中的元素方法:
+		list<string>::value_type	//value_type表示元素类型;
+	2.写入string的list中的元素,需要使用非常量的引用类型:
+		list<string>::reference
+
+### 9.7 练习7
+
+对象类型说明:
+
+	vector<int v1>;
+	const vector<int> v2;
+	auto it1 = v1.begin(), it2 = v2.begin();
+	auto it3 = v1.cbegin(), it4 = v2.cbegin();
+	1.v1是int的vector类型,可以修改v1的内容(包括添加、删除元素及修改元素值等操作);
+	2.v2是int的常量vector类型,其内容不能修改(即添加、删除元素及修改元素值均不允许);
+	3.v3,v4和v2一样都是const迭代器,const迭代器不能对容器元素进行写访问.
+
+### 9.8 练习8
+
+6中创建和初始化vector对象的方法:
+
+	1.vector<int> ivec;
+		/*
+			默认初始化,vector为空.size返回0,capacity返回0.适用于在程序运行期间动态添加元素的情况;
+		*/
+	2.vector<int> ivec2(ivec);
+		/*
+			ivec2为ivec的拷贝,ivec2具有和ivec相同的容量和元素(容器和元素类型必须是一样的);
+			等价方式:
+			vector<int> ivec2 = ivec;	//支持直接赋值
+		*/
+	3.vector<int> ivec = {1, 2, 3.0, 4, 5, 6, 7};
+		/*
+			ivec为初始化列表中元素的拷贝.列表中的元素必须和ivec指定类型(即int)具有相容性.此处为必须是与
+			整形相容的数值类型(e.g.元素列表中的"3.0").
+			等价方式:
+			vector<int> ivec{1, 2, 3.0, 4, 5, 6, 7};
+		*/
+	4.vector<int> ivec2(ivec.begin()+2, ivec.end()-1);
+		/*
+			ivec2初始化为两个迭代器指定范围中的元素的拷贝,元素类型必须与ivec2中指定类型具有相容性.
+			初始化为:para1开始到para2前一个元素.此处为{3, 4, 5, 6};
+				ivec.end()-1为7,该参数的前一个为6.
+			PS:这种初始化方法适用于获取一个序列的子序列.
+		*/
+	5.vector<int> ivec(7);
+		/*
+			ivec为含有7个元素vector,每个元素进行缺省值的初始化(int初始化为0,string初始化为空).
+			此处为初始化含有7个0的vector.
+			PS:这种初始化适用于程序运行期间数量可预知,而元素值需动态获取.
+		*/
+	6.vector<int> ivec(7, 3);
+		/*
+			ivec被初始化为还有7个3的vector.
+		*/
+
+### 9.9 练习9
+
+用list<int>/vector<int>初始化一个vector<double>.
+
+	由于容器或者元素类型不一样,不能使用拷贝初始化.可以使用范围初始化:
+	--->对于不同或相同的迭代器,只要元素类型具有相容性,就可以使用返回初始化.
+
+	#include <iostream>
+	#include <vector>
+	#include <list>
+	using namespace std;
+	
+	int main()
+	{
+		list<int> ilist = {1, 2, 3, 4, 5, 6, 7};
+		vector<int> ivec = {7, 6, 5, 4, 3, 2, 1};
+		
+		vector<double> dvec(ilist.begin(), ilist.end());
+		vector<double> dvec1(ivec.begin(), ivec.end());
+	
+		cout << dvec.capacity() << " " << dvec.size() << " "
+			<< dvec[0] << " " << dvec[dvec.size() - 1] << endl;
+		cout << dvec1.capacity() << " " << dvec1.size() << " "
+			<< dvec1[0] << " " << dvec1[dvec1.size() - 1] << endl;
+	}
+	//结果为:
+		7 7 1 7
+		7 7 7 1
+
+### 9.10 练习10
+
+将一个list中的char *指针(指向C风格字符串)元素赋值给一个vector中的string.
+
+	由于list<char *>与vector<string>是不同类型的容器,但是char *可以转换为string,因此可以采用范围
+	初始化方式进行赋值.
+
+	#include <iostream>
+	#include <vector>
+	#include <list>
+	using namespace std;
+	
+	int main()
+	{
+		//list<char *>slist = {"hello", "world", "!"};
+			//C风格字符串在vs2017会报错,暂不知道什么原因.
+		list<string> slist = { "hello", "world", "!" };
+		vector<string> svec;
+	
+		svec.assign(slist.begin(),slist.end());
+		/*
+			定义之后进行赋值使用的方法为:
+			svec.assgin();	//容器的assign方法.
+		*/
+		cout << svec.capacity() << " " << svec.size() << endl;
+		//cout << " " << svec[0] << " " << svec[svec.size() - 1] << endl;	//会报错.
+	}
+
+### 9.11 练习11
+
+判定两个vector<int>是否相等.
+
+	#include <iostream>
+	#include <vector>
+	using namespace std;
+	
+	int main()
+	{
+		vector<int> ivec = {1, 2, 3, 4, 5, 6, 7};
+		vector<int> ivec1 = { 1, 2, 3, 4, 5, 6, 7};
+		vector<int> ivec2 = { 1, 2, 3, 4, 5};
+		vector<int> ivec3 = { 1, 2, 3, 4, 5, 6, 8};
+		vector<int> ivec4 = { 1, 2, 3, 4, 5, 7, 6};
+		cout << (ivec == ivec1) << endl;	//输出1
+		/*
+			相同的容器且元素类型相同可以直接进行比较.
+			元素个数及对位的元素相等,则两个vector.否则就不相等.
+		*/
+		cout << (ivec == ivec2) << endl;	//输出0
+		cout << (ivec == ivec3) << endl;	//输出0
+		cout << (ivec == ivec4) << endl;	//输出0
+		ivec1.push_back(8);
+		ivec1.pop_back();	//pop_back:从尾部删除一个元素.
+		cout << ivec.capacity() << " " << ivec1.size() << endl;
+		cout << (ivec == ivec1) << endl;	//push_back然后再pop_back不影响判断.--->输出1
+		return 0;
+	}
+
+### 9.12 练习12
+
+### 9.1 练习1
+
+### 9.1 练习1
+
+### 9.1 练习1
