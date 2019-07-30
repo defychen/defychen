@@ -549,8 +549,182 @@ vector、deque与list迭代器的差异:
 
 ### 9.12 练习12
 
-### 9.1 练习1
+比较list<int>和vector<int>中的元素.
 
-### 9.1 练习1
+	两个容器相等的条件是包含相同个数的元素,且对位元素的值都相等.
 
-### 9.1 练习1
+	#include <iostream>
+	#include <vector>
+	#include <list>
+	using namespace std;
+	
+	bool l_v_equal(vector<int> &ivec, list<int> &ilist)
+	{
+		if (ilist.size() != ivec.size())
+			return false;
+	
+		auto lb = ilist.begin();
+		auto le = ilist.end();
+		auto vb = ivec.begin();
+		for (; lb != le; lb++, vb++) {
+			if (*lb != *vb)
+				return false;
+		}
+		return true;
+	}
+	
+	int main()
+	{
+		vector<int> ivec = { 1, 2, 3, 4, 5, 6, 7};
+		list<int> ilist = { 1, 2, 3, 4, 5, 6, 7};
+		list<int> ilist1 = { 1, 2, 3, 4, 5};
+		list<int> ilist2 = { 1, 2, 3, 4, 5, 6, 8};
+		list<int> ilist3 = { 1, 2, 3, 4, 5, 7, 6};
+	
+		cout << l_v_equal(ivec, ilist) << endl;
+		cout << l_v_equal(ivec, ilist1) << endl;
+		cout << l_v_equal(ivec, ilist2) << endl;
+		cout << l_v_equal(ivec, ilist3) << endl;
+	}
+	//结果为:
+	1
+	0
+	0
+	0
+
+更优的方法:
+
+	//先拷贝,再使用"=="比较两个vector.
+	bool l_v_equal(vector<int> &ivec, list<int> &ilist)
+	{
+		vector<int> ivec_copy(ilist.begin(), ilist.end());
+		return (ivec_copy == ivec);
+	}	
+
+### 9.13 练习13
+
+两个容器使用关系运算符(<, >等)的限制:
+
+	if (container1 < container)使用的限制:
+	1.容器类型必须相同,元素类型也必须相同;
+	2.元素类型必须支持"<"/">"等运算符.
+
+### 9.14 练习14
+
+向deque添加元素.
+
+	#include <iostream>
+	#include <string>
+	#include <deque>
+	using namespace std;
+
+	int main()
+	{
+		deque<string> sdeq;
+		string word;
+		while (cin >> word)
+			sdeq.push_back(word);	//deque的push_front是往首位置添加新元素.会导致顺序相反.
+
+		//遍历
+		for (auto siter = sdeq.begin(); siter != sdeq.end(); siter++)
+			cout <<*siter << endl;
+	}
+
+### 9.15 练习15
+
+向list添加元素--->方法与deque相似.
+
+	#include <iostream>
+	#include <list>
+	using namespace std;
+
+	int main()
+	{
+		list<string> slist;
+		string word;
+		while (cin >> word)
+			slist.push_back(word);	//deque的push_front是往首位置添加新元素.会导致顺序相反.
+
+		//遍历
+		for (auto siter = slist.begin(); siter != slist.end(); siter++)
+			cout <<*siter << endl;
+	}
+
+### 9.16 练习16
+
+将一个list<int>中奇数元素拷贝到一个deque,偶数元素拷贝到另一个deque.
+
+	#include <iostream>
+	#include <deque>
+	#include <list>
+	using namespace std;
+	
+	int main()
+	{
+		list<int> ilist = { 1, 2, 3, 4, 5, 6, 7, 8};
+		deque<int> odd_deq, even_deq;
+	
+		for (auto int_iter = ilist.cbegin(); int_iter != ilist.cend(); int_iter++) {
+			if (*int_iter & 1)	//奇偶性判断,此处与"*int_iter % 2"等价.
+				odd_deq.push_back(*int_iter);
+			else
+				even_deq.push_back(*int_iter);
+		}
+	
+		cout << "Odd value: ";
+		for (auto int_iter = odd_deq.cbegin(); int_iter != odd_deq.cend(); int_iter++)
+			cout << *int_iter << " ";
+		cout << endl;
+	
+		cout << "Even value: ";
+		for (auto int_iter = even_deq.cbegin(); int_iter != even_deq.cend(); int_iter++)
+			cout << *int_iter << " ";
+		cout << endl;
+	}
+	//结果为:
+	Odd value: 1 3 5 7
+	Even value: 2 4 6 8
+
+### 9.17 练习17
+
+insert成员函数的使用.
+
+	#include <iostream>
+	#include <vector>
+	#include <string>
+	using namespace std;
+	
+	int main()
+	{
+		vector<string> svec;
+		string word;
+		auto str_iter = svec.begin();
+		while (cin >> word)
+			str_iter = svec.insert(str_iter, word);
+			/*
+				vector,list等的insert方法:
+					para1:插入的位置,为一个迭代器的值;
+					para2:插入的元素;
+					retval:将元素插入到para1迭代器指定的元素之前,并返回指向新插入的元素的迭代器.
+				此处每次插入之后str_iter都指向首元素,即往首位置插入.
+			*/
+	
+		for (auto str_iter = svec.cbegin(); str_iter != svec.cend(); str_iter++)
+			cout << *str_iter << endl;
+	}
+
+**PS:vector/deque的insert方法少用,因为会移动元素,性能很差.使用list的insert方法不存在这个问题.**
+
+### 9.18 练习18
+
+### 9.19 练习19
+
+### 9.20 练习20
+
+### 9.21 练习21
+
+### 9.22 练习22
+
+### 9.23 练习23
+
+### 9.24 练习24
