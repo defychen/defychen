@@ -717,14 +717,483 @@ insert成员函数的使用.
 
 ### 9.18 练习18
 
+遍历到vector的中间位置,将满足条件的值插入到vector中.
+
+	#include <iostream>
+	#include <vector>
+	using namespace std;
+	
+	int main()
+	{
+		vector<int> iv = {1, 1, 1, 1, 1};
+		int some_val = 1;
+	
+		vector<int>::iterator iter = iv.begin();
+		int org_size = iv.size(), i = 0;
+	
+		while (i <= org_size / 2) {
+			if (*iter == some_val) {
+				iter = iv.insert(iter, 2 * some_val);
+				/*
+					插入到当前iter之前的一个位置.返回前一个位置的迭代器,并赋值给iter;
+				*/
+				iter++;		//向后移动一次迭代器,移动到插入之前的位置.
+				iter++;		//再向后移动一次迭代器,移动到插入之前的后一个位置.
+			} else {
+				iter++;	//没有值满足条件,直接向后移动迭代器即可.
+			}
+			i++;
+		}
+	
+		for (iter = iv.begin(); iter != iv.end(); iter++)
+			cout << *iter << " ";
+		cout << endl;
+	}
+
+**向一个vector,string,deque插入一个元素会导致当前指向容器的迭代器、指针和引用失效.要注意进行迭代器的更新.**
+
 ### 9.19 练习19
+
+获取vector首元素的方法:
+
+	1.iv.at(0):使用at访问容器的第一个元素.如果vector为空,则会抛出out_of_range异常;
+		正确的做法是:先检查容器是否为空,再使用at访问容器的首元素;
+	2.iv.[0]:下标运算符.如果vector为空,会导致程序直接退出.
+		正确的做法是:先检查下标的合法性,再使用下标运算符;
+	3.iv.front():获取首元素.如果vector为空,会导致程序直接退出;
+		正确的做法是:先检查容器是否为空,再获取首元素;
+	4.*iv.begin();获取首元素.如果vector为空,会导致程序直接退出.
+		正确的做法是:先检查容器是否为空,再获取首元素;
 
 ### 9.20 练习20
 
+删除vector和list中的元素.
+
+	1.从vector中删除元素时,会导致删除点之后位置的迭代器、引用和指针失效;
+	2.erase返回的迭代器指向删除元素之后的位置,将erase返回的迭代器赋值给iter,使其正确向前推进;
+	3.虽然list的删除操作不会令迭代器失效,但是还是建议将其看成失效,方便统一.
+
+代码如下:
+
+	#include <iostream>
+	#include <vector>
+	#include <list>
+	using namespace std;
+	
+	int main()
+	{
+		int ia[] = {0, 1, 1, 2, 3, 5, 8, 13, 21, 55, 89};
+		vector<int> iv;
+		list<int> il;
+	
+		iv.assign(ia, ia + 11);
+		il.assign(ia, ia + 11);
+		
+		for (vector<int>::iterator i_iter = iv.begin(); i_iter != iv.end();) {
+			if (!(*i_iter & 1))
+				i_iter = iv.erase(i_iter);	//删除掉偶数,返回的迭代器赋值给i_iter,使其正确向前推进.
+			else
+				i_iter++;
+		}
+	
+		for (list<int>::iterator i_iter = il.begin(); i_iter != il.end();) {
+			if (*i_iter & 1)
+				i_iter = il.erase(i_iter);	//删除掉奇数,返回的迭代器赋值给i_iter,使其正确向前推进.
+			else
+				i_iter++;
+		}
+	
+		for (vector<int>::iterator i_iter = iv.begin(); i_iter != iv.end(); i_iter++)
+			cout << *i_iter << " ";
+		cout << endl;
+	
+		for (list<int>::iterator i_iter = il.begin(); i_iter != il.end(); i_iter++)
+			cout << *i_iter << " ";
+		cout << endl;
+	}
+
 ### 9.21 练习21
+
+forward_list<int>的使用:
+
+	1.forward_list是单向链表数据结构,只有前驱节点指向后继节点的指针,没有反向的指针;
+	2.forward_list可以高效的从前驱转到后继,但无法从后继转到前驱;
+	3.forward_list插入、删除操作都是after形式(即插入、删除给定迭代器的后继):
+		1)提供了before_begin获取首元素之前位置的迭代器;
+		2)提供了insert_after向某迭代器之后插入元素;
+		3)提供了erase_after删除某迭代器之后的元素.
+
+实例代码:
+
+	#include <iostream>
+	#include <forward_list>
+	using namespace std;
+	
+	int main()
+	{
+		forward_list<int> iflst = {1, 2, 3, 4, 5, 6, 7, 8};
+	
+		auto prev = iflst.before_begin();
+		auto curr = iflst.begin();
+	
+		while (curr != iflst.end()) {
+			if (*curr & 1)
+				curr = iflst.erase_after(prev);
+				/*
+					curr = iflst.erase_after(prev);
+					1.将prev之后的元素从forward_list中移除;
+					2.返回后一个元素的迭代器,赋值给curr(变成当前迭代器).
+				*/
+			else {
+				prev = curr;	//不满足条件,prev向后移动,curr也向后移动.
+				curr++;
+			}
+		}
+	
+		for (auto i_iter = iflst.begin(); i_iter != iflst.end(); i_iter++)
+			cout << *i_iter << " ";
+		cout << endl;
+	}
 
 ### 9.22 练习22
 
+forward<list>的插入操作:
+
+	#include <iostream>
+	#include <forward_list>
+	#include <string>
+	using namespace std;
+	
+	void test_and_insert(forward_list<string> &sflst, const string &s1, const string &s2)
+	{
+		auto prev = sflst.before_begin();
+		auto curr = sflst.begin();
+		bool inserted = false;
+	
+		while (curr != sflst.end()) {
+			if (*curr == s1) {
+				curr = sflst.insert_after(curr, s2);	//在当前位置之后插入s2
+				inserted = true;
+			}
+			prev = curr;
+			curr++;
+		}
+		if (!inserted)
+			sflst.insert_after(prev, s2);	//遍历到最后,没有找到插入的位置.则插入到最后.
+	}
+	
+	int main()
+	{
+		forward_list<string> sflst = {"Hello", "!", "world", "!"};
+	
+		test_and_insert(sflst, "Hello", "hi");
+		for (auto s_iter = sflst.begin(); s_iter != sflst.end(); s_iter++)
+			cout << *s_iter << " ";
+		cout << endl;
+		test_and_insert(sflst, "!", "?");
+		for (auto s_iter = sflst.begin(); s_iter != sflst.end(); s_iter++)
+			cout << *s_iter << " ";
+		cout << endl;
+		test_and_insert(sflst, "Bye", "defy");
+		for (auto s_iter = sflst.begin(); s_iter != sflst.end(); s_iter++)
+			cout << *s_iter << " ";
+		cout << endl;
+	}
+	//结果为:
+	Hello hi ! world !
+	Hello hi ! ? world ! ?
+	Hello hi ! ? world ! ? defy
+
 ### 9.23 练习23
 
+vec.resize()操作:
+
+	如果vec有25个元素:
+		vec.resize(100):则会在vec末尾添加75个元素,这些元素将进行初始化;
+		接着调用vec.resize(10):则会将vec末尾的90个元素删除.
+
 ### 9.24 练习24
+
+list和forward_list的注意点:
+
+	list和forward_list与其他容器的一个重要的不同点是:它们的迭代器不支持加减运算.
+	因为链表中的元素在内存中不是连续存储的,因此无法直接通过地址的加减在元素间移动.
+
+### 9.25 练习25
+
+vector的capacity和size区别:
+
+	1.capacity()返回已经为vector分配了多大的内存空间(单位为元素大小),即vector可以保存的元素个数;
+	2.size()返回vector已经保存了多个元素;
+	3.capacity()返回值一定大于或等于size()返回值.
+
+### 9.26 练习26
+
+list或array没有capacity()函数的原因:
+
+	1.list是链表,有新元素时会动态分配一个新节点存放,删除元素时会立刻释放节点空间,因此不需要capacity功能;
+	2.array是固定大小数组,内存一次性分配,大小不变,因此也不需要capacity功能.
+
+### 9.27 练习27
+
+从一个vector<char>初始化一个string.
+
+	#include <iostream>
+	#include <vector>
+	#include <string>
+	using namespace std;
+	
+	int main()
+	{
+		vector<char> vc = {'H', 'e', 'l', 'l', 'o'};
+		string s(vc.data(), vc.size());
+		/*
+			vc.data():vector的data()函数,返回vector在内存空间的首地址;
+			string的构造函数其中的一种形式:s(vc.data(), vc.size()):
+				para1:字符数组(此处为vector)的首地址;
+				para2:字符数组(此处为vector)的大小.
+		*/
+		cout << s << endl;
+	}
+
+### 9.28 练习28
+
+往string中添加字符.
+
+	#include <iostream>
+	#include <string>
+	using namespace std;
+	
+	void input_string(string &s)
+	{
+		s.reserve(100);	//预先为string保留100字符的空间.string和vector一样,具有reserve成员函数.
+		char c;
+		while (cin >> c)
+			s.push_back(c);	//string和容器一样,具有push_back()向尾部添加字符.
+	}
+	
+	int main()
+	{
+		string s;
+		input_string(s);
+		cout << s << endl;
+	}
+
+### 9.29 练习29
+
+字符串中参数替换.
+
+	#include <iostream>
+	#include <string>
+	using namespace std;
+	
+	void replace_string(string &s, const string &oldStr, const string &newStr)
+	{
+		int l = s.size();
+		if (!l)
+			return;
+	
+		auto str_iter = s.begin();
+		while (str_iter != s.end()) {
+			auto str_iter1 = str_iter;
+			auto str_iter2 = oldStr.begin();
+			while (str_iter2 != oldStr.end() && (*str_iter1 == *str_iter2)) {
+				//检查每一个字符是否都相等
+				str_iter1++;
+				str_iter2++;
+			}
+	
+			if (str_iter2 == oldStr.end()) {	//到达字符串结尾,表示查找到对应字符.
+				str_iter = s.erase(str_iter, str_iter1);	//删除从起始到结束点的字符串
+				if (newStr.size()) {
+					str_iter2 = newStr.end();
+					do {
+						str_iter2--;	//取待插入字符串尾部一一插入
+						str_iter = s.insert(str_iter, *str_iter2);
+						//必须一个字符一个字符的插入才能保证顺序
+					} while (str_iter2 > newStr.begin());
+				}
+				str_iter += newStr.size();
+			} else {
+				str_iter++;
+			}
+		}
+	}
+	
+	int main()
+	{
+		string s = "tho thru tho!";
+		replace_string(s, "thru", "through");
+		cout << s << endl;
+		replace_string(s, "tho", "though");
+		cout << s << endl;
+	}
+	//结果为:
+	tho through tho!
+	though through though!
+
+### 9.30 练习30
+
+使用string的find()和replace()来实现29题练习.
+
+	#include <iostream>
+	#include <string>
+	using namespace std;
+	
+	void replace_string(string &s, const string &oldStr, const string &newStr)
+	{
+		int pos = 0;
+		while ((pos = s.find(oldStr, pos)) != string::npos) {
+			/*
+				string的find函数:
+					para1:待查找的字符串(字符串整体查找);
+					para2:查找的起始点,默认为从0开始.
+				retval:返回匹配的字符串的起始点.
+				string::npos:表示查找到末尾没有查找到的值.
+			*/
+			s.replace(pos, oldStr.size(), newStr);
+			/*
+				string的replace函数:
+					para1:替换的起始点;
+					para2:替换字符串的大小;
+					para3:替换的新字符串.
+				PS:即将从起始点para1开始的para2大小替换为para3.
+			*/
+			pos += newStr.size();	//pos往后移动newStr.size()个单位
+		}
+	}
+	
+	int main()
+	{
+		string s = "tho thru tho!";
+		replace_string(s, "thru", "through");
+		cout << s << endl;
+		replace_string(s, "tho", "though");
+		cout << s << endl;
+	}
+
+### 9.31 练习31
+
+string的insert和append函数的使用.
+
+	#include <iostream>
+	#include <string>
+	using namespace std;
+	
+	void name_string(string &name, const string &prefix, const string &suffix)
+	{
+		name.insert(name.begin(), 1, ' ');	
+		/*
+			begin()位置插入一个' '.也可以使用:
+			name.insert(0, " ");	//表示在0的位置之前插入一个空格
+		*/
+		name.insert(name.begin(), prefix.begin(), prefix.end());
+		/*
+			begin()位置插入prefix.begin()到prefix.end()之间的字符串.也可以使用:
+			name.insert(0, prefix);	//表示在0的位置之前插入一个prefix字符串
+		*/
+		name.append(" ");	
+		/*
+			append()在末尾插入一个" ".也可以使用:
+			name.insert(name.size(), " "); //表示在name.size()即末尾位置插入一个空格
+		*/
+		name.append(suffix.begin(), suffix.end());
+		/*
+			append()在末尾插入suffix.begin()到suffix.end()之间的字符串.也可以使用:
+			name.insert(name.size(), suffix); //表示在name.size()即末尾位置插入suffix字符串
+		*/
+	}
+	
+	int main()
+	{
+		string s = "James Bond";
+		name_string(s, "Mr.", "II");
+		cout << s << endl;
+		s = "M";
+		name_string(s, "Mrs.", "III");
+		cout << s << endl;
+	}
+
+### 9.32 练习32
+
+练习在string "ab2c3d7R4E6"中查找出数字和字母.
+
+	#include <iostream>
+	#include <string>
+	using namespace std;
+	
+	void find_char(string &s, const string &chars)
+	{
+		cout << "Find " << chars << " sin " << s << endl;
+		string::size_type pos = 0;	//查找的位置
+		while ((pos = s.find_first_of(chars, pos)) != string::npos) {
+			/*
+				string的find_first_of:
+					para1:查找的给定字符集合,即在s中查找para1给定的字符集合中的字符;
+					para2:查找的起始位置;
+					retval:查找到字符的位置.
+			*/
+			cout << "pos: " << pos << ", char: " << s[pos] << endl;
+			pos++;
+		}
+	}
+	
+	int main()
+	{
+		string s = "ab2c3d7R4E6";
+		cout << "Find all number in " << s << endl;
+		find_char(s, "0123456789");
+		cout << endl << "Find all characters in" << s << endl;
+		find_char(s, "abcdefghijklmnopqrstuvwxyz" \
+			"ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+	}
+
+**s.find_first_of和s.find_first_not_of**
+
+	1.s.find_first_of(chars, pos):在s中查找位于集合chars中首次出现的字符;
+	2.s.find_first_not_of(chars, pos):在s中查找不在集合chars中首次出现的字符;
+	PS:find_first_of和find_first_not_of属于补集的查找关系.
+
+### 9.33 练习33
+
+字符串到数值的类型转换.
+
+	1.字符串转整型(stoi):
+	#include <iostream>
+	#include <string>
+	#include <vector>
+	using namespace std;
+	
+	int main()
+	{
+		vector<string> vs = {"123", "+456", "-789"};
+		int sum = 0;
+	
+		for (auto str_iter = vs.begin(); str_iter != vs.end(); str_iter++)
+			sum += stoi(*str_iter);
+		cout << "Sum: " << sum << endl;
+	}
+	//结果为:
+		Sum: -210
+	2.字符串转浮点数(stof):
+	#include <iostream>
+	#include <string>
+	#include <vector>
+	using namespace std;
+	
+	int main()
+	{
+		vector<string> vs = {"12.3", "-4.56", "+7.8e-2"};
+		float sum = 0;
+	
+		for (auto str_iter = vs.begin(); str_iter != vs.end(); str_iter++)
+			sum += stof(*str_iter);
+		cout << "Sum: " << sum << endl;
+	}
+	//结果为:
+		Sum: 7.818
+
+### 9.34 练习34
+
+年、月、日的解析.
+
