@@ -1197,3 +1197,269 @@ string的insert和append函数的使用.
 
 年、月、日的解析.
 
+date.h头文件:
+
+	#ifndef __DATE_H__
+	#define __DATE_H__
+	
+	#include <iostream>
+	#include <string>
+	#include <stdexcept>
+	using namespace std;
+	
+	const string month_name[] = {"January", "February", "March", "April",
+		"May", "June", "July", "August", "September", "October", "November", "December"};
+	const string month_abbr[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug",
+		"Sep", "Oct", "Nov", "Dec"};
+	const int days[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+	
+	class date {
+	public:
+		friend ostream& operator<<(ostream &, const date&);
+		date() = default;
+		date(string &ds);
+		unsigned y() const 
+		{
+			return year;
+		}
+		unsigned m() const
+		{
+			return month;
+		}
+		unsigned d() const
+		{
+			return day;
+		}
+	private:
+		unsigned year, month, day;
+	};
+	
+	inline int get_month(string &ds, int &end_of_month)
+	{
+		int i, j;
+		for (i = 0; i < 12; i++) {
+			for (j = 0; j < month_abbr[i].size(); j++)
+				if (ds[j] != month_abbr[i][j])
+					break;
+	
+			if (j == month_abbr[i].size())
+				break;
+		
+		}
+	
+		if (i == 12)
+			throw invalid_argument("Invalid month");
+	
+		if (ds[j] == ' ') {
+			end_of_month = j + 1;
+			return i + 1;
+		}
+	
+		for (; j < month_name[i].size(); j++)
+			if (ds[j] != month_name[i][j])
+				break;
+	
+		if (j == month_name[i].size() && ds[j] == ' ') {
+			end_of_month = j + 1;
+			return i + 1;
+		}
+		throw invalid_argument("Invalid month");
+	}
+	
+	inline int get_day(string &ds, int month, int &p)
+	{
+		size_t q;
+		int day = stoi(ds.substr(p), &q);
+		/*
+			stoi(ds.substr(p), &q):
+				para1:字符串数字.
+				para2:保存字符串数字后的非数字的索引,相对p开始的位置(即为一个相对位置);
+				retval:返回转换后的数字.
+			ds.substr():表示从p位置开始取字符串.
+		*/
+		if (day < 1 || day > days[month])
+			throw invalid_argument("Invalid date");
+		p += q;
+		return day;
+	}
+	
+	inline int get_year(string &ds, int &p)
+	{
+		size_t q;
+		int year = stoi(ds.substr(p), &q);
+		if (p + q < ds.size())
+			throw invalid_argument("Invalid ending");
+		return year;
+	}
+	
+	date::date(string &ds)
+	{
+		int p;
+		size_t q;
+		if ((p = ds.find_first_of("0123456789")) == string::npos)
+			throw invalid_argument("No number, invalid date");
+	
+		if (p > 0) {
+			month = get_month(ds, p);
+			day = get_day(ds, month, p);
+			if (ds[p] != ' ' && ds[p] != ',') {
+				throw invalid_argument("Invalid blank");
+			}
+			p++;
+			year = get_year(ds, p);
+		}
+		else {
+			month = stoi(ds, &q);
+			p = q;
+			if (month < 1 || month > 12)
+				throw invalid_argument("Invalid month");
+			if (ds[p++] != '/')
+				throw invalid_argument("Invalid blank");
+			day = get_day(ds, month, p);
+			if (ds[p++] != '/')
+				throw invalid_argument("Invalid blank");
+			year = get_year(ds, p);
+		}
+	}
+	
+	ostream &operator<<(ostream &out, const date &d)
+	{
+		out << d.y() << " year," << d.m() << " month," << d.d() << " day" << endl;
+		return out;
+	}
+	
+	#endif
+
+测试程序:
+
+	#include <iostream>
+	#include <string>
+	#include "date.h"
+	using namespace std;
+	
+	int main()
+	{
+		string dates[] = {"Jan 1,2014", "February 1 2014", "3/1/2014",
+					//"3 1 2014",
+					};
+	
+		try {
+			for (auto ds : dates) {
+				date d1(ds);
+				cout << d1;
+			}
+		} catch (invalid_argument e) {
+			cout << e.what() << endl;
+		}
+	}
+
+***
+
+## Chapter 15. 面向对象程序设计
+
+### 15.1 练习1
+
+虚成员:
+
+	1.在类中声明为virtual的成员,基类希望这种成员在派生类中被重定义;
+	2.类中除了构造函数外,其他任意非static成员都可以成为虚成员.
+
+### 15.2 练习2
+
+protected与private访问说明符的区别:
+
+	1.protected是受保护的访问标号,protected成员可以被该类的成员、友元(函数)和派生类成员(非友元)访问,但
+		不可以被该类的普通用户访问(e.g.该类声明的对象则不可以访问protected成员);
+	2.private表示私有成员,只能被基类的成员和友元访问,派生类不能访问.
+
+### 15.3 练习3
+
+静态类型和动态类型的定义:
+
+	1.静态类型是声明变量时的类型或表达式生成的类型,在编译时已经确定;
+	2.动态类型是变量或表达式表示的内存中的对象的类型,直到运行时才能知道.
+		e.g. Quote *pQuote = new Bulk_quote;
+		1.指针pQuote的静态类型是Quoter,编译时已经确定;
+		2.指针pQuoter的动态类型是Bulk_quote,直到运行时才能知道该指针指向的是基类还是派生类.
+	PS:如果一个变量是指针或者引用,则其静态类型和动态类型可能不一致;否则一个变量非指针也非引用,则其静态类型
+		和动态类型永远一致.e.g.
+			Bulk_quote bulk;
+			Quote *pQuote = &bulk;	//pQuote为指针,静态类型与动态不一致;
+			Quote &rQuote = bulk;	//rQuote为引用,静态类型与动态不一致.
+
+### 15.4 练习4
+
+虚函数练习:
+
+1.class Quote
+
+	class Quote
+	{
+	public:
+		Quote() = default;
+		Quote(const string &book, double sales_price) :
+			bookNo(book), price(sales_price) {}
+		string isbn() const
+		{
+			return bookNo;
+		}
+		virtual double net_price(size_t n) const	//虚函数
+		{
+			return n * price;
+		}
+		virtual void debug()
+		{
+			cout << "bookNo = " << bookNo << " price = " << price << endl;
+		}
+		virtual ~Quote() = default;
+	private:
+		string bookNo;
+	protected:
+		double price = 0.0;
+	};
+
+2.class Bulk_quote
+
+	class Bulk_quote : public Quote
+	{
+	public:
+		Bulk_quote(const string &book = "", double sales_price = 0, size_t qty = 0, double 
+		disc_rate = 0) :
+			Quote(book, sales_price), min_qty(qty), discount(disc_rate) {}
+		
+		double net_price(size_t cnt) const
+		{
+			if (cnt > min_qty)
+				return cnt * (1 - discount) * price;
+			else
+				return cnt * price;
+		}
+		virtual void debug()
+		{
+			Quote::debug();	//引用基类的成员函数方法
+			cout << "min_qty = " << min_qty << " discount = " << discount << endl;
+		}
+	private:
+		size_t min_qty;
+		double discount;
+	};
+
+### 15.5 练习5
+
+### 15.6 练习6
+
+### 15.7 练习7
+
+### 15.8 练习8
+
+### 15.9 练习9
+
+### 15.10 练习10
+
+### 15.11 练习11
+
+### 15.12 练习12
+
+### 15.13 练习13
+
+### 15.14 练习14
