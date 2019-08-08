@@ -4410,7 +4410,7 @@ public继承特点:
 	virtual ~CommissionEmployee();
 	//基类声明virtual析构函数,当删除基类指针指向的对象时,自动删除对应的new的派生类对象空间.
 
-**2.Final成员函数和类**
+**2.final成员函数和类**
 
 略.
 

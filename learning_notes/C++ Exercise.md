@@ -1446,20 +1446,260 @@ protected与private访问说明符的区别:
 
 ### 15.5 练习5
 
+override和final使用场景:
+
+1.override
+
+	1.在基类中声明virtual成员函数形式:
+		virtual void draw() const;
+	2.基类中声明了virtual成员函数,派生类为了程序清晰可读.最好在派生类中也将该成员函数声明为virtual,且使用
+	override关键词进行检查:
+		virtual void draw() const override;
+		/*
+		1.派生类中也使用virtual关键词;
+		2.派生类中后面使用override关键词,用于检查基类中是否存在一个相同函数签名的成员函数,不存在就报错.
+			达到检查的目的;
+		*/
+	3.对于基类中virtual成员函数,派生类也可以不添加virtual,默认继承而来的也是virtual类型,只是不易读.
+
+2.final
+
+	如果将某个成员函数定义成final,则不允许后续的派生类来覆盖这个函数,否则会报错.
+
 ### 15.6 练习6
+
+继承的运用:
+
+	#include <iostream>
+	using namespace std;
+	
+	class Base
+	{
+	public:
+		void pub_mem();
+	protected:
+		int prot_mem;
+	private:
+		char priv_mem;
+	};
+	
+	struct Pub_Derv : public Base
+	{
+		int f()
+		{
+			return prot_mem;
+		}
+		void memfcn(Base &b)
+		{
+			b = *this;
+			cout << "Pub_Derv" << endl;
+		}
+	};
+	
+	struct Priv_Derv : private Base
+	{
+		int f1() const
+		{
+			return prot_mem;
+			//private继承只能访问基类中public/protected成员函数/变量,基类中的private不能被访问.
+		}
+		void memfcn(Base &b)
+		{
+			b = *this;
+			/*
+				直接继承(无论以public/protected/private),派生类的成员函数和友元都可以使用派生类对象向
+				基类的转换.
+			*/
+			cout << "Priv_Derv" << endl;
+		}
+	};
+	
+	struct Prot_Derv : protected Base
+	{
+		int f2()
+		{
+			return prot_mem;
+		}
+		void memfcn(Base &b)
+		{
+			b = *this;
+			cout << "Prot_Derv" << endl;
+		}
+	};
+	
+	struct Derived_from_Public : public Pub_Derv
+	{
+		int use_base()
+		{
+			return prot_mem;
+		}
+		void memfcn(Base &b)
+		{
+			b = *this;
+			cout << "Derived_from_Public" << endl;
+		}
+	};
+	
+	#if 0
+	struct Derived_from_Private : private Priv_Derv
+	{
+		int use_base()
+		{
+			return prot_mem;
+			//private继承派生出任何类,不能访问基类中的任何成员.
+		}
+		void memfcn(Base &b)
+		{
+			b = *this;
+			//private继承派生出任何类,不能使用派生类对象向基类的转换.
+			cout << "Derived_from_Private" << endl;
+		}
+	};
+	#endif
+	
+	struct Derived_from_Protected : protected Prot_Derv
+	{
+		int use_base()
+		{
+			return prot_mem;
+		}
+		void memfcn(Base &b)
+		{
+			b = *this;
+			//protected继承派生出protected类,其中的成员函数或友元也是可以使用派生类对象向基类的转换.
+			cout << "Derived_from_Protected" << endl;
+		}
+	};
+	
+	int main()
+	{
+		Pub_Derv d1;
+		Priv_Derv d2;
+		Prot_Derv d3;
+		Derived_from_Public dd1;
+		//Derived_from_Private dd2;
+		Derived_from_Protected dd3;
+		Base base;
+		Base *p = new Base;
+		p = &d1;
+		//p = &d2;
+		//p = &d3;
+		p = &dd1;
+		//p = &dd2;
+		//p = &dd3;
+		d1.memfcn(base);
+		//d2.memfcn(base);
+		d3.memfcn(base);
+		dd1.memfcn(base);
+		//dd2.memfcn(base);
+		dd3.memfcn(base);
+		return 0;
+	}
+	结果为:
+	Pub_Derv
+	Priv_Derv
+	Prot_Derv
+	Derived_from_Public
+	Derived_from_Protected
 
 ### 15.7 练习7
 
+虚析构函数:
+
+	虚析构函数:基类使用的类应具有虚虚构函数,以保证在删除指向派生类对象的基类指针时,根据指针实际指向的
+	对象所属的类型运行适当的析构函数.
+
 ### 15.8 练习8
 
-### 15.9 练习9
+C++11智能指针unique_ptr, shared_ptr的使用.
 
-### 15.10 练习10
+	1.C++11中有unique_ptr, shared_ptr与weak_ptr等智能指针(smart pointer),定义在<memory>中;
+	2.智能指针可以对动态资源进行管理,保证任何情况下,已构造的对象能够被销毁.避免内存泄漏;
+	3.指针指针位于<memory>头文件中.
 
-### 15.11 练习11
+**1.unique_ptr**
 
-### 15.12 练习12
+unique_ptr对对象持有独有权,即同一时刻只能有一个unique_ptr指向给定对象.
 
-### 15.13 练习13
+	#include <iostream>
+	#include <memory>
+	
+	void test()
+	{
+		std::unique_ptr<int> up1(new int(11));	//不能复制的unique_ptr.指向11的内容
+		//std::unique_ptr<int> up2 = up1;		//错误,unique_ptr只能有一个指向给定对象
+		std::cout << *up1 << std::endl;			// 11
+	
+		std::unique_ptr<int> up3 = std::move(up1);	//up1移除,p3是数据11的唯一的unique_ptr
+	
+		std::cout << *up3 << std::endl;			// 11
+		//std::cout << *up1 << std::endl;		//错误
+		up3.reset();		//显示释放内存
+		up1.reset();		//不能导致运行时错误
+		//std::cout << *up3 << std::endl;	//up3已经释放,错误
+	
+		std::unique_ptr<int> up4(new int(22));	//不能复制的unique_ptr.指向22的内容
+		up4.reset(new int(44));		//重新指向44,绑定动态对象
+		std::cout << *up4 << std::endl;		// 44
+	
+		up4 = nullptr;		//显示销毁所指对象,up4变为空指针.与up4.reset()等价
+	
+		std::unique_ptr<int> up5(new int(55));
+		int *p = up5.release();		//释放控制权,不会释放内存
+		std::cout << *p << std::endl;	// 55
+		//std::cout << *up5 << std::endl;	//控制权已经释放,错误.
+		delete p;
+	}
+	
+	int main()
+	{
+		test();
+		system("pause");
+	}
+	//结果为:
+	11
+	11
+	44
+	55
 
-### 15.14 练习14
+**2.shared_ptr**
+
+shared_ptr是允许多个shared_ptr指针指向同一个对象(底层通过引用计数实现).
+
+	#include <iostream>
+	#include <memory>
+	
+	void test()
+	{
+		std::shared_ptr<int> sp1(new int(22));
+		std::shared_ptr<int> sp2 = sp1;		//两个shared_ptr指向同一个对象
+		std::cout << "count: " << sp2.use_count() << std::endl;
+		// shared_ptr指针的.use_count():打印引用计数.此处为2.
+	
+		std::cout << *sp1 << std::endl;
+		std::cout << *sp2 << std::endl;
+	
+		sp1.reset();	//显示让引用计数减一
+		std::cout << "count: " << sp2.use_count() << std::endl;		// 1
+		std::cout << *sp2 << std::endl;		// 22
+	}
+	
+	int main()
+	{
+		test();
+		system("pause");
+	}
+	//结果为:
+	count: 2
+	22
+	22
+	count: 1
+	22
+
+**3.weak_ptr**
+
+略.
+
+***
+
+## Chapter 16. 模板与泛型编程
