@@ -225,6 +225,35 @@ C语言中,字符串实际上是使用空字符(即'\0')终止的一堆字符数
 
 	strstr(s1, s2):返回一个指针,指向字符串s1中字符串s2第一次出现的位置.
 
+7.strdup(s)
+
+strdup不是标准的C函数,内部会调用malloc为变量分配内存,因此需要主动调用free释放相应的空间.
+
+	p = strdup(s):返回一个指针.主动分配空间并复制s中的字符串,p指向该空间.
+
+实例:
+
+	#include <stdlib.h>
+	#include <stdio.h>
+	#include <string.h>
+	#include <malloc.h>
+	
+	int main()
+	{
+		char *s = "Golden Global View";
+		char *d;
+		d = strdup(s);
+		/*
+			d不需要提前分配空间.传入一个含有内容的字符指针.自动调用malloc分配空间并复制s中的内容,p指向
+			该空间.
+		*/
+		if (NULL != d) {
+			printf("%s\n", d);
+			free(d);	//需要主动调用free去释放分配的空间.
+		}
+		return 0;
+	}
+
 ### 18.3 实例
 
 	#include <stdio.h>

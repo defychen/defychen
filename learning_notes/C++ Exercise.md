@@ -1355,6 +1355,133 @@ date.h头文件:
 
 ***
 
+## Chapter 10. 泛型算法
+
+### 10.1 练习1
+
+头文件algorithm中的count的使用,统计有多少个元素的值等于给定值.
+
+	#include <iostream>
+	#include <fstream>
+	#include <vector>
+	#include <algorithm>
+	using namespace std;
+
+	int main(int argc, char *argv[])
+	{
+		ifstream in(argv[1]);
+		if (!in) {
+			cerr << "Open file fail!" << endl;
+			exit(1);
+		}
+
+		vector<int> vi;
+		int val;
+		while (in >> val)
+			vi.push_back(val);
+
+		cout << "Please input an integer value to count:";
+		cin >> val;
+
+		cout << "The vector contains " << count(vi.begin(), vi.end(), val)  << " " << val
+			<< " integers";
+		/*
+			count(vi.begin(), vi.end(), val):在迭代器vi.begin()到vi.end()之间统计val出现的次数.
+			para1:迭代器的起始;
+			para2:迭代器的终止;
+			para3:要查找的值.
+		*/
+	}
+
+### 10.2 练习2
+
+count对字符串的使用.
+
+	#include <iostream>
+	#include <fstream>
+	#include <string>
+	#include <list>
+	#include <algorithm>
+	using namespace std;
+
+	int main(int argc, char *argv[])
+	{
+		ifstream in(argv[1]);
+		if (!in) {
+			cerr << "Open file fail!" << endl;
+			exit(1);
+		}
+
+		list<strin> ls;
+		string word;
+		while (in >> word)
+			ls.push_back(word);
+
+		cout << "Please input a string to count:";
+		cin >> word;
+
+		cout << "The list contains " << count(ls.begin(), ls.end(), word)  << " " << word
+			<< " string";
+		/*
+			count(ls.begin(), ls.end(), word):在迭代器ls.begin()到ls.end()之间统计字符串word出
+				现的次数.
+			para1:迭代器的起始;
+			para2:迭代器的终止;
+			para3:要查找的字符串.
+		*/
+	}
+
+### 10.3 练习3
+
+头文件algorithm中的accumulate的使用,计算元素的总和.
+
+	#include <algorithm>
+	#include <fstream>
+	#include <vector>
+	#include <iostream>
+	using namespace std;
+
+	int main(int argc, char *argv[])
+	{
+		ifstream in(argv[1]);
+		if (!in) {
+			cerr << "Open file fail!" << endl;
+			exit(1);
+		}
+
+		vector<int> vi;
+		int val;
+		while (in >> val)
+			vi.push_back(val);
+
+		cout << "The sum of vector<int> is " << accumulate(vi.begin(), vi.end(), 0) << endl;
+		/*
+			accumulate(vi.begin(), vi.end(), 0):在迭代器vi.begin()到vi.end()之间计算整个vector
+				元素的总和.第三个参数是和的初值.
+			para1:迭代器的起始;
+			para2:迭代器的终止;
+			para3:和的初值.该参数的类型也指明最终的和的类型以及使用的加法类型:
+				如果为0,表示最终的结果为整型,使用的是整型加法运算.如果此时容器中的元素类型为double,
+					结果就会不正确;
+				如果为0.0,表示最终的结果是浮点,使用的是浮点加法运算.
+				PS:如果容器元素为double,此处应该传0.0.
+		*/
+	}
+
+### 10.4 练习4
+
+### 10.5 练习5
+
+### 10.6 练习6
+
+### 10.7 练习7
+
+### 10.8 练习8
+
+### 10.9 练习9
+
+***
+
 ## Chapter 15. 面向对象程序设计
 
 ### 15.1 练习1
