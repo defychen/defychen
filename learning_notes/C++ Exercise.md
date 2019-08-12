@@ -1470,9 +1470,121 @@ count对字符串的使用.
 
 ### 10.4 练习4
 
+algorithm中的equal的使用:
+
+	bool equal(iter1_begin, iter1_end, iter2_begin, [param]);
+	/*
+		由iter1_begin到iter1_end迭代器指定的元素范围(个数),比较两个容器中元素是否相等.相等返回true,否则
+		返回false.
+	*/
+
+实例:
+
+	#include <iostream>
+	#include <algorithm>
+	#include <vector>
+	#include <array>
+	using namespace std;
+	
+	int main()
+	{
+		vector<int> vi{1, 5, 7, 8, 9};
+		array<int, 4> ai{1, 5, 7, 8};
+	
+		if (equal(ai.begin(), ai.end(), vi.begin()))	// 相等,返回true
+			cout << "equal(ai.begin(), ai.end(), vi.begin()) return true!" << endl;
+		else
+			cout << "equal(ai.begin(), ai.end(), vi.begin()) return false!" << endl;
+	}
+
 ### 10.5 练习5
 
+fill_n的使用:
+
+	#include <iostream>
+	#include <fstream>
+	#include <vector>
+	#include <algorithm>
+	using namespace std;
+
+	int main(int argc, char *argv[])
+	{
+		ifstream in(argv[1]);
+		if (!in) {
+			cerr << "Open file fail!" << endl;
+			exit(1);
+		}
+
+		vector<int> vi;
+		int val;
+		while (in >> val) {
+			vi.push_back(val);
+			cout << val << " ";
+		}
+		cout << endl;
+
+		fill_n(vi.begin(), vi.end(), 0);
+		/*
+			fill_n将一个序列中指定范围的值设为某个值.
+			para1:容器的起始迭代器;
+			para2:容器的终止迭代器;
+			para3:需要设置的值.
+			PS:fill_n填充容器值要求:容器必须有元素,类似reserve仅保留了空间,但没有添加元素是错误的.
+		*/
+		for (auto &val_i : vi)
+			cout << val_i << " ";
+	}
+
 ### 10.6 练习6
+
+algorithm的copy和fill_n的使用:
+
+	copy(iter1_begin, iter1_end, iter2_begin);
+	/*
+		由iter1_begin到iter1_end迭代器指定的元素范围(个数),拷贝容器1中的元素到iter2_begin迭代器指定的
+		容器中.
+		PS:目标容器iter2_begin指定的容器要求至少含有iter1容器一样多的元素(此处为元素而非空间).因为所有
+			的algorithm中的算法不能直接向容器添加、删除元素,无法改变容器的大小.
+	*/
+
+使用back_inserter避免因为没有分配空间或无元素而无法使用copy或fill_n.
+
+	1.back_inserter在copy中的使用:
+	#include <iostream>
+	#include <fstream>
+	#include <vector>
+	#include <list>
+	#include <algorithm>
+	using namespace std;
+
+	int main(int argc, char *argv[])
+	{
+		ifstream in(argv[1]);
+		if (!in) {
+			cerr << "Open file fail!" << endl;
+			exit(1);
+		}
+		list<int> lst;
+		vector<int> vec;
+		int val;
+		while (in >> val)
+			lst.push_back(val);
+
+		copy(lst.begin(), lst.end(), back_inserter(vec));
+		/*
+			para1:源容器的起始迭代器;
+			para2:源容器的终止迭代器;
+			para3:目标容器的起始迭代器.此处:
+			back_inserter(vec):向vec容器的末尾插入,避免因为vec没有分配空间或者元素数量太少导致copy
+				出错.			
+		*/
+		cout << equal(lst.begin(), lst.end(), vec.begin()) << endl;
+	}
+	2.back_inserter在fill_n中的使用:
+		vector<int> vec;
+		vec.reserve(10);	//预留10的空间,但无元素.直接fill_n会出错.
+		fill_n(back_inserter(vec), 10, 0);
+		//向vec中尾插入10个元素,每个元素的值为0.
 
 ### 10.7 练习7
 
