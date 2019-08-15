@@ -2,7 +2,9 @@
 
 ## 1.Ubuntu16.04下载
 
-下载地址:[Ubuntu Release](http://releases.ubuntu.com/)
+下载地址:[Ubuntu Release](http://releases.ubuntu.com/)--->这个地址国内下载很慢.
+
+[ubuntu下载地址](http://mirrors.163.com/ubuntu-releases/)--->这个地址块.
 
 ## 2.UltraISO安装
 
