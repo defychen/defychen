@@ -407,6 +407,15 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 		*/
 	2.编译
 		make
+		/*
+		编译时,可能出现的问题:
+		1."util/memfd.c:43:12:error: static declaration of ‘memfd_create’ follows non-staticdeclaration"
+		--->解决办法:
+			打开util/memfd.c,将memfd_create函数名重命名为:tmp_memfd_create即可.
+		2."qga/commands-posix.c:634: undefined reference to `minor'"
+		--->解决方法:
+			打开qga/commands-posix.c,在commands.posix.c文件中加上头文件<sys/sysmacros.h>即可.
+		*/
 	3.安装
 		make install	//会安装到系统的"/usr/local/bin/qemu-system-arm"的位置
 	4.查看qemu版本
