@@ -140,5 +140,25 @@ AT字段与PCIe总线的地址转换相关.
 		系统中,PCIe设备才会使用该字段;
 	2.AT字段用作存储器域与PCIe总线域之间的地址转换,目的是为了方便多个虚拟主机共享同一个PCIe设备.
 
+**3.Length字段**
 
-	
+Length字段用来描述TLP的有效负载(Data Payload)的大小.
+
+	1.PCIe总线规范规定一个TLP的Data Payload的大小在1 B~4096 B之间;
+	2.Length字段以DW为单位,最小单位为1DW;
+	3.如果PCIe主设备传送的Payload小于1个DW或传送的数据不以DW对齐时,需要使用"DW BE"字段(字节使能字段).
+
+### 6.2 TLP的路由
+
+PCIe一共定义了3中路由方法:基于地址路由,基于ID路由,隐式路由(Implicit).
+
+	1.地址路由:存储器和I/O读写其你去TLP使用基于地址路由;;
+	2.基于ID路由:配置读写报文、"Vendor_Defined Message"报文、Cpl和CpID报文使用基于ID路由;
+	3.隐式路由:用于Message报文的传递(包括:INTx Interrupt Signaling, Power Management Message,
+		Error Signal Messages等报文).
+
+### 6.2.1 基于地址的路由
+
+### 6.2.2 基于ID的路由
+
+### 6.2.3 隐式路由
