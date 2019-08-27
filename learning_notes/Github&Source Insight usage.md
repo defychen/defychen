@@ -84,6 +84,10 @@
 
 	git checkout -- .		//针对有时本地修改了,但是不需要提交.而且此时不能执行"git pull"
 
+**7)查看代码改动情况**
+
+	git show commit-number	//查看某个commit号的代码改动情况
+
 ## 1.3 git pull更新时的问题
 
 	1.git pull之后出现:

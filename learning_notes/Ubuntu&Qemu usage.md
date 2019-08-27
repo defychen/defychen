@@ -190,6 +190,91 @@ rar/unrar命令的使用:
 
 	官网下载很慢.
 
+## 1.11 更改软件源
+
+ubuntu经常会需要执行更新操作,使用官方的软件源更新会很慢.因此需要更改软件源为国内,这样更新会快很多.
+
+	打开/etc/apt/sources.list文件,在该文件开头添加以下内容:
+	#东北大学：
+	deb-src http://mirror.neu.edu.cn/ubuntu/ xenial main restricted #Added by software-
+		properties
+	deb http://mirror.neu.edu.cn/ubuntu/ xenial main restricted
+	deb-src http://mirror.neu.edu.cn/ubuntu/ xenial restricted multiverse universe #Added by
+		 software-properties
+	deb http://mirror.neu.edu.cn/ubuntu/ xenial-updates main restricted
+	deb-src http://mirror.neu.edu.cn/ubuntu/ xenial-updates main restricted multiverse 
+		universe #Added by software-properties
+	deb http://mirror.neu.edu.cn/ubuntu/ xenial universe
+	deb http://mirror.neu.edu.cn/ubuntu/ xenial-updates universe
+	deb http://mirror.neu.edu.cn/ubuntu/ xenial multiverse
+	deb http://mirror.neu.edu.cn/ubuntu/ xenial-updates multiverse
+	deb http://mirror.neu.edu.cn/ubuntu/ xenial-backports main restricted universe multiverse
+	deb-src http://mirror.neu.edu.cn/ubuntu/ xenial-backports main restricted universe
+		multiverse #Added by software-properties
+	deb http://archive.canonical.com/ubuntu xenial partner
+	deb-src http://archive.canonical.com/ubuntu xenial partner
+	deb http://mirror.neu.edu.cn/ubuntu/ xenial-security main restricted
+	deb-src http://mirror.neu.edu.cn/ubuntu/ xenial-security main restricted multiverse 
+		universe #Added by software-properties
+	deb http://mirror.neu.edu.cn/ubuntu/ xenial-security universe
+	deb http://mirror.neu.edu.cn/ubuntu/ xenial-security multiverse
+	#清华大学
+	# deb cdrom:[Ubuntu 16.04 LTS _Xenial Xerus_ - Release amd64 (20160420.1)]/ xenial main 
+		restricted
+	deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial main restricted
+	deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-updates main restricted
+	deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial universe
+	deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-updates universe
+	deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial multiverse
+	deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-updates multiverse
+	deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-backports main restricted universe 
+		multiverse
+	deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-security main restricted
+	deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-security universe
+	deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-security multiverse
+	#阿里云
+	# deb cdrom:[Ubuntu 16.04 LTS _Xenial Xerus_ - Release amd64 (20160420.1)]/ xenial main
+		restricted
+	deb-src http://archive.ubuntu.com/ubuntu xenial main restricted #Added by software-
+		properties
+	deb http://mirrors.aliyun.com/ubuntu/ xenial main restricted
+	deb-src http://mirrors.aliyun.com/ubuntu/ xenial main restricted multiverse
+		universe #Added by software-properties
+	deb http://mirrors.aliyun.com/ubuntu/ xenial-updates main restricted
+	deb-src http://mirrors.aliyun.com/ubuntu/ xenial-updates main restricted multiverse
+		universe #Added by software-properties
+	deb http://mirrors.aliyun.com/ubuntu/ xenial universe
+	deb http://mirrors.aliyun.com/ubuntu/ xenial-updates universe
+	deb http://mirrors.aliyun.com/ubuntu/ xenial multiverse
+	deb http://mirrors.aliyun.com/ubuntu/ xenial-updates multiverse
+	deb http://mirrors.aliyun.com/ubuntu/ xenial-backports main restricted universe
+		multiverse
+	deb-src http://mirrors.aliyun.com/ubuntu/ xenial-backports main restricted
+		universe multiverse #Added by software-properties
+	deb http://archive.canonical.com/ubuntu xenial partner
+	deb-src http://archive.canonical.com/ubuntu xenial partner
+	deb http://mirrors.aliyun.com/ubuntu/ xenial-security main restricted
+	deb-src http://mirrors.aliyun.com/ubuntu/ xenial-security main restricted multiverse 
+		universe #Added by software-properties
+	deb http://mirrors.aliyun.com/ubuntu/ xenial-security universe
+	deb http://mirrors.aliyun.com/ubuntu/ xenial-security multiverse
+
+/etc/apt/sources.list表示apt install时,ubuntu会从这些站点下载软件包到本地并进行安装.
+
+## 1.12 安装u-boot-tools
+
+uboot-tools是将Image转成u-boot可以引导的镜像文件格式.
+
+安装方法:
+
+	apt install u-boot-tools
+
+## 1.13 安装tree
+
+tree用于查看目录结构,默认是不安装的.
+
+	apt install tree
+
 ***
 
 # Chapter 2. Ubuntu 18.04问题方法
@@ -348,6 +433,29 @@ Ubuntu18.04安装后可能会出现找不到Wifi,不能连接到Wifi.
 	
 PS:总结起来,"2.4.4"步最重要.执行完等5-6分钟应该就有Wifi标识了.
 
+## 2.5 Ubuntu 16.04小技巧
+
+1.打开终端操作
+
+	1.打开一个终端
+		Ctrl+Alt+T
+	2.在一个终端的基础上重新增加一个终端(两个终端并排排列)
+		Ctrl+Shift+T
+	3.切换终端
+		Alt+1	//切换到1终端
+		Alt+2	//切换到2终端
+
+2.设置屏幕不息屏
+
+	点击左上角的设置图标--->选择"System Settings"--->点击"Brightness & Lock"--->在"Turn screen off
+		when inactive for":选择"Never"(表示从不息屏)
+
+3.隐藏左侧的菜单项
+
+	点击左上角的设置图标--->选择"Appearance"--->切换到"Behavior"页--->在"Auto-hide the Launcher"
+		选择打开(即ON)即可--->此时左侧的菜单项就会隐藏
+	PS:显示左侧菜单项方法:按下"win"键即可显示.
+
 ***
 
 # 3. Qemu usage
@@ -451,6 +559,13 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 	本人下载的地址为:http://ftp.sjtu.edu.cn/sites/ftp.kernel.org/pub/linux/kernel/v4.x/
 	下载的版本为:linux-4.8.tar.gz		//因为最新的gnu交叉编译工具仅支持4.x之后的版本的
 
+版本下载原则:
+
+	1.首先到"https://www.kernel.org"查看当前linux版本信息,选择版本为"longterm"的作为下载项;
+		e.g.longterm:	4.4.189		//表示linux社区依旧在维护该版本
+	2.到"http://ftp.sjtu.edu.cn/sites/ftp.kernel.org/pub/linux/kernel/v4.x/"国内下载源去下载
+		对应版本即可.
+
 **3.解压、配置、编译**
 
 	1.解压
@@ -483,7 +598,7 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 				其中包括"vexpress_defconfig",此处配置编译参数即选择该配置文件.
 
 	3.编译
-		make -j2 	//2线程编译
+		make -j2 	//2线程编译(使用make zImage j2是一样的效果)
 		/*
 			1.image:
 				编译好的image会在:./arch/arm/boot/zImage.
@@ -491,6 +606,10 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 				编译好的dtb会在:./arch/arm/boot/dts/vexpress-v2p-ca9.dtb
 				PS:./arch/arm/boot/dts/下存放了linux支持的各种arm开发板的dts文件
 		*/
+	4.编译内核模块--->可不执行
+		make modules -j4
+	5.编译dts--->可不执行(make -j2会将该步一起执行)
+		make dtbs
 
 ### 3.1.3 根文件系统的制作
 
@@ -602,9 +721,13 @@ busybox:一个集成100多个linux常用命令和工具的软件,是一个特别
 	-dtb /root/linux-4.8/arch/arm/boot/dts/vexpress-v2p-ca9.dtb -nographic -append
 	"root=/dev/mmcblk0 console=ttyAMA0" -sd a9rootfs.ext3
 
+	参数解析:
+		-M:表示Machine;
+		-m:表示memory.
+
 也可写成一个脚本(qemu.sh):
 
-	#!/bin/sh
+	#!/usr/bin/sh
 	qemu-system-arm -M vexpress-a9 -m 512M -kernel /root/linux-4.8/arch/arm/boot/zImage
 	-dtb /root/linux-4.8/arch/arm/boot/dts/vexpress-v2p-ca9.dtb -nographic -append
 	"root=/dev/mmcblk0 console=ttyAMA0" -sd a9rootfs.ext3

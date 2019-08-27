@@ -42,6 +42,10 @@
 
 	正常安装成功即可进入到ubuntu.
 
+### 1.2.3 启动ubuntu 19.04
+
+在VMware Workstation Pro可执行程序中有一个"vmplayer.exe",用该可执行程序启动的ubuntu更符合使用习惯.
+
 ## 1.3 VMware下Linux和Windows共享文件
 
 VMware下Linux和Windows共享文件是借助VMware Tools实现的.具体步骤如下:
@@ -90,6 +94,7 @@ VMware下Linux和Windows共享文件是借助VMware Tools实现的.具体步骤�
 		./vmware-install.pl			//安装
 		PS:安装过程中,一直输入"yes"或者点击"Enter"即可.不出意外,安装就会成功.
 	7.安装成功之后,关闭Linux系统及WMware软件,重新启动.
+	8.ubuntu 16.04安装成功后可以直接从Windows拖文件到虚拟机中(包括复制操作也可以).
 
 **4.设置共享文件夹**
 
