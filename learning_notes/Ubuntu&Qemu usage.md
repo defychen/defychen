@@ -801,3 +801,141 @@ busybox:一个集成100多个linux常用命令和工具的软件,是一个特别
 		*/
 
 **3.单独启动u-boot**
+
+	#!/usr/bin/sh
+	qemu-system-arm -M vexpress-a9 -m 512M -kernel /root/u-boot-2017.05/u-boot -nographic
+
+**4.u-boot中的命令**
+
+	在u-boot启动显示"Hit any key to stop autoboot"敲击Enter后,即可进入到u-boot命令行:
+	1.	print ipaddr	//显示u-boot的ip地址--->刚编译好看不到ip地址?
+	2.	print			//显示所有的u-boot的变量值
+
+### 3.2.2 Qemu网络功能设置
+
+**1.配置Qemu与Ubuntu主机的网路连接**
+
+1.环境网络连接情况
+
+	1.虚拟机与主机使用NAT方式连接;
+	2.Qemu与Ubuntu虚拟机采用桥接(bridge)进行通信(需要Ubuntu主机内核tun/tap模块的支持).
+
+2.配置
+
+	1.Ubuntu安装工具包:
+		apt install uml-utilities bridge-utils
+	2.创建tun设备文件:
+		tun设备文件位于: /dev/net/tun	--->我的自动就创建好了,因此不用再创建了
+	3.修改/etc/network/interfaces文件,内容如下:
+		# interfaces(5) file used by ifup(8) and ifdown(8)
+		auto lo
+		iface to inet loopback
+
+		//下面的代码是新增的
+		auto ens33		//ens33网络为ifconfig显示的网卡信息
+		auto br0
+		iface br0 inet dhcp
+		bridge_ports ens33
+	4.配置/etc/qemu-ifup、/etc/qemu-ifdown脚本--->可能有些有自动生成,但是我的没有
+		1./etc/qemu-ifup内容如下:
+			#!/bin/sh
+	
+			echo sudo tunctl -u $(id -un) -t $1
+			sudo tunctl -u $(id -un) -t $1
+			
+			echo sudo ifconfig $1 0.0.0.0 promisc up
+			sudo ifconfig $1 0.0.0.0 promisc up
+			
+			echo sudo brctl addif br0 $1
+			sudo brctl addif br0 $1
+			
+			echo brctl show
+			brctl show
+			
+			sudo ifconfig br0 192.168.33.135
+			//此处的ip:我的是与虚拟机主机ifconfig中的ip一致,不确定是否有问题?
+		2./etc/qemu-ifdown内容如下:
+			#!/bin/sh
+
+			echo sudo brctl delif br0 $1
+			sudo brctl delif br0 $1
+			
+			echo sudo tunctl -d $1
+			sudo tunctl -d $1
+			 
+			echo brctl show
+			brctl show
+	5.重启虚拟机即可.
+
+**2.主机TFTP工具安装**
+
+1.安装tftp工具
+
+	apt-get install tftp-hpa tftpd-hpa xinetd
+
+2.修改配置文件:/etc/default/tftpd-hpa
+
+	TFTP_USERNAME="tftp"
+	TFTP_DIRECTORY="/home/defychen/tftpboot"
+	TFTP_ADDRESS="0.0.0.0:69"
+	TFTP_OPTIONS="-l -c -s"
+
+3.创建tftp目录(步骤2中指定"TFTP_DIRECTORY")
+
+	mkdir /home/defychen/tftpboot
+	chmod 777 /home/defychen/tftpboot
+
+4.重启tftp服务
+
+	/etc/init.d/tftpd-hpa restart
+
+**3.自动化引导需修改u-boot和kernel**
+
+1.u-boot修改的地方:
+
+	1.打开u-boot目录下的:./include/configs/vexpress_common.h,修改代码如下:
+		/* Basic enviroment settings */
+		//注释掉原始的
+		/*#define CONFIG_BOOTCOMMAND \
+				"run distro_bootcmd; " \
+				"run bootflash; "
+		*/
+		//修改为:
+		#define CONFIG_BOOTCOMMAND \
+				"tftp 0x60003000 uImage; tftp 0x60500000 vexpress-v2p-ca9.dtb; \
+				setenv bootargs 'root=/dev/mmcblk0 console=ttyAMA0'; \
+				bootm 0x60003000 - 0x60500000; "
+				//此处"0x60003000 - 0x60500000"必须有空格隔开,没有是引导不起来的
+		//新增的Netmask
+		/*Netmask*/
+		#define CONFIG_IPADDR 192.168.33.196	//板卡的ip地址,需要与虚拟机主机在同一网段
+		#define CONFIG_NETMASK 255.255.255.0
+		#define CONFIG_SERVERIP 192.168.33.135	//虚拟机主机的ip地址
+	2.重新编译
+		export CROSS_COMPILE=arm-linux-gnueabi-
+		export ARCH=arm
+		make vexpress_ca9x4_defconfig
+		make -j4
+	3.拷贝编译好的u-boot到tftpboot目录
+		cp u-boot /home/defychen/tftpboot/
+
+2.linux需要修改的地方
+
+	1.进入linux目录,执行编译:
+		make LOADADDR=0x60003000 uImage -j4		//指定uImage加载地址
+	2.拷贝uImage/dtb到tftpboot目录
+		cp arch/arm/boot/uImage /home/defychen/tftpboot/
+		cp arch/arm/boot/dts/vexpress-v2p-ca9.dtb /home/defychen/tftpboot/
+
+**4.修改tftpboot下的启动脚本**
+
+	#!/bin/sh
+	qemu-system-arm -M vexpress-a9 -m 512M \
+		-kernel u-boot -nographic     \
+		-net nic,vlan=0 -net tap,vlan=0,ifname=tap0 \
+		-sd a9rootfs.ext3
+
+**5.启动即可**
+
+	./qemu-uboot.sh
+
