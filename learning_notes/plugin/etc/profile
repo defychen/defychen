@@ -1,0 +1,3 @@
+
+PS1='defychen@vexpress:\w # ' 
+export PS1 

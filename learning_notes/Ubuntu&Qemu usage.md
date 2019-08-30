@@ -939,3 +939,130 @@ busybox:一个集成100多个linux常用命令和工具的软件,是一个特别
 
 	./qemu-uboot.sh
 
+## 3.3 在Ubuntu系统搭建Qemu模拟ARM(三)--->挂载NFS文件系统
+
+NFS文件系统是一种网络文件系统,两个机器之间可通过NFS实现网络共享.
+
+### 3.3.1 Ubuntu主机HOST支持NFS服务
+
+**1.安装nfs server**
+
+	apt install nfs-kernel-server	//Ubuntu主机是作为nfs的server端,板卡作为client端
+
+**2.配置NFS(即设置NFS共享)**
+
+	在/etc/exports文件中添加:
+	/home/defychen/repository_develop/rootfs *(rw,sync,no_root_squash,no_subtree_check)
+	/*
+		/home/defychen/repository_develop/rootfs:根文件系统所在的目录,通过NFS实现共享;
+		rw:两个机器均可可读写;
+		sync:同步;
+		no_root_squash:指示板卡访问主机的文件系统目录可以以root用户访问;
+		no_subtree_check:不检查根文件系统子目录.
+	*/
+
+**3.开启NFS服务**
+
+	/etc/init.d/rpcbind restart
+	/etc/init.d/nfs-kernel-server restart
+
+### 3.3.2 u-boot修改bootargs启动参数
+
+1.修改u-boot目录下的./include/configs/vexpress_common.h:
+
+	//修改为:
+	#define CONFIG_BOOTCOMMAND \
+			"tftp 0x60003000 uImage; tftp 0x60500000 vexpress-v2p-ca9.dtb; \
+			setenv bootargs 'root=/dev/nfs rw \
+			nfsroot=192.168.33.135:/home/defychen/repository_develop/rootfs init=/linuxrc \
+			ip=192.168.33.196 console=ttyAMA0'; \
+			bootm 0x60003000 - 0x60500000; "
+	/*
+		1.root=/dev/nfs表示根文件系统是NFS形式;而root=/dev/mmcblk0表示根文件系统是在SD中;
+		2.nfsroot=192.168.33.135:/home/defychen/repository_develop/rootfs:
+			表示根文件系统所在服务器的位置;
+		4.ip=192.168.33.196:表示板卡的ip地址;
+		3.此处"0x60003000 - 0x60500000"必须有空格隔开,没有是引导不起来的.
+	*/
+	//新增的Netmask
+	/*Netmask*/
+	#define CONFIG_IPADDR 192.168.33.196	//板卡的ip地址,需要与虚拟机主机在同一网段
+	#define CONFIG_NETMASK 255.255.255.0
+	#define CONFIG_SERVERIP 192.168.33.135	//虚拟机主机的ip地址
+
+2.编译
+
+	make -j4
+
+3.拷贝到tftboot目录
+
+	cp u-boot /home/defychen/tftpboot
+
+### 3.3.3 内核支持挂载NFS文件系统
+
+1.配置menuconfig以支持NFS文件系统
+
+	在linux下执行:make menuconfig,接着勾选下面几个选项(好像默认是选上的):
+		File Systems--->
+			[*]Network File Systems
+				<*> NFS client support
+				<*> NFS client support for NFS versoin 2
+				<*> NFS client support for NFS versoin 3
+				...
+				<*> Root file system on NFS
+
+2.编译
+
+	make uImage -j4
+
+3.拷贝到tftpboot目录
+
+	cp arch/arm/boot/uImage /home/defychen/tftpboot
+	cp arch/arm/boot/dts/vexpress-v2p-ca9.dtb /home/defychen/tftpboot/
+
+### 3.3.4 启动Qemu及板卡
+
+1.启动脚本与之前可以一样
+
+	#!/bin/sh
+	qemu-system-arm -M vexpress-a9 -m 512M \
+		-kernel u-boot -nographic     \
+		-net nic,vlan=0 -net tap,vlan=0,ifname=tap0 \
+		-sd a9rootfs.ext3	//该行可去掉,因为不会看sd卡中的文件系统
+
+### 3.3.5 测试
+
+1.板卡端测试
+
+	在板卡的文件系统目录下新建一个文件:
+		touch hello	//此时在ubuntu主机端的/home/defychen/repository_develop/rootfs可以看到该文件.
+
+2.ubuntu主机端测试
+
+	在ubuntu主机端删掉刚刚创建的文件:
+		cd /home/defychen/repository_develop/rootfs
+		rm hello //此时在在板卡端可以看到该文件已经没了
+
+## 3.4 在Ubuntu系统搭建Qemu模拟ARM(四)--->完善根文件系统
+
+**1.目的**
+
+	1.增加内核的各种用户接口;
+	2.reboot功能的添加
+
+**2.添加步骤**
+	
+	在板卡的根文件系统中:
+	1.新建etc目录:
+		添加inittab、init.d/rcS、fstab、profile
+		PS:该目录可在./plugin/下面有,直接拷贝,修改profile为显示自己希望的前缀:
+			PS1='defychen@vexpress:\w # '
+			export PS1
+	2.新建tmp、sys、var、proc目录--->仅创建即可,不需要有内容
+	3.启动qemu即可.
+
+**3.根文件系统启动流程**
+
+...
+
+## 3.5 在Ubuntu系统搭建Qemu模拟ARM(五)--->在板卡上运行应用和驱动程序
