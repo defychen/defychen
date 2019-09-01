@@ -2491,7 +2491,7 @@ PS:无论是get_user/put_user,内核空间变量在前面,用户空间变量在�
 
 ### 6.2 globalmem虚拟设备实例
 
-**ioctl函数**
+**1.ioctl函数**
 
 对于不支持的命令(cmd),linux下ioctl()函数应该返回"-ENOIOCTLCMD",如果这个返回值就没有返回"-EPERM".
 
@@ -2508,11 +2508,476 @@ ioctl()命令生成:
 	*/
 	#define xxx_KL_KEY	_IOW(xxx_BASE, 2, struct xxx_kl_key)
 
-**设备节点创建**
+**2.支持单个设备的globalmem虚拟设备驱动**
+
+1.驱动代码(位于./code/globalmem_single目录下)
+
+	#include <linux/module.h>
+	#include <linux/fs.h>
+	#include <linux/init.h>
+	#include <linux/cdev.h>
+	#include <linux/slab.h>
+	#include <linux/uaccess.h>
+	
+	#define GLOBALMEM_SIZE		0x1000
+	#define MEM_CLEAR			0x1
+	#define GLOBALMEM_MAJOR	230
+	
+	static int globalmem_major = GLOBALMEM_MAJOR;
+	module_param(globalmem_major, int, S_IRUGO);
+	
+	struct globalmem_dev {
+		struct cdev cdev;
+		unsigned char mem[GLOBALMEM_SIZE];
+	};
+	
+	struct globalmem_dev *globalmem_devp;
+	
+	static int globalmem_open(struct inode *inode, struct file *filp)
+	{
+		filp->private_data = globalmem_devp;
+		return 0;
+	}
+	
+	static int globalmem_release(struct inode *inode, struct file *filp)
+	{
+		return 0;
+	}
+	
+	static long globalmem_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+	{
+		struct globalmem_dev *devp = filp->private_data;
+	
+		switch (cmd) {
+		case MEM_CLEAR:
+			memset(devp->mem, 0, GLOBALMEM_SIZE);
+			pr_info("globalmem is set to zero\n");
+			break;
+		default:
+			return -EINVAL;
+		}
+	
+		return 0;
+	}
+	
+	static ssize_t globalmem_read(struct file *filp, char __user *buf, size_t size, loff_t *ppos)
+	{
+		unsigned long p = *ppos;
+		unsigned int count = size;
+		int ret = 0;
+		struct globalmem_dev *devp = filp->private_data;
+	
+		if (p >= GLOBALMEM_SIZE)
+			return 0;
+	
+		if (count > GLOBALMEM_SIZE -p)
+			count = GLOBALMEM_SIZE - p;
+	
+		if (copy_to_user(buf, devp->mem + p, count)) {
+			ret = -EFAULT;
+		} else {
+			*ppos += count;
+			ret = count;
+			pr_info("read %u bytes from &lu\n", count, p);
+		}
+		return ret;
+	}
+	
+	static ssize_t globalmem_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos)
+	{
+		unsigned long p = *ppos;
+		unsigned int count = size;
+		int ret = 0;
+		struct globalmem_dev *devp = filp->private_data;
+	
+		if (p >= GLOBALMEM_SIZE)
+			return 0;
+	
+		if (count > GLOBALMEM_SIZE - p)
+			count = GLOBALMEM_SIZE - p;
+	
+		if (copy_from_user(devp->mem + p, buf, count))
+			return -EFAULT;
+		else {
+			*ppos += count;
+			ret = count;
+	
+			pr_info("write %u bytes from %lu\n", count, p);
+		}
+	
+		return ret;
+	}
+	
+	static loff_t globalmem_llseek(struct file *filp, loff_t offset, int orig)
+	{
+		loff_t ret = 0;
+		switch (orig) {
+		case 0:
+			if (offset < 0) {
+				ret = -EINVAL;
+				break;
+			}
+	
+			if ((unsigned int)offset > GLOBALMEM_SIZE) {
+				ret = -EINVAL;
+				break;
+			}
+	
+			filp->f_pos = (unsigned int)offset;
+			ret = filp->f_pos;
+			break;
+		case 1:
+			if ((filp->f_pos + offset) > GLOBALMEM_SIZE) {
+				ret = -EINVAL;
+				break;
+			}
+			if ((filp->f_pos + offset) < 0) {
+				ret = -EINVAL;
+				break;
+			}
+			filp->f_pos += offset;
+			ret = filp->f_pos;
+			break;
+		default:
+			ret = -EINVAL;
+			break;
+		}
+		return ret;
+	}
+	
+	static const struct file_operations globalmem_fops = {
+		.owner = THIS_MODULE,
+		.llseek = globalmem_llseek,
+		.read = globalmem_read,
+		.write = globalmem_write,
+		.unlocked_ioctl = globalmem_ioctl,
+		.open = globalmem_open,
+		.release = globalmem_release,
+	};
+	
+	static void globalmem_setup_cdev(struct globalmem_dev *devp, int index)
+	{
+		int err, devno;
+		devno = MKDEV(globalmem_major, index);
+	
+		cdev_init(&devp->cdev, &globalmem_fops);
+		devp->cdev.owner = THIS_MODULE;
+		err = cdev_add(&devp->cdev, devno, 1);
+		if (err)
+			pr_err("Error %d adding globalmem %d\n", err, index);
+	}
+	
+	static int __init globalmem_init(void)
+	{
+		int ret;
+		dev_t devno = MKDEV(globalmem_major, 0);
+		if (globalmem_major)
+			ret = register_chrdev_region(devno, 1, "globalmem");
+		else {
+			ret = alloc_chrdev_region(&devno, 0, 1, "globalmem");
+			globalmem_major = MAJOR(devno);
+		}
+	
+		if (ret < 0)
+			return ret;
+	
+		globalmem_devp = kzalloc(sizeof(struct globalmem_dev), GFP_KERNEL);
+		if (!globalmem_devp) {
+			ret = -ENOMEM;
+			goto fail_malloc;
+		}
+	
+		globalmem_setup_cdev(globalmem_devp, 0);
+		return 0;
+		
+	fail_malloc:
+		unregister_chrdev_region(devno, 1);
+		return ret;
+	}
+	
+	static void __exit globalmem_exit(void)
+	{
+		cdev_del(&globalmem_devp->cdev);
+		kfree(globalmem_devp);
+		unregister_chrdev_region(MKDEV(globalmem_major, 0), 1);
+	}
+	
+	module_init(globalmem_init);
+	module_exit(globalmem_exit);
+	
+	MODULE_AUTHOR("Defychen");
+	MODULE_LICENSE("GPL v2");
+
+2.Makefile文件内容
+
+	ifneq ($(KERNELRELEASE), )
+
+	obj-m := globalmem.o
+	
+	else
+	
+	EXTRA_CFLAGS += DDEBUG
+	KDIR := /home/defychen/repository_software/linux-4.4.189
+	all:
+		make CROSS_COMPILE=arm-linux-gnueabi- ARCH=arm -C $(KDIR) M=$(PWD) modules
+	clean:
+		rm -rf *.ko *.o *.mod.o *.mod.c *.symvers *.order .*.ko .tmp_versions
+	endif
+	
+	.PYONY:all clean
+
+**3.支持多个子设备的globalmem虚拟设备驱动**
+
+	#include <linux/module.h>
+	#include <linux/fs.h>
+	#include <linux/init.h>
+	#include <linux/cdev.h>
+	#include <linux/slab.h>
+	#include <linux/uaccess.h>
+	
+	#define GLOBALMEM_SIZE		0x1000
+	#define MEM_CLEAR			0x1
+	#define GLOBALMEM_MAJOR		230
+	#define DEVICE_NUM			10	//定义子设备数量
+	
+	static int globalmem_major = GLOBALMEM_MAJOR;
+	module_param(globalmem_major, int, S_IRUGO);
+	
+	struct globalmem_dev {
+		struct cdev cdev;
+		unsigned char mem[GLOBALMEM_SIZE];
+	};
+	
+	struct globalmem_dev *globalmem_devp;
+	
+	static int globalmem_open(struct inode *inode, struct file *filp)
+	{
+		struct globalmem_dev *devp = container_of(inode->i_cdev, struct globalmem_dev, cdev);
+		/*
+			container_of:通过设备结构体变量中的某个成员的首地址找到对应设备结构体的指针.
+		*/
+		filp->private_data = devp;
+		return 0;
+	}
+	
+	static int globalmem_release(struct inode *inode, struct file *filp)
+	{
+		return 0;
+	}
+	
+	static long globalmem_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+	{
+		struct globalmem_dev *devp = filp->private_data;
+	
+		switch (cmd) {
+		case MEM_CLEAR:
+			memset(devp->mem, 0, GLOBALMEM_SIZE);
+			pr_info("globalmem is set to zero\n");
+			break;
+		default:
+			return -EINVAL;
+		}
+	
+		return 0;
+	}
+	
+	static ssize_t globalmem_read(struct file *filp, char __user *buf, size_t size, loff_t *ppos)
+	{
+		unsigned long p = *ppos;
+		unsigned int count = size;
+		int ret = 0;
+		struct globalmem_dev *devp = filp->private_data;
+	
+		if (p >= GLOBALMEM_SIZE)
+			return 0;
+	
+		if (count > GLOBALMEM_SIZE -p)
+			count = GLOBALMEM_SIZE - p;
+	
+		if (copy_to_user(buf, devp->mem + p, count)) {
+			ret = -EFAULT;
+		} else {
+			*ppos += count;
+			ret = count;
+			pr_info("read %u bytes from %lu\n", count, p);
+		}
+		return ret;
+	}
+	
+	static ssize_t globalmem_write(struct file *filp, const char __user *buf, size_t size, loff_t *ppos)
+	{
+		unsigned long p = *ppos;
+		unsigned int count = size;
+		int ret = 0;
+		struct globalmem_dev *devp = filp->private_data;
+	
+		if (p >= GLOBALMEM_SIZE)
+			return 0;
+	
+		if (count > GLOBALMEM_SIZE - p)
+			count = GLOBALMEM_SIZE - p;
+	
+		if (copy_from_user(devp->mem + p, buf, count))
+			return -EFAULT;
+		else {
+			*ppos += count;
+			ret = count;
+	
+			pr_info("write %u bytes from %lu\n", count, p);
+		}
+	
+		return ret;
+	}
+	
+	static loff_t globalmem_llseek(struct file *filp, loff_t offset, int orig)
+	{
+		loff_t ret = 0;
+		switch (orig) {
+		case 0:
+			if (offset < 0) {
+				ret = -EINVAL;
+				break;
+			}
+	
+			if ((unsigned int)offset > GLOBALMEM_SIZE) {
+				ret = -EINVAL;
+				break;
+			}
+	
+			filp->f_pos = (unsigned int)offset;
+			ret = filp->f_pos;
+			break;
+		case 1:
+			if ((filp->f_pos + offset) > GLOBALMEM_SIZE) {
+				ret = -EINVAL;
+				break;
+			}
+			if ((filp->f_pos + offset) < 0) {
+				ret = -EINVAL;
+				break;
+			}
+			filp->f_pos += offset;
+			ret = filp->f_pos;
+			break;
+		default:
+			ret = -EINVAL;
+			break;
+		}
+		return ret;
+	}
+	
+	static const struct file_operations globalmem_fops = {
+		.owner = THIS_MODULE,
+		.llseek = globalmem_llseek,
+		.read = globalmem_read,
+		.write = globalmem_write,
+		.unlocked_ioctl = globalmem_ioctl,
+		.open = globalmem_open,
+		.release = globalmem_release,
+	};
+	
+	static void globalmem_setup_cdev(struct globalmem_dev *devp, int index)
+	{
+		int err, devno;
+		devno = MKDEV(globalmem_major, index);
+	
+		cdev_init(&devp->cdev, &globalmem_fops);
+		devp->cdev.owner = THIS_MODULE;
+		err = cdev_add(&devp->cdev, devno, 1);
+		if (err)
+			pr_err("Error %d adding globalmem %d\n", err, index);
+	}
+	
+	static int __init globalmem_init(void)
+	{
+		int ret;
+		int i;
+		dev_t devno = MKDEV(globalmem_major, 0);
+		if (globalmem_major)
+			ret = register_chrdev_region(devno, DEVICE_NUM, "globalmem");
+			/*
+				表示注册字符设备的区域,表示设备号为devno整个DEVICE_NUM的范围都属于该字符设备.
+			*/
+		else {
+			ret = alloc_chrdev_region(&devno, 0, DEVICE_NUM, "globalmem");
+			/*
+				表示分配字符设备的区域,由系统分配一个设备号,子设备从0开始,覆盖整个DEVICE_NUM的范围都
+				属于该字符设备.
+			*/
+			globalmem_major = MAJOR(devno);
+		}
+	
+		if (ret < 0)
+			return ret;
+	
+		globalmem_devp = kzalloc(sizeof(struct globalmem_dev) * DEVICE_NUM, GFP_KERNEL);
+		//申请sizeof(struct globalmem_dev) * DEVICE_NUM字符设备空间.
+	
+		if (!globalmem_devp) {
+			ret = -ENOMEM;
+			goto fail_malloc;
+		}
+	
+		for (i = 0; i < DEVICE_NUM; i++) {
+			globalmem_setup_cdev(globalmem_devp + i, i);
+			//将每一个子字符设备都注册进去
+		}
+		return 0;
+		
+	fail_malloc:
+		unregister_chrdev_region(devno, DEVICE_NUM);	//释放分配的字符设备区域.
+		return ret;
+	}
+	
+	static void __exit globalmem_exit(void)
+	{
+		int i;
+		for (i = 0; i < DEVICE_NUM; i++) {
+			cdev_del(&(globalmem_devp + i)->cdev);	//将cdev_add的每一个子字符设备删除.
+		}
+		kfree(globalmem_devp);
+		unregister_chrdev_region(MKDEV(globalmem_major, 0), DEVICE_NUM);
+	}
+	
+	module_init(globalmem_init);
+	module_exit(globalmem_exit);
+	
+	MODULE_AUTHOR("Defychen");
+	MODULE_LICENSE("GPL v2");
+
+**4.加载及查看字符设备**
+
+1.加载单个设备的globalmem
+
+	1.加载
+		insmod globalmem.ko
+	2.查看
+		lsmod globalmem
+	3.查看设备信息
+		cat /proc/devices --->显示
+		Character devices:
+			1 mem
+			...
+			230 globalmem
+
+2.加载多个设备的globalmem_multiple
+
+	1.加载
+		insmod globalmem_multiple.ko
+	2.查看
+		lsmod globalmem_multiple
+	3.查看设备信息
+		cat /proc/devices --->显示
+		Character devices:
+			1 mem
+			...
+			230 globalmem_multiple
+
+**5.设备节点创建**
 
 设备节点:即是驱动open函数中的inode(或应用程序open函数中的第一个参数),也即是/dev下面的设备文件(设备节点).
 
-自动创建设备节点(在cdev_init和cdev_add之后):
+1.自动创建设备节点(在cdev_init和cdev_add之后):
 
 	/*class_create可在./driver/class.c中找到原型; device_create可在./driver/core.c中找到原型*/
 	
@@ -2541,10 +3006,27 @@ ioctl()命令生成:
 	/*注销class*/
 	class_destroy(xxx_class);
 	
-手动创建设备节点
+2.手动创建设备节点
 
-	mknod /dev/globalmem c 230 0	
-	/*mknod:创建设备节点命令;/dev/globalmem:节点名;c:字符设备;230:主设备号;0:次设备号*/
+	1.单个globalmem设备创建及测试
+		1.创建设备节点
+			mknod /dev/globalmem c 230 0	
+			/*mknod:创建设备节点命令;/dev/globalmem:节点名;c:字符设备;230:主设备号;0:次设备号*/
+		2.测试
+			echo "hello world" > /dev/globalmem		//测试写操作
+			//结果为:write 12 bytes from 0
+			cat /dev/globalmem		//测试读操作	
+			//结果为:hello world
+	2.多个globalmem_multiple设备创建及测试
+		1.创建设备节点
+			mknod /dev/globalmem0 c 230 0
+			mknod /dev/globalmem1 c 230 1	
+			/*mknod:创建设备节点命令;/dev/globalmem:节点名;c:字符设备;230:主设备号;0:次设备号*/
+		2.测试
+			echo "hello world" > /dev/globalmem0		//测试写操作
+			//结果为:write 12 bytes from 0
+			cat /dev/globalmem0		//测试读操作	
+			//结果为:hello world
 
 ***
 
@@ -2566,7 +3048,7 @@ ioctl()命令生成:
 
 ### 7.2 编译乱序和执行乱序
 
-**编译乱序**
+#### 7.2.1 编译乱序
 
 代码编译后得到的汇编码可能不是严格按照代码的逻辑顺序排布的(特别是使用了"-O2"优化编译选项)
 
@@ -2609,7 +3091,7 @@ volatile一般用于修饰register,因为register容易被其他的操作更改�
 		会导致第一次调用之后所有其他操作都使用第一次取得的值.有可能会出错.因此使用volatile.
 	*/
 
-**执行乱序---常见于多个CPU**
+#### 7.2.2 执行乱序---常见于多个CPU
 
 即使编译后的指令顺序正确,但是由于CPU是"乱序执行(Out-of-Order-Execution)"策略,CPU本质决定的.
 
@@ -2652,6 +3134,13 @@ volatile一般用于修饰register,因为register容易被其他的操作更改�
 		writel(value, addr);	//writel的实现中具有__iowmb(),写IO屏障
 	}
 	#endif
+
+**实例:DMA操作的过程**
+
+	writel_relaxed(DMA_SRC_REG, src_addr);	//writel_relaxed:无屏障的写DMA的开始地址
+	writel_relaxed(DMA_DST_REG, dst_addr);	//无屏障的写DMA的结束地址
+	writel_relaxed(DMA_SIZE_REG, size);		//无屏障的写DMA的大小
+	writel(DMA_ENABLE, 1);	//有屏障的启动DMA,保证之前操作DMA寄存器完成之后再启动DMA.
 
 ### 7.3 中断屏蔽
 
