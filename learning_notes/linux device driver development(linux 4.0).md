@@ -3249,7 +3249,22 @@ volatile一般用于修饰register,因为register容易被其他的操作更改�
 
 自旋锁是一种对临界资源进行互斥访问的手段.特点:如果锁被占用,试图获得锁的代码将会一直处于"自旋"状态,等待锁.
 
-**自旋锁的操作步骤:**
+#### 7.5.1 自旋锁
+
+自旋锁主要针对SMP或单CPU但内核可抢占的情况,对于单CPU和内核不支持抢占的情况,自旋锁没用(退化为空操作).对于支持抢占的系统,单核会直接将整个核的抢占调度禁止;多核SMP的情况会禁止本核的抢占调度,但其他核继续正常的抢占调度.
+
+由于多核SMP的情况下,自旋锁保证本核临界区不受别的CPU核的抢占进程干扰(其他CPU核的抢占调度仍然正常运行),本CPU核抢占调度禁止.但是中断可以打破这种禁止抢占调度的情况(中断的优先级比抢占调度的高).因此,在某些特殊情况下需要在获得的锁的同时关中断,释放的时候开中断.
+
+自旋锁与中断的使用:
+
+	spin_lock_irq() = spin_lock() + local_irq_disable()	/*获得锁的同时关中断*/
+	spin_unlock_irq() = spin_unlock() + local_irq_enable()	/*释放锁的同时开中断*/
+	spin_lock_irqsave() = spin_lock() + local_irq_save()	/*获得锁的同时关中断并保存状态字*/
+	spin_unlock_irqrestore() = spin_unlock() + local_irq_restore()	/*释放锁的同时开中断并恢复状态字*/
+	spin_lock_bh() = spin_lock() + local_bh_disable()	/*获得锁的同时关中断底半部*/
+	spin_unlock_bh() = spin_unlock() + local_bh_enable()	/*释放锁的同时开中断底半部*/
+
+#### 7.5.2 自旋锁的操作步骤
 
 	spinlock_t lock;			/*定义一个自旋锁*/
 	spin_lock_init(&lock);		/*初始化自旋锁,会调用内核中./include/linux/spinlock.h中宏
@@ -3259,7 +3274,7 @@ volatile一般用于修饰register,因为register容易被其他的操作更改�
 	.../*临界区*/
 	spin_unlock(&lock);		/*解锁,释放自旋锁*/
 
-**自旋锁使用例程:**
+#### 7.5.3 使用例程---设备只能被最多一个进程打开
 
 	int xxx_count = 0;	
 		/*定义设备打开的状态变量,为临界资源.该临界资源会在其他多个地方监控,决定是否执行后续的操作.*/
@@ -3277,8 +3292,8 @@ volatile一般用于修饰register,因为register容易被其他的操作更改�
 		...
 		spin_lock(&lock);
 		/*
-			试图获得锁,该核上操作该临界资源的其他进程被CPU暂时停止调度.其后续代码单独执行,直到释放锁调度
-			重新启用.
+			试图获得锁,获得锁后该核上操作该临界资源的其他进程被CPU暂时停止调度.其后续代码单独执行,
+			直到释放锁调度重新启用.
 		*/
 		if(xxx_count)		/*已经打开了设备*/
 		{
@@ -3301,47 +3316,38 @@ volatile一般用于修饰register,因为register容易被其他的操作更改�
 		return 0;
 	}
 
-使用技巧:
+#### 7.5.4 注意点
 
-自旋锁主要针对SMP或单CPU但内核可抢占的情况,对于单CPU和内核不支持抢占的情况,自旋锁没用(退化为空操作).对于支持抢占的系统,单核会直接将整个核的抢占调度禁止;多核SMP的情况会禁止本核的抢占调度,但其他核继续正常的抢占调度.
+	1.进程上下文中使用"spin_lock_irqsave()/spin_unlock_irqrestore()"(防止中断的打扰);中断上下文中
+		(中断服务程序中)使用"spin_lock()/spin_unlock()"(中断上下文会自动关中断);
+	2.在自旋锁锁定期间不能调用可能引起进程调度的函数(e.g.阻塞函数:copy_from_user(), copy_to_user(),
+		kmalloc(), msleep()等),,系统需要调度出去,但是调度又关掉了,此时可能导致内核崩溃;
+	3.自旋锁只能用于占用锁时间极短的场合,长时间占用锁,会降低系统的性能,而且可能出现内核崩溃.
 
-由于多核SMP的情况下,自旋锁保证本核临界区不受别的CPU核的抢占进程干扰(其他CPU核的抢占调度仍然正常运行),本CPU核抢占调度禁止.但是中断可以打破这种禁止抢占调度的情况(中断的优先级比抢占调度的高).因此,在某些特殊情况下需要在获得的锁的同时关中断,释放的时候开中断.
-
-	spin_lock_irq() = spin_lock() + local_irq_disable()	/*获得锁的同时关中断*/
-	spin_unlock_irq() = spin_unlock() + local_irq_enable()	/*释放锁的同时开中断*/
-	spin_lock_irqsave() = spin_lock() + local_irq_save()	/*获得锁的同时关中断并保存状态字*/
-	spin_unlock_irqrestore() = spin_unlock() + local_irq_restore()	/*释放锁的同时开中断并恢复状态字*/
-	spin_lock_bh() = spin_lock() + local_bh_disable()	/*获得锁的同时关中断底半部*/
-	spin_unlock_bh() = spin_unlock() + local_bh_enable()	/*释放锁的同时开中断底半部*/
-
-**一般使用的是:进程上下文中"spin_lock_irqsave()/spin_unlock_irqrestore()",中断上下文中(中断服务程序中)"spin_lock()/spin_unlock()"**
-
-在自旋锁锁定期间不能调用可能引起进程调度的函数(e.g.copy_from_user(), copy_to_user(), kmalloc(), msleep()等),否则可能导致内核崩溃.
-
-**读写自旋锁**
+#### 7.5.5 读写自旋锁
 
 读写自旋锁对临界资源允许读的并发(多个读操作),但写只能有一个进程操作,读和写也不能同时进行.
 
 	rwlock_t rwlock;			/*定义读写自旋锁rwlock*/
 	rwlock_init(&rwlock);		/*初始化rwlock*/
 
-	//下面是获得读的锁函数,多个进程都可以调用.
-	read_lock(&rwlock);		/*读时获取锁,正常每个需要读取临界资源的操作都应该调用读锁定函数*/
+	//下面是获得读锁定函数,多个进程都可以调用.
+	read_lock(&rwlock);		/*读锁定,正常每个需要读取临界资源的操作都应该调用读锁定函数*/
 	...						/*读临界资源*/
-	read_unlock(&rwlock);		/*释放*/
+	read_unlock(&rwlock);		/*读解锁*/
 
-	//下面是获得写的锁函数,只能有一个进程可以调用.
-	write_lock(&rwlock);		/*写时获取锁,只能有一个进程可获得*/
+	//下面是获得写锁定函数,只能有一个进程可以调用.
+	write_lock(&rwlock);		/*写锁定,只能有一个进程可获得写锁定*/
 	...						/*操作临界资源*/
-	write_unlock(&rwlock);
+	write_unlock(&rwlock);	/*写解锁*/
 
-顺序锁和RCU(读-复制-更新)省略
+顺序锁和RCU(读-复制-更新)省略.
 
 ### 7.6 信号量
 
 信号量(Semaphore)用于同步和互斥,保护临界资源,信号量值可以是0,1或者n.
 
-信号量操作函数:
+#### 7.6.1 信号量操作函数:
 
 	struct semaphore sem;	//定义一个名称为sem的信号量
 	void sema_init(struct semaphore *sem, int val);	//初始化信号量,并设置信号量sem的值为val
@@ -3353,31 +3359,31 @@ volatile一般用于修饰register,因为register容易被其他的操作更改�
 	//尝试获取信号量,成功获取返回0;没有成功获取会进入睡眠状态,但是能被信号打断,此时返回非0值.
 	void up(struct semaphore *sem);	//释放信号量sem,唤醒等待者.
 
-	/*
-	down_trylock和down_interruptbile的使用区别:
-		1.如果需要立即返回的使用down_trylock,允许睡眠使用down_interruptible.因此:
-		down_interruptible使用的较多.
-		2.使用:
-			//down_trylock和down的使用
-			if (file->f_flags & O_NONBLOCK)	//非阻塞模式
-			{
-				if (down_trylock(&xxx_sem))	//没有获取成功会立即返回非0
-				{	
-					pr_err("try again\n");
-					return -EAGAIN;
-				}
-			}
-			else
-			{
-				down(&xxx_sem);	//阻塞模式的话就睡眠,不能被打断
-			}
+#### 7.6.2 down_trylock和down_interruptible的使用区别
 
-			//down_interruptible的使用
-			if (down_interruptible(&xxx_sem))	//没有获取成功就睡眠,但是可以被其他信号打断,此时返回非0
-			{
-				return -EINTR;
-			}
-	*/
+如果需要立即返回的使用down_trylock,允许睡眠使用down_interruptible.因此:down_interruptible使用的较多.
+
+	//down_trylock和down的使用
+	if (file->f_flags & O_NONBLOCK)	//非阻塞模式
+	{
+		if (down_trylock(&xxx_sem))	//没有获取成功会立即返回非0
+		{	
+			pr_err("try again\n");
+			return -EAGAIN;
+		}
+	}
+	else
+	{
+		down(&xxx_sem);	//阻塞模式的话就睡眠,不能被打断
+	}
+	
+	//down_interruptible的使用
+	if (down_interruptible(&xxx_sem))	//没有获取成功就睡眠,但是可以被其他信号打断,此时返回非0
+	{
+		return -ERESTARTSYS;
+	}
+
+PS:新的linux内核倾向于直接使用mutex作为互斥手段,semaphore不再被推荐使用.
 
 ### 7.7 互斥体
 
