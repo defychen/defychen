@@ -276,7 +276,8 @@ GNU zip---gzip(gz)和bzip2(bz2)两种压缩格式，压缩比:gzip>bzip2
 **重定向**
 
 	1)将标准输出和标准错误输出分别重定向到不同的文件中:
-		kill -HUP 1234 > killout.txt 2> killerr.txt	//将标准输入重定向到killout.txt;将标准错误输出重定向到killerr.txt
+		kill -HUP 1234 > killout.txt 2> killerr.txt	//将标准输入重定向到killout.txt;将标准错误
+													//输出重定向到killerr.txt
 	2)将标准输出和标准错误输出重定向到同一个文件:
 		kill -l 1234 > killouterr.txt 2>&1		//2--标准错误; >--冲定向; &1--和1(标准输出一样)
 
@@ -647,5 +648,33 @@ apt-get(Advanced Package Tool:高级安装工具):linux上的软件包管理器.
 		hello.so--->有程序头信息
 		hello.a--->无程序头信息
 		hello.debug--->有程序头信息
+
+## 34. rename
+
+rename常用于批量修改文件名.
+
+### 34.1 批量添加文件扩展名
+
+	$ ls
+		1 2 3 4
+	$ rename 's/$/.txt' *
+	$ ls
+		1.txt 2.txt 3.txt 4.txt
+
+### 34.2 批量更改文件扩展名
+
+	$ ls
+		1.txt 2.txt 3.txt 4.txt
+	$ rename 's/\.txt/\.cc/' *
+	$ ls
+		1.cc 2.cc 3.cc 4.cc
+
+### 34.3 批量删除文件扩展名
+
+	$ ls
+		1.txt 2.txt 3.txt 4.txt
+	$ rename 's/\.txt//' *
+	$ ls
+		1 2 3 4
 
 ## 13. wget命令
