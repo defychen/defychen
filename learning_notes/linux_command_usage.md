@@ -677,4 +677,36 @@ rename常用于批量修改文件名.
 	$ ls
 		1 2 3 4
 
+### 35. grep
+
+#### 35.1 grep -i
+
+针对单个字符不区分大小写
+
+	OS := $(shell uname -s) //uname -s:获得系统名
+	IS_LINUX := $(shell echo $(OS) | grep -i linux) //不区分大小写
+	IS_CYGWIN := $(shell echo $(OS) | grep -i cygwin)
+
+#### 35.2 grep -E
+
+-E:表示扩展的正则表达式.可用于搜索满足任意关键字或同时满足多个关键字.
+
+1.满足任意关键字的搜索
+
+	grep -E "word1|word2|word3" file.txt -nr
+	/*
+		在文件file.txt中搜索带有word1/word2或word3关键字的行.
+		word1|word2|word3:竖线隔开,且不能有空格;
+		file.txt:必须指定文件名.
+	*/
+
+2.同时满足多个关键字的搜索
+
+	grep word1 file.txt | grep word2 | grep word3
+	/*
+		在文件file.txt中搜索同时带有word1、word2和word3关键字的行.
+	*/
+	PS:更多使用的是:
+		grep "word1.*word2.*word3" file.txt -nr
+
 ## 13. wget命令
