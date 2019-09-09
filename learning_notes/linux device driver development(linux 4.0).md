@@ -4076,57 +4076,131 @@ e.g. 一个程序中同时对两个文件进行读/写操作,使用异步I/O时,
 
 ### 10.1 中断与定时器
 
-中断:CPU暂停(中断)当前程序,转去处理突发事件(急需处理的事件)就叫中断.所以中断与CPU相关.
+#### 10.1.1 中断概念
 
-中断分为内部中断和外部中断:
+	CPU在执行程序的过程中,出现了某些突发事件急待处理.CPU必须暂停当前程序的执行,转去处理突发事件就叫中断.
+	处理完毕后又返回原程序被中断的位置继续执行.中断与CPU相关.
 
-1)内部中断:中断源来自CPU内部(软件中断指令SDBBP、溢出、除法错误)
+#### 10.1.2 中断分类
 
-2)外部中断:中断源来自CPU外部,即由外设提出请求.
+	1.根据中断来源:分为内部中断和外部中断:
+		内部中断:中断源来自CPU内部(软件中断指令、溢出、除法错误等。e.g.操作系统由用户态切换到内核态需要
+			借助CPU内部的软件中断);
+		外部中断:中断源来自CPU外部,即由外设提出请求.
+	2.根据是否可屏蔽:分为可屏蔽中断和不可屏蔽中断(NMI):
+		可屏蔽中断:通过设置中断控制器寄存器等方法屏蔽某中断,不再得到响应;
+		不可屏蔽中断:不能被屏蔽.
+	3.根据中断入口跳转方法:向量中断和非向量中断:
+		向量中断:CPU为不同的中断分配不同的中断号.当检测到某中断号到来时,跳转到与该中断号对应的地址去执行
+			(由硬件提供中断服务程序入口地址);
+		非向量中断:多个中断共享一个入口地址,软件根据中断标志来识别具体的某个中断(由软件提供中断服务程序
+			入口地址).
 
-中断入口跳转两种方法:
+#### 10.1.3 中断服务程序结构
 
-1)向量中断:CPU为不同的中断分配不同的中断号.当检测到某中断号到来时,跳转到与该中断号对应的地址去执行(由硬件提供中断服务程序入口地址).
+非向量中断服务程序的典型结构:
 
-2)非向量中断:多个中断共享一个入口地址,根据中断标志来识别具体的某个中断(由软件提供中断服务程序入口地址).
+	ire_handler()
+	{
+		...
+		int int_src = read_int_status();	//读硬件的中断相关寄存器
+		switch (int_src) {	//判断中断源
+		case DEV_A:
+			dev_a_handler();
+			break;
+		case DEV_B:
+			dev_b_handler();
+			break;
+		...
+		default:
+			break;
+		}
+	}
+
+#### 10.1.4 ARM的GIC
+
+GIC(Generic Interrupt Controller):ARM处理器中的中断控制器.支持3种类型的中断:
+
+![](images/arm_gic.png)
+
+ARM中断类型
+
+	1.SGI(Software Generated Interrupt,中断号0-15):软件产生的中断,可用于多核间的通信.一个CPU可以通过
+		写GIC寄存器SGI中断号给另一个CPU产生中断;
+	2.PPI(Private Peripheral Interrupt,中断号16-31):某个CPU私有外设的中断.此类中断只能发给绑定的
+		那个CPU;
+	3.SPI(Shared Peripheral Interrupt,中断号32-1019):共享外设的中断.此类中断可以路由到任意一个CPU.
+	PS:ARM linux默认情况下,中断都是在CPU0上产生的.
 
 ### 10.2 Linux中断处理程序架构
 
-中断会打断内核进程的正常调度和运行,因此要求中断服务程序进来短小精悍.
+中断会打断内核进程的正常调度和运行,因此要求中断服务程序尽量短小精悍.
 
-linux将中断分为顶半部和底半部:
+#### 10.2.1 中断处理程序框架
 
-顶半部(Top Half):完成尽量少、比较紧急的功能.工作包括:读取寄存器中断状态,在清除中断标志后"登记中断"---将底半部处理程序挂到该设备的底半部执行队列中去.顶半部不可被中断,属于硬件的中断服务程序,处于中断上下文中.
+中断到来时,要完成的工作量往往并不会是短小的,可能要进行大量的耗时处理.为了在中断执行时间尽量短和中断处理需完成的工作量大之间找到一个平衡点.linux将中断分为顶半部和底半部:
 
-底半部(Bottom Half):实现中断服务程序处理耗时的中断,不在硬件的中断服务程序中,处于非中断上下文中.
+	顶半部(Top Half):完成尽量少、比较紧急的功能.工作包括:读取寄存器中断状态,在清除中断标志后"登记中断".
+		即将底半部处理程序挂到该设备的底半部执行队列中去.顶半部不可被中断,属于硬件的中断服务程序,处于中断
+		上下文中.
+	底半部(Bottom Half):实现中断服务程序处理耗时的中断,不在硬件的中断服务程序中,处于非中断上下文中.
+	PS:如果中断要处理的工作本身很少,完成可以直接在顶颁布全部完成,不需要底半部.
 
-**查看系统的中断统计信息**
+#### 10.2.2 查看系统的中断统计信息
 	
 	cat /proc/interrupts
 
 ### 10.3 Linux中断编程
 
-**申请irq(中断)**
+#### 10.3.1 申请和释放中断
+
+**1.申请irq**
+
+	int request_irq(unsigned int irq, irq_handler_it handler, unsigned long flags,
+		const char *name, void *dev);
+	/*
+		para1:要申请的硬件中断号;
+		para2:中断处理函数(顶半部),是一个回调函数,中断发生时,系统调用这个函数,para5将被传递给它;
+		para3:中断处理属性(触发方式):IRQF_TRIGGER_RISING/FALLING/HIGH/LOW;
+		para4:...(没看懂);
+		para5:一般设置为设备结构体(表示传递给中断服务程序的私有数据);
+		retval:
+			0:表示成功;
+			-EINVAL:表示中断号无效或处理函数指针为NULL;
+			-EBUSY:表示中断已经被占用且不能共享.
+	*/
+
+**2.释放irq**
+
+	void free_irq(unsigned int irq, void *dev_id);
+	//参数定义与request_irq相同.释放申请的irq中断.
+
+**3.带自动内核managed资源的irq申请函数**
+
+内核中以"devm_"开头的API申请的是内核"managed"的资源,一般不需要再出错处理和remove()接口里显示的释放资源(e.g.申请的irq不需要调用free_irq来释放资源)--->类似Java的垃圾回收机制.
 
 	int devm_request_irq(struct device *dev, unsigned int irq, irq_handler_t handle, 
 		unsigned long irqflags, const char *devname, void *dev_id);
 	/*
-		para1:struct device结构体指针
-		para2:要申请的硬件中断号
-		para3:中断处理函数(顶半部),是一个回调函数,中断发生时,系统调用这个函数
-		para4:中断处理属性(触发方式):IRQF_TRIGGER_RISING/FALLING/HIGH/LOW
-		para5:...(没看懂)
-		para6:一般设置为设备结构体(表示传递给中断服务程序的私有数据)
+		para1:struct device结构体指针;
+		para2:要申请的硬件中断号;
+		para3:中断处理函数(顶半部),是一个回调函数,中断发生时,系统调用这个函数;
+		para4:中断处理属性(触发方式):IRQF_TRIGGER_RISING/FALLING/HIGH/LOW;
+		para5:...(没看懂);
+		para6:一般设置为设备结构体(表示传递给中断服务程序的私有数据);
 	*/
+
+	实例:
 	struct device *dev = &pdev->dev;
 	struct resource *irq[2];
 	struct tsio_dev *tsio;
-	irq[0] = platform_get_resource(pdev, IORESOURCE_IRQ, 0);	/*struct platform_device *pdev*/
-	ret = devm_request_irq(dev, irq[0]->start, tsio_dmq_irq, IRQF_TRIGGER_HIGH, irq[0]->name, tsio);
+	irq[0] = platform_get_resource(pdev, IORESOURCE_IRQ, 0); /* struct platform_device *pdev */
+	ret = devm_request_irq(dev, irq[0]->start, tsio_dmq_irq, IRQF_TRIGGER_HIGH, irq[0]->name,
+		tsio);
 
-使用dev_request_irq申请顶半部中断不需要显示释放,kernel自动进行资源的回收.
+PS:使用devm_request_irq申请顶半部中断不需要显示释放,kernel自动进行资源的回收.
 
-**使能和屏蔽中断**
+#### 10.3.2 使能和屏蔽中断
 
 ...在哪里使用??
 
