@@ -4202,35 +4202,84 @@ PS:使用devm_request_irq申请顶半部中断不需要显示释放,kernel自动
 
 #### 10.3.2 使能和屏蔽中断
 
-...在哪里使用??
+**1.使能中断函数**
 
-以"local_"开头的方法作用范围为本CPU内.
+	void enable_irq(int irq);
 
-**底半部机制实现方式**
+**2.屏蔽中断**
 
-1)tasklet
+屏蔽中断号的目的:程序收到某中断后,一般先屏蔽该中断号,然后进行中断处理,处理完了之后再使能该中断号.
 
-tasklet底半部机制执行上下文为"软中断",运行与软中断上下文,不允许睡眠.
+1.屏蔽指定的中断号
+
+	1.disable_irq
+	void disable_irq(int irq);
+	/*
+		屏蔽irq指定的中断号.
+		disable_irq()需要等待指定的中断号irq被处理完才会返回.不能用在顶半部,会造成死锁.
+	*/
+	2.disable_irq_nosync
+	void disable_irq_nosync(int irq);
+	/*
+		屏蔽irq指定的中断号.
+		disable_irq_nosync():调用后立即返回,因此在顶半部中只能调用disable_irq_nosync(n).
+	*/
+
+2.屏蔽本CPU内的所有中断
+
+	1.local_irq_disable()和local_irq_enable()只能禁止和使能本CPU内的中断.不能解决SMP多CPU引发的竞态,
+		单独使用通常是一个bug,因此SMP的多CPU引发的竟态常常使用中断屏蔽+自旋锁.
+	2.local_irq_save(flags)/local_irq_restore(flags)除了禁止/恢复中断操作外,还保存CPU的中断位信息
+		(即保存和恢复CPSR).
+	PS:以local_开头的方法的作用范围为本CPU内.
+
+#### 10.3.3 底半部机制
+
+linux实现底半部的机制主要由tasklet, 工作队列, 软中断和线程化irq.
+
+**1.tasklet**
+
+tasklet执行上下文为"软中断",运行于软中断上下文,不允许睡眠.
+
+1.步骤
+
+	1.定义一个底半部处理函数:
+		void my_tasklet_func(unsigned long);
+	2.声明一个struct tasklet_struct结构,并与底半部处理函数关联:
+		DECLARE_TASKLET(my_tasklet, my_tasklet_func, data);
+		/*
+			para1:该宏定义一个struct tasklet_struct变量my_tasklet;
+			para2:需要关联的底半部处理函数名;
+			para3:传递给底半部处理函数的参数.
+		*/
+	3.在需要调度tasklet的地方引用tasklet_schedule()函数就能使系统在适当的时候进行调度运行:
+		tasklet_schedule(&my_tasklet);
+
+2.使用tasklet作为底半部处理设备中断的驱动模板
 
 	void xxx_do_tasklet(unsigned long);	/*定义中断低半部处理函数*/
-	DECLARE_TASKLET(xxx_tasklet, xxx_do_tasklet, 0);	/*定义一个tasklet,并将其与底半部处理函数关联*/
+	DECLARE_TASKLET(xxx_tasklet, xxx_do_tasklet, 0);
+	/*声明一个struct tasklet_struct变量xxx_tasklet,并将其与底半部处理函数关联*/
 	
 	void xxx_do_tasklet(unsigned long)
 	{
-		...	/*底半部处理函数*/
+		...	/*底半部处理函数的实现*/
 	}
 
+	//中断处理顶半部
 	irqreturn_t xxx_interrupt(int irq, void *dev_id)
 	{
 		...
-		tasklet_schedule(&xxx_tasklet);	/*顶半部中调度底半部tasklet*/
+		tasklet_schedule(&xxx_tasklet);
+		/*顶半部中调用tasklet_schedule():系统会在适当的时候进行调度运行与xxx_tasklet关联的底半部函数*/
 		...
 	}
 
 	int __init xxx_init(void)
 	{
 		...
-		ret = request_irq(xxx_irq, xxx_interrupt, 0, "xxx", NULL);	/*另一种申请中断方式*/
+		ret = request_irq(xxx_irq, xxx_interrupt, 0, "xxx", NULL);
+		/*申请中断,中断号与顶半部函数关联*/
 		...
 		return IRQ_HANDLED;
 	}	
@@ -4242,22 +4291,41 @@ tasklet底半部机制执行上下文为"软中断",运行与软中断上下文,
 		...
 	}
 
-2)工作队列
+**2.工作队列**
 
-工作队列底半部机制执行上下文为"内核线程",运行进程上下文,允许睡眠.
+工作队列执行上下文为"内核线程",运行进程上下文,允许睡眠.
+
+1.步骤
+
+	1.定义一个工作队列:
+		struct work_struct my_wq;
+	2.定义底半部处理函数:
+		void my_wq_func(struct workd_struct *work);
+	3.通过INIT_WORK()初始化定义的工作队列并将工作队列与底半部处理函数绑定:
+		INIT_WORK(&my_wq, my_wq_func);
+		/*
+			para1:定义的工作队列;
+			para2:需要关联的底半部处理函数名;
+		*/
+	4.在需要调度工作队列的地方调用schedule_work()函数就能使系统在适当的时候进行调度运行:
+		schedule_work(&my_wq);
+
+2.使用工作队列作为底半部处理设备中断的驱动模板
 
 	struct work_struct xxx_wq;	/*定义一个工作队列*/
-	void xxx_do_work(struct work_struct *work);	/*定义一个底半部执行函数*/
+	void xxx_do_work(struct work_struct *work);	/*定义一个底半部处理函数*/
 
 	void xxx_do_work(struct work_struct *work)
 	{
-		...	/*中断处理底半部*/
+		...	/*底半部处理函数实现*/
 	}
 
+	/*中断顶半部*/
 	irqreturen_t xxx_interrupt(int irq, void *dev_id)
 	{
 		...
 		schedule_work(&xxx_wq);	/*顶半部调度底半部工作队列*/
+		/*顶半部中调用schedule_work():系统会在适当的时候进行调度运行与工作队列关联的底半部函数*/
 		...
 		return IRQ_HANDLED;
 	}
@@ -4265,7 +4333,8 @@ tasklet底半部机制执行上下文为"软中断",运行与软中断上下文,
 		int __init xxx_init(void)
 	{
 		...
-		ret = request_irq(xxx_irq, xxx_interrupt, 0, "xxx", NULL);	/*另一种申请中断方式*/
+		ret = request_irq(xxx_irq, xxx_interrupt, 0, "xxx", NULL);
+		/*申请中断,中断号与顶半部函数关联*/
 		...
 		INIT_WORK(&xxx_wq, xxx_do_work);	/*初始化工作队列,完成工作队列与底半部函数的绑定*/
 	}	
@@ -4277,11 +4346,31 @@ tasklet底半部机制执行上下文为"软中断",运行与软中断上下文,
 		...
 	}
 
-**硬中断:外部设备对CPU的中断**
+**3.软中断**
 
-**软中断:中断底半部的一种处理机制**
+1.概念
 
-**信号:内核(或其他进程)对某个进程的中断**
+	1.软中断(softirq):是一种传统的底半部处理机制,tasklet是基于软中断实现的,都运行于软中断上下文;
+	2.linux内核中:
+		softirq_action结构体用于表征一个软中断(包含软中断处理函数指针和传递给该函数的参数);
+		open_softirq()函数用于注册软中断对应的处理函数;
+		raise_softirq()函数用于触发一个软中断.
+	3.软中断和tasklet都运行于软中断上下文(属于原子上下文的一种),工作队列运行于进程上下文.因此:
+		软中断和tasklet处理函数不允许睡眠,工作队列处理函数允许睡眠.
+	4.local_bh_disable()和local_bh_enable()是内核中用于禁止和使能软中断及tasklet底半部机制的函数;
+	5.一般驱动不宜使用softirq.
+
+2.硬中断、软中断和信号的区别
+
+	硬中断:外部设备对CPU的中断;
+	软中断:中断底半部的一种处理机制;
+	信号:内核(或其他进程)对某个进程的中断.
+
+**4.threaded_irq**
+
+略.
+
+#### 10.3.4 实例:GPIO按键的中断
 
 ### 10.4 内核定时器
 
