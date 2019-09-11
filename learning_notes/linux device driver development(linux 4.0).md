@@ -4372,9 +4372,56 @@ tasklet执行上下文为"软中断",运行于软中断上下文,不允许睡眠
 
 #### 10.3.4 实例:GPIO按键的中断
 
-### 10.4 内核定时器
+linux下的./drivers/input/keyborad/gpio_keys.c是一个通用的GPIO按键驱动,移植该驱动时只需要修改"arch/arm/mach-xxx"下的板文件或者device tree对应的dts即可.
 
-**...未看...**
+	源码见"./drivers/input/keyborad/gpio_keys.c"或"defychen/code/linux-gpio/gpio_keys.c".
+	PS:源码分析暂略.
+
+### 10.4 共享中断
+
+共享中断:多个设备共享同一根硬件中断线.
+
+#### 10.4.1 使用方法
+
+	1.多个设备在申请中断时,都应该以IRQF_SHARED标志取申请:
+		request_irq(sh_irq_num, xxx_interrupt, IRQ_SHARED, "xxx", xxx_dev);
+	2.在中断到来时,系统会遍历执行共享此中断的所有中断处理程序,直到某一个函数返回IRQ_HANDLED.因此,在中断
+		处理程序顶半部中,应根据硬件寄存器中的信息比照传入的dev_id参数迅速判断是否为本设备的中断.如果不是,
+		应迅速返回IRQ_NONE.
+
+#### 10.4.2 共享中断驱动模板
+
+	/*中断顶半部*/
+	irqreturn_t xxx_interrupt(int irq, void *dev_id)
+	{
+		...
+		int status = read_int_status();	//获知中断源
+		if (!is_myint(dev_id, status))	//判断是否为本设备中断
+			return IRQ_NONE;			//不是本设备中断,立即返回
+		
+		//是本设备中断,进行处理
+		...
+		return IRQ_HANDLED;		//返回IRQ_HANDLED表示中断已被处理
+	}
+
+	//设备驱动模块加载函数
+	int xxx_init(void)
+	{
+		...
+		//申请共享中断
+		result = request_irq(sh_irq, xxx_interrupt, IRQF_SHARED, "xxx", xxx_dev);
+		...
+	}
+
+	//设备驱动模块卸载函数
+	void xxx_exit(void)
+	{
+		...
+		//释放中断
+		free_irq(sh_irq, xxx_interrupt);
+	}
+
+### 10.5 内核定时器
 
 ***
 ## Chapter 11 内存与I/O访问
