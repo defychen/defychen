@@ -4423,6 +4423,111 @@ linux下的./drivers/input/keyborad/gpio_keys.c是一个通用的GPIO按键驱�
 
 ### 10.5 内核定时器
 
+#### 10.5.1 内核定时器编程
+
+软件意义上的定时器最终依赖硬件定时器来实现,内核在时钟中断发生后检测各定时器是否到期,到期后的定时器处理函数将作为软中断在底半部执行.
+
+linux内核提供了用于操作定时器的数据结构和函数如下:
+
+**1.timer_list**
+
+timer_list结构体的一个实例对应一个定时器:
+
+	struct timer_list {
+		struct list_head entry;
+		unsigned long expires;	//指定定时器到期的时间(jiffies)
+		struct tvec_base *base;
+
+		void (*function)(unsigned long); //定时器满后,函数指针function指向的函数将被调用
+		unsigned long data;		//传入函数指针的参数
+
+		int slack;
+	#ifdef CONFIG_TIMER_STATS
+		int start_pid;
+		void start_site;
+		char start_comm[16];
+	#endif
+	#ifdef CONFIG_LOCKDEP
+		struct lockdep_map lockdep_map;
+	#endif
+	};
+
+定义一个my_timer的定时器:
+
+	struct timer_list my_timer;
+
+**2.初始化定时器**
+
+	void init_timer(struct timer_list *timer);	//para为声明的定时器
+
+**3.添加定时器**
+
+添加(也叫注册)定时器,用于将定时器加入到内核动态定时器链表中:
+
+	void add_timer(struct timer_list *timer);
+
+**4.删除定时器**
+
+删除定时器,用于将定时器从内核动态定时器链表中移除:
+
+	int del_timer(struct timer_list *timer);
+	/*
+	PS: del_timer_sync()是del_timer()的同步版,在删除一个定时器时需等待其被处理完,因此不能用于中断上下
+		文(因为会阻塞).
+	*/
+
+**5.修改定时器**
+
+修改定时器的到期时间,在新的被传入的expires到来后才会执行定时器函数:
+
+	int mod_timer(struct timer_list *timer, unsigned long expires);
+		//指定timer中的expires参数为para2(expires的值).
+
+**6.内核定时器使用模板**
+
+	//设备结构体
+	struct xxx_dev {
+		struct cdev dev;
+		...
+		struct timer_list xxx_timer;
+	};
+
+	//xxx驱动中的某函数
+	xxx_func1(...)
+	{
+		struct xxx_dev *dev = filp->private_data;
+		...
+		//初始化定时器
+		init_timer(&dev->xxx_timer);
+		dev->xxx_timer.function = &xxx_do_timer; //指定定时器满的处理函数
+		dev->xxx_timer.data = (unsigned long)dev;
+			//指定定时器处理函数的参数,一般为设备结构体指针.
+		dev->xxx_timer.expires = jiffies + delay;
+		//指定到期时间.一般为jiffies的基础上添加一个时间,如为Hz,则表示延迟1s.
+		add_timer(&dev->xxx_timer);	//注册定时器
+	}
+
+	//xxx驱动中的某函数
+	xxx_func2(...)
+	{
+		...
+		//删除定时器
+		del_timer(&dev->xxx_timer);
+	}
+
+	//定时器处理函数
+	static void xxx_do_timer(unsigned long arg)
+	{
+		struct xxx_dev *dev = (struct xxx_dev *)(arg);
+		...
+		//调度定时器再执行
+		dev->xxx_timer.expires = jiffies + delay; //新的定时器满的时间
+		add_timer(&dev->xxx_timer);
+		...
+	}
+
+#### 10.5.2 实例:秒字符设备
+
 ***
 ## Chapter 11 内存与I/O访问
 
