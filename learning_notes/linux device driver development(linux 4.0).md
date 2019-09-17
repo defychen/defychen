@@ -4528,6 +4528,188 @@ timer_list结构体的一个实例对应一个定时器:
 
 #### 10.5.2 实例:秒字符设备
 
+**1.秒字符设备驱动代码**
+
+	#include <linux/module.h>
+	#include <linux/fs.h>
+	#include <linux/mm.h>
+	#include <linux/init.h>
+	#include <linux/cdev.h>
+	#include <linux/slab.h>
+	#include <linux/uaccess.h>
+	
+	#define SECOND_MAJOR	(248)
+	static int second_major = SECOND_MAJOR;
+	module_param(second_major, int, S_IRUGO);
+	
+	struct second_dev {
+		struct cdev cdev;
+		atomic_t counter;
+		struct timer_list s_timer;
+	};
+	
+	static struct second_dev *second_devp;
+	
+	static void second_timer_handler(unsigned long arg)
+	{
+		mod_timer(&second_devp->s_timer, jiffies + HZ); //修改定时器,触发下一次定时
+		/*
+			此处的:jiffies + HZ:表示每个一秒定时器绑定的函数指针将会被调用一次.
+		*/
+		atomic_inc(&second_devp->counter); //增加秒计数
+		pr_info("current jiffies is %ld\n", jiffies);
+	}
+	
+	static int second_open(struct inode *inode, struct file *filp)
+	{
+		init_timer(&second_devp->s_timer);
+		second_devp->s_timer.function = &second_timer_handler; //绑定函数指针
+		second_devp->s_timer.expires = jiffies + HZ;
+	
+		add_timer(&second_devp->s_timer);
+		atomic_set(&second_devp->counter, 0);
+	
+		return 0;
+	}
+	
+	static int second_release(struct inode *inode, struct file *filp)
+	{
+		del_timer(&second_devp->s_timer);
+		return 0;
+	}
+	
+	static ssize_t second_read(struct file *filp, char __user *buf, size_t count, loff_t *ppos)
+	{
+		int counter;
+	
+		counter = atomic_read(&second_devp->counter);
+	
+		if (put_user(counter, (int *)buf)) //复制counter到userspace
+			return -EFAULT;
+		else
+			return sizeof(unsigned int);
+	}
+	
+	static const struct file_operations second_fops = {
+		.owner = THIS_MODULE,
+		.open = second_open,
+		.release = second_release,
+		.read = second_read,
+	};
+	
+	static void second_setup_cdev(struct second_dev *devp, int index)
+	{
+		int err, devno = MKDEV(second_major, index);
+	
+		cdev_init(&devp->cdev, &second_fops);
+		devp->cdev.owner = THIS_MODULE;
+		err = cdev_add(&devp->cdev, devno, 1);
+	
+		if (err)
+			pr_err("Failed to add second device!\n");
+	}
+	
+	static int __init second_init(void)
+	{
+		int ret;
+		dev_t devno = MKDEV(second_major, 0);
+	
+		if (second_major)
+			ret = register_chrdev_region(devno, 1, "second");
+		else {
+			ret = alloc_chrdev_region(&devno, 0, 1, "second");
+			second_major = MAJOR(devno);
+		}
+	
+		if (ret < 0)
+			return ret;
+	
+		second_devp = kzalloc(sizeof(struct second_dev), GFP_KERNEL);
+		if (!second_devp) {
+			ret = -ENOMEM;
+			goto fail_malloc;
+		}
+	
+		second_setup_cdev(second_devp, 0);
+		return 0;
+	
+	fail_malloc:
+		unregister_chrdev_region(devno, 1);
+		return ret;
+	}
+	
+	static void __exit second_exit(void)
+	{
+		cdev_del(&second_devp->cdev);
+		kfree(second_devp);
+		unregister_chrdev_region(MKDEV(second_major, 0), 1);
+	}
+	
+	module_init(second_init);
+	module_exit(second_exit);
+	MODULE_AUTHOR("Defychen");
+	MODULE_LICENSE("GPL v2");
+
+**2.编译驱动的Makefile**
+
+	ifneq ($(KERNELRELEASE), )
+	
+	obj-m := second_device.o
+	
+	else
+	
+	EXTRA_CFLAGS += DDEBUG
+	KDIR := /home/defychen/repository_software/linux-4.4.189
+	all:
+		make CROSS_COMPILE=arm-linux-gnueabi- ARCH=arm -C $(KDIR) M=$(PWD) modules
+	clean:
+		rm -rf *.ko *.o *.mod.o *.mod.c *.symvers *.order .*.ko .tmp_versions
+	endif
+	
+	.PYONY:all clean
+
+**3.编译之后加载驱动并创建设备节点**
+
+	insmod second_device.ko
+	mknod /dev/second c 248 0
+
+**4.应用程序代码**
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <fcntl.h>
+	
+	int main()
+	{
+		int fd;
+		int counter = 0;
+		int old_counter = 0;
+	
+		fd = open("/dev/second", O_RDONLY);
+		if (fd != -1) {
+			while (1) {
+				read(fd, &counter, sizeof(unsigned int));
+				if (counter != old_counter) {
+					printf("seconds after open /dev/second: %d\n", counter);
+					old_counter = counter;
+				}
+			}
+		}else {
+			printf("Device open failure!\n");
+		}
+		
+**5.编译并运行应用程序**
+
+	arm-linux-guneabi-gcc second_app.c -o second_app
+	//需要拷贝到板卡的工项目录再执行
+	./second_app
+
+**6.运行结果**
+
+![](images/second_test.png)
+
+### 10.6 内核延时
+
 ***
 ## Chapter 11 内存与I/O访问
 
