@@ -4710,6 +4710,48 @@ timer_list结构体的一个实例对应一个定时器:
 
 ### 10.6 内核延时
 
+#### 10.6.1 短延迟
+
+**1.忙等待延迟**
+
+忙等待延迟本质是CPU在进行循环.
+
+	1.void ndelay(unsigned long nsecs);	//纳秒延迟
+	2.void udelay(unsigned long usecs);	//微妙延迟
+	3.void mdelay(unsigned long msecs);	//毫秒延迟
+	//有时软件的延迟也可以:
+	void delay(unsigned int time)
+	{
+		while(time--);
+	}
+
+**2.睡眠延迟**
+
+睡眠延迟会使用调用的进程睡眠.对于毫秒时延(以及更大的秒时延),内核中最好不要直接使用mdelay()函数,因为会耗费CPU资源.而应该使用睡眠延迟.
+
+	1.void msleep(unsigned int millisecs);	//毫秒睡眠延迟
+	2.unsigned long msleep_interruptile(unsigned int millisecs);	//可中断的毫秒睡眠延迟
+	3.void ssleep(unsigned int seconds);	//秒睡眠延迟
+
+#### 10.6.2 长延迟
+
+长延迟的方法为:比较当前的jiffies和目标jiffies(为当前的jiffies加上时间间隔的jiffies),直到未来的jiffies达到目标的jiffies.
+
+**实例:使用忙等待先延迟100jiffies,再延迟2s**
+
+	/*延迟100jiffies*/
+	unsigned long delay = jiffies + 100;
+	while (time_before(jiffies, delay));
+
+	/*再延迟2s*/
+	unsigned long delay = jiffies + 2*Hz;
+	while (time_before(jiffies, delay));
+	PS:还存在一个time_after(),与time_before类似.
+
+#### 10.6.3 睡眠延迟
+
+暂略.
+
 ***
 ## Chapter 11 内存与I/O访问
 
