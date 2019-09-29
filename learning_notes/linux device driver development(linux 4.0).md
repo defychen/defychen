@@ -5223,44 +5223,147 @@ PS:devm_request_region不需要明显的调用释放动作.
 
 PS:有时候在访问寄存器或I/O端口前,会省去request_mem_region()、request_region()这样的调用(不影响结果).
 
-### 11.5 Cache & DMA
+#### 11.4.4 将设备地址映射到用户空间.
 
-**Cache原理:**
+关于mmap的讲解,暂略.
 
-Cache:CPU缓存,位于CPU与内存之间的临时存储器.容量比内存小得多但交换速度比内存快得多.通常cache与主存在一定范围内保持适当的比例关系,cache的命中率90%以上(一般比例为4:1000)e.g. 128KB cache映射32MB内存;256KB可映射64MB内存.
+### 11.5 I/O内存静态映射
 
-**cache一致性问题:**
+该方法已经不值得推荐.
 
-CPU需要操作的数据和结果优先从cache中拿或者写回到cache.
+### 11.6 DMA
 
-1)外设对内存数据的修改不能保证cache同样得到更新;
+DMA:无需CPU参与,让外设与系统内存之间进行双向数据传输的硬件机制.使用DMA可以是系统CPU从实际的I/O数据传输过程中摆脱出来,大大提高了系统的吞吐率.
 
-2)处理器对cache中内容的修改不能保证内存中的数据得到更新.
+	DMA方式的数据传输由DMAC(DMA控制器)控制,在传输期间,CPU可以并发地执行其他任务.当DMA结束后,DMAC通过中断
+	通知CPU数据传输已结束,然后由CPU执行相应的中断服务程序进行处理.
+
+#### 11.6.1 DMA与Cache一致性
+
+**1.Cache原理:**
+
+Cache:CPU缓存,位于CPU与内存之间的缓存.利用程序的空间局部性和时间局部性原理,达到较高的命中率,从而避免CPU每次都必须要与相对慢速的内存交互数据依次来提高数据的访问速率.
+
+	Cache虽然容量比内存小得多但交换速度比内存快得多.通常cache与主存存在一定范围内保持适当的比例关系,达到
+	Cache的命中率90%以上(一般比例为4:1000).e.g.128KB Cache映射32MB内存;256KB可映射64MB内存.
+
+DMA:可以作为内存与外设之间传输数据的方式,在此方式下,数据不需要经过CPU中转.
+
+**2.cache一致性**
+
+CPU需要操作的数据和结果优先从Cache中拿或者写回到Cache.
+
+	1.外设对内存数据的修改不能保证cache同样得到更新;
+	2.处理器对cache中内容的修改不能保证内存中的数据得到更新.
 
 cache一致性问题最终解释为:cache中数据与内存中数据需要是一致的.
 
-处理cache与DRAM存取一致性方法:
+处理cache与内存数据一致性方法:
 
-	贯穿读出式(Look Through):CPU首先请求cache，如果命中，切断主存请求;不命中,请求DRAM.
-	旁路读出式(Look Aside):CPU同时请求cache和DRAM，cache速度快，如果命中cache将数据送给CPU的同时切断CPU对DRAM的请求;
-	否则cache不做任何动作，CPU访问DRAM.
-	写穿式(Write Through):CPU写到cache的同时也写入DRAM.
-	回写式(Copy Back):一般只写到cache,当cache中的数据得到更新而DRAM中数据不变,cache中会设置一个标记.当cache中的数据再
-	一次准备更新前会将cache中的数据写入DRAM中，进而才更新.
+	贯穿读出式(Look Through):CPU首先请求cache,如果命中,切断主存请求;不命中,请求DRAM;
+	旁路读出式(Look Aside):CPU同时请求cache和DRAM,cache速度快.如果命中cache将数据送给CPU的同时切断
+		CPU对DRAM的请求;否则cache不做任何动作,CPU访问DRAM;
+	写穿式(Write Through):CPU写到cache的同时也写入DRAM;
+	回写式(Copy Back):一般只写到cache,当cache中的数据得到更新而DRAM中数据不变,cache中会设置一个标记.
+		当cache中的数据再一次准备更新前会将cache中的数据写入DRAM中,进而才更新cache.
 
-**DMA原理:**
+**3.Cache与DMA的一致性问题**
 
-DMA:无需CPU参与,让外设与内存直接进行双向数据传输的硬件机制.是一种内存与外设之间进行数据传输的方式.
+![](images/dma_and_cache_data_coherent.png)
 
-**Cache与DMA的一致性问题**
-
-1)外设数据到CPU:DMA将外设数据传到DRAM，cache中保留的仍是旧数据,CPU从cache中拿到错误的数据.
+1.外设数据到CPU:DMA将外设数据传到DRAM,cache中保留的仍是旧数据,CPU从cache中拿到错误的数据.
 	
 	解决:CPU在读取cache中的数据之前,先进行cache_invalidate作用,保证从DRAM读取数据到cache再到CPU.
 
-2)CPU数据到外设:CPU处理的数据结果存放到cache，此时cache中的数据还没写回到DRAM;DMA从DRAM中取数据送到外设取到的为错误的数据.
+2.CPU数据到外设:CPU处理的数据结果存放到cache,此时cache中的数据还没写回到DRAM;DMA从DRAM中取数据送到外设取到的为错误的数据.
 
 	解决:DMA处理之前先进行cache_flush(刷新数据到DRAM),保证DMA取到的数据为最新的数据.
+
+#### 11.6.2 linux下的DMA编程
+
+DMA本身不属于一种外设,它只是一种外设与内存交互数据的方式.
+
+	内存中用于与外设交互数据的一块区域称为DMA缓冲区,在设备不支持scatter/gather(分散/聚集,简称S/G)操作的
+	情况下,DMA缓冲区在物理上必须是连续的.
+
+**1.DMA区域**
+
+x86系统其DMA操作只能在16MB以下的内存中进行.使用kmalloc()、__get_free_pages()等函数申请DMA区域应使用GFP_DMA标志.
+
+	内核源代码中的:unsigned long dma_mem_alloc(int size);可用于申请DMA内存.
+
+PS:在现代嵌入式处理中,DMA操作可以在整个常规内存区域中进行.因此,DMA区域就直接覆盖了常规内存.
+
+**2.虚拟地址、物理地址和总线地址**
+
+	总线地址:从设备角度看到的内存地址,基于DMA的硬件使用的是总线地址而不是物理地址;
+	物理地址:从CPU MMU控制器外围看到的内存地址;
+	虚拟地址:CPU核角度看到的地址.
+	PS:有时总线地址即为物理地址(e.g.PC上的ISA和PCI),但不是每个平台都如此.
+
+IOMMU
+
+IOMMU的工作原理与CPU内的MMU类似,针对的是外设总线地址和内存地址之间的转化.
+
+![](images/iommu.png)
+
+	IOMMU可以使得外设DMA引擎看到"虚拟地址",在使用IOMMU的情况下,在修改映射寄存器后,可以使得SG中分段的
+	缓冲区地址对外设变得连续.
+
+**3.DMA地址掩码**
+
+设备并不一定能在所有的内存地址上执行DMA操作,此时需要执行DMA地址掩码:
+
+	int dma_set_mask(struct device *dev, u64 mask);
+	/*
+		e.g.对于只能在24-bit地址上执行DMA操作的设备而言,应该调用:
+			dma_set_mask(dev, 0xffffff); //表示只取地址的低24-bit.
+	*/
+
+**4.一致性DMA缓冲区**
+
+1.分配/释放一个DMA一致性的内存区域
+
+	1.申请一片DMA缓冲区,以进行地址映射并保证该缓冲区的Cache一致性.
+	void *dma_alloc_coherent(struct device *dev, size_t size, dma_addr_t *handle, gfp_t gfp);
+	/*
+		para1:device;
+		para2:分配的大小;
+		para3:返回DMA缓冲区的总线地址.dma_addr_t类型表示的是总线地址;
+		para4:gfp标志.
+		retval:返回申请到的DMA缓冲区的虚拟地址.
+	*/
+	2.释放函数
+	void dma_free_coherent(struct device *dev, size_t size, void *cpu_addr, dma_addr_t handle);
+
+2.分配一个写合并(writecombining)的DMA缓冲区
+
+	1.申请一片写合并的DMA缓冲区
+	void *dma_alloc_writecombine(struct device *dev, size_t size, dma_addr_t *handle,
+		gfp_t gfp);
+	2.释放函数
+	#define dma_free_writecombine(dev, size, cpu_addr, handle) \
+			dma_free_coherent(dev, size, cpu_addr, handle)
+
+3.PCI设备申请DMA缓冲区
+
+	1.申请DMA缓冲区
+	void *pci_alloc_consistent(struct pci_dev *pdev, size_t size, dma_addr_t *dma_addrp);
+	2.释放函数
+	void pci_free_consistent(struct pci_dev *pdev, size_t size, void *cpu_addr,
+		dma_addr_t dma_addr);
+
+PS:dma_alloc_xxx开头的函数申请的内存区域不一定在DMA区域里面.对于32-bit处理器,当coherent_dma_mask小于0xffffff时,才会设置GFP_DMA标记,并从DMA区域去申请内存.
+
+**5.流式DMA映射**
+
+暂略.
+
+**6.dmaengine标准API**
+
+linux内核目前推荐使用dmaengine的驱动架构来编写DMA控制器区域.
+
+内容暂略.
 
 ***
 
