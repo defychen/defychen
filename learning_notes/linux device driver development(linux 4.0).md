@@ -4937,9 +4937,9 @@ DMA、常规、高端内存都采用buddy算法进行管理.
 
 ### 11.3 内存存取
 
-**用户空间内存动态申请**
+#### 11.3.1 用户空间内存动态申请
 
-申请:malloc()函数,释放:free()函数
+申请:malloc()函数;释放:free()函数
 
 	void *malloc(size_t size);	//申请一段size字节大小的buffer,返回为"void *"
 	free(ptr);	//释放ptr(指针)指向的malloc内存
@@ -4950,106 +4950,278 @@ DMA、常规、高端内存都采用buddy算法进行管理.
 
 malloc()和free()函数在malloc.h和stdlib.h都有.
 	
-	一般只需要:#include <stdlib.h>即可
+	一般只需要:#include <stdlib.h>即可.
 
-*Linux内核是按需调页(Demand Paging),malloc()申请返回时内核并没有真正给进程内存.此时读申请的内存会全部是0.只有在这个内存中写了数据之后再去读才会有真正的内容.*
+Linux内核是按需调页(Demand Paging),malloc()申请返回时内核并没有真正给进程内存.此时读申请的内存会全部是0.只有在这个内存中写了数据之后再去读才会有真正的内容.
 
-**内核空间内存动态申请**
+#### 11.3.2 内核空间内存动态申请
 
-1)kmalloc
+linux内核空间申请内存的函数主要是:kmalloc(), __get_free_pages()和vmalloc()等.
 
-申请的内存位于DMA和常规内存区域,物理上连续.与物理内存仅存在一个固定偏移,具有一一对应关系,转换关系简单
+	1.kmalloc()和__get_free_pages()申请的内存位于DMA和常规区域的映射区,在物理上也是连续的,与真实的物
+		理地址只有一个固定的偏移,一般使用virt_to_phys即可得到物理地址;
+	2.vmalloc()是在虚拟内存空间给出一块连续的内存区,这片虚拟内存在物理上不一定连续,虚拟内存与物理内存也
+		没有简单的换算关系.
 
-	void *kmalloc(size_t size, int flags);	/*para1:字节大小; para2:分配标志.适用于申请小于128KB的内存*/
-	/*分配标志:
-		GFP_KERNEL:在内核空间的进程申请内存.若申请不满足,进程会睡眠等待页,引起阻塞.不能用于中断上下文或持有自旋锁的时候.
-		GFP_ATOMIC:不存在空闲页时,不等待直接返回.适用于中断处理函数、tasklet、内核定时器等非进程上下文.
-		GFP_USER/HIHGUSER/DMA(从DMA区域分配内存)...
+**1.kmalloc()**
+
+申请的内存位于DMA和常规内存区域,物理上连续.与物理内存仅存在一个固定偏移,具有一一对应关系,转换关系简单,
+
+	void *kmalloc(size_t size, int flags);
+	/*
+		para1:申请的字节大小;
+		para2:分配标志(适用于申请小于128KB的内存).分配标志种类如下:
+			GFP_KERNEL:在内核空间的进程申请内存.若申请不满足,进程会睡眠等待页,引起阻塞.不能用于中断上
+			下文或持有自旋锁的时候(e.g.中断处理函数、tasklet和内核定时器等非进程上下文不能使用);
+			GFP_ATOMIC:不存在空闲页时,不等待直接返回.适用于中断处理函数、tasklet、内核定时器等非进程
+			上下文;
+			GFP_USER:为用户空间分配内存,可能阻塞;
+			GFP_HIHGUSER:类似GFP_USER,但是是从高端内存分配;
+			GFP_DMA:从DMA区域分配内存.
+			...其他略.
+		PS:因为kmalloc()底层实现依赖于__get_free_pages(),因为分配标志前缀为:GFP(get_free_pages的
+			缩写).
 	*/
-	kfree(ptr);	/*内核内存释放函数*/
+	kfree(ptr);	/*使用kmalloc申请的内存释放函数*/
 
-2)__get_free_pages()
+**2.__get_free_pages()**
 
 linux内核最底层获得空闲内存页的方法,kmalloc中的GFP即是get_free_pages,所以一般使用kmalloc即可.
 
-3)vmalloc
+相关的函数:
 
-vmalloc只为存在于软件中(没有硬件意义)的较大的顺序缓冲区分配内存.因此vmalloc不能用于分配少量内存(e.g. 1 page以内的内存)
+	get_zeroed_page(unsigned int flags);	//该宏返回一个指向新页的指针并将该页清0;
+	__get_free_page(unsigned int flags);	//该宏返回一个指向新页的指针,但是该页不清0;
+	__get_free_pages(unsigned int flags, unsigned int order);
+	/*
+		para1:分配标志,常用的为:GFP_KERNEL和GFP_ATOMIC;
+		para2:分配的页数为2^order,order的最大值为10(即1024页)或11(即2048页),每个页为4KB;
+		retval:返回分配内存的首地址.
+	*/
 
-	void *vmalloc(unsigned long size);	/*分配size字节的内存(仅在软件中使用)*/
+**3.vmalloc()**
+
+1.vmalloc()分配的特点:
+
+	1.vmalloc()只为存在于软件中(没有硬件意义)的较大的顺序缓冲区分配内存;
+	2.vmalloc()远大于__get_free_pages()的开销,为了完成vmalloc(),新的页表项需要被建立;
+	3.vmalloc不能用于分配少量内存(e.g.1页以内的内存,1 page更适合用kmalloc或者__get_free_page()).
+
+2.vmalloc()函数
+
+	void *vmalloc(unsigned long size);	/*分配size字节的内存*/
 	void vfree(void *addr);	/*释放*/
 
-vmalloc不能用于原子上下文中,因为内部使用GFP_KERNEL标志的kmalloc.vmalloc的虚拟地址和物理地址不是一个简单的线性映射(也因为没有硬件意义)
+vmalloc不能用于原子上下文中,因为内部使用GFP_KERNEL标志的kmalloc.vmalloc的虚拟地址和物理地址不是一个简单的线性映射(也没有硬件意义).
 
-4)slab和内存池
+**4.slab和内存池**
 
-slab和内存池都是用于分配大量小对象(少量字节 < 1 page)的后备缓存计数.
+kmalloc()和__get_free_pages()等函数以页为单位申请和释放内存容易导致浪费(如果申请少量字节,也需要1页).slab和内存池是预先分配好一片大内存,然后透过slab或内存池来管理,提供给一些需要少量内存的软件.
 
-	/*获知当前slab的分配和使用情况*/
-	cat /proc/slabinfo
+1.slab
+
+slab建立在buddy算法之上,从buddy算法拿到2^n个页面后进行二次管理.slab申请的内存以及基于slab的kmalloc()申请的内存,与物理内存之间也是一个简单的线性偏移.
+
+	1.创建slab缓存
+		struct kmem_cache *kmem_cache_create(const char *name, size_t size, size_t align,
+			unsigned long flags,
+			void (*ctor)(void *, struct kmem_cache *, unsigned long),
+			void (*dtor)(void *, struct kmem_cache *, unsigned long));
+		/*
+			para1:slab名字;
+			para2:是要分配的每个数据结构的大小--->slab用于管理n个相同结构体的的大小;
+			para3:对齐,一般给0即可;
+			para4:控制如何进行分配的位掩码,包括:
+				SLAB_HWCACHE_ALIGN(每个数据对象对齐到一个cacheline);
+				SLAB_CACHE_DMA(要求数据对象在DMA区域中分配);
+			para5:为NULL即可;
+			para6:为NULL即可.
+		*/
+	2.分配slab缓存
+		void kmem_cache_alloc(struct kmem_cache *cachep, gfp_t flags);
+		//从kmem_cache_create()创建的slab后备缓存中分配一块内存,并返回首地址指针.
+	3.释放slab缓存
+		void kmem_cache_free(struct kmem_cache *cachep, void *objp);
+		//释放由kmem_cache_alloc()分配的缓存.
+	4.回收slab缓存
+		int kmem_cache_destroy(struct kmem_cache *cachep);
+	5.slab缓存使用范例
+		/* 1.创建slab缓存 */
+		static kmem_cache_t *xxx_cachep;
+		xxx_cachep = kmem_cache_create("xxx", sizeof(struct xxx),
+			0, SLAB_HWCACHE_ALIGN | SLAB_PANIC, NULL, NULL);
+		/* 2.分配slab缓存 */
+		struct xxx *ctx;
+		ctx = kmem_cache_alloc(xxx_cachep, GFP_KERNEL);
+		... //使用slab缓存
+		/* 3.释放slab缓存 */
+		kmem_cache_free(xxx_cachep, ctx);
+		/* 4.回收slab缓存 */
+		kmem_cache_destroy(xxx_cachep);
+	6.获知当前slab的分配和使用情况
+		cat /proc/slabinfo
+
+2.内存池
+
+内存池技术是一种非常经典的用于分配大量小对象的后备缓存技术.
+
+	1.创建内存池
+		mempool_t *mempool_create(int min_nr, mempool_alloc_t *alloc_fn,
+			mempool_free_t *free_fn, void *pool_data);
+		/*
+			para1:需要预分配对象的数目;
+			para2:指向内存池机制提供的标准对象分配函数的指针;
+				typedef void *(mempool_alloc_t)(int gfp_mask, void *pool_data);
+			para3:指向内存池机制提供的标准对象回收函数的指针;
+				typedef void *(mempool_free_t)(int gfp_mask, void *pool_data);
+			para4:分配和回收函数指针需要用到的指针.
+		*/
+	2.从内存池中分配对象或回收对象到内存池
+		void *mempool_alloc(mempool_t *pool, int gfp_mask);
+		void mempool_free(void *element, mempool_t *pool);
+	3.回收内存池
+		void mempool_destroy(mempool_t *pool);
 
 ### 11.4 设备I/O端口和I/O内存的访问
 
-**任何设备通常都会有控制、数据、状态等寄存器来控制设备、读写设备和获取设备状态.**
+任何设备通常都会有控制、数据、状态等寄存器来控制设备、读写设备和获取设备状态.
 
 ARM CPU没有I/O空间,只有内存空间.外设和内存统一编址,使用相同的指令去访问外设和内存.
 
-**I/O端口(外设寄存器位于I/O空间)---ARM CPU没有**
+#### 11.4.1 I/O端口和IO内存访问接口
 
-	unsigned inb/inw/inl(unsigned port);	//从端口port读字节/字/长字(32bit)数据
-	unsigned outb/outw/outl(unsigned char byte/short word/long word, unsigned port); //将字节/字/长字写入port端口
-	void insb/insw/insl(unsigned port, void *addr, unsigned long count); 
-	/*从端口port读count数据(字节/字/长字)到addr指向的内存*/
-	void outsb/outsw/outsl(unsigned port, void *addr, unsigned long count);
-	/*将addr指向的内存中的count数据(字节/字/长字)写入port端口*/
+**1.I/O端口**
 
-**I/O端口申请**
+(外设寄存器位于I/O空间)--->ARM CPU没有.
+
+	1.读写字节端口(8-bit)
+		unsigned inb(unsigned port); //从端口port读一个字节数据
+		unsigned outb(unsigned char byte, unsigned port); //将一个字节的数据写入port端口
+	2.读写字端口(16-bit)
+		unsigned inw(unsigned port); //从端口port读一个字数据
+		unsigned outw(unsigned short word, unsigned port); //将一个字的数据写入port端口
+	3.读写长字端口(32-bit)
+		unsigned inl(unsigned port); //从端口port读一个长字数据
+		unsigned outl(unsigned longword, unsigned port); //将一个长字的数据写入port端口
+	4.读写一串字节
+		void insb(unsigned port, void *addr, unsigned long count); 
+		/*从端口port读count个字节到addr指向的内存*/
+		void outsb(unsigned port, void *addr, unsigned long count);
+		/*将addr指向的内存中的count个字节写入port端口*/
+	5.读写一串字
+		void insw(unsigned port, void *addr, unsigned long count); 
+		/*从端口port读count个字到addr指向的内存*/
+		void outsw(unsigned port, void *addr, unsigned long count);
+		/*将addr指向的内存中的count个字写入port端口*/
+	6.读写一串长字
+		void insl(unsigned port, void *addr, unsigned long count); 
+		/*从端口port读count个长字到addr指向的内存*/
+		void outsl(unsigned port, void *addr, unsigned long count);
+		/*将addr指向的内存中的count个长字写入port端口*/
+
+**2.I/O内存**
+
+ARM属于I/O内存,一般ARM板卡的寄存器用I/O内存来访问.
+
+1.将设备所处的物理地址映射到虚拟地址上--->因为驱动中访问的必须是虚拟地址.
+
+	void *ioremap(unsigned long offset, unsigned long size);
+	/*
+		para1:offset,一般传递设备的物理地址即可;
+		para2:size,一般传递设备寄存器的大小即可.
+		retval:返回映射的虚拟地址.
+	*/
+
+2.在设备驱动卸载时需要释放映射的设备虚拟地址
+
+	void iounmap(void *addr);
+
+3.ioremap的变体devm_ioremap()
+
+	void __iomem *devm_ioremap(struct device *dev, resource_size_t offset, unsigned long size);
+	/*
+		para1:设备指针,devm_开头的函数在驱动卸载时不需要进行释放;
+		para2:offset,一般传递设备的物理地址即可;
+		para3:size,一般传递设备寄存器的大小即可.
+	*/
+
+4.读写ioremap映射的虚拟地址
+
+	不带内存屏障的读I/O空间的虚拟地址函数:
+		readb_relaxed(addr)---读8-bit的寄存器.
+		readw_relaxed(addr)---读16-bit的寄存器.
+		readl_relaxed(addr)---读32-bit的寄存器.
+	不带内存屏障的写I/O空间的虚拟地址函数:
+		readb_relaxed(value, addr)---写8-bit到addr寄存器.
+		readw_relaxed(value, addr)---写16-bit到addr寄存器.
+		readl_relaxed(value, addr)---写32-bit到addr寄存器.
+	带内存屏障的读I/O空间的虚拟地址函数:
+		readb(addr)---读8-bit的寄存器.
+		readw(addr)---读16-bit的寄存器.
+		readl(addr)---读32-bit的寄存器.
+	带内存屏障的写I/O空间的虚拟地址函数:
+		readb(value, addr)---写8-bit到addr寄存器.
+		readw(value, addr)---写16-bit到addr寄存器.
+		readl(value, addr)---写32-bit到addr寄存器.
+
+#### 11.4.2 申请和释放设备的I/O端口和IO内存
+
+**1.I/O端口申请**
 
 申请和释放I/O端口,表明驱动要访问这片区域.
 
+	1.申请I/O端口
 	struct resource *request_region(unsigned long first, unsigned long n, const char *name);
-	/*对name这个设备,从first端口开始,申请n个端口.*/
+	/*
+		para1:起始端口号;
+		para2:向内核申请n个端口;
+		para3:设备名称;
+		retval:分配成功返回不是NULL,失败返回NULL,意味着申请端口失败.
+	*/
+	2.释放申请的I/O端口
 	void release_region(unsigned long start, unsigned long n);
 	/*从start开始,释放n个端口*/
-
-*有devm_request_region不需要明显的调用释放动作.*
-
-#### I/O端口访问流程
-
-	step1:request_region()------申请I/O端口区域(在设备驱动模块加载函数中进行)
-	step2:inb/outb等------------I/O端口访问(read/write/ioctl函数中进行)
-	step3:release_region()------释放I/O端口区域(在设备驱动模块的卸载函数中进行)
 	
-**I/O内存**
+PS:devm_request_region不需要明显的调用释放动作.
 
-使用之前先使用ioremap()将设备所处的物理地址映射到虚拟地址上.但现在多数使用devm_ioremap()---"devm_"开头的函数在驱动退出或出错时不需要进行释放(会自动释放).
+**2.I/O内存申请**
 
-	void __iomem *devm_ioremap(struct device *dev, resource_size_t offset, unsigned long size);
-	/*将位于I/O内存的设备的物理地址映射到虚拟地址,之后可以用linux标准API来访问虚拟地址进而访问物理地址*/
+申请和释放I/O内存,表明驱动要访问这片内存区域.
 
-读I/O空间的虚拟地址函数:readb/w/l_relaxed()---读8/16/32 bit的寄存器.readb/w/l()比带"_relaxed"多一个内存屏障.
-
-写I/O空间的虚拟地址函数:writeb/w/l_relaxed()---写8/16/32 bit的寄存器.writeb/w/l()比带"_relaxed"多一个内存屏障.
-
-**I/O内存申请**
-
-申请和释放I/O内存,表明驱动要访问这篇内存区域.
-
+	1.申请I/O内存
 	struct resource *request_mem_region(unsigned long start, unsigned long len, char *name);
-	/*对于name这个设备,从start地址开始申请len个内存地址*/
+	/*
+		para1:申请内存的起始地址;
+		para2:申请len个内存地址;
+		para3:设备名称;
+		retval:分配成功返回不是NULL,失败返回NULL,意味着申请I/O内存失败.
+	*/
+	2.释放I/O内存
 	void release_mem_region(unsigned long start, unsigned long len);
 	/*从start开始,释放len个内存地址*/
+	PS:devm_request_mem_region不需要明显的调用释放动作.
 
-*有devm_request_mem_region不需要明显的调用释放动作.*
+#### 11.4.3 设备I/O端口和I/O内存访问流程
 
-#### I/O内存访问流程
+**1.I/O端口访问流程**
 
-	step1:request_mem_region()------申请I/O内存(在设备驱动模块加载函数中进行)
-	step2:ioremap()-----------------将寄存器物理地址映射到内核虚拟地址(在设备驱动模块加载函数中进行)
-	step3:readb/l/writeb/l----------I/O内存访问(read/write/ioctl函数中进行)
-	step4:iounmap()-----------------将映射的虚拟地址释放(在设备驱动模块的卸载函数中进行)
-	step5:release_mem_region()------释放I/O内存区域(在设备驱动模块的卸载函数中进行)
+![](images/access_flow_of_io_port.png)
 
+	request_region()------申请I/O端口区域(在设备驱动模块加载函数中进行)
+	inb/outb等------------I/O端口访问(read/write/ioctl函数中进行)
+	release_region()------释放I/O端口区域(在设备驱动模块的卸载函数中进行)
+
+**2.I/O内存访问流程**
+
+![](images/access_flow_of_io_mem.png)
+
+	request_mem_region()------申请I/O内存(在设备驱动模块加载函数中进行)
+	ioremap()-----------------将寄存器物理地址映射到内核虚拟地址(在设备驱动模块加载函数中进行)
+	readb/l/writeb/l----------I/O内存访问(read/write/ioctl函数中进行)
+	iounmap()-----------------将映射的虚拟地址释放(在设备驱动模块的卸载函数中进行)
+	release_mem_region()------释放I/O内存区域(在设备驱动模块的卸载函数中进行)
+
+PS:有时候在访问寄存器或I/O端口前,会省去request_mem_region()、request_region()这样的调用(不影响结果).
 
 ### 11.5 Cache & DMA
 
