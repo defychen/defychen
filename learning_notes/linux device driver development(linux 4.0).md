@@ -5369,24 +5369,45 @@ linux内核目前推荐使用dmaengine的驱动架构来编写DMA控制器区域
 
 ## Chapter 12 Linux设备驱动的软件架构思想
 
-软件工程基本原则--->高内聚,低耦合.
+### 12.1 Linux驱动的软件架构
 
-### 12.1 platform设备驱动
+**linux驱动的软件架构哲学:**
 
-**1.platform总线、设备和驱动**
+1.linux设备和驱动分离
+
+![](images/linux_device_driver_detach.png)
+
+	驱动只管驱动,设备只管设备,总线负责匹配设备和驱动.驱动则以标准途径拿到板级信息;
+
+2.linux驱动的分层
+
+![](images/layering_driver.png)
+
+	提炼一个input的核心层出来,将与linux接口以及整个一套input事件的汇报机制都在input里实现
+
+3.linux驱动的分隔
+
+![](images/high_cohesion_low_coupling.png)
+
+	实现高内聚,低耦合.
+
+### 12.2 platform设备驱动
+
+#### 12.2.1 platform总线、设备和驱动
 
 总线实现将设备和驱动绑定.在注册设备时,总线会寻找与该设备匹配的驱动;注册驱动时,总线会寻找与该驱动匹配的设备.
 
 常用的总线有:
 
 	1.PCI, USB, I2C, SPI等:像此类的总线是有设备会依附于该总线;
-	2.platform总线:Linux中的一种虚拟总线.像在SoC内部集成的独立外设控制器(e.g.I2C,RTC,LCD,看门狗等)以及
-		挂接在SoC内存空间的外设等都会依附于platform总线.
+	2.platform总线:linux中的一种虚拟总线.像在SoC内部集成的独立外设控制器(e.g.内部I2C,RTC,LCD,看门狗等)
+		以及挂接在SoC内存空间的外设等都会依附于platform总线;
 
-**2.struct platform_device--->在./include/linux/platform_device.h定义**
+**1.struct platform_device**
 
-platform的设备称为platform_device(e.g.I2C,RTC,LCD,看门狗等SoC内部集成的控制器)
+platform的设备称为platform_device(e.g.I2C,RTC,LCD,看门狗等SoC内部集成的控制器挂在platform上,称为platform_device).
 
+	/* 在./include/linux/platform_device.h定义 */
 	struct platform_device {
 		const char *name;
 		int id;
@@ -5405,10 +5426,11 @@ platform的设备称为platform_device(e.g.I2C,RTC,LCD,看门狗等SoC内部集�
 		struct pdev_archdata archdata;
 	};
 
-**3.struct platform_driver--->在./include/linux/platform_device.h定义**
+**2.struct platform_driver**
 
-platform的驱动称为platform_driver
+platform的驱动称为platform_driver.
 
+	/* 在./include/linux/platform_device.h定义 */
 	struct platform_driver {
 		int (*probe)(struct platform_device *);
 		int (*remove)(struct platform_device *);
@@ -5420,17 +5442,16 @@ platform的驱动称为platform_driver
 		boo prevent_deferred_probe;
 	};
 
-**4.struct device_driver和struct dev_pm_ops**
+**3.struct device_driver和struct dev_pm_ops**
 
-struct device_driver--->位于./include/linux/device.h.
+	1.platform_driver中的电源回调函数:suspend,resume已经过时,很少使用了;
+	2.电源回调函数suspend,resume现在一般使用:struct platform_driver--->struct device_driver
+		--->const struct dev_pm_ops下的suspend和resume函数;
+	3.struct device_driver--->位于./include/linux/device.h;
+	4.struct dev_pm_ops--->位于./include/linux/pm.h.
 
-struct dev_pm_ops--->位于./include/linux/pm.h.
+1.struct device_driver
 
-platform_driver中的电源回调函数:suspend,resume已经过时,很少使用了.
-
-电源回调函数suspend,resume现在一般使用:struct platform_driver--->struct device_driver--->const struct dev_pm_ops下的suspend和resume函数.
-
-	1.struct device_driver:
 	struct device_driver {
 		const char *name;
 		struct bus_type *bus;
@@ -5454,7 +5475,8 @@ platform_driver中的电源回调函数:suspend,resume已经过时,很少使用�
 		struct driver_private *p;
 	};
 
-	2.struct dev_pm_ops--->电源回调函数suspend,resume等
+2.struct dev_pm_ops--->电源回调函数suspend,resume等
+
 	struct dev_pm_ops {
 		int (*prepare)(struct device *dev);
 		void (*complete)(struct device *dev);
@@ -5481,10 +5503,14 @@ platform_driver中的电源回调函数:suspend,resume已经过时,很少使用�
 		int (*runtime_idle)(struct device *dev);
 	};
 
-**5.platform_device和platform_driver的匹配**
+**4.platform_device和platform_driver的匹配**
 
-1.struct bus_type用于定义匹配函数,即match函数.platform的bus_type定义位于./drivers/base/platform.c中
+1.struct bus_type用于定义匹配函数,即match函数.platform的bus_type定义位于./drivers/base/platform.c中.
 
+	/*
+		系统为platform总线定义了一个struct bus_type的实例platform_bus_type,该实例中的match()函数用于
+		确定platform_device和platform_driver之间的匹配.
+	*/
 	struct bus_type platform_bus_type = {
 		.name		= "platform",
 		.dev_groups = platform_dev_groups,
@@ -5495,6 +5521,8 @@ platform_driver中的电源回调函数:suspend,resume已经过时,很少使用�
 	EXPORT_SYMBOL_GPL(platform_bus_type);
 
 2.platform_match函数
+
+用于platform_device和platform_driver之间的匹配.
 
 	static int platform_match(struct device *dev, struct device_driver *drv)
 	{
@@ -5522,9 +5550,9 @@ platform_driver中的电源回调函数:suspend,resume已经过时,很少使用�
 		return (strcmp(pdev->name, drv->name) == 0);
 	}
 
-	/*
-		Linux 3.x之后的,一般使用设备树来匹配.
-	*/
+	PS:Linux 3.x之后的,一般使用设备树来匹配.
+
+#### 12.2.2 将globalfifo作为platform设备
 
 ### 12.2 platform设备驱动加载编写方法及dts写法
 
