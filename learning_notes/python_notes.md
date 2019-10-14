@@ -3229,6 +3229,50 @@ docopt:Python 3的命令行参数解析工具.
 	if __name__ == '__main__':
 		cli()
 
+***
+
+## 19. 其他一些常用的技巧
+
+### 19.1 python中的__all__的作用
+
+**__all__定义其他模块只能使用本模块中特定的变量或函数**
+
+1.foo.py文件--->定义__all__变量
+
+	#!/usr/bin/env python
+	# -*- coding: utf-8 -*-
+	__all__ = ['bar', 'baz']
+	/*
+		定义模块变量,当其他文件import该模块后,只能找到__all__中存在的变量或函数,使用其他的会报错.
+	*/
+	waz = 5	//本模块可以定义其他的变量,但是其他模块不能调用该变量.
+	bar = 10
+	def baz():
+		return 'baz'
+
+2.run-foo.py--->使用__all__变量
+
+	#!/usr/bin/env python
+	# -*- coding: utf-8 -*-
+	from foo import *
+	print(bar)	//打印出10,因为__all__中含有该变量
+	print(baz)	//输出baz函数的地址,因为__all__中含有该函数
+	print(baz())	//输出baz函数调用结果(即'baz'),因为__all__中含有该函数
+
+	print(waz)	//会报错"NameError: name 'waz' is not defined.".因为__all__中没有该变量或函数
+	PS:如果foo.py文件中"__all__ = ['bar', 'baz']"去掉或注释,则运行正常.
+
+### 19.2 python计算以2为底的对数
+
+	from math import log
+	log(x, 2)
+	/*
+		para1:所需要计算的数;
+		para2:底数.
+	*/
+
+***
+
 ### Python类及实例的应用
 
 	class Test(object):		/*Test:类名; object:从"object"继承,所有类都可以从object继承*/
