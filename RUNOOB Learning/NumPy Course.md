@@ -369,3 +369,31 @@ NumPy创建数组一般用ndarray,也可使用下面方式创建特殊的数组.
 ***
 
 ## Chapter 6. NumPy从已有的数组创建数组
+
+***
+
+## Chapter 20. matplotlib画图
+
+matplotlib是一个python的2D绘图库,可以绘制直方图、功率谱、条形图、散点图等.
+
+### 20.1 matplotlib画图的属性控制
+
+#### 20.1.1 matplotlib的简单使用
+
+代码:
+
+	import matplotlib.pyplot as plt
+	import numpy as np
+
+	x = np.linspace(-1, 1, 50)	//创建一个一维数组,起始值为-1,终值为1,数值个数为50.
+	y = 2 * x
+
+	plot.plot(x, y)	//matplotlib.pyplot的plot函数用于绘制图形
+	plot.show()		//绘制完了之后需要调用show()用于显示.
+
+结果为:
+
+![](images/matplotlib_easy_usage.png)
+
+#### 20.1.2 figure对象的使用
+
