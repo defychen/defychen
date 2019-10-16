@@ -380,7 +380,7 @@ matplotlib是一个python的2D绘图库,可以绘制直方图、功率谱、条�
 
 #### 20.1.1 matplotlib的简单使用
 
-代码:
+1.代码:
 
 	import matplotlib.pyplot as plt
 	import numpy as np
@@ -391,9 +391,44 @@ matplotlib是一个python的2D绘图库,可以绘制直方图、功率谱、条�
 	plot.plot(x, y)	//matplotlib.pyplot的plot函数用于绘制图形
 	plot.show()		//绘制完了之后需要调用show()用于显示.
 
-结果为:
+2.结果为:
 
 ![](images/matplotlib_easy_usage.png)
 
 #### 20.1.2 figure对象的使用
+
+在matplotlib中,默认弹出一个图表(一个图表是一个figure对象).可以指定创建多个figure对象,方法如下:
+
+1.代码
+
+	import matplotlib.pyplot as plt
+	import numpy as np
+	
+	x = np.linspace(-1, 1, 50)
+	y1 = x ** 2		//表示x的平方
+	y2 = x * 2
+	plt.figure()	//创建一个图表,绘制下面的图形
+	plt.plot(x, y1)
+	
+	plt.figure(num = 3, figsize=(10, 5))
+	/*
+		创建第二个图表,绘制后面的图形.
+		num = 3:默认标题显示从figure1开始递增,此处指定显示标题为figure3;
+		figsize=(10, 5):表示指定窗口的大小.
+	*/
+	plt.plot(x, y2)
+	plt.show()
+
+2.结果为:
+
+![](images/figure_uasge.png)
+
+3.指定线相关属性
+
+	plt.plot(x, y2, colod = 'red', linewidth = 3.0, linestyle = '--')
+	//指定颜色为红色,线宽为3.0,线型为'--'
+
+PS:Pycharm plot绘制多个figure时会出现多个图在同一个窗口中,设置plot独立窗口显示方法:
+
+	File->Settings->Tools->Python Scientific->去掉Show plots in tool window选项即可.
 
