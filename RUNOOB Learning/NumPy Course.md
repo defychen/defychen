@@ -432,3 +432,63 @@ PS:Pycharm plot绘制多个figure时会出现多个图在同一个窗口中,设�
 
 	File->Settings->Tools->Python Scientific->去掉Show plots in tool window选项即可.
 
+#### 20.1.3 坐标轴的使用
+
+1.限制坐标轴的范围
+
+	import matplotlib.pyplot as plt
+	import numpy as np
+	
+	x = np.linspace(-1, 1, 50)
+	y = x * 2
+	plt.plot(x, y)
+	plt.xlim((0, 1))	//限制x坐标在(0, 1)之间.plt.xlim()参数为一个dict
+	plt.ylim((0, 2))	//限制y坐标在(0, 2)之间.plt.ylim()参数为一个dict
+	plt.show()
+
+2.结果
+
+![](images/matplotlib_limit_xy.png)
+
+3.给坐标轴设置名称
+
+	import matplotlib.pyplot as plt
+	import numpy as np
+	
+	x = np.linspace(-1, 1, 50)
+	y = x * 2
+	plt.xlabel("x'slabel")	//设置x坐标轴名称为"x'slabel"
+	plt.ylabel("y'slabel")	//设置y坐标轴名称为"xy'slabel"
+	plt.plot(x, y)
+	plt.show()
+
+4.结果
+
+![](images/matplotlib_xy_label.png)
+
+5.更换坐标轴单位
+
+	import matplotlib.pyplot as plt
+	import numpy as np
+	
+	x = np.linspace(-1, 1, 50)
+	y = x * 2
+	new_ticks = np.linspace(-1, 2, 5)
+	plt.xticks(new_ticks)	//更换x坐标为(-1, 2, 5)
+	plt.yticks([-2, -1, 0, 1, 2], [r'$really\ bad$', r'$b$', r'$c\ \alpha$', 'd', 'good'])
+	/*
+	给y坐标更换名称,即:
+		y坐标为-2时,更换为r'$really\ bad$'--->前后$表示中间为字符串,"\ "转译为空格.显示为really bad;
+		y坐标为-1时,更换为r'$b$'--->前后$表示中间为字符串,显示为b;
+		y坐标为-0时,更换为r'$c\ \alpha$'--->前后$表示中间为字符串,\alpha转译为希腊字母α,显示为c α;
+		y坐标为1时,更换为'd'--->显示为字符d;
+		y坐标为2时,更换为'good'--->显示为字符串good;
+	*/
+	plt.plot(x, y)
+	plt.show()
+
+6.结果
+
+![](images/matplotlib_change_xy.png)
+
+#### 20.1.4 legend图例的使用
