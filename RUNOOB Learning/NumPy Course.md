@@ -391,7 +391,7 @@ matplotlib是一个python的2D绘图库,可以绘制直方图、功率谱、条�
 	plot.plot(x, y)	//matplotlib.pyplot的plot函数用于绘制图形
 	plot.show()		//绘制完了之后需要调用show()用于显示.
 
-2.结果为:
+2.结果
 
 ![](images/matplotlib_easy_usage.png)
 
@@ -492,3 +492,79 @@ PS:Pycharm plot绘制多个figure时会出现多个图在同一个窗口中,设�
 ![](images/matplotlib_change_xy.png)
 
 #### 20.1.4 legend图例的使用
+
+1.代码
+
+	import matplotlib.pyplot as plt
+	import numpy as np
+	
+	x = np.linspace(-1, 1, 50)
+	y1 = x * 2
+	y2 = x ** 2
+	
+	l1, = plt.plot(x, y1, label = 'linear line')
+	/*
+		plt.plot():返回的是一个list,因此"l1,"后面需要逗号.
+	*/
+	l2, = plt.plot(x, y2, color = 'red', linewidth = 1.0, linestyle = '--', label = 'square 
+		line')
+	plt.legend(loc = 'upper right')
+	/*
+		loc:指定图例的位置:
+			best:系统指定的最佳位置;
+			upper right:右上角;
+			upper left:左上角;
+			lower left:左下角;
+			lower right:右下角;
+			right:靠右;
+			center left:左中;
+			center right:右中;
+			lower center:中下;
+			upper center:中上;
+			center:中间位置.
+	*/
+	plt.show()
+
+2.结果
+
+![](images/legend_usage.png)
+
+### 20.2 matplotlib画图类型
+
+#### 20.2.1 scatter散点图
+
+1.代码
+
+	import matplotlib.pyplot as plt
+	import numpy as np
+	
+	n = 1024
+	X = np.random.normal(0, 1, n)
+	/*
+		para1:loc,正态分布的均值;
+		para2:scale,正态分布的标准差(scale越大越矮胖,越小越瘦高);
+		para3:size,输出的点数.
+		np.random.normal(0, 1, 1024)即为标准正态分布.也可以简写为:
+			np.random.normal(1024)--->默认均值为0,标准差为1.
+	*/
+	Y = np.random.normal(0, 1, n)
+	T = np.arctan2(Y, X)	//--->此处不知道是干嘛用的????
+	plt.scatter(X, Y, s = 75, c = T, alpha = 0.5)
+	/*
+		plt.scatter():采用scatter绘制点.采用X,Y作为输入点,颜色c为T,透明度alpha为50%.
+	*/
+	plt.xlim((-1.5, 1.5))	//设置x轴显示范围为(-1.5, 1.5)
+	plt.xticks([])	//xticks()函数隐藏x坐标轴.
+	plt.yticks((-1.5, 1.5))
+	plt.yticks([])	//yticks()函数隐藏y坐标轴.
+	plt.show()
+
+2.结果
+
+![](images/scatter_figure.png)
+
+#### 20.2.2 柱状图
+
+--->用于机器学习.
+
+### 20.3 多图合并
