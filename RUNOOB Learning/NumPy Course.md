@@ -595,3 +595,43 @@ PS:Pycharm plot绘制多个figure时会出现多个图在同一个窗口中,设�
 2.结果
 
 ![](images/subplot_usage.png)
+
+#### 20.3.2 次坐标轴
+
+1.代码
+
+	import matplotlib.pyplot as plt
+	import numpy as np
+
+	x = np.arange(0, 10, 0.1)
+	y1 = 0.05 * x ** 2
+	y2 = -1 * y1
+	
+	fig, ax1 = plt.subplots()
+	/*
+		figure:整个图像为一个figure对象;
+		axes:一个figure对象可以包含多个axes对象,每个axes对象都拥有自己坐标系统的绘图区域
+			(类似由axes来标识子图).
+		plt.subplots(nrows = n, ncols = m)--->绘制n * m个子图.返回一个figure对象和axes对象tuple.
+			默认为1 * 1,即只有一个子图.
+	*/
+	ax2 = ax1.twinx()
+	/*
+		ax1.twinx():添加y轴的坐标轴;
+		ax2.twiny():添加x轴的坐标轴.返回另一套坐标系统,但是子图是和ax1共用的.
+	*/
+	ax1.plot(x, y1, 'g-')
+	ax2.plot(x, y2, 'b-')
+
+	ax1.set_xlabel('X data')
+	ax1.set_ylabel('Y1 data', color = 'g')
+	ax2.set_ylabel('Y2 data', color = 'b')	//为另一套坐标系统添加y轴标签.
+	plt.show()
+
+2.结果
+
+![](images/add_twinx.png)
+
+**其他暂略,参考笔记如下网址:**
+
+[参考笔记](https://blog.csdn.net/gaotihong/article/details/80983937)
