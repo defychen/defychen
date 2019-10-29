@@ -181,3 +181,39 @@
 	recognize_wit()--->Wit.ai
 	
 	PS:只有recognize_sphinx()可与CMU Sphinx引擎脱机工作,其他6个需要联网--->中文识别使用这个.
+
+## 7. 字典的使用及推导
+
+代码
+
+	data = {"title" : "Python", "author" : "Eason", "price" : 39.9}
+	print(data) //{'title': 'Python', 'author': 'Eason', 'price': 39.9}
+	print(type(data)) //类型:<class 'dict'>
+	print(data.keys()) //key:dict_keys(['title', 'author', 'price'])
+	print(data.values()) //value:dict_values(['Python', 'Eason', 39.9])
+	print(data.items())
+	/*
+		遍历出key-value使用dict.items().结果放在列表中,列表元素为含有(key,value)的tuple.
+		结果:dict_items([('title', 'Python'), ('author', 'Eason'), ('price', 39.9)])
+	*/
+	for k, v in data.items():	//遍历列表,将tuple元素取出分别放在k,v中
+	    print(f"{k}--->{v}")
+		
+	d1 = {i : i**2 for i in range(1, 6)}
+	print(d1) //生成一个ditc:{1: 1, 2: 4, 3: 9, 4: 16, 5: 25}
+	students = ["Tom", "Jerry", "Mike", "Peter"]
+	scores = [98, 82, 55, 66]
+	d2 = {name : score for name, score in zip(students, scores)}
+	/*
+		zip接收两个list(两个list元素个数必须相同),生成一个列表,列表元素为含有(key,value)的tuple.
+		结果:{'Tom': 98, 'Jerry': 82, 'Mike': 55, 'Peter': 66}
+	*/
+	print(d2)
+	d3 = {k : v for k, v in d2.items()}
+	print(d3)
+	d4 = {k : v for k, v in d3.items() if v >= 60} //对value做判断,满足条件才会生成进dict中
+	print(d4) //{'Tom': 98, 'Jerry': 82, 'Peter': 66}
+	d5 = {k : "pass" if v >= 60 else "Not pass" for k, v in d3.items()}
+	print(d5)
+
+
