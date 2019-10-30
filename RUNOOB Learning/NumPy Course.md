@@ -252,12 +252,12 @@ ndarray.shape:表示一个数组的维度,返回一个tuple(行数和列数).也
 	 [3 4]
 	 [5 6]]
 	PS:使用reshape调整大小也可以:
-		b = a.reshape
+		b = a.reshape(3, 2)
 		print(b)	//结果为一样
 
-**3.ndarray.itersize**
+**3.ndarray.itemsize**
 
-ndarray.itersize:以字节的形式返回数组中每一个元素的大小.
+ndarray.itemize:以字节的形式返回数组中每一个元素的大小.
 
 	import numpy as np
 	a = np.array([1, 2, 3, 4, 5], dtype = np.float64)
@@ -332,7 +332,8 @@ NumPy创建数组一般用ndarray,也可使用下面方式创建特殊的数组.
 	2.2*2的数组
 	import numpy as np
 	y = np.zeros((2, 2), dtype=[('x', 'i4'), ('y', 'i4')])
-		//2x2,第1/2列均为int32.第一列可用:y['x']访问;第二列可用:y['y']访问.
+	//2x2.每一个元素都是dtype类型(即一个元素中含有两个int32的数据).访问第一个元素类型可用:y['x']访问;
+	//访问第二个元素可用:y['y']访问.
 	print(y)
 	//结果为:
 	[[(0, 0) (0, 0)]
@@ -369,6 +370,97 @@ NumPy创建数组一般用ndarray,也可使用下面方式创建特殊的数组.
 ***
 
 ## Chapter 6. NumPy从已有的数组创建数组
+
+### 6.1 numpy.asarray
+
+**1.numpy.asarray原型**
+
+	numpy.asarray(a, dtype = None, order = None)
+	/*
+		para1:输入参数,可以是:list/tuple/带有list的tuple/带有tuple的list/多维数组;
+		para2:数据类型,可选;
+		para3:"C"和"F"两个选项,分别代表:行优先和列优先.
+	*/
+
+**2.实例---将list转换为ndarray**
+
+	import numpy as np
+	x = [1, 2, 3]
+	a = np.asarray(x)
+	print(a)
+	//结果为:[1 2 3]
+
+**3.实例---将tuple转换为adarray**
+
+	import numpy as np
+	x = (1, 2, 3)
+	a = np.asarray(x)
+	print(a)
+	//结果为:[1 2 3]
+
+**4.实例---将带tuple的list转换为ndarray**
+
+	import numpy as np
+	x = [(1, 2, 3), (4, 5)]
+	a = np.asarray(x)
+	print(a)
+	//结果为:[(1, 2, 3) (4, 5)]
+
+**5.实例---设置dtype参数**
+
+	import numpy as np
+	x = [1, 2, 3]
+	a = np.asarray(x, dtype = float)	//设置dtype参数
+	print(a)
+	//结果为:[1. 2. 3.]
+
+### 6.2 numpy.frombuffer
+
+**1.numpy.frombuffer原型**
+
+	numpy.frombuffer(buffer, dtype = float, count = -1, offset = 0)
+	/*
+		para1:以流的形式读入(e.g.字符串:b'Hello world');
+		para2:数据类型,可选;
+		/*
+			如果para2是字符串的时候,需要是字符串流(即bytestring).python3默认str是Unicode类型,要转
+			成bytestring需要在字符串前加上b.
+		para3:读取的数据量,默认是-1(读取所有数据);
+		para4:读取的起始位置,默认是0.
+	*/
+
+**2.实例**
+
+	import numpy as np
+	s = b'Hello world'
+		//此处一定要在前面加上b,否则在python3中会报错.python2没问题(默认字符串都是byptestring)
+	a = np.frombuffer(s, dtype = 'S1')
+	print(a)
+	//结果为:[b'H' b'e' b'l' b'l' b'o' b' ' b'w' b'o' b'r' b'l' b'd']
+
+### 6.3 numpy.fromiter
+
+**1.numpy.fromiter原型**
+
+	numpy.fromiter(iterable, dtype, count=-1)
+	/*
+		para1:可迭代对象(e.g.list变成可迭代对象方法:iter(list)即可);
+		para2:数据类型,可选;
+		para3:读取的数据量,默认是-1(读取所有数据);
+	*/
+
+**2.实例**
+
+	import numpy as np
+	list = range(5)
+	it = iter(list)	//得到list的迭代器it.
+	x = np.fromiter(it, dtype = float)
+	print(x)
+	//结果为:[0. 1. 2. 3. 4.]
+
+***
+
+## Chapter 7. NumPy从数值范围创建数组
 
 ***
 
