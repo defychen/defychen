@@ -462,6 +462,73 @@ NumPy创建数组一般用ndarray,也可使用下面方式创建特殊的数组.
 
 ## Chapter 7. NumPy从数值范围创建数组
 
+### 7.1 numpy.arange
+
+**1.numpy.arange原型**
+
+	numpy.arange(start, stop, step, dtype)
+	/*
+		根据start与stop指定的范围以及step设定的步长生成一个ndarray.
+		para1:起始值,默认为0;
+		para2:终止值,无默认值,必须指定;
+		para3:步长,默认为1;
+		para4:数据类型,可选.
+	*/
+
+**2.实例---生成0到5的数组**
+
+	import numpy as np
+	x = np.arange(5)
+	print(x)
+	//结果为:[0 1 2 3 4]
+
+**3.实例---设置类型为float**
+
+	import numpy as np
+	x = np.arange(5, dtype = float)
+	print(x)
+	//结果为:[0. 1. 2. 3. 4.]
+
+**4.设置起始值、终止值及步长**
+
+	import numpy as np
+	x = np.arange(10, 20, 2)
+	print(x)
+	//结果为:[10 12 14 16 18]
+
+### 7.2 numpy.linspace
+
+### 7.3 numpy.logspace
+
+**1.numpy.logspace原型**
+
+	numpy.logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None)
+	/*
+		创建等比数列(虽然写的是log,其实是以base为底的指数)
+		para1:起始值(最后的结果为:base ** start);
+		para2:终止值,如果endpoint为True,则包含该值(包含时结果为:base ** stop),否则不包含;
+		para3:数据总数,默认为50;
+		para4:是否包含终止值,True包含,False不包含.默认为True(即包含);
+		para5:指数的底数;
+		para6:数据类型,可选.
+	*/
+
+**2.实例---以10为底的指数**
+
+	import numpy as np
+	a = np.logspace(1.0, 2.0, num = 10)
+	print(a)
+	//结果为:
+	[ 10.          12.91549665  16.68100537  21.5443469   27.82559402
+	35.93813664  46.41588834  59.94842503  77.42636827 100.        ]
+
+**3.实例---以2为底的指数**
+
+	import numpy as np
+	a = np.logspace(0, 9, 10, base = 2)	//para3:数据数量为10
+	print(a)
+	//结果为:[  1.   2.   4.   8.  16.  32.  64. 128. 256. 512.]
+
 ***
 
 ## Chapter 20. matplotlib画图
