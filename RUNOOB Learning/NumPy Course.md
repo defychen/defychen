@@ -498,6 +498,66 @@ NumPy创建数组一般用ndarray,也可使用下面方式创建特殊的数组.
 
 ### 7.2 numpy.linspace
 
+**1.numpy.linspace原型**
+
+	numpy.linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None)
+	/*
+		创建等差数列.
+		para1:起始值;
+		para2:终止值,如果endpoint为True,则包含该值,否则不包含;
+		para3:数据总数,默认为50;
+		para4:是否包含终止值,True包含,False不包含.默认为True(即包含);
+		para5:为True则显示间距,否则不显示.默认为False(不显示);
+		para6:数据类型,可选.
+	*/
+
+**2.实例---起始值为1,终止值为10,总共10个数**
+
+	import numpy as np
+	a = np.linspace(1, 10, 10)
+	print(a)
+	//结果为:[ 1.  2.  3.  4.  5.  6.  7.  8.  9. 10.]
+
+**3.实例---数据元素全是1的数列**
+
+	import numpy as np
+	a = np.linspace(1, 1, 10)	//此处起始和终止相同,说明元素全相同
+	print(a)
+	//结果为:[1. 1. 1. 1. 1. 1. 1. 1. 1. 1.]
+
+**4.实例---endpoint设为False和True的区别**
+
+	1.为True
+	import numpy as np
+	a = np.linspace(10, 20, 5)
+	print(a)
+	//结果为:[10.  12.5 15.  17.5 20. ]--->包含终止值进行递增
+	2.为False
+	import numpy as np
+	a = np.linspace(10, 20, 5, endpoint=False)
+	print(a)
+	//结果为:[10. 12. 14. 16. 18.]--->不包含终止值递增
+
+**5.实例---retstep的使用**
+
+	import numpy as np
+	a = np.linspace(1, 10, 10, retstep = True)	//retstep:显示间距
+	print(a)
+	b = np.linspace(1, 10, 10).reshape([10, 1])	//调整维度为10行1列
+	print(b)
+	//结果为:
+	(array([ 1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9., 10.]), 1.0)
+	[[ 1.]
+	 [ 2.]
+	 [ 3.]
+	 [ 4.]
+	 [ 5.]
+	 [ 6.]
+	 [ 7.]
+	 [ 8.]
+	 [ 9.]
+	 [10.]]
+
 ### 7.3 numpy.logspace
 
 **1.numpy.logspace原型**
