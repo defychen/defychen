@@ -591,6 +591,74 @@ NumPy创建数组一般用ndarray,也可使用下面方式创建特殊的数组.
 
 ***
 
+## Chapter 8. NumPy切片与索引
+
+### 8.1 slice函数用于切片
+
+	import numpy as np
+	a = np.arange(10)	//结果为:[0 1 2 3 4 5 6 7 8 9]
+	s = slice(2, 7, 2)
+	/*
+		slice函数:生成一个切片对象.
+		para1:切片的start;
+		para2:切片的stop;
+		para3:切片的step.
+		PS:此处为生成一个索引从2开始到7停止(不包含7),间隔为2的slice对象.
+	*/
+	print(a[s])	//np.arange()生成的数组可以接收一个slice对象.
+	//结果为:[2 4 6]
+
+### 8.2 直接使用":"来索引
+
+**1.实例---指定start,stop,step**
+
+	import numpy as np
+	a = np.arange(10)
+	b = a[2:7:2]	//直接使用":"间隔指定start,stop,step--->均为索引的下标信息
+	print(b)
+	//结果为:[2 4 6]
+
+**2.实例---[]中只防止一个参数,表示指定的索引下标**
+
+	import numpy as np
+	a = np.arange(10)
+	b = a[5]	//指定索引下标为5的值.此处结果为:5
+	print(b)
+
+**3.实例---[:]有一个":",表示从索引开始之后的所有元素(冒号后无数字)或者指定的范围(冒号后有数字)**
+
+	1.无数字
+	import numpy as np
+	a = np.arange(10)
+	b = a[2:]	//表示从索引2开始之后的所有元素,结果为:[2 3 4 5 6 7 8 9]
+	print(b)
+	2.有数字
+	import numpy as np
+	a = np.arange(10)
+	b = a[2:5]	//表示选取索引2到5(不包括)之间的所有元素,结果为:[2 3 4]
+	print(b)
+
+**4.实例---提取多维数组**
+
+	import numpy as np
+	a = np.array([[1, 2, 3], [3, 4, 5], [4, 5, 6]])
+	print(a)
+	/*
+		结果为:
+			[[1 2 3]
+			 [3 4 5]
+			 [4 5 6]]
+	*/
+	b = a[1:]
+	print(b)
+	/*
+		结果为:
+		[[3 4 5]
+		[4 5 6]]
+	*/
+
+***
+
 ## Chapter 20. matplotlib画图
 
 matplotlib是一个python的2D绘图库,可以绘制直方图、功率谱、条形图、散点图等.
