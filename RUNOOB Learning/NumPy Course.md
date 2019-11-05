@@ -659,6 +659,204 @@ NumPy创建数组一般用ndarray,也可使用下面方式创建特殊的数组.
 
 ***
 
+## Chapter 15. NumPy数学函数
+
+### 15.1 三角函数
+
+**1.sin()/cos()/tan()函数**
+
+	import numpy as np
+	a = np.array([0, 30, 45, 60, 90])
+	print(np.sin(a * np.pi / 180))
+	//结果为:[0.         0.5        0.70710678 0.8660254  1.        ]
+	print(np.cos(a * np.pi / 180))
+	/*
+		结果为:[1.00000000e+00 8.66025404e-01 7.07106781e-01 5.00000000e-01
+			6.12323400e-17]
+	*/
+	print(np.tan(a * np.pi / 180))
+	/*
+		结果为:[0.00000000e+00 5.77350269e-01 1.00000000e+00 1.73205081e+00
+			1.63312394e+16]
+	*/
+
+**2.arcsin()/arccos()/arctan()函数及numpy.degrees()**
+
+arcsin()/arccos()/arctan()为反三角函数;numpy.degrees():将弧度转换为角度.
+
+	import numpy as np
+	
+	a = np.array([0, 30, 45, 60, 90])
+	sin = np.sin(a * np.pi / 180)
+	print(sin)	//结果为:[0.         0.5        0.70710678 0.8660254  1.        ]
+	inv = np.arcsin(sin)
+	print(inv)	//反正弦:[0.         0.52359878 0.78539816 1.04719755 1.57079633]
+	print(np.degrees(inv))	//将反正弦弧度转换为角度:[ 0. 30. 45. 60. 90.]
+	cos = np.cos(a * np.pi / 180)
+	print(cos)
+	/*
+		结果为:[1.00000000e+00 8.66025404e-01 7.07106781e-01 5.00000000e-01
+			6.12323400e-17]
+	*/
+	inv = np.arccos(cos)
+	print(inv)	//反余弦:[0.         0.52359878 0.78539816 1.04719755 1.57079633]
+	print(np.degrees(inv))	//将反余弦弧度转换为角度:[ 0. 30. 45. 60. 90.]
+	tan = np.tan(a * np.pi / 180)
+	print(tan)
+	/*
+		结果为:[0.00000000e+00 5.77350269e-01 1.00000000e+00 1.73205081e+00
+			1.63312394e+16]
+	*/
+	inv = np.arctan(tan)
+	print(inv)	//反正切:[0.         0.52359878 0.78539816 1.04719755 1.57079633]
+	print(np.degrees(inv))	//将反正切弧度转换为角度:[ 0. 30. 45. 60. 90.]
+
+### 15.2 numpy.around()舍入函数
+
+#### 15.2.1 numpy.around()原型
+
+	numpy.around(a, decimals)
+	/*
+		para1:数组;
+		para2:舍入的小数位数(即保留几位小数进行舍入).默认值为0,如果为负数,则四舍五入到小数点左侧的位置.
+	*/
+
+#### 15.2.2 实例
+
+	import numpy as np
+	a = np.array([1.0, 5.55, 123, 0.567, 25.532])
+	print(a)	//结果为:[  1.      5.55  123.      0.567  25.532]
+	print(np.around(a))
+	/*
+		小数点后保留0位进行舍入.结果为:[  1.   6. 123.   1.  26.]
+	*/
+	print(np.around(a, decimals = 1))
+	/*
+		小数点后保留1位进行舍入.结果为:[  1.    5.6 123.    0.6  25.5]
+	*/
+	print(np.around(a, decimals = -1))
+	/*
+		舍入到小数点左侧的位置.结果为:[  0.  10. 120.   0.  30.]
+	*/
+
+### 15.2 numpy.floor()
+
+向下取整函数.
+
+	import numpy as np
+	a = np.array([-1.7, 1.5, -0.2, 0.6, 10])
+	print(a)
+	print(np.floor(a))
+	/*
+		向下取整.结果为:[-2.  1. -1.  0. 10.]
+	*/
+
+### 15.2 numpy.ceil()
+
+向上取整函数.
+
+	import numpy as np
+	a = np.array([-1.7, 1.5, -0.2, 0.6, 10])
+	print(a)
+	print(np.ceil(a))
+	/*
+		向上取整.结果为:[-1.  2. -0.  1. 10.]
+	*/
+
+***
+
+## Chapter 16. NumPy算术函数
+
+### 16.1 +/-/*//
+
+	import numpy as np
+	a = np.arange(9, dtype = np.float_).reshape(3, 3)
+	print(a)
+	b = np.array([10, 10, 10])	//两个数组运算至少列数相同.
+	print(b)
+	print(np.add(a, b))
+	/*
+		np.add():两数组相加.
+		结果为:
+			[[10. 11. 12.]
+			[13. 14. 15.]
+			[16. 17. 18.]]
+	*/
+	print(np.subtract(a, b))
+	/*
+		np.add():两数组相减.
+		结果为:
+			[[-10.  -9.  -8.]
+			[ -7.  -6.  -5.]
+			[ -4.  -3.  -2.]]
+	*/
+	print(np.multiply(a, b))
+	/*
+		np.add():两数组相乘.
+		结果为:
+			[[ 0. 10. 20.]
+			[30. 40. 50.]
+			[60. 70. 80.]]
+	*/
+	print(np.divide(a, b))
+	/*
+		np.add():两数组相除.
+		结果为:
+			[[0.  0.1 0.2]
+			[0.3 0.4 0.5]
+			[0.6 0.7 0.8]]
+	*/
+
+### 16.2 numpy.reciprocal()
+
+返回参数各个元素的倒数.
+
+	import numpy as np
+	a = np.array([0.25, 1.33, 1, 100])
+	print(a)
+	print(np.reciprocal(a))
+	/*
+		np.reciprocal():返回参数各个元素的倒数.
+		结果为:[4.        0.7518797 1.        0.01     ]
+	*/
+
+### 16.3 numpy.power()
+
+指数函数.para1为底,para2(可以为数组,给对应的para1指定幂)为幂.
+
+	import numpy as np
+	a = np.array([10, 100, 1000])
+	print(a)
+	print(np.power(a, 2))
+	/*
+		np.power(a, 2):表示a数组中各个元素的平方.
+		结果为:[    100   10000 1000000]
+	*/
+	b = np.array([1, 2, 3])
+	print(b)
+	print(np.power(a, b))
+	/*
+		np.power(a, b):表示a数组中各个元素的对应b对应元素的幂次方.
+		结果为:[        10      10000 1000000000]
+	*/
+
+### 16.3 numpy.mod()
+
+对两个数组取余的函数.
+
+	import numpy as np
+	a = np.array([10, 20, 30])
+	print(a)
+	b = np.array([3, 5, 7])
+	print(b)
+	print(np.mod(a, b))
+	/*
+		np.mod(a, b):对数组a和b中的对应元素取余.
+		结果为:[1 0 2]
+	*/
+
+***
+
 ## Chapter 20. matplotlib画图
 
 matplotlib是一个python的2D绘图库,可以绘制直方图、功率谱、条形图、散点图等.
