@@ -447,14 +447,20 @@ PS:总结起来,"2.4.4"步最重要.执行完等5-6分钟应该就有Wifi标识�
 
 2.设置屏幕不息屏
 
+	/* 1.ubuntu 16.04设置方法 */
 	点击左上角的设置图标--->选择"System Settings"--->点击"Brightness & Lock"--->在"Turn screen off
 		when inactive for":选择"Never"(表示从不息屏)
+	/* 2.ubuntu 19.04设置方法 */
+	右键--->Settings--->选择"Privacy"--->点击"Screen Lock",将On切换为Off即可.
 
 3.隐藏左侧的菜单项
 
+	/* 1.ubuntu 16.04设置方法 */
 	点击左上角的设置图标--->选择"Appearance"--->切换到"Behavior"页--->在"Auto-hide the Launcher"
 		选择打开(即ON)即可--->此时左侧的菜单项就会隐藏
 	PS:显示左侧菜单项方法:按下"win"键即可显示.
+	/* 2.ubuntu 19.04设置方法 */
+	右键--->Change Backgound--->Dock--->将"Auto-hide the Dock"打开即可.
 
 ***
 
@@ -699,7 +705,7 @@ busybox:一个集成100多个linux常用命令和工具的软件,是一个特别
 		cd etc/init.d/
 		touch rcS
 		chmod a+x rcS
-		gvim rcS
+		vim rcS
 	2.在rcS文件中写入:
 		echo "---------------------------------"
 		echo "  Welcome to A9 vexpress borad   "
@@ -959,6 +965,7 @@ NFS文件系统是一种网络文件系统,两个机器之间可通过NFS实现�
 		sync:同步;
 		no_root_squash:指示板卡访问主机的文件系统目录可以以root用户访问;
 		no_subtree_check:不检查根文件系统子目录.
+		PS:(rw,sync,no_root_squash,no_subtree_check)--->中间无空格.
 	*/
 
 **3.开启NFS服务**
@@ -1042,6 +1049,50 @@ NFS文件系统是一种网络文件系统,两个机器之间可通过NFS实现�
 	在ubuntu主机端删掉刚刚创建的文件:
 		cd /home/defychen/repository_develop/rootfs
 		rm hello //此时在在板卡端可以看到该文件已经没了
+
+### 3.3.6 问题及解决方法
+
+问题:在ubuntu 19.04上,在uboot启动时,使用nfs挂载NFS时会出现以下问题:
+
+	VFS: Unable to mount root fs via NFS, trying floppy. 
+	VFS: Cannot open root device “nfs” or unknown-block(2,0): error -6 
+	Please append a correct “root=” boot option; here are the available partitions: 
+	1f00 256 mtdblock0 (driver?) 
+	1f01 128 mtdblock1 (driver?) 
+	1f02 2048 mtdblock2 (driver?) 
+	1f03 259712 mtdblock3 (driver?) 
+	Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block
+
+解决:
+
+	1.原因:ubuntu 17.10之后nfs默认就只支持协议3和协议4,但是uboot默认启动的是协议2;
+	2.解决:使ubuntu 19.04的nfs支持协议2,在文件"/etc/default/nfs-kernel-server"末尾加上一句:
+		RPCNFSDOPTS="--nfs-version 2,3,4 --debug --syslog"
+		
+		改完之后内容如下:
+		# Number of servers to start up
+		RPCNFSDCOUNT=8
+		
+		# Runtime priority of server (see nice(1))
+		RPCNFSDPRIORITY=0
+		
+		# Options for rpc.mountd.
+		# If you have a port-based firewall, you might want to set up
+		# a fixed port here using the --port option. For more information, 
+		# see rpc.mountd(8) or http://wiki.debian.org/SecuringNFS
+		# To disable NFSv4 on the server, specify '--no-nfs-version 4' here
+		RPCMOUNTDOPTS="--manage-gids"
+		
+		# Do you want to start the svcgssd daemon? It is only required for Kerberos
+		# exports. Valid alternatives are "yes" and "no"; the default is "no".
+		NEED_SVCGSSD=""
+		
+		# Options for rpc.svcgssd.
+		RPCSVCGSSDOPTS=""
+		RPCNFSDOPTS="--nfs-version 2,3,4 --debug --syslog"	//增加的一句话
+	3.重启nfs服务器即可
+		/etc/init.d/rpcbind restart
+		/etc/init.d/nfs-kernel-server restart
 
 ## 3.4 在Ubuntu系统搭建Qemu模拟ARM(四)--->完善根文件系统
 
