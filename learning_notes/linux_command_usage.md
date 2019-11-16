@@ -709,4 +709,8 @@ rename常用于批量修改文件名.
 	PS:更多使用的是:
 		grep "word1.*word2.*word3" file.txt -nr
 
+#### 25.3 grep -w
+
+精确匹配.
+
 ## 13. wget命令
