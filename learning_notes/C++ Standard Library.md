@@ -246,3 +246,161 @@ constexpr:将变量或函数声明为constexpr,表示为一个常量表达式(�
 
 	float a[sqaure(9)];	//传递了一个常量9,此时表示a有81个元素.
 	
+#### 2.1.9 新的template特性
+
+C++11起,tempalte可拥有"个数不定的template实参"的参数.成为variadic tempalte.
+
+**1.print()函数,允许调用时给与不定个数的实参且各具不同类型**
+
+	void print()	//必须提供一个non-template的print()函数,只为了结束递归.
+	{
+	}
+
+	template <typename T, typename... Types>
+	void print(const T &firstArg, const Types &...args)
+	{
+		std::cout << firstArg << std::endl;
+		print(args...);	//递归调用print,调用到最后需要调用non-template的重载函数print(),结束整个递归.
+	}
+
+	//调用
+	print(7.4, "hello", std::bitset<16>(377), 42);
+	结果为:
+		7.4
+		hello
+		0000000101111001
+
+**2.sizeof...(args)的使用**
+
+在variadic template中,sizeof...(args)会得到实参的个数.
+
+**3.Alias Template(或者叫Template Typedef)**
+
+	Template <typename T>
+	using Vec = std::vector<T, MyAlloc<T>>;	//使用using来为后面的模板命别名为Vec.
+
+	Vec<int> coll;
+	--->等价于:
+		std::vector<int, MyAlloc<int>> coll;
+
+#### 2.1.10 Lambda
+
+**1.Lambda语法**
+
+1.最小型的lambda函数
+
+	[]{
+		std::cout << "hello lambda" << std::endl;
+	}
+
+	调用:
+	[]{
+		std::cout << "hello lambda" << std::endl;
+	}();	//这种调用用的比较少,不实用.
+
+2.lambda函数传递给一个对象,调用方便
+
+	auto l = []{
+				std::cout << "hello lambda" << std::endl;
+			};	//传递给auto对象,会自动指明类型.
+	...
+	l();	//调用
+
+3.带参数的lambda函数
+
+	auto l = [](const std::string &s) {
+				std::cout << s << std::endl;
+			};
+	l("hello lambda");
+
+4.指定lambda返回类型
+
+	[]() -> double {	//指定返回类型为double.
+		return 42;
+	}
+
+**2.capture--->访问外部作用域的变量**
+
+lambda中[]可以指明一个captue用来处理外部作用域未被传递给实参的数据.
+
+1.by value和by reference传递
+
+	[=]:表示by value传递,可读取但不能修改;
+	[&]:表示by reference传递,可读可修改.
+
+2.实例
+
+	int x = 0;
+	int y = 42;
+	auto qqq = [x, &y] {
+	/*
+		x以by value传递; y以by reference传递.
+	*/
+				std::cout << "x: " << x << std::endl;
+				std::cout << "y: " << y << std::endl;
+				++y;
+			};
+	x = y = 77;
+	qqq();
+	qqq();
+	std::cout << "final y: " << y << std::endl;
+	/*
+		结果为:
+		x: 0
+		y: 77
+		x: 0
+		y: 78
+		final y: 79
+	*/
+	PS:此处也可以写成:[=, &y]代替[x, &y],表示y是by reference传递,其他以by value传递.
+
+3.mutable
+
+如果生命lambda为mutable,则以by value方式传递的对象也可以在lambda中修改.
+
+	int id = 0;
+	auto f = [id] () mutalbe {
+				std::cout << "id: " << id << std::endl;
+				++id;
+			};
+	id = 42;
+	f();
+	f();
+	f();
+	//结果为:
+	id: 42
+	id: 43
+	id: 44
+
+**3.Lambda类型**
+
+略.
+
+#### 2.1.11 关键字decltype
+
+decltype让编译器找到表达式的类型(类似typeof,但是比typeof更好).
+
+	std::map<std::string, float> coll;
+	decltype<coll>::value_type elem;
+	/*
+		decltype<coll>:找到coll的类型.
+	*/
+
+decltype的应用:
+
+	让函数的返回类型取决于某个表达式对实参的处理:
+	template<typename T1, typename T2>
+	auto add(T1 x, T2 y) -> decltype(x+y);	//函数的返回类型由x+y的值决定.
+
+#### 2.1.12 带领域的(Scoped) Enumeration
+
+略.
+
+#### 2.1.13 新的基础类型
+
+C++11增加了新的基础类型:
+
+	char16_t和char32_t;
+	long long和unsigned long long;
+	std::nullptr_t.
+
