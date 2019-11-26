@@ -4,6 +4,8 @@
 
 C++11批准于2011年,是第二份C++标准.C++0x标准长时间被称为C++0x,因此C++11或C++0x是一个东西.
 
+***
+
 ## Chapter 2 语言新特性
 
 ### 2.1 C++11语言新特性
@@ -403,4 +405,158 @@ C++11增加了新的基础类型:
 	char16_t和char32_t;
 	long long和unsigned long long;
 	std::nullptr_t.
+
+### 2.2 虽旧犹新的语言特性
+
+没什么新东西,暂略.
+
+## Chapter 3 一般概念
+
+### 3.1 命名空间(namespace)std
+
+**using namespace std存在的问题**
+
+	1.在复杂代码中,使用"using namespace std"可能导致意外的名称冲突,一般尽量避免使用using
+		namespace std;
+	2.比较好的方式:
+		1)直接指定标识符
+			std::cout << std::hex << 3.2 << std::endl;
+		2)使用using declaration
+			using std::cout;	//先指定,后面再使用就不用全部写出来了.
+			using std::endl;
+			cout << std::hex << 3.4 << endl;
+
+### 3.2 头文件
+
+C++中使用C标准头文件是在前面采用前缀字符c,不再使用扩展名.h.
+
+	#include <cstdlib>	//即为C中的<stdlib.h>
+	#include <cstring>	//即为C中的<string.h>
+
+C++中也可以直接包含旧式C标准头文件:
+
+	#include <stdlib.h>
+
+### 3.3 差错和异常的处理
+
+#### 3.3.1 标准的Exception Class(异常类)
+
+C++所有异常都派生自基类exception,头文件为<exception>.
+
+标准异常的层次结构:
+
+![](images/standard_exception_layer.png)
+
+**1.标准异常如下**
+
+	std::exception--->所有异常的基类;
+	std::bad_alloc---->通过new抛出,new不到内存;
+	std::bad_cast--->通过dynamic_cast抛出;
+	std::bad_exception--->处理C++程序中无法预期的异常时使用;
+	std::bad_typeid--->通过typeid抛出;
+	std::logic_error--->通过读取代码来检测到的异常;
+	std::domain_error--->使用了无效的数学域时,抛出该异常;
+	std::invalid_argument--->使用了无效参数,抛出该异常;
+	std::length_error--->创建了太长的std::string时,抛出该异常;
+	std::out_of_range--->访问超过vector/deque等的范围抛出该异常;
+	std::runtime_error--->不能通过读取代码来检测到的异常;
+	std::overflow_error--->发生数学上溢时,抛出该异常;
+	std::range_error--->尝试存储超过范围的值时,会抛出该异常;
+	std::underflow_error--->发生数学下溢时,抛出该异常.
+	/*
+	PS:在gdb调试时,碰到out_of_range的异常的打断点方法如下:
+		b std::out_of_range::out_of_range
+	其他的类似:
+		b std::invalid_argument::invalid_argument
+	*/
+
+**2.实例**
+
+	#include <iostream>
+	#include <vector>
+	#include <exception>
+	using namespace std;
+
+	int main()
+	{
+		vector<int> v = {1, 2, 3};
+		try {
+			cout << "v[3] = " << v.at(3) << endl;
+		} catch(std::out_of_range e) {	//捕获到out_of_range的异常
+			cout << e.what() << endl;
+		}
+	}
+
+#### 3.3.2 异常类的成员
+
+标准异常类都提供了成员函数what()--->用来获取类型以外的附加信息.某些异常类还提供了code()--->用的比较少.
+
+	namespace std {
+		class exception {
+			public:
+				virtual const char *what() const noexcept;
+				...
+		};
+	};
+	//what()返回的string内容由编译器决定.
+
+其他:略.
+
+### 3.4 Callable Object(可被调用的对象)
+
+Callable Object:可被某种方式调用其某些函数的对象.
+
+**1.可调用对象包括**
+
+	1.函数:
+		void func(int x, int y);
+	2.lambda:
+		auto l = [] (int x, int y) {
+			...
+		};
+	2.成员函数和重载():
+		class C {
+			public:
+				void operator() (int x, int y) const;
+				void mem_func(int x, int y) const;
+		};
+
+**2.调用**
+
+	int main()
+	{
+		C c;
+		std::shared_ptr<C> sp(new C);
+
+		/* 使用bind()函数调用可调用对象 */
+		std::bind(func, 77, 33)();	//调用函数: func(77, 33)
+		std::bind(l, 77, 33)();		//调用lambda: l(77, 33)
+		std::bind(C(), 77, 33)();
+		/*
+			C():会找到class C重载的operator() (int x, int y),即:C::operator()(77, 33).
+		*/
+		std::bind(&C::mem_func, c, 77, 33)();
+		/*
+			para0--->&C::mem_func(为成员函数指针),此处调用: c.mem_func(77, 33)
+		*/
+		std::bind(&C::mem_func, sp, 77, 33)();
+		//此处调用: sp->mem_func(77, 33);
+
+		/* 使用async()函数调用可调用对象(会在后台启动task) */
+		std::async(func, 42, 77);	//调用函数: func(77, 33)
+		std::async(l, 42, 77);		//调用lambda: l(77, 33)
+		std::async(C(), 42, 77);	//调用C::operator()(77, 33)
+		std::async(&C::mem_func, &c, 42, 77);	//调用: c.mem_func(77, 33)
+		std::async(&C::mem_func, sp, 42, 77);	//调用: sp->mem_func(77, 33)
+	}
+
+### 3.5 并发与多线程
+
+略.
+
+### 3.6 分配器(Allocator)
+
+略.
+
+## Chapter 4 通用工具
 
