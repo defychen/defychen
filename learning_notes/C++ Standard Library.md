@@ -560,3 +560,73 @@ Callable Object:可被某种方式调用其某些函数的对象.
 
 ## Chapter 4 通用工具
 
+### 4.1 pair和tuple
+
+#### 4.1.1 pair
+
+class pair将两个value视为一个单元.map, multimap, unordered_map和unordered_multimap就是使用pair来管理其以key-value pair形式存在的元素.
+
+	1.任何需要返回两个value的地方都可以用到pair(e.g.minmax()函数);
+	2.struct pair定义于<utility>,由于为struct,因此其所有成员都是public.
+
+**1.struct pair的定义**
+
+	namespace std {
+		template <typename T1, typename T2>
+		struct pair {
+			T1 first;	//first数据成员可以访问到pair的第一个元素
+			T2 second;	//second数据成员可以访问到pair的第二个元素
+		};
+	};
+
+**2.pair对象的构造**
+
+1.pair<T1, T2> p构造
+
+	pair<int, string> p(42, "hello");
+
+2.make_pair()构造--->更常用
+
+	1.一般的构造为:
+		std::pair<int, char> p(42, '@');
+	2.使用make_pair()构造:
+		std::make_pair(42, '@');	//直接写出两个元素值即可
+	3.但是,如果:
+		std::pair<int, float> p(42, 7.77);
+		使用:
+		std::make_pair(42, 7.77);	//不等价,因为7.77默认认为的类型为double,与float不相符.
+
+**3.pair的比较**
+
+pair重载的==, !=, <, >, <=, >=等符号,可以直接比较两个pair对象.内部实现为:
+
+	namespace std {
+		template <typename T1, typename T2>
+		bool operator== (const pair<T1, T2> &x, const pair<T1, T2> &y) {
+			return x.first == y.first && x.second == y.second;
+		}
+	};
+
+	//使用方法为:
+	p1 == p2	//p1, p2为相同类型pair的两个对象
+
+**4.实例---将一个value pair写入一个stream内**
+
+	template <typename T1, typename T2>
+	std::ostream &operator << (std::ostream &strm, const std::pair<T1, T2> &p)
+	{
+		return strm << "[" << p.first << ", " << p.second << "]";
+	}
+
+**5.pair为特殊的tuple(只有两个元素的tuple),因此可以使用tuple的某些函数**
+
+	typedef std::pair<int, float> int_float_pair;
+	int_float_pair p(42, 3.14);
+
+	std::get<0>(p)	//等价于p.first,获取p的第一个元素
+	std::get<1>(p)	//等价于p.second,获取p的第二个元素
+	std::tuple_size<int_float_pair>::value	//获取tuple的元素个数,此处为pair,结果为2
+	std::tuple_element<0, int_float_pair>::type
+		//获取tuple指定元素的类型,此处为pair第0个,结果为int.
+
+#### 4.1.2 tuple(不定数的值组)
