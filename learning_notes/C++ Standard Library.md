@@ -630,3 +630,103 @@ pair重载的==, !=, <, >, <=, >=等符号,可以直接比较两个pair对象.�
 		//获取tuple指定元素的类型,此处为pair第0个,结果为int.
 
 #### 4.1.2 tuple(不定数的值组)
+
+tuple为拥有任意数量个元素,且元素类型可以被单独指定.
+
+**1.tuple的操作**
+
+1.make_tuple():用于创建一个tuple; get<>()用于访问tuple的元素.
+
+	#include <tuple>
+	#include <iostream>
+	#include <complex>	//复数
+	#include <string>
+	using namespace std;
+
+	int main()
+	{
+		tuple<string, int, int, complex<double>> t;	//实例一个tuple对象,元素全部为默认值
+		
+		tuple<int, float, string> t1(41, 6.3, "nico");	//实例一个tuple对象,并带有初始化的值
+		
+		cout << get<0>(t1) << " ";	//获取第一个元素--->41
+		cout << get<1>(t1) << " ";	//获取第二个元素--->6.3
+		cout << get<2>(t1) << " ";	//获取第三个元素--->nico
+
+		auto t2 = make_tuple(22, 44, "nico");
+		//auto自动推断tuple元素类型,t2的元素类型为(int, int, const char *)
+
+		get<1>(t1) = get<1>(t2);	//给tuple某个元素赋值
+
+		if (t1 < t2) {
+			t1 = t2;	//比较两个tuple并赋值
+		}
+	}
+
+2.tuple元素的引用
+
+	std::string s;
+
+	auto x = std::make_tuple(s);
+	std::get<0>(x) = "my value";	//可以更改x中的0元素值,但是不能更改s的值
+
+	auto y = std::make_tuple(ref(s));	//tuple中的第一个元素为s的引用.ref(s)->表示s的引用
+	std::get<0>(y) = "my value";	//此时也会更改s的值
+
+3.tie--->更方便的引用
+
+	std::tuple<int, float, std::string> t(77, 1.1, "more light");
+	int i;
+	float f;
+	std::string s;
+	std::tie(i, f, s) = t;	//tie(type...):表示某个tuple的引用,元素排布与tuple必须一致
+
+	PS:
+		std::ignore--->忽略tuple中的某些元素
+	std::tuple<int, float, std::string> t(77, 1.1, "more light");
+	int i;
+	std::string s;
+	std::tie(i, std::ignore, s) = t;	//表示忽略tuple中的第二个元素
+
+**2.tuple的初始化**
+
+tuple不允许使用赋值语法来初始化.
+
+	1.简单初始化
+		std::tuple<int, double> t1{42, 3.14};	//允许
+		std::tuple<int, double> t2 = {42, 3.14};	//赋值语法,不允许
+	2.复杂初始化
+		std::vector<std::tuple<int, float>> v{std::make_tuple(1, 1.0),
+											  std::make_tuple(2, 2.0)};
+			//允许
+		std::vector<std::tuple<int, float>> v{{1, 1.0}, {2, 2.0}};
+			//不允许,和赋值一样的原理
+	3.函数返回值
+		std::tuple<int, int, int> foo() {
+			return std::make_tuple(1, 2, 3);	//允许
+		}
+		std::tuple<int, int, int> foo() {
+			return {1, 2, 3};	//不允许,和赋值一样的原理
+		}
+
+**3.其他tuple特性**
+
+1.tuple_size<tuple_name>::value--->获得元素个数
+
+	typename std::tuple<int, float, std::string> tuple_type;
+
+	cout << std::tuple_size<tuple_type>::value;	//结果为3
+
+2.tuple_element<idx, tuple_name>::type--->获得第idx个元素的类型(即get<>()的返回值类型)
+
+	typename std::tuple<int, float, std::string> tuple_type;
+
+	cout << tuple_element<1, tuple_type>::type;	//结果为float
+
+3.tuple_cat()--->将多个tuple连接成一个tuple
+
+	int n;
+	auto tt = std::tuple_cat(std::make_tuple(42, 7.7, "hello"), std::tie(n));
+		//此时tt tuple中的元素为(42, 7.7, "hello", 0)	--->n默认值为0
+
+#### 4.1.3 tuple的输入/输出 
