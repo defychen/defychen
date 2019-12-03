@@ -729,4 +729,55 @@ tuple不允许使用赋值语法来初始化.
 	auto tt = std::tuple_cat(std::make_tuple(42, 7.7, "hello"), std::tie(n));
 		//此时tt tuple中的元素为(42, 7.7, "hello", 0)	--->n默认值为0
 
-#### 4.1.3 tuple的输入/输出 
+#### 4.1.3 tuple的输入/输出
+
+使用"<<"打印任何tuple的实现.
+
+	// printtuple.h
+	#include <tuple>
+	#include <iostream>
+
+	template <int IDX, int MAX, typename... Args>
+	struct PRINT_TUPLE {	//默认该结构体例化需要3个参数
+		//结构体里的静态函数
+		static void print(std::ostream &strm, const std::tuple<Args...> &t) {
+			strm << std::get<IDX>(t) << (IDX + 1 == MAX ? "" : ",");
+			PRINT_TUPLE<IDX+1, MAX, Args...>::print(strm, t);
+				//直接调用静态函数,此处为递归调用
+		}
+	};
+
+	//无操作的模板,用于结束递归
+	tempate <int MAX, typename... Args>
+	struct PRINT_TUPLE<MAX, MAX, Args...> { //指定结构体例化需要3个参数
+		static void print(std::ostream &strm, const std::tuple<Args...> &t) {
+		}
+	};
+
+	//使用"<<"打印任何tuple
+	template <typename... Args>
+	std::ostream &operator << (std::ostream &strm, const std::tuple<Args...> &t)
+	{
+		strm << "[";
+		PRINT_TUPLE<0, sizeof...(Args), Args...>::print(strm, t);
+		return strm << "]";
+	}
+
+测试代码:
+
+	// printtuple.cpp
+	#include "printtuple.h"
+	#include <tuple>
+	#include <iostream>
+	#include <string>
+	using namespace std;
+
+	int main()
+	{
+		tuple<int, float, string> t(77, 1.1, "more light");
+		cout << "io: " << t << endl;
+	}
+
+	//结果为: io: [77, 1.1, more light]
+
+### 4.2 Smart Pointer(智能指针)
