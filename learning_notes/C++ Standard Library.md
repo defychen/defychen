@@ -781,3 +781,12 @@ tuple不允许使用赋值语法来初始化.
 	//结果为: io: [77, 1.1, more light]
 
 ### 4.2 Smart Pointer(智能指针)
+
+自C++11起,C++标准库提供了两大类型的smart pointer:
+
+	1.class shared_ptr:实现共享式拥有概念.多个smart pointer可以指向相同对象,在最后一个reference被销
+		毁时所有资源被释放;
+	2.class unique_ptr:实现独占式拥有概念.保证同一时间只有一个smart pointer可以指向该对象,可以移交拥
+		有权.对于避免资源泄漏(e.g.以new创建对象后因为发生异常而忘记调用delete)特别有用.
+
+#### 4.2.1 class shared_ptr
