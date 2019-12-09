@@ -790,3 +790,129 @@ tuple不允许使用赋值语法来初始化.
 		有权.对于避免资源泄漏(e.g.以new创建对象后因为发生异常而忘记调用delete)特别有用.
 
 #### 4.2.1 class shared_ptr
+
+多个shared_ptr可以共享同一对象,对象的最后一个拥有者有责任销毁对象,并清理与该对象相关的所有资源.
+
+**1.shared_ptr的使用**
+
+	#include <iostream>
+	#include <string>
+	#include <vector>
+	#include <memory>	//shared_ptr的头文件
+	using namespace std;
+
+	int main()
+	{
+		shared_ptr<string> p_nico(new string("nico"));
+		/*
+			shared_ptr接收单一pointer作为实参的构造函数是explicit(显示的,此时默认的删除指针的是直接
+				调用delete,与new对应).
+			shared_ptr的初始化:
+				1.新式语法"{}":
+					shared_ptr<string> p_nico{new string("nico")};
+					PS--->下面的是不正确的:
+					shared_ptr<string> p_nico = new string("nico");	//赋值是不合法的
+				2.使用make_shared<...>():
+					shared_ptr<string> p_nico = make_shared<string>("nico");
+					--->这种方式比较快且安全.
+				3.先声明,再调用reset:
+					shared_ptr<string> p_nico;
+					p_nico.reset(new string("nico"));	//用的比较少
+		*/
+		shared_ptr<string> p_jutta(new string("jutta"));
+
+		(*p_nico)[0] = 'N';		//和一般指针用法一样,更改第一个字母为"N".
+		p_jutta->replace(0, 1, "J");	//替换第0个字符为"J".
+
+		vector<shared_ptr<string>> who_made_coffee;
+		who_made_coffee.push_back(p_jutta);
+		/*
+			凡是压入容器的均为元素的拷贝.如果改变原始元素的内容是不会更改容器中的元素内容.
+			此处压入shared_ptr,一旦指向的元素内容更改了,读取该容器中的指针指向的内容也跟着改了.
+		*/
+		who_made_coffee.push_back(p_jutta);
+		who_mode_coffee.push_back(p_nico);
+		who_mode_coffee.push_back(p_jutta);
+		who_mode_coffee.push_back(p_nico);
+		
+		for (auto ptr_iter : who_made_coffer) {
+			cout << *ptr_iter << " ";
+		}
+		/*
+			结果为:
+				jutta jutta	nico jutta nico
+		*/
+		cout << endl;
+
+		*p_nico = "nicolai";	//更改共享指针的内容为"nicolai"
+
+		for (auto ptr_iter : who_mode_coffer) {
+			cout << *ptr_iter << " ";
+		}
+		//结果为:jutta jutta	nicolai jutta nicolai
+		cout << endl;
+		cout << "use_count: " << who_mode_coffer[0].use_count() << endl;
+		/*
+			shared_ptr的use_count方法统计某个shared_ptr所指对象的当前拥有者数量.
+			此处为4个,vector中有3个和p_jutta.
+		*/
+
+		//结束时shared_ptr会自动调用默认的delete来删除指针.
+	}
+
+**2.指定deleter**
+
+声明一个属于自己的deleter,在"删除被指对象"之前打印一条消息.
+
+	shared_ptr<string> p_nico(new string("nico"),
+					[](string *p) {
+						cout << "delete " << *p << endl;
+						delete p;
+					});
+	/*
+		将一个lambda函数作为shared_ptr构造函数的第二个参数,用于指定删除对象时调用的delete函数.默认是直接
+		调用delete.
+	*/
+
+**3.给array指定deleter**
+
+	shared_ptr<int> p(new int[10],
+					[](int *p) {
+						delete []p;
+					});
+	/*
+		shared_ptr默认只能删除由new创建的单一对象.对于array是不能使用默认的deleter.此处传入一个lambda
+		用于指定deleter array的函数.
+	*/
+
+**4.指定属于自己的析构策略**
+
+	#include <string>
+	#include <fstream>
+	#include <memory>
+	#include <cstdio>
+
+	class file_deleter {
+	private:
+		std::string filename;
+	public:
+		file_deleter(const std::string &fn) :
+			filename(fn) {}
+		
+		void operator()(std::ofstream *fp) {
+			fp->close();
+			std::remove(filename.c_str());
+		}	//重载括号运算符
+	};
+
+	int main()
+	{
+		std::shared_ptr<std::ofstream> fp(new std::ofstream("tmpfile.txt"),
+										file_deleter("tmpfile.txt"));
+		/*
+			此处deleter为先创建file_deleter类的对象inst.当需要delete时,会自动调用该对象的括号运算符,
+				并传入fp指针(即:--->inst(fp)).因此会调用类的重载括号运算符函数.
+		*/
+	}
+
+#### 4.2.2 class weak_ptr
