@@ -916,3 +916,121 @@ tuple不允许使用赋值语法来初始化.
 	}
 
 #### 4.2.2 class weak_ptr
+
+weak_ptr的设计目的是为了配合shared_ptr而引入的一种smart pointer,用来协助shared_ptr工作.可以从一个shared_ptr或另一个weak_ptr构造,weak_ptr的构造和析构不会引起引用计数的增加或减少.
+
+**1.weak_ptr的简单使用**
+
+	std::shared_ptr<int> sp(new int(10));
+	std::weak_ptr<int> wp(sp);	//由shared_ptr构造
+	wp = sp;
+	printf("%d\n", wp.use_count());	//结果为1,因为weak_ptr不会增加引用计数
+	wp.reset();	//重置
+	printf("%d\n", wp);	//结果为0
+
+**2.使用weak_ptr解决shared_ptr因循环引用不能释放资源的问题**
+
+1.shared_ptr导致循环引用
+
+	#include <iostream>
+	#include <string>
+	#include <memory>
+	#include <vector>
+	using namespace std;
+
+	class person {
+	public:
+		string name;
+		shared_ptr<person> mother;
+		shared_ptr<person> father;
+		vector<shared_ptr<person>> kids;
+
+		person(const string &n,
+			shared_ptr<person> m = nullptr,
+			shared_ptr<person> f = nullptr) :
+			name(n),
+			mother(m),
+			father(f)
+		{}
+
+		~person()
+		{
+			cout << "delete" << name << endl;
+		}
+	};
+
+	shared_ptr<person> init_family(const string &name)
+	{
+		shared_ptr<person> mom(new person(name + "'s mom"));
+		shared_ptr<person> dad(new person(name + "'s dad"));
+		shared_ptr<person> kid(new person(name, mom, dad));
+		mom->kids.push_back(kid);
+		dad->kids.push_back(kid);
+		return kid;
+	}
+
+	int main()
+	{
+		shared_ptr<person> p = init_family("nico");
+
+		cout << "nico's famliy exists" << endl;
+		cout <<"- nico is shared " << p.use_count() << " times" << endl;
+		cout << "- name of 1st kid of nico's mom: "
+			<< p->mother->kids[0]->name << endl;
+
+		p->init_family("jim");
+		cout << "jim's family exists" << endl;
+	}
+
+	//结果为:
+		nico's famliy exists
+		- nico is shared 3 times
+		- name of 1st kid of nico's mom: nico
+		jim's family exists
+	--->析构函数从未被调用过(有循环指向).
+
+指向关系如图:
+
+![](images/shared_ptr_use_problem.png)
+
+	指向均为实线,表示存在真实的引用关系.
+
+2.使用weak_ptr避免循环引用
+
+	class person {
+	public:
+		string name;
+		shared_ptr<person> mother;
+		shared_ptr<person> father;
+		vector<weak_ptr<person>> kids;
+
+		person(const string &n,
+			shared_ptr<person> m = nullptr,
+			shared_ptr<person> f = nullptr) :
+			name(n),
+			mother(m),
+			father(f)
+		{}
+
+		~person()
+		{
+			cout << "delete" << name << endl;
+		}
+	};
+
+使用weak_ptr后的指向关系:
+
+![](images/shared_ptr_weak_ptr.png)
+
+	此时循环引用的实现被weak_ptr替换为虚线,无循环引用.
+	//结果为:
+		nico's famliy exists
+		- nico is shared 1 times
+		- name of 1st kid of nico's mom: nico
+		delete nico
+		delete nico's dad
+		delete nico's mom
+		jim's family exists
+		delete jim
+		delete jim's dad
+		delete jim's mom
