@@ -1018,6 +1018,35 @@ weak_ptr的设计目的是为了配合shared_ptr而引入的一种smart pointer,
 		}
 	};
 
+	shared_ptr<person> init_family(const string &name)
+	{
+		shared_ptr<person> mom(new person(name + "'s mom"));
+		shared_ptr<person> dad(new person(name + "'s dad"));
+		shared_ptr<person> kid(new person(name, mom, dad));
+		mom->kids.push_back(kid);
+		dad->kids.push_back(kid);
+		return kid;
+	}
+
+	int main()
+	{
+		shared_ptr<person> p = init_family("nico");
+
+		cout << "nico's famliy exists" << endl;
+		cout <<"- nico is shared " << p.use_count() << " times" << endl;
+		//p.use_count()效率有时不高,C++标准库不推荐使用,仅在调试时使用.
+		cout << "- name of 1st kid of nico's mom: "
+			<< p->mother->kids[0].lock()->name << endl;
+		/*
+			此处: p->mother->kids[0]为weak_ptr,使用其取访问类的成员需要加上lock(),即:
+				p->mother->kids[0].lock()->name.
+			避免不明确的行为发生.
+		*/
+
+		p->init_family("jim");
+		cout << "jim's family exists" << endl;
+	}
+
 使用weak_ptr后的指向关系:
 
 ![](images/shared_ptr_weak_ptr.png)
@@ -1034,3 +1063,93 @@ weak_ptr的设计目的是为了配合shared_ptr而引入的一种smart pointer,
 		delete jim
 		delete jim's dad
 		delete jim's mom
+
+#### 4.2.3 误用shared_ptr
+
+	//错误用法:
+		int *p = new int;
+		shared_ptr<int> sp1(p);
+		shared_ptr<int> sp2(p);
+		/*
+			此处sp1和sp2都有对p的拥有权,释放时相应资源会被执行两次.这是错误的用法.
+		*/
+	//正确用法:
+		shared_ptr<int> sp1(new int);
+		shared_ptr<int> sp2(sp1);	//sp2由sp1初始化
+
+#### 4.2.4 class unique_ptr
+
+class unique_ptr实现了独占式拥有,确保一个对象和其资源在同一时间只被一个pointer拥有.一旦拥有者被销毁或变成empty,或开始拥有另一个对象,先前拥有的那个对象就会被销毁,其相应资源也会被自动释放.
+
+**1.class unique_ptr与传统指针对比**
+
+	//传统指针:
+		void f()
+		{
+			class_a *ptr = new class_a;
+			...
+			delete ptr;	//主动释放指针及其资源
+		}
+	//使用unique_ptr
+		void f()
+		{
+			std::unique_ptr<class_a> ptr(new class_a);	//定义一个unique_ptr
+			...	//后面不需要主动释放,系统会自动释放unique_ptr的资源
+		}
+
+**2.使用unique_ptr**
+
+1.访问成员(可以像普通指针一样访问)
+
+	std::unique_ptr<std::string> up(new std::string("nico"));
+
+	(*up)[0] = 'N';
+	up->append("lai");
+	std::cout << *up << std::endl;
+
+2.初始化
+
+	std::unique_ptr<int> up = new int;	//错误,赋值语法不可以
+	std::unique_ptr<int> up(new int);	//正确,必须使用该种语法初始化
+
+3.其他操作
+
+	std::unique_ptr<std::string> up(new std::string("nico"));
+	...
+	std::string *sp = up.release();
+		//放弃拥有的对象,返回该对象给到普通指针(今后由普通指针负责释放资源).
+
+	if (up) {	//和普通指针一样,判断是否为empty
+		...
+	}
+
+	if (up != nullptr) {	//判断非空
+		...
+	}
+
+	if (up.get() != nullptr) {	//up.get()--->拿到unique_ptr内的raw_pointer,判断非空
+		...
+	}
+
+**3.转移unique_ptr的拥有权**
+
+使用move转移
+
+	1.错误的使用copy
+		std::unique_ptr<class_a> up1(new class_a);
+		std::unique_ptr<class_a> up2(up1);
+		/*
+			错误:使用copy,unique_ptr要求独占式拥有,此处copy是用于shared_ptr的.
+		*/
+	2.正确的转移
+		std::unique_ptr<class_a> up3(std::move(up1));
+		/*
+			使用move将对象拥有权由up1移到up3.
+		*/
+	3.move的赋值也可以
+		std::unique_ptr<class_a> up2;	//定义一个unique_ptr
+		up2 = std::move(up1);	//返回up1拥有的对象,并转移给up2
+	4.指针另一个对象
+		std::unique_ptr<class_a> up1(new class_a);
+		std::unique_ptr<class_a> up2(new class_a);
+		up2 = std::move(up1);	//up2原先指代的会被自动释放,转而指向up1的对象
