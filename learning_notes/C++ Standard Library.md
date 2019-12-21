@@ -1153,3 +1153,67 @@ class unique_ptr实现了独占式拥有,确保一个对象和其资源在同一
 		std::unique_ptr<class_a> up1(new class_a);
 		std::unique_ptr<class_a> up2(new class_a);
 		up2 = std::move(up1);	//up2原先指代的会被自动释放,转而指向up1的对象
+
+**4.使用自己的deleter**
+
+	#include <iostream>
+	#include <string>
+	#include <memory>	// for unique_ptr
+	#include <dirent.h>	// for opendir()
+	#include <cstring>	// for strerror()
+	#include <cerrno>	// for errno
+	using namespace std;
+
+	class dir_closer {
+	public:
+		void operator() (DIR *dp)	// DIR是dirent.h中的结构体
+		{
+			if (closedir(dp) != 0) {	//closedir()关闭目录
+				std::cerr << "oops: closedir() failed" << std::endl;
+			}
+		}
+	};
+
+	int main()
+	{
+		unique_ptr<DIR, dir_closer> p_dir(opendir("."));
+		/*
+			unique_ptr的para1:unique_ptr指代的类型;	para2:指定deleter.当释放该对象时,
+			dir_closer()会被自动调用.
+		*/
+		struct dirent *dp;
+		while ((dp = readdir(p_dir.get())) != nullptr) {
+			/*
+				dp = readdir(p_dir.get()):用于读取目录中的单个文件信息
+				dp->d_name:得到文件名.
+			*/
+			string filename(dp->d_name);
+			cout << "process " << filename << endl;
+		}
+	}
+
+#### 4.2.5 class auto_ptr
+
+C++11明确声明不再支持.
+
+### 4.3 数值的极值
+
+暂略.
+
+### 4.4 Type Trait和Type Utility
+
+暂略.
+
+### 4.5 辅助函数
+
+暂略.
+
+### 4.6 Clock和Timer
+
+暂略.
+
+### 4.7 头文件
+
+暂略.
+
+## Chapter 5 标准模板库
