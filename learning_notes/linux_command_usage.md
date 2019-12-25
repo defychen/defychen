@@ -691,7 +691,7 @@ rename常用于批量修改文件名.
 
 -E:表示扩展的正则表达式.可用于搜索满足任意关键字或同时满足多个关键字.
 
-1.满足任意关键字的搜索
+**1.满足任意关键字的搜索**
 
 	grep -E "word1|word2|word3" file.txt -nr
 	/*
@@ -700,7 +700,7 @@ rename常用于批量修改文件名.
 		file.txt:必须指定文件名.
 	*/
 
-2.同时满足多个关键字的搜索
+**2.同时满足多个关键字的搜索**
 
 	grep word1 file.txt | grep word2 | grep word3
 	/*
@@ -712,5 +712,18 @@ rename常用于批量修改文件名.
 #### 25.3 grep -w
 
 精确匹配.
+
+	//批量删除linux进程
+	ps | grep -w "xxx" | awk '{print $1}' | xargs kill -9
+	/*
+		"xxx":为匹配的字符串
+		$1:为进程ID位于匹配后字符串的位置.
+	*/
+
+#### 25.4 zgrep
+
+zgrep用于查看压缩文件(以tar.gz结尾的文件).
+
+	zgrep "xxxx" yyy.tar.gz -nr	//像grep一样使用即可.
 
 ## 13. wget命令
