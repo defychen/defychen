@@ -1,5 +1,7 @@
 # Run Linux Kernel
+
 ***
+
 # Chapter 1 处理器体系结构
 
 1.ARMv4指令集的处理器架构有ARM7-TDMI,典型的处理器有三星的S3C44B0X;
@@ -68,6 +70,56 @@
 
 	ARM默认采用的是小端模式,但是Cortex-A系列可以通过软件来配置大小端模式.
 
+## 1.3 	x86和ARM的一条存储读写指令执行的全过程分解
+
+**1.全过程步骤分解**
+
+	1.指令首先进去流水线(pipeline)的前端(front-end),包括预取(fetch)和译码(decode),经过分发(dispatch)
+		和调度(scheduler)后进入执行单元,最后提交执行结果;
+	2.所有指令采用顺序方式(In-Order)通过前端,并采用乱序的方式(Out-of-Order, OOO)进行发射,然后乱序执行,
+		最后用顺序方式提交结果,并将最终结果更新到LSQ(Load-Store Queue)部件;
+	3.LSQ部件是执行流水线的一个执行部件,可以理解为存储子系统的最高层,其上接收来自CPU的存储器指令,其下连接
+		着存储器子系统.主要功能是将来自CPU的存储器请求发送到存储器子系统,并处理其下存储器子系统的应答数据
+		和消息.
+
+**2.x86微处理器架构框图**
+
+![](images/x86_architecture.png)
+
+详细过程如下:
+
+	1.存储指令从L1 I-Cache中读取指令,L1 I-cache做指令加载、指令预取、指令解码器,以及分支预测;
+	2.然后进入Fetch & Decode单元,将指令解码成macro-ops微操作指令,然后由Dispatch部件分发到Integer Unit
+		或FloatPoint Unit;
+	3.Integer Unit由Integer Scheduler和Execution Unit组成,Execution Unit包含算法逻辑单元
+		(arithmetic-logic unit, ALU)和地址生成单元(address generation unit, AGU),在ALU计算完成后
+		进入AGU,计算有效地址后,将结果发送到LSQ部件;
+	4.LSQ部件根据处理器系统要求的内存一致性(memory consistency)模型确定访问时序,另外LSQ还需要处理存储器
+		指令间的依赖关系,最后LSQ需要准备L1 Cache使用的地址,包括有效地址的计算和虚实地址转换,将地址发送到
+		L1 D-Cache中.
+
+**3.ARM微处理器架构框图**
+
+![](images/ARM_architecture.png)
+
+详细过程如下:
+
+	1.存储指令首先通过主存或者L2 Cache加载到L1 I-cache中;
+	2.在指令预取阶段(instruction prefetch stage),主要是做指令预取和分支预测,然后指令通过Instruction
+		Queue队列被送到解码器进行指令的解码(解码器(decode)支持两路解码,可以通过解码两条指令);
+	3.在寄存器重命名阶段(Register rename stage)会做寄存器重命名,避免机器指令不必要的顺序化操作,提高处
+		理器的指令集并行能力;
+	4.在指令分发阶段(Dispatch stage),该图支持4路猜测发射和乱序执行(Out-of-Order Multi-Issue with
+		Speculation),然后在执行单元(ALU/MUL/FPU/NEON)中乱序执行;
+	5.存储指令会计算有效地址并发射到内存系统中的LSU部件(Load Store Unit),最终LSU部件会去访问L1 D-cache.
+	PS:在ARM中,只有cacheable的内存地址才需要访问cache.
+
+**4.多处理器环境要求**
+
+在多处理器环境下,需要考虑cache的一致性问题.
+
+	在Cortex-A9中的L1和L2 cache的一致性由MESI协议来实现.
+
 ## 1.3 指令的执行过程相关概念
 
 **1.五级流水线**
@@ -76,12 +128,12 @@
 
 **2.超标量体系结构(Superscalar Architecture)**
 
-	描述一种微处理器设计理念,能够在一个时钟周期内执行多个指令.
+	描述一种微处理器设计理念,能够在一个时钟周期内执行多条指令.
 
 **3.乱序执行(Out-of-Order Execution)**
 
-	CPU采用了允许将多条指令不按程序规定的顺序分开发送给各相应电路单元处理的计数,避免处理器在计算对象不可
-	获取时的等待,从而导致流水线停顿.
+	CPU采用了允许将多条指令不按程序规定的顺序分开发送给各相应电路单元处理,避免处理器在计算对象不可获取时的
+	等待,从而导致流水线停顿.
 
 **4.寄存器重命名(Register Rename)**
 
