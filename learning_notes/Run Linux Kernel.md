@@ -193,15 +193,16 @@
 	数据同步隔离,比DMB更严格.要求是所有指令都要等待DSB前面的存储访问完成.
 	DSB比DMB常用.
 
-**3.ISB(Instructiong Synchronization Barrier)指令同步屏障**
+**3.ISB(Instruction Synchronization Barrier)指令同步屏障**
 
 	指令同步隔离,最严格,会冲洗流水线(Flush Pipeline)和预取buffers.通常用来保证上下文切换的效果.
 	e.g.更改ASID(Address Space Identifier)、TLB维护操作和C15寄存器的修改等.
 
-**内存屏障实例1---两个CPU核同时访问Addr1和Addr2地址**
+### 1.5.1 内存屏障实例1---两个CPU核同时访问Addr1和Addr2地址
 
 	Core A:
-		str r0, [addr1]	//将寄存器r0的值保存到addr1的地址中.str/ldr指令操作memory第二个参数的格式"[addr]"
+		str r0, [addr1]
+		//将寄存器r0的值保存到addr1的地址中.str/ldr指令操作memory第二个参数的格式"[addr]"
 		ldr r1, [addr2]	//取addr2中的值放到寄存器r1中
 
 	Core B:
@@ -209,14 +210,15 @@
 		ldr r3, [addr1]	//取addr1中的值放到寄存器r3中
 
 	/*
-	因为:1.多级流水线;2.没有指令屏障,3.两个CPU属于并行执行.Core A的寄存器r1和Core B的寄存器r3可能得到一下4种结果:
+	因为:1.多级流水线;2.没有指令屏障,3.两个CPU属于并行执行.
+	Core A的寄存器r1和Core B的寄存器r3可能得到以下4种结果:
 		1)r1得到旧的值,r3也得到旧的值;
 		1)r1得到旧的值,r3也得到新的值;
 		1)r1得到新的值,r3也得到旧的值;
 		1)r1得到新的值,r3也得到新的值;
 	*/
 
-**内存屏障实例2---乱序执行**
+### 1.5.2 内存屏障实例2---乱序执行
 
 	Core A:
 		str r0, [msg]	//写r0中的新数据到msg地址
@@ -230,8 +232,8 @@
 		ldr r0, [msg]	//不相等,读取msg地址的数据到r0
 
 	/*
-		Core B可能读取不到最新的数据.因为Core B可能因为乱序执行的原因先读入msg,然后读取flag.处理器并不知道
-		msg和flag存在数据依赖性.
+		Core B可能读取不到最新的数据.因为Core B可能因为乱序执行的原因先读入msg,然后读取flag.处理器并不
+		知道msg和flag存在数据依赖性.
 		修改如下:
 	*/
 	Core A:
@@ -247,7 +249,7 @@
 	+	dmb				//保证直到flag置位才读入msg
 		ldr r0, [msg]	//不相等,读取msg地址的数据到r0
 
-**内存屏障实例3---写命令到外设寄存器,等待状态变化**
+### 1.5.3 内存屏障实例3---写命令到外设寄存器,等待状态变化
 
 	str r0, [addr]	//写一个命令到外设寄存器(相当于写地址addr)
 	dsb				//强制让该命令完成,写进了addr
@@ -261,15 +263,15 @@
 cache使用的地址编码方式和主存储器的类似,因此处理器可以使用访问主存储器的地址编码访问cache.
 
 	处理器在访问存储器时,会把地址同时传递给TLB和cache.
-	1.TLB(Translation Lookaside Buffer):用于存储虚拟地址到物理地址转换的小缓存,处理器先使用EPN(effective page
-		number)在TLB中进行查找最终的RPN(Real Page Number).如果这期间发生TLB miss,处理器需要重新查询页表.如果
-		TLB Hit,此时可以很快得到合适的RPN,并得到相应的物理地址.
+	1.TLB(Translation Lookaside Buffer):用于存储虚拟地址到物理地址转换的小缓存,处理器先使用EPN
+		(effective page number)在TLB中进行查找最终的RPN(Real Page Number).如果这期间发生TLB miss,
+		处理器需要重新查询页表.如果TLB Hit,此时可以很快得到合适的RPN,并得到相应的物理地址.
 	2.cache:
-		1)物理内存通过物理地址PA标识,内存块用PA+SIZE表示.在读取内存时,CPU会将内存块按照cache line的大小load到
-		cache中.而需要的内存块应该是被包含在这段load的内存中.在编程时,尽量将结构设计为cache line对齐,一次加载完
-		成.而在访问下一个结构体时,可以直接访问另一个cache line,避免冲突.
+		1)物理内存通过物理地址PA标识,内存块用PA+SIZE表示.在读取内存时,CPU会将内存块按照cache line的大
+		小load到cache中.而需要的内存块应该是被包含在这段load的内存中.在编程时,尽量将结构设计为cache
+		line对齐,一次加载完成.而在访问下一个结构体时,可以直接访问另一个cache line,避免冲突.
 		2)cache编码地址(或者物理编码地址)被分为三个部分:tag+index+offset.
-			index:是物理地址在cache这个数组中的索引,此时可以得到cache line
+			index:是物理地址在cache这个数组中的索引,此时可以得到cache line.
 				整个cache相当于一个一维数组,由多个cache line构成.
 				cache line的大小一般为32 byte,也有的是64 byte.
 			offset:是物理地址在cache line中的偏移量
@@ -279,14 +281,16 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 			set(组):相同的cache line构成一个组.
 			way(路):路相当于整个cache多了若干层.在组相连的cache中,同一个index又多了4/8 way.
 				进一步扩大cache范围,提高cache命中效率.
-	3.cache Hit和cache miss:
-		将cache line中存放的地址和通过虚实地址转换得到的物理进行比较.如果相同并且状态为匹配,就会发生cache hit.
-		通过offset等即可获得所需数据.如果发生cache miss,处理器需要用物理地址进一步访问主存储器来获得数据,并将
-		数据填充到相应的cache line中.
+	3.cache hit和cache miss:
+		将cache line中存放的地址和通过虚实地址转换得到的物理进行比较.如果相同并且状态为匹配,就会发生
+			cache hit.通过offset等即可获得所需数据.如果发生cache miss,处理器需要用物理地址进一步访问
+			主存储器来获得数据,并将数据填充到相应的cache line中.
+	4.VIPT(virtual Index physical Tag):虚拟的Index和物理的Tag--->现在用的比较少了;
+	  PIPT(physical Index physical Tag):物理的Index和物理的Tag--->ARM现在的处理器都用这种方式.
 	
-## 1.7 cache映射方式---direct mapping, set-associative, full-associative
+## 1.7 cache映射方式---direct mapping, set-associative, fully-associative
 
-**1.direct mappin(直接映射)**
+**1.direct mapping(直接映射)**
 
 每个组只有一行cache line时(即只有一个层级---1 way),称为直接映射高速缓存.
 
@@ -306,11 +310,11 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 			result[i] = data1[i] + data2[i];
 		}
 	}
-	如果result, data1, data2分别指向0x00, 0x40, 0x80地址,这三个地址的[5:4]相同,因此处于同一个cache line
-	step 1:读data1即0x40地址数据时,不在cache中,所以读取主存的0x40到0x4f(因为cache line大小为16 byte)地址
-		的数据填充到cache line中;
-	step 2:读data2即0x80地址数据时.因为0x80和0x40映射到同一个cache line,此时0x80地址数据不在cache line中,
-		所以需要读取主存0x80到0x8f地址的数据填充到cache line中,cache line发生替换操作;
+	如果result,data1,data2分别指向0x00,0x40,0x80地址,这三个地址的[5:4]相同,因此处于同一个cache line.
+	step 1:读data1即0x40地址数据时,不在cache中,所以读取主存的0x40到0x4f(因为cache line大小为16 byte)
+		地址的数据填充到cache line中;
+	step 2:读data2即0x80地址数据时.因为0x80和0x40映射到同一个cache line,此时0x80地址数据不在cache
+		line中,所以需要读取主存0x80到0x8f地址的数据填充到cache line中,cache line发生替换操作;
 	step 3:result写入0x00地址时,先写到cache line中.因此也会在同一个cache line发生替换操作.
 	因此这段代码发生了严重的cache颠簸,性能会很糟糕.
 
@@ -318,12 +322,11 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 
 增加一个way的概念(相当于多了层,由平面构成立体结构).
 
-	2路组相联cache:
-		1.每个路(way)包括4行cache line,即每个面由4行cache line;
-		2.2路组相联表明有两个面,每一路都是一样的.
-		3.每个组(set)有2个cache line可以提供cache line替换---因为有2路,相同的index有2个完全一样的cache line
-	此时地址0x00,0x40,0x80可以映射到同一个组(相同的index构成)中任意一个cache line.当cache line要发生替换操作时,
-	就有50%的概率可以不被替换,较少cache颠簸.
+	8条entry的2路组相联cache:
+		1.总共有4个set,因此含有4个index;
+		2.每个组(set)有2个cache line可以提供cache line替换(2路组相连).
+	此时地址0x00,0x40,0x80可以映射到同一个组(相同的index构成)中任意一个cache line.当cache line要发生
+	替换操作时,就有50%的概率可以不被替换,较少cache颠簸.
 
 ## 1.8 32 KB的4路组相联的cache
 
