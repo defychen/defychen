@@ -290,7 +290,7 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 	
 ## 1.7 cache映射方式---direct mapping, set-associative, fully-associative
 
-**1.direct mapping(直接映射)**
+### 1.7.1 direct mapping(直接映射)
 
 每个组只有一行cache line时(即只有一个层级---1 way),称为直接映射高速缓存.
 
@@ -318,9 +318,11 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 	step 3:result写入0x00地址时,先写到cache line中.因此也会在同一个cache line发生替换操作.
 	因此这段代码发生了严重的cache颠簸,性能会很糟糕.
 
-**2.set associative(组相联)**
+### 1.7.2 set associative(组相联)
 
-增加一个way的概念(相当于多了层,由平面构成立体结构).
+8条entry的2路组相连的映射关系:
+
+![](images/2_way_set_associative.png)
 
 	8条entry的2路组相联cache:
 		1.总共有4个set,因此含有4个index;
@@ -330,15 +332,17 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 
 ## 1.8 32 KB的4路组相联的cache
 
+![](images/32K-4-way_set-associative.png)
+
 	在Cortex-A7和Cortex-A9的处理器上有32 KB的4路组相联的cache:
 	cache大小:32 KB;		way:4路;		cache line:32 Byte
-	1.每一路的大小:	way_size = 32/4 = 8(KB)	//即每个面为8KB
-	2.每一路含有的cache line数量:	num_cache_line = 8KB/32B = 256
+	1.总共的cache line数量为: 32KB / 32B = 1K 条
+	2.总共有的set数为: 1K / 4 = 256 个set
 	
 	cache的编码地址address排布:
-	[4:0]---选择cache line中的数据(cache line大小为32B).[4:2]寻址8个字;[1:0]寻址每个字中的字节;
-	[12:5]---用于索引(Index)选择每一路上的cache line.
-	[31:13]---用作标记位(tag)
+	[4:0]---选择一条cache line中的数据(cache line大小为32B).[4:2]寻址8个字;[1:0]寻址每个字中的字节;
+	[12:5]---用于索引(Index)set号;
+	[31:13]---用作标记位(tag)--->其余位用于匹配tag.
 
 ## 1.9 ARM处理器的D-Cache和I-Cache组织方式
 
@@ -358,47 +362,52 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 	L2缓存结构		8路组相联		External		16路组相联		16路组相联
 	----------------------------------------------------------------------------------
 
-处理器在进行存储器访问时,处理器访问的是虚拟地址(VA),经过TLB和MMU的映射,最终编程了物理地址(PA).
+处理器在进行存储器访问时,处理器访问的是虚拟地址(VA),经过TLB和MMU的映射,最终变成了物理地址(PA).
 
-**VIVT、VIPT、PIPT定义及区别**
+### 1.9.1 VIVT、VIPT、PIPT定义及区别
 
-	VIVT(Virtual Index Virtual Tag):使用虚拟地址索引域和虚拟地址标记域.不经过MMU翻译,直接使用虚拟地址的索引域和
-		标记域来查找cache line.这种方式会导致高速缓存别名的问题,形成一个物理地址的内容出现在多个cache line中.
-	VIPT(Virtual Index Physical Tag):使用虚拟地址索引域和物理地址标记域.处理器输出的虚拟地址会发送到TLB/MMU进行
-		地址翻译以及送到cache中进行索引和查询cache组.cache和TLB/MMU同时工作,当TLB/MMU完成地址翻译后,再用物理标记
-		域来匹配cache line.但也会有可能出现多个cache组映射到同一个物理地址上.
-	PIPT(Physical Index Physical Tag):使用物理地址索引域和物理地址标记域.需要查找1级TLB进行虚实转换,如果未命中,
-		还需要到2级或者软件页表去查找,很耗时间.
+	VIVT(Virtual Index Virtual Tag):使用虚拟地址索引域和虚拟地址标记域.不经过MMU翻译,直接使用虚拟地址
+		的索引域和标记域来查找cache line.这种方式会导致高速缓存别名的问题,形成一个物理地址的内容出现在多
+		个cache line中;
+	VIPT(Virtual Index Physical Tag):使用虚拟地址索引域和物理地址标记域.处理器输出的虚拟地址会发送到
+		TLB/MMU进行地址翻译以及送到cache中进行索引和查询cache组(set).cache和TLB/MMU同时工作,当TLB/MMU
+		完成地址翻译后,再用物理标记域来匹配cache line.但也会有可能出现多个cache组映射到同一个物理地址上;
+	PIPT(Physical Index Physical Tag):使用物理地址索引域和物理地址标记域.需要查找1级TLB进行虚实转换,
+		如果未命中,还需要到2级或者页表去查找,很耗时间.
 
 	//使用场合
 	D-cache:由于PIPT耗时,而现在处理器频率越来越高,D-cache也只能使用VIPT.
-	I-cache:因为I-cache通常是只读的,不需要进行写操作,也就不会出现多条表项引起的一致性错误.因此I-cache一般使用VIPT.
+	I-cache:因为I-cache通常是只读的,不需要进行写操作,也就不会出现多条表项引起的一致性错误.因此I-cache一
+		般使用VIPT.
+	PS:现在更多的使用PIPT.
 
 ## 1.10 二级页表架构中虚拟地址到物理地址查询页表的过程
 
-**ARM内存管理架构**
+### 1.10.1 ARM内存管理架构
 
 					MMU								主存储器
 	ARM核心--->TLBs & Table Walk Unit--->Cache缓存--->页表
 	MMU(Memory Management Unit):内存管理单元,包括TLB和Table Walk Unit两个部件.
 	TLB:是一块高速缓存,用于缓存页表转换的结果,从而减少内存访问的时间.
-	页表查询(Translation table walk):一个完整的页表翻译和查找的过程.页表查询的过程由硬件自动完成,但是页表的维护
-		需要软件来完成.页表查询是一个相对耗时的过程,理想状态下是TLB里存有页表相关信息.只有当TLB Miss时,才会去查询
-		页表,并且读入页表的内容.
+	页表查询(Translation table walk):一个完整的页表翻译和查找的过程.页表查询的过程由硬件自动完成,但是
+		页表的维护需要软件来完成.页表查询是一个相对耗时的过程,理想状态下是TLB里存有页表相关信息.只有当
+		TLB Miss时,才会去查询页表,并且读入页表的内容.
 
-### 1.10.1 ARMv7-A架构的页表
+### 1.10.2 ARMv7-A架构的页表
 
 	ARMv7-A架构:支持安全扩展(Security Extensions),CA-15开始支持大物理地址扩展(Large Physical Address 
-		Extension, LPAE)和虚拟化扩展.如果使能了安全扩展,ARMv7-A分为Secure World和Non-secure World(也叫
-		Normal World).如果使能了虚拟化扩展,处理器就会在Non-secure World里增加一个Hyp模式.
+		Extension, LPAE)和虚拟化扩展.如果使能了安全扩展,ARMv7-A分为Secure World和Non-secure World
+		(也叫Normal World).如果使能了虚拟化扩展,处理器就会在Non-secure World里增加一个Hyp模式.
 
 在Non-secure World里,ARMv7-A运行特权被划分为PL0、PL1、PL2.
 
-	PL0等级:运行在用户模式(User mode),用于运行用户程序.它是没有系统特权的,e.g.没有权限访问处理器内部的硬件资源.
-	PL1等级:包括ARMv6架构中的Sys/SVC/FIQ/IRQ/Undef/Abort模式.Linux内核运行在PL1,应用程序运行在PL0.如果使能
-			了安全扩展,Secure World里有一个monitor模式也是运行在secure PL1等级,用来管理Secure World和Non-
-			secure world的状态切换.
-	PL2等级:如果使能了虚拟化扩展,超级管理程序(Hypervisor)就运行在这个等级,运行在Hyp模式,管理Guest OS之间的切换.
+	PL0等级:运行在用户模式(User mode),用于运行用户程序.它是没有系统特权的.
+		e.g.没有权限访问处理器内部的硬件资源.
+	PL1等级:包括ARMv6架构中的Sys/SVC/FIQ/IRQ/Undef/Abort模式.Linux内核运行在PL1,应用程序运行在PL0.
+		如果使能了安全扩展,Secure World里有一个monitor模式也是运行在secure PL1等级,用来管理Secure
+		World和Non-secure world的状态切换.
+	PL2等级:如果使能了虚拟化扩展,超级管理程序(Hypervisor)就运行在这个等级,运行在Hyp模式,管理Guest OS之
+		间的切换.
 
 **ARMv7二级页表页大小情况:**
 
@@ -414,12 +423,12 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 二级页表:如果需要支持4KB页面或64KB大页映射,就需要用到二级页表.
 
 	//当TLB miss时,处理器需要查询页表,过程如下:
-	1)处理器根据页表基地址控制寄存器TTBCR和虚拟地址判断使用哪个页表基地址寄存器(TTBR0还是TTBR1).页表基地址寄存器
-		存放的是一级页表的基地址.据此可以确定一级页表的基地址.
-	2)处理器根据虚拟地址的bit[31:20]作为索引值,在一级页表中找到页表项,一级页表共有4096个页表项.一级页表项中存放的
-		是二级页表的物理基地址.据此可以确定二级页表的物理基地址.
+	1)处理器根据页表基地址控制寄存器TTBCR和虚拟地址判断使用哪个页表基地址寄存器(TTBR0还是TTBR1).页表基
+		地址寄存器存放的是一级页表的基地址.据此可以确定一级页表的基地址.
+	2)处理器根据虚拟地址的bit[31:20]作为索引值,在一级页表中找到页表项,一级页表共有4096个页表项.一级页表
+		项中存放的是二级页表的物理基地址.据此可以确定二级页表的物理基地址.
 	3)处理器根据虚拟地址的bit[19:12]作为索引值,在二级页表中找到页表项,二级页表供有256个页表项.
-	4)二级页表中的页表项存放的就是4KB页的物理地址.
+	4)二级页表中的页表项存放的就是4KB页的物理基地址.
 	/*
 	PS:当一个页表大小超过一个页面大小,就会产生二级页表.
 	*/
@@ -449,8 +458,8 @@ AArch64架构支持安全扩展和虚拟化扩展.安全扩展把ARM世界分为
 **AArch64架构的地址总线:**
 
 	1,地址总线位宽最多48位,虚拟地址VA被划分为2个空间,每个空间最大支持256TB大小.
-	2,低位虚拟地址:0x0000_0000_0000_0000到0x0000_FFFF_FFFF_FFFF.用于用户控件;
-	3,高位虚拟地址:0xFFFF_0000_0000_0000到0xFFFF_FFFF_FFFF_FFFF.用于内核控件.
+	2,低位虚拟地址:0x0000_0000_0000_0000到0x0000_FFFF_FFFF_FFFF.用于用户空间;
+	3,高位虚拟地址:0xFFFF_0000_0000_0000到0xFFFF_FFFF_FFFF_FFFF.用于内核空间.
 
 **AArch64页表:**
 
