@@ -469,12 +469,39 @@ AArch64架构支持安全扩展和虚拟化扩展.安全扩展把ARM世界分为
 
 ## 1.11 多核处理器中cache的一致性
 
-**略**
+### 1.11.1 cache coherency产生的原因
+
+	在一个处理器系统中不同CPU核上的D-cache和内存可能具有同一数据的多个副本,仅有一个CPU核的系统中不存在一
+	致性问题.
+
+### 1.11.2 一致性维护
+
+跟踪每一个cache line的状态,并根据处理器的读写操作和总线上的相应传输来更新cache line在不同CPU核上的D-cache中的状态,从而维护cache一致性.
+
+### 1.11.3 一致性维护方法
+
+ARM或x86广泛使用类似MESI协议来维护cache一致性.
+
+**1.MESI协议定义**
+
+![](images/MESI_protocol.png)
+
+	1.M态(修改态)和E(独占态)态的cache line,数据都是独有的.不同点:
+		M态的数据是dirty的,和内存不一致.E态的数据是干净(clean)的,和内存的一致.
+	2.拥有M态的cache line会在某个合适的时候把该cache line写回到内存中,其他状态变为S态(共享态);
+	3.S态的cache line,数据和其他cache共享,只有clean的数据才能被多个cache共享;
+	4.I态表示这个cache line无效.
+
+**2.MESI状态迁移说明**
+
+![](images/MESI_status_1.png)
+
+![](images/MESI_status_2.png)
 
 ## 1.12 cache在linux内核中的应用
 
-	1.内核中常用的数据结构通常是L1 cache对齐的.e.g mm_struct,fs_cache等使用"SLAB_HWCACHE_ALIGN"标志来创建slab
-		缓存描述符.
+	1.内核中常用的数据结构通常是L1 cache对齐的.e.g mm_struct,fs_cache等使用"SLAB_HWCACHE_ALIGN"标志
+		来创建slab缓存描述符.
 	2.一些常用的数据结构在定义时就约定数据结构以L1 cache对齐.使用"____cacheline_aligned_in_smp和
 		____cacheline_internodealigned_in_smp"等宏来定义数据结构:
 		/*在目录./include/linux/mmzone.h中*/
@@ -482,12 +509,13 @@ AArch64架构支持安全扩展和虚拟化扩展.安全扩展把ARM世界分为
 			...
 		}__cacheline_internodealigned_in_smp;	//表示该结构体cache line对齐
 	3.数据结构中频繁访问的成员可以单独占用一个cache line,或者相关的成员在cache line彼此错开.
-		e.g.struct zone数据结构中的zone->lock和zone->lru_lock可以让他们各自使用不同的cache line,以提高获取锁的效率.
+		e.g.struct zone数据结构中的zone->lock和zone->lru_lock可以让他们各自使用不同的cache line,
+		以提高获取锁的效率.
 	4.slab的着色区和自旋锁的实现.
 
 ## 1.13 ARM big.LITTLE架构
 
-ARM big.LITTLE架构:ARM的大小核概念.针对性能优化化的处理器内核称为大核,针对低功耗待机优化过的处理器内核称为小核.
+ARM big.LITTLE架构:ARM的大小核概念.针对性能优化过的处理器内核称为大核,针对低功耗待机优化过的处理器内核称为小核.
 
 常见的大核处理器:Cortex-A15, Cortex-A57, Cortex-A72和Cortex-A73.
 
@@ -495,7 +523,7 @@ ARM big.LITTLE架构:ARM的大小核概念.针对性能优化化的处理器内�
 
 ## 1.14 cache coherency和memory consistency
 
-cachecoherency:高速缓存一致性关注的是同一个数据在多个cache和内存中的一致性问题.解决方法主要是总线监听协议,e.g.MESI协议.
+cache coherency:高速缓存一致性关注的是同一个数据在多个cache和内存中的一致性问题.解决方法主要是总线监听协议,e.g.MESI协议.
 
 memory consistency:处理器系统对多个地址进行存储器访问序列的正确性,即内存访问模型.
 
