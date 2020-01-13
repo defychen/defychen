@@ -529,7 +529,21 @@ memory consistency:处理器系统对多个地址进行存储器访问序列的�
 
 ## 1.15 cache的write back策略
 
-**略**
+存储器读写指令流程:
+
+	1.一条存储器读写指令经过取指、译码、发射和执行等一系列操作后,先到达LSU(Load Store Unit)部件,然后
+		达到L1 cache控制器;
+	2.L1 cache控制器首先发起探测(probe)操作,对于读操作发起cache读探测并带回数据;写操作发起cache写探测
+		操作(写操作之前需要准备好待写的cache line);
+	3.写操作探测过程中,如果没有找到对应的cache block,就是Write miss(否则是Write hit).Write miss的策
+		略是Write-Allocate,即L1 cache控制器分配一个新的cache line,之后和获取的数据进行合并,然后写入L1
+		cache中.
+	4.之后就是写入操作,分为两种模式:
+		1.write throught(直写模式):进行写操作时,数据同时写入当前的cache、下一级cache或主存中.
+			优点:降低cache一致性的实现难度;缺点:消耗比较多的总线带宽.
+		2.write bach(回写模式):进行写操作时,数据直接写入当前cache中,而不会继续传递.而当该cache line被
+		替换出去时,被改写的数据才会更新到下一级cache或主存储器中.
+			优点:有效降低了总线带宽需求;缺点:增加了cache一致性的实现难度.
 
 ## 1.16 cache line替换策略
 
@@ -544,7 +558,24 @@ memory consistency:处理器系统对多个地址进行存储器访问序列的�
 
 ## 1.17 NUMA架构
 
-**略.**
+### 1.17.1 UMA内存架构
+
+UMA的内存架构(Uniform Memory Architecture):内存是统一架构和统一寻址.SMP(Symmetric Multiple Processing:对称多处理器)系统大部分都采用UMA内存架构.特点:
+
+	1.所有硬件资源是共享的,每个处理器都能访问到系统中的内存和外设资源;
+	2.所有处理器都是平等关系;
+	3.统一寻址访问内存;
+	4.处理器和内存通过内部的一条总线连接在一起.
+	缺点:
+	因为所有对等的处理器都通过一条总线连接在一起,随着处理器数量的增多,系统总线成为系统的最大瓶颈.
+
+![](images/smp_architecture.png)
+
+### 1.17.2 NUMA架构
+
+NUMA系统由多个内存节点组成,整个内存体系可以作为一个整体,任何处理器都可以访问,只是处理器访问本地内存节点拥有更小的延迟和更大的带宽,处理器访问远程节点速度要慢一些.
+
+![](images/numa_architecture.png)
 
 ***
 
