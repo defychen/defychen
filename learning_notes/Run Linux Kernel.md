@@ -600,8 +600,8 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 		->early_init_dt_scan_memory()]
 
 	/*
-		start_kernel:位于./init/main.c/start_kernel()--->该函数由汇编代码调用.e.g../arch/arm/kernel/head-common.S
-			调用.该函数会做一些初始化:init_IRQ(),tick_init()...
+		start_kernel:位于./init/main.c/start_kernel()--->该函数由汇编代码调用.e.g../arch/arm/
+			kernel/head-common.S调用.该函数会做一些初始化:init_IRQ(),tick_init()...
 		setup_arch:位于./arch/arm/kernel/setup.c/setup_arch()
 		setup_machine_fdt:位于./arch/arm/kernel/devtree.c/setup_machine_fdt()
 		early_init_dt_scan_nodes:位于./drivers/of/fdt.c/early_init_dt_scan_nodes()
@@ -623,21 +623,21 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 			pr_debug(" - %llx ,  %llx\n", (unsigned long long)base,
 			    (unsigned long long)size);
 	
-			early_init_dt_add_memory_arch(base, size);	//得到内存的base_address和size信息.
+			early_init_dt_add_memory_arch(base, size);	//得到内存的base和size信息.
 			//通过early_init_dt_add_memory_arch()->memblock_add()函数添加到memblock子系统中.
 		}
 
-	return 0;
+		return 0;
 	}
 
 ### 2.1.2 物理内存映射
 
-1.将页表中的页表项清零,在函数prepare_page_table()中实现(清除一级页表项的内容):
+1.内核使用内存前,需要初始化内核的页表,初始化页表主要在map_lowmem()函数中.在映射页表之前,需要把页表中的页表项清零,在函数prepare_page_table()中实现(清除一级页表项的内容):
 
 	[start_kernel->setup_arch->paging_init->prepare_page_table]
 	/*
-		start_kernel:位于./init/main.c/start_kernel()--->该函数由汇编代码调用.e.g../arch/arm/kernel/head-common.S
-			调用.该函数会做一些初始化:init_IRQ(),tick_init()...
+		start_kernel:位于./init/main.c/start_kernel()--->该函数由汇编代码调用.e.g../arch/arm/
+			kernel/head-common.S调用.该函数会做一些初始化:init_IRQ(),tick_init()...
 		setup_arch:位于./arch/arm/kernel/setup.c/setup_arch()
 		paging_init:位于./arch/arm/mm/mmu.c/paging_init()
 		prepare_page_table:位于./arch/arm/mm/mmu.c/prepare_page_table().
@@ -680,8 +680,8 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 
 	[start_kernel->setup_arch->paging_init->map_lowmem]
 	/*
-		start_kernel:位于./init/main.c/start_kernel()--->该函数由汇编代码调用.e.g../arch/arm/kernel/head-common.S
-			调用.该函数会做一些初始化:init_IRQ(),tick_init()...
+		start_kernel:位于./init/main.c/start_kernel()--->该函数由汇编代码调用.e.g../arch/arm/
+			kernel/head-common.S调用.该函数会做一些初始化:init_IRQ(),tick_init()...
 		setup_arch:位于./arch/arm/kernel/setup.c/setup_arch()
 		paging_init:位于./arch/arm/mm/mmu.c/paging_init()
 		map_lowmem:位于./arch/arm/mm/mmu.c/map_lowmem().
@@ -703,6 +703,7 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 			if (start >= end)
 				break;
 	
+			// 映射kernel_image区域
 			if (end < kernel_x_start) {
 				map.pfn = __phys_to_pfn(start);
 				map.virtual = __phys_to_virt(start);
@@ -747,9 +748,12 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 		}
 	}
 
-**kernel内部代码段和只读数据段划分:**
+3.kernel内部代码段和只读数据段划分
 
-	/*_stext:代码段起始;		_init_end:代码段结束.		__end_rodata:只读数据段结束.*/
+	/*_stext:代码段起始;		_init_end:代码段结束.		__end_rodata:只读数据段结束.
+		kernel的代码段从_stext开始,到_init_end结束.
+	*/
+
 	//得到代码段起始和只读数据段的结束
 	extern int _stext;
 	extern int __end_rodata;
