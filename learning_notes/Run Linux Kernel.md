@@ -750,7 +750,10 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 
 3.kernel内部代码段和只读数据段划分
 
-	/*_stext:代码段起始;		_init_end:代码段结束.		__end_rodata:只读数据段结束.
+	/*	_stext:代码段起始,地址为:0x60000000(该地址也是内存开始地址);
+		_init_end:代码段结束,地址为:0x60800000;
+		arm_lowmem_limit:0x8f800000;
+		__end_rodata:只读数据段结束.
 		kernel的代码段从_stext开始,到_init_end结束.
 	*/
 
@@ -769,7 +772,7 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 
 ### 2.1.3 zone初始化
 
-**struct zone**
+#### 2.1.3.1 struct zone
 
 页表初始化完成之后,内核对内存进行管理.内核采用区块zone的方式进行管理.
 
@@ -778,8 +781,11 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 		/* Read-mostly fields */
 	
 		/* zone watermarks, access with *_wmark_pages(zone) macros */
-		unsigned long watermark[NR_WMARK];	//每个zone在系统启动时会计算出3个水位值(WMARK_WIN, WMARK_LOW, 
-				//WMARK_HIGH).在页面分配器中和kswapd页面回收中用到.
+		unsigned long watermark[NR_WMARK];
+		/* 
+			每个zone在系统启动时会计算出3个水位值(WMARK_MIN, WMARK_LOW,WMARK_HIGH).在页面分配器中
+			和kswapd页面回收中用到.
+		*/
 		long lowmem_reserve[MAX_NR_ZONES];	//zone中预留的内存.
 		struct pglist_data	*zone_pgdat;	//指向内存节点
 		struct per_cpu_pageset __percpu *pageset;	//维护Per-CPU页面,减少自旋锁的争用.
@@ -802,7 +808,7 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 		atomic_long_t		vm_stat[NR_VM_ZONE_STAT_ITEMS];	//zone计数
 	} ____cacheline_internodealigned_in_smp;
 
-**zone的划分**
+#### 2.1.3.2 zone的划分
 
 	/*mmzone.h位于./include/linux/mmzone.h中*/
 	enum zone_type {
@@ -823,7 +829,7 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 	+	__MAX_NR_ZONES
 	};
 
-**平台运行之后zone信息**
+#### 2.1.3.3 平台运行之后zone信息
 
 	/*平台跑起来的打印信息,搜索zone就在附近*/
 	Virtual kernel memory layout:	//虚拟kernel内存布局
@@ -838,13 +844,13 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 	      .data : 0xc3722000 - 0xc3765c70   ( 272 kB)
 	       .bss : 0xc3765c70 - 0xc391a2d0   (1746 kB)
 
-**zone的初始化函数---free_area_init_core**
+#### 2.1.3.4 zone的初始化函数---free_area_init_core
 
 	/*start_kernel->setup_arch->paging_init->bootmem_init->zone_sizes_init->
 		free_area_init_node->free_area_init_core*/
 	/*
-		start_kernel:位于./init/main.c/start_kernel()--->该函数由汇编代码调用.e.g../arch/arm/kernel/head-common.S
-			调用.该函数会做一些初始化:init_IRQ(),tick_init()...
+		start_kernel:位于./init/main.c/start_kernel()--->该函数由汇编代码调用.e.g../arch/arm/
+			kernel/head-common.S调用.该函数会做一些初始化:init_IRQ(),tick_init()...
 		setup_arch:位于./arch/arm/kernel/setup.c/setup_arch()
 		paging_init:位于./arch/arm/mm/mmu.c/paging_init()
 		bootmem_init:位于./arch/arm/mm/init.c/bootmem_init()
