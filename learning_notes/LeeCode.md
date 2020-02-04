@@ -267,6 +267,103 @@ Example 3:
 
 ### 5.1 Description
 
+Given a string s, find the longest palindromic substring in s. You may assume that the maximum length of s is 1000.
+
+Example 1:
+	
+	Input: "babad"
+	Output: "bab"
+	Note: "aba" is also a valid answer.
+
+Example 2:
+
+	Input: "cbbd"
+	Output: "bb"
+
+### 5.2 Analysis
+
+什么是回文串，就是正读反读都一样的字符串，比如 "bob", "level", "noon" 等等。那么最长回文子串就是在一个字符串中的那个最长的回文子串。
+
+LeetCode 中关于回文串的题共有五道，除了这道，其他的四道为 Palindrome Number，Validate Palindrome，Palindrome Partitioning，Palindrome Partitioning II，我们知道传统的验证回文串的方法就是两个两个的对称验证是否相等，那么对于找回文字串的问题，就要以每一个字符为中心，像两边扩散来寻找回文串，这个算法的时间复杂度是 O(n*n)，可以通过 OJ，就是要注意奇偶情况，由于回文串的长度可奇可偶，比如 "bob" 是奇数形式的回文，"noon" 就是偶数形式的回文，两种形式的回文都要搜索，对于奇数形式的，我们就从遍历到的位置为中心，向两边进行扩散，对于偶数情况，我们就把当前位置和下一个位置当作偶数行回文的最中间两个字符，然后向两边进行搜索。
+
+### 5.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <string>
+	using namespace std;
+	
+	void search_palindrome(string s, int left, int right, int &start, int &max_len)
+	{
+		while (left >= 0 && right < s.size() && s[left] == s[right]) {
+			left--;
+			right++;
+		}
+
+		if (max_len < right - left - 1) {
+			start = left + 1;
+			max_len = right - left - 1;
+		}
+	}
+
+	string longest_palindrome(string s)
+	{
+		if (s.size() < 2)
+			return s;
+		int n = s.size(), start = 0, max_len = 0;
+		for (int i = 0; i < n - 1; i++) {
+			search_palindrome(s, i, i, start, max_len);
+			search_palindrome(s, i, i + 1, start, max_len);
+		}
+		return s.substr(start, max_len);
+	}
+
+	//测试程序
+	int main()
+	{
+		string s = "babad";
+		string res = longest_palindrome(s);
+		cout << res << endl;	//结果为:bab
+	}
+
+**2.Solution 2**
+
+我们也可以不使用子函数，直接在一个函数中搞定，我们还是要定义两个变量 start 和 maxLen，分别表示最长回文子串的起点跟长度，在遍历s中的字符的时候，我们首先判断剩余的字符数是否小于等于 maxLen 的一半，是的话表明就算从当前到末尾到子串是半个回文串，那么整个回文串长度最多也就是 maxLen，既然 maxLen 无法再变长了，计算这些就没有意义，直接在当前位置 break 掉就行了。否则就要继续判断，我们用两个变量 left 和 right 分别指向当前位置，然后我们先要做的是向右遍历跳过重复项，这个操作很必要，比如对于 noon，i在第一个o的位置，如果我们以o为最中心往两边扩散，是无法得到长度为4的回文串的，只有先跳过重复，此时left指向第一个o，right指向第二个o，然后再向两边扩散。而对于 bob，i在第一个o的位置时，无法向右跳过重复，此时 left 和 right 同时指向o，再向两边扩散也是正确的，所以可以同时处理奇数和偶数的回文串，之后的操作就是更新 maxLen 和 start 了，跟上面的操作一样。
+
+	string longest_palindrome(string s)
+	{
+		if (s.size() < 2)
+			return s;
+		int n = s.size(), start = 0, max_len = 0;
+		for (int i = 0; i < n;) {
+			if ((n - i) <= (max_len / 2))
+				break;
+			int left = i, right = i;
+			while (right < n - 1 && s[right + 1] == s[right]) {
+				right++;
+			}
+			i = right + 1;
+			while (right < n - 1 && left > 0 && s[right + 1] == s[left - 1]) {
+				right++;
+				left--;
+			}
+			if (max_len < right - left + 1) {
+				start = left;
+				max_len = right - left + 1;
+			}
+		}
+		return s.substr(start, max_len);
+	}
+
+**3.Solution 3**
+
+[还有一种使用马拉车算法 Manacher's Algorithm](https://github.com/grandyang/leetcode/issues/5)
+
+	马拉车算法将时间复杂度提升到了 O(n) 这种逆天的地步，而算法本身也设计的很巧妙。暂时没看。
+
+[Manacher's Algorithm 马拉车算法介绍](https://www.cnblogs.com/grandyang/p/4475985.html)
+
 ## 6. ZigZag Conversion
 
 ### 6.1 Description
@@ -333,3 +430,291 @@ The string "PAYPALISHIRING" is written in a zigzag pattern on a given number of 
 		cout << s1 << "---" << s2 << "---" << s3 << endl;
 	}
 	//结果为:02468ACE13579BDF---048C13579BDF26AE---06C157BD248AE39F
+
+## 7. Reverse Integer
+
+### 7.1 Description
+
+Given a 32-bit signed integer, reverse digits of an integer.
+
+Example 1:
+
+	Input: 123
+	Output: 321
+
+Example 2:
+
+	Input: -123
+	Output: -321
+
+Example 3:
+
+	Input: 120
+	Output: 21
+
+### 7.2 Analysis
+
+翻转数字问题需要注意的就是溢出问题，由于int型的数值范围是 -2147483648～2147483647，那么如果要翻转 1000000009 这个在范围内的数得到 9000000001，而翻转后的数就超过了范围。
+
+### 7.3 Code
+
+**1.Solution**
+
+	#include <iostream>
+	using namespace std;
+
+	int reverse(int x)
+	{
+		int res = 0;
+		while (x != 0) {
+			if (abs(res) > INT_MAX / 10)	// INT_MAX为:2147483647
+				return 0;
+			res = res * 10 + x % 10;
+			x = x / 10;
+		}
+		return res;
+	}
+	//测试程序
+	int main()
+	{
+		int x = -1463847412;
+		cout << reverse(x) << endl;
+	}
+
+在贴出答案的同时，OJ 还提了一个问题 To check for overflow/underflow, we could check if ret > 214748364 or ret < –214748364 before multiplying by 10. On the other hand, we do not need to check if ret == 214748364, why? （214748364 即为 INT_MAX / 10）。为什么不用 check 是否等于 214748364 呢，因为输入的x也是一个整型数，所以x的范围也应该在 -2147483648～2147483647 之间，那么x的第一位只能是1或者2，翻转之后 res 的最后一位只能是1或2，所以 res 只能是 2147483641 或 2147483642 都在 int 的范围内。但是它们对应的x为 1463847412 和 2463847412，后者超出了数值范围。所以当过程中 res 等于 214748364 时， 输入的x只能为 1463847412， 翻转后的结果为 2147483641，都在正确的范围内，所以不用 check。
+
+## 8. String to Integer
+
+### 8.1 Description
+
+Example 1:
+
+	Input: "42"
+	Output: 42
+
+Example 2:
+
+	Input: "   -42"
+	Output: -42
+	Explanation: The first non-whitespace character is '-', which is the minus sign.
+	             Then take as many numerical digits as possible, which gets 42.
+
+Example 3:
+
+	Input: "4193 with words"
+	Output: 4193
+
+Example 4:
+
+	Input: "words and 987"
+	Output: 0
+	Explanation: The first non-whitespace character is 'w', which is not a numerical 
+	             digit or a +/- sign. Therefore no valid conversion could be performed.
+
+Example 5:
+
+	Input: "-91283472332"
+	Output: -2147483648
+	Explanation: The number "-91283472332" is out of the range of a 32-bit signed integer.
+	             Thefore INT_MIN (−231) is returned.
+
+### 8.2 Analysis
+
+字符串转为整数是很常用的一个函数，由于输入的是字符串，所以需要考虑的情况有很多种。这题只需要考虑数字和符号的情况：
+	
+	1.若字符串开头是空格，则跳过所有空格，到第一个非空格字符，如果没有，则返回0.
+	2.若第一个非空格字符是符号 +/-，则标记 sign 的真假，这道题还有个局限性，那就是在 c++ 里面，
+		+-1 和-+1 都是认可的，都是 -1，而在此题里，则会返回0.
+	3.若下一个字符不是数字，则返回0，完全不考虑小数点和自然数的情况，不过这样也好，起码省事了不少。
+	4.如果下一个字符是数字，则转为整形存下来，若接下来再有非数字出现，则返回目前的结果。
+	5.还需要考虑边界问题，如果超过了整型数的范围，则用边界值替代当前值。
+
+### 8.3 Code
+
+**1.Solution**
+
+	#include <iostream>
+	#include <string>
+	using namespace std;
+
+	int my_atoi(string s)
+	{
+		if (s.empty())
+			return 0;
+		int sign = 1, base = 0, i = 0, n = s.size();
+		while (i < n && s[i] == ' ') {
+			i++;
+		}
+		if (i < n && (s[i] == '+' || s[i] == '-')) {
+			sign = (s[i++] == '+') ? 1 : -1;
+		}
+		while (i < n && (s[i] >= '0' && s[i] <= '9')) {
+			if ((base > INT_MAX / 10) || (base == INT_MAX && s[i] > '7')) {
+				return (sign == 1) : INT_MAX : INT_MIN;
+			}
+			base = base * 10 + (s[i++] - '0');
+		}
+		return base * sign;
+	}
+	//测试程序
+	int main()
+	{
+		cout << my_atoi("4193 with words") << endl;	//结果为:4193
+		//cout << typeid(to_string(1234)).name() << endl;
+		/*
+			to_string(1234)--->将数组转换为字符串
+			typeid(to_string(1234)).name():查看类型
+		*/
+	}
+
+## 9. Palindrome Number
+
+### 9.1 Description
+
+Determine whether an integer is a palindrome. An integer is a palindrome when it reads the same backward as forward.
+
+Example 1:
+
+	Input: 121
+	Output: true
+
+Example 2:
+
+	Input: -121
+	Output: false
+
+### 9.2 Analysis
+
+直接对整数进行操作，可以利用取整和取余来获得想要的数字，比如 1221 这个数字，如果 计算 1221 / 1000， 则可得首位1，如果 1221 % 10， 则可得到末尾1，进行比较，然后把中间的 22 取出继续比较。
+
+### 9.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	using namespace std;
+
+	bool is_palindrome(int x)
+	{
+		if (x < 0)
+			return false;
+
+		int div = 1;
+		while (x / div >= 10)
+			div *= 10;
+		while (x > 0) {
+			int left = x / div;
+			int right = x % 10;
+			if (left != right)
+				return false;
+			x = (x % div) / 10;
+			div /= 100;
+		}
+		return true;
+	}
+	//测试程序
+	int main()
+	{
+		cout << boolalpha << is_palindrome(123321) << endl;
+	}
+
+**2.Solution 2**
+
+一种很巧妙的解法，还是首先判断x是否为负数，这里可以用一个小 trick，因为整数的最高位不能是0，所以回文数的最低位也不能为0，数字0除外，所以如果发现某个正数的末尾是0了，也直接返回 false 即可。好，下面来看具体解法，要验证回文数，那么就需要看前后半段是否对称，如果把后半段翻转一下，就看和前半段是否相等就行了。所以做法就是取出后半段数字，进行翻转，具体做法是，每次通过对 10 取余，取出最低位的数字，然后加到取出数的末尾，就是将 revertNum 乘以 10，再加上这个余数，这样翻转也就同时完成了，每取一个最低位数字，x都要自除以 10。这样当 revertNum 大于等于x的时候循环停止。由于回文数的位数可奇可偶，如果是偶数的话，那么 revertNum 就应该和x相等了；如果是奇数的话，那么最中间的数字就在 revertNum 的最低位上了，除以 10 以后应该和x是相等的。
+
+	bool is_palindrome(int x)
+	{
+		if (x < 0 || (x != 0 && x % 10 == 0))
+			return false;
+		int reverse_num = 0;
+		while (x > reverse_num) {
+			reverse_num = reverse_num * 10 + x % 10;
+			x = x / 10;
+		}
+		return x == reverse_num || x == reverse_num / 10;
+	}
+
+## 10. Regular Expression Matching
+
+### 10.1 Description
+
+### 10.2 Analysis
+
+### 10.3 Code
+
+## 11. Container With Most Water
+
+### 11.1 Description
+
+Given n non-negative integers  a1 ,  a2 , ...,  an , where each represents a point at coordinate ( i ,  ai ).  n  vertical lines are drawn such that the two endpoints of line  i  is at ( i ,  ai ) and ( i , 0). Find two lines, which together with x-axis forms a container, such that the container contains the most water.
+Note: You may not slant the container and  n is at least 2.
+
+![](images/container_with_most_water.png)
+
+The above vertical lines are represented by array [1,8,6,2,5,4,8,3,7]. In this case, the max area of water (blue section) the container can contain is 49.
+
+Example:
+
+	Input: [1,8,6,2,5,4,8,3,7]
+	Output: 49
+
+### 11.2 Analysis
+
+定义i和j两个指针分别指向数组的左右两端，然后两个指针向中间搜索，每移动一次算一个值和结果比较取较大的，容器装水量的算法是找出左右两个边缘中较小的那个乘以两边缘的距离。
+
+### 11.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <vector>
+	#include <algorithm>
+	using namespace std;
+
+	int max_area(vector<int> height)
+	{
+		int res = 0, i = 0, j = height.size() - 1;
+		while (i < j) {
+			res = max(res, min(height[i], height[j]) * (j - i));
+			(height[i] < height[j]) ? i++ : j--; 
+		}
+		return res;
+	}
+	//测试程序
+	int main()
+	{
+		vector<int> height = {1,8,6,2,5,4,8,3,7};
+		cout << max_area(height) << endl;
+	}
+
+**2.Solution 2**
+
+	int max_area(vector<int> height)
+	{
+		int res = 0, i = 0, j = height.size() - 1;
+		while (i < j) {
+			int h = min(height[i], height[j]);
+			res = max(res, h * (j - i));
+			while (i < j && h == height[i])
+				i++;
+			while (i < j && h == height[j])
+				j++;
+		}
+		return res;
+	}
+
+## 12. Integer to Roman
+
+### 12.1 Description
+
+### 12.2 Analysis
+
+### 12.3 Code
+
+## 13. Roman to Integer
+
+### 13.1 Description
+
+### 13.2 Analysis
+
+### 13.3 Code
