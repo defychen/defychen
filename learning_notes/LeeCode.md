@@ -707,14 +707,164 @@ Example:
 
 ### 12.1 Description
 
+Roman numerals are represented by seven different symbols: I, V, X, L, C, D and M.
+
+	Symbol       Value
+	I             1
+	V             5
+	X             10
+	L             50
+	C             100
+	D             500
+	M             1000
+
+Example 1:
+
+	Input: 9
+	Output: "IX"
+
+Example 2:
+
+	Input: 58
+	Output: "LVIII"
+	Explanation: L = 50, V = 5, III = 3.
+
+Example 3:
+
+	Input: 1994
+	Output: "MCMXCIV"
+	Explanation: M = 1000, CM = 900, XC = 90 and IV = 4.
+
 ### 12.2 Analysis
 
+整数 1437 的罗马数字为 MCDXXXVII， 我们不难发现，千位，百位，十位和个位上的数分别用罗马数字表示了。 1000 - M, 400 - CD, 30 - XXX, 7 - VII。所以我们要做的就是用取商法分别提取各个位上的数字，然后分别表示出来：
+
+	100 - C
+	200 - CC
+	300 - CCC
+	400 - CD
+	500 - D
+	600 - DC
+	700 - DCC
+	800 - DCCC
+	900 - CM
+
+可以分为四类，100 到 300 一类，400 一类，500 到 800 一类，900 最后一类。每一位上的情况都是类似的。
+
 ### 12.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <string>
+	#include <vector>
+	using namespace std;
+
+	string int_to_roman(int num)
+	{
+		string res = "";
+		vector<char> roman{'M', 'D', 'C', 'L', 'X', 'V', 'I'};
+		vector<int> value{1000, 500, 100, 50, 10, 5, 1};
+		for (int i = 0; i < 7; i += 2) {
+			int x = num / value[i];
+			if (x < 4) {
+				for (int j = 0; j < x; j++) {
+					res += roman[i];
+				}
+			} else if (x == 4) {
+				res = res + roman[i] + roman[i - 1];
+			} else if (x > 4 && x < 9) {
+				res += roman[i - 1];
+				for (int j = 6; j <= x; j++) {
+					res = res + roman[i];
+				}
+			} else if (x == 9) {
+				res = res + roman[i] + roman[i - 2];
+			}
+
+			num %= value[i];
+		}
+		return res;
+	}
+	//测试程序
+	int main()
+	{
+		cout << int_to_roman(1437) << endl;
+	}
 
 ## 13. Roman to Integer
 
 ### 13.1 Description
 
+Given a roman numeral, convert it to an integer. Input is guaranteed to be within the range from 1 to 3999.
+
+Example 1:
+
+	Input: "IX"
+	Output: 9
+
+Example 2:
+
+	Input: "LVIII"
+	Output: 58
+	Explanation: L = 50, V= 5, III = 3.
+
+Example 3:
+
+	Input: "MCMXCIV"
+	Output: 1994
+	Explanation: M = 1000, CM = 900, XC = 90 and IV = 4.
+
 ### 13.2 Analysis
 
+有几条须注意掌握：
+
+	1、基本数字Ⅰ、X 、C 中的任何一个，自身连用构成数目，或者放在大数的右边连用构成数目，都不能超过三个；
+		放在大数的左边只能用一个。
+	2、不能把基本数字V 、L 、D 中的任何一个作为小数放在大数的左边采用相减的方法构成数目；放在大数的右边采
+		用相加的方式构成数目，只能使用一个。
+	3、V 和X 左边的小数字只能用Ⅰ。
+	4、L 和C 左边的小数字只能用X。
+	5、D 和M 左边的小数字只能用C。
+
+用到 HashMap 数据结构，来将罗马数字的字母转化为对应的整数值，因为输入的一定是罗马数字，那么只要考虑两种情况即可：
+
+	1.如果当前数字是最后一个数字，或者之后的数字比它小的话，则加上当前数字。
+	2.其他情况则减去这个数字。
+
 ### 13.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <string>
+	#include <unordered_map>
+	using namespace std;
+
+	int roman_to_int(string s)
+	{
+		int res = 0;
+		unordered_map<char, int> m{{'M', 1000}, {'D', 500}, {'C', 100}, {'L', 50}, {'X', 10},
+			{'V', 5}, {'I', 1}};
+		for (int i = 0; i < s.size(); i++) {
+			int val = m[s[i]];
+			if (i == s.size() - 1 || m[s[i + 1]] <= m[s[i]])
+				res += val;
+			else
+				res -= val;
+		}
+		return res;
+	}
+	//测试程序
+	int main()
+	{
+		cout << roman_to_int("MCDXXXVII") << endl;
+	}
+
+## 14. Longest Common Prefix
+
+### 14.1 Description
+
+### 14.2 Analysis
+
+### 14.3 Code
