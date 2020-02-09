@@ -865,6 +865,134 @@ Example 3:
 
 ### 14.1 Description
 
+Write a function to find the longest common prefix string amongst an array of strings.
+If there is no common prefix, return an empty string "".
+
+Example 1:
+
+	Input: ["flower","flow","flight"]
+	Output: "fl"
+
+Example 2:
+
+	Input: ["dog","racecar","car"]
+	Output: ""
+	Explanation: There is no common prefix among the input strings.
+
+Note:
+
+All given inputs are in lowercase letters a-z.
+
 ### 14.2 Analysis
 
+定义两个变量i和j，其中i是遍历搜索字符串中的字符，j是遍历字符串集中的每个字符串。这里将单词上下排好，则相当于一个各行长度有可能不相等的二维数组，遍历顺序和一般的横向逐行遍历不同，而是采用纵向逐列遍历，在遍历的过程中，如果某一行没有了，说明其为最短的单词，因为共同前缀的长度不能长于最短单词，所以此时返回已经找出的共同前缀。每次取出第一个字符串的某一个位置的单词，然后遍历其他所有字符串的对应位置看是否相等，如果有不满足的直接返回 res，如果都相同，则将当前字符存入结果，继续检查下一个位置的字符。
+
 ### 14.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <vector>
+	#include <string>
+	using namespace std;
+
+	string longest_common_prefix(vector<string> s)
+	{
+		if (s.empty())
+			return "";
+		string res = "";
+		for (int i = 0; i < s[0].size(); i++) {
+			char c = s[0][i];
+			for (int j = 1; j < s.size(); j++) {
+				if (i > s[j].size() || s[j][i] != c) {
+					return res;
+				}
+			}
+			res += c;
+		}
+		return res;
+	}
+	//测试代码
+	int main()
+	{
+		vector<string> s{"flower", "flow", "flight"};
+		cout << longest_common_prefix(s) << endl;
+	}
+
+## 15. 3Sum
+
+### 15.1 Description
+
+Given an array  S  of  n  integers, are there elements  a ,  b ,  c  in  S  such that  a  +  b  +  c  = 0? Find all unique triplets in the array which gives the sum of zero.
+
+Note:Elements in a triplet ( a , b , c ) must be in non-descending order. (ie,  a  ≤  b  ≤  c )
+The solution set must not contain duplicate triplets.
+
+    For example, given array S = {-1 0 1 2 -1 -4},
+    A solution set is:
+    (-1, 0, 1)
+    (-1, -1, 2)
+
+### 15.2 Analysis
+
+对原数组进行排序，然后开始遍历排序后的数组，这里注意不是遍历到最后一个停止，而是到倒数第三个就可以了。这里可以先做个剪枝优化，就是当遍历到正数的时候就 break，为啥呢，因为数组现在是有序的了，如果第一个要 fix 的数就是正数了，则后面的数字就都是正数，就永远不会出现和为0的情况了。然后还要加上重复就跳过的处理，处理方法是从第二个数开始，如果和前面的数字相等，就跳过，因为不想把相同的数字fix两次。对于遍历到的数，用0减去这个 fix 的数得到一个 target，然后只需要再之后找到两个数之和等于 target 即可。用两个指针分别指向 fix 数字之后开始的数组首尾两个数，如果两个数和正好为 target，则将这两个数和 fix 的数一起存入结果中。然后就是跳过重复数字的步骤了，两个指针都需要检测重复数字。如果两数之和小于 target，则将左边那个指针i右移一位，使得指向的数字增大一些。同理，如果两数之和大于 target，则将右边那个指针j左移一位，使得指向的数字减小一些。
+
+### 15.3 Code
+
+	#include <iostream>
+	#include <vector>
+	using namespace std;
+
+	vector<vector<int>> three_sum(vector<int> nums)
+	{
+		vector<vector<int>> res;
+		sort(nums.begin(), nums.end());
+		if (nums.empty() || nums.back() < 0 || nums.front() > 0)
+			return {};
+		for (int i = 0; i < nums.size() - 2; i++) {
+			if (nums[i] > 0)
+				break;
+			if (i > 0 && nums[i] == nums[i - 1])
+				continue;
+			int target = 0 - nums[i], j = i + 1, k = nums.size() - 1;
+			while (j < k) {
+				if (nums[j] + nums[k] == target) {
+					res.pusk_back({nums[i], nums[j], nums[k]});
+					while (j < k && nums[j + 1] == nums[j])
+						j++;
+					while (j < k && nums[k - 1] == nums[k])
+						k--;
+					j++;
+					k--;
+				} else if (nums[j] + nums[k] < target) {
+					j++;
+				} else {
+					k--;
+				}
+			}
+		}
+		return res;
+	}
+	//测试程序
+	int main()
+	{
+		vector<int> nums{-1, 0, 1, 2, -1, -4};
+		vector<vector<int>> res = three_sum(nums);
+		for (int i = 0; i < res.size(); i++) {
+			for (int j = 0; j < res[i].size(); j++) {
+				cout << res[i][j] << " ";
+			}
+			cout << endl;
+		}
+	}
+	//结果为
+	-1 -1 2
+	-1 0 1
+
+## 16. Longest Common Prefix
+
+### 16.1 Description
+
+### 16.2 Analysis
+
+### 16.3 Code
