@@ -939,6 +939,8 @@ The solution set must not contain duplicate triplets.
 
 ### 15.3 Code
 
+**1.Solution 1**
+
 	#include <iostream>
 	#include <vector>
 	using namespace std;
@@ -989,10 +991,270 @@ The solution set must not contain duplicate triplets.
 	-1 -1 2
 	-1 0 1
 
-## 16. Longest Common Prefix
+## 16. 3Sum Closest
 
 ### 16.1 Description
 
+Given an array nums of  n  integers and an integer target, find three integers in nums such that the sum is closest to target. Return the sum of the three integers. You may assume that each input would have exactly one solution.
+
+	Example:
+	
+	Given array nums = [-1, 2, 1, -4], and target = 1.
+	
+	The sum that is closest to the target is 2. (-1 + 2 + 1 = 2).
+
 ### 16.2 Analysis
 
+保证当前三数和跟给定值之间的差的绝对值最小，需要定义一个变量 diff 用来记录差的绝对值，然后还是要先将数组排个序，然后开始遍历数组，思路跟那道三数之和很相似，都是先确定一个数，然后用两个指针 left 和 right 来滑动寻找另外两个数，每确定两个数，求出此三数之和，然后算和给定值的差的绝对值存在 newDiff 中，然后和 diff 比较并更新 diff 和结果 closest 即可。
+
 ### 16.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <vector>
+	#include <algorithm>
+	using namespace std;
+
+	int three_sum_closest(vector<int> nums, int target)
+	{
+		sort(nums.begin(), nums.end());
+		int closest = nums[0] + nums[1] + nums[2];
+		int diff = abs(target - closest);
+		for (int i = 0; i < nums.size() - 1; i++) {
+			int left = i + 1, right = nums.size() - 1;
+			while (left < right) {
+				int sum = nums[i] + nums[left] + nums[right];
+				int new_diff = abs(target - sum);
+				if (new_diff < diff) {
+					diff = new_diff;
+					closest = sum;
+				}
+
+				if (sum < target)
+					left++;
+				else
+					right--;
+			}
+		}
+		return closest;
+	}
+	//测试程序
+	int main()
+	{
+		vector<int> nums{-1, 1, 2, -4};
+		cout << three_sum_closest(nums, 1) << endl;
+	}
+
+## 17. Letter Combination of a Phone Number
+
+### 17.1 Description
+
+Given a string containing digits from 2-9 inclusive, return all possible letter combinations that the number could represent.
+
+A mapping of digit to letters (just like on the telephone buttons) is given below. Note that 1 does not map to any letters.
+
+	Example:
+	
+	Input: "23"
+	Output: ["ad", "ae", "af", "bd", "be", "bf", "cd", "ce", "cf"].
+
+### 17.2 Analysis
+
+这里可以用递归 Recursion 来解，需要建立一个字典，用来保存每个数字所代表的字符串，然后还需要一个变量 level，记录当前生成的字符串的字符个数。在递归函数中首先判断 level，如果跟 digits 中数字的个数相等了，将当前的组合加入结果 res 中，然后返回。我们通过 digits 中的数字到 dict 中取出字符串，然后遍历这个取出的字符串，将每个字符都加到当前的组合后面，并调用递归函数即可。
+
+### 17.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <vector>
+	#include <string>
+	using namespace std;
+
+	void letter_combination_dfs(string digits, vector<string> dict, int level, string out,
+		vector<string> &res)
+	{
+		if (level == digits.size()) {
+			res.push_back(out);
+			return;
+		}
+		string str = dict[digits[level] - '0'];
+		for (int i = 0; i < str.size(); i++) {
+			letter_combination_dfs(digits, dict, level + 1, out + str[i], res);
+		}
+	}
+
+	vector<string> letter_combination(string digits)
+	{
+		if (digits.empty())
+			return {};
+		vector<string> res;
+		vector<string> dict{"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
+			//因为0, 1都是没有字母的
+		letter_combination(digits, dict, 0, "", res);
+		return res;
+	}
+	//测试程序
+	int main()
+	{
+		string digits{"23"};
+		vector<string> res = letter_combination(digits);
+		for (int i = 0; i < res.size(); i++) {
+			cout << res[i] << " ";
+		}
+	}
+
+## 18. 4Sum
+
+### 18.1 Description
+
+Given an array S of n integers, are there elements a , b , c , and d in S such that a + b + c + d = target? Find all unique quadruplets in the array which gives the sum of target.
+
+Note:
+
+Elements in a quadruplet(a, b, c, d)must be in non-descending order.(ie, a ≤ b ≤ c ≤ d )
+
+The solution set must not contain duplicate quadruplets.
+
+	For example, given array S = {1 0 -1 0 -2 2}, and target = 0.
+	A solution set is:
+	(-1,  0, 0, 1)
+	(-2, -1, 1, 2)
+	(-2,  0, 0, 2)
+
+### 18.2 Analysis
+
+为了避免重复项，我们使用了 STL 中的 TreeSet，其特点是不能有重复，如果新加入的数在 TreeSet 中原本就存在的话，插入操作就会失败，这样能很好的避免的重复项的存在。此题的 O(n^3) 解法的思路跟 3Sum 基本没啥区别。
+
+### 18.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <set>
+	#include <vector>
+	#include <algorithm>
+	using namespace std;
+
+	vector<vector<int>> four_sum(vector<int> nums, int target)
+	{
+		set<vector<int>> res;
+		sort(nums.begin(), nums.end());
+		for (int i = 0; i < nums.size() - 3; i++) {
+			for (int j = i + 1; j < nums.size() - 2; j++) {
+				if (j > i + 1 && nums[j] == nums[j - 1])
+					continue;
+
+				int left = j + 1, right = nums.size() - 1;
+				while (left < right) {
+					int sum = nums[i] + nums[j] + nums[left] + nums[right];
+					if (sum == target) {
+						vector<int> out{nums[i], nums[j], nums[left], nums[right]};
+						res.insert(out);
+						left++;
+						right--;
+					} else if (sum < target) {
+						left++;
+					} else {
+						right--;
+					}
+				}
+			}
+		}
+		return vector<vector<int>>(res.begin(), res.end());
+	}
+	//测试程序
+	int main()
+	{
+		vector<int> nums{1, 0, -1, 0, -2, 2};
+		vector<vector<int>> res = four_sum(nums, 0);
+	
+		for (int i = 0; i < res.size(); i++) {
+			for (int j = 0; j < res[i].size(); j++) {
+				cout << res[i][j] << " ";
+			}
+			cout << endl;
+		}
+	}
+
+## 19. Remove Nth Node From End of List
+
+### 19.1 Description
+
+Given a linked list, remove the n-th node from the end of list and return its head.
+
+	For example,
+	Given linked list: **1- >2->3->4->5**, and **_n_ = 2**.	
+	After removing the second node from the end, the linked list becomes **1- >2->3->5**.
+
+### 19.2 Analysis
+
+首先要考虑的是，如何找到倒数第N个节点，由于只允许一次遍历，所以不能用一次完整的遍历来统计链表中元素的个数，而是遍历到对应位置就应该移除了。那么就需要用两个指针来帮助解题，pre 和 cur 指针。首先 cur 指针先向前走N步，如果此时 cur 指向空，说明N为链表的长度，则需要移除的为首元素，那么此时返回 head->next 即可，如果 cur 存在，再继续往下走，此时pre指针也跟着走，直到 cur 为最后一个元素时停止，此时 pre 指向要移除元素的前一个元素，再修改指针跳过需要移除的元素即可。
+
+### 19.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	using namespace std;
+
+	struct list_node {
+		int val
+		list_node *next;
+		list_node(int v) :
+			val(v),
+			next(nullptr)
+		{}
+	};
+
+	list_node *remove_nth_from_end(list_node *head, int n)
+	{
+		if (!head->next)
+			return nullptr;
+		list_node *pre = head, *cur = head;
+		for (int i = 0; i < n; i++)
+			cur = cur->next;
+		if (!cur->next)
+			return head->next;
+
+		while (cur->next) {
+			cur = cur->next;
+			pre = pre->next;
+		}
+		pre->next = pre->next->next;
+		return head;
+	}
+	//测试程序
+	int main()
+	{
+		list_node *head = new list_node(-1);
+		list_node *cur = head;
+		cur->next = new list_node(1);
+		cur = cur->next;
+		cur->next = new list_node(2);
+		cur = cur->next;
+		cur->next = new list_node(3);
+		cur = cur->next;
+		cur->next = new list_node(4);
+		cur = cur->next;
+		cur->next = new list_node(5);
+		cur = cur->next;
+		list_node *res = remove_nth_from_end(head, 2);
+	
+		cur = res->next;
+		while (cur) {
+			cout << cur->val << " ";
+			cur = cur->next;
+		}
+	}
+
+## 20. Remove Nth Node From End of List
+
+### 20.1 Description
+
+### 20.2 Analysis
+
+### 20.3 Code
+
+**1.Solution 1**
