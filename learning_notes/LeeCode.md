@@ -1249,12 +1249,76 @@ Given a linked list, remove the n-th node from the end of list and return its he
 		}
 	}
 
-## 20. Remove Nth Node From End of List
+## 20. Valid Parentheses
 
 ### 20.1 Description
 
+Given a string containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid. An input string is valid if:
+
+Open brackets must be closed by the same type of brackets.
+Open brackets must be closed in the correct order.
+Note that an empty string is also considered valid.
+
+Example 1:
+
+	Input: "()[]{}"
+	Output: true
+
+Example 2:
+
+	Input: "([)]"
+	Output: false
+
+Example 3:
+
+	Input: "{[]}"
+	Output: true
+
 ### 20.2 Analysis
 
+验证输入的字符串是否为括号字符串，包括大括号，中括号和小括号。这里需要用一个栈，开始遍历输入字符串，如果当前字符为左半边括号时，则将其压入栈中，如果遇到右半边括号时，若此时栈为空，则直接返回 false，如不为空，则取出栈顶元素，若为对应的左半边括号，则继续循环，反之返回 false。
+
 ### 20.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <string>
+	#include <stack>
+	using namespace std;
+
+	bool is_valid(string s)
+	{
+		stack<char> parentheses;
+		for (int i = 0; i < s.size(); i++) {
+			if (s[i] == '(' || s[i] == '[' || s[i] == '{')
+				parentheses.push(s[i]);
+			else {
+				if (parentheses.empty())
+					return false;
+				if (s[i] == ')' && parentheses.top() != '(')
+					return false;
+				if (s[i] == ']' && parentheses.top() != '[')
+					return false;
+				if (s[i] == '}' && parentheses.top() != '{')
+					return false;
+				parentheses.pop();
+			}
+		}
+		return parentheses.empty();
+	}
+	//测试程序
+	int main()
+	{
+		cout << boolalpha << is_valid("{[]}");
+	}
+
+## 21. Remove Nth Node From End of List
+
+### 21.1 Description
+
+### 21.2 Analysis
+
+### 21.3 Code
 
 **1.Solution 1**
