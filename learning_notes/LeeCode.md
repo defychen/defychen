@@ -1313,12 +1313,82 @@ Example 3:
 		cout << boolalpha << is_valid("{[]}");
 	}
 
-## 21. Remove Nth Node From End of List
+## 21. Merge Two Sorted Lists
 
 ### 21.1 Description
 
+Merge two sorted linked lists and return it as a new list. The new list should be made by splicing together the nodes of the first two lists.
+
+Example:
+
+	Input: 1->2->4, 1->3->4
+	Output: 1->1->2->3->4->4
+
 ### 21.2 Analysis
 
+具体思想就是新建一个链表，然后比较两个链表中的元素值，把较小的那个链到新链表中，由于两个输入链表的长度可能不同，所以最终会有一个链表先完成插入所有元素，则直接另一个未完成的链表直接链入新链表的末尾。
+
 ### 21.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	using namespace std;
+
+	struct list_node {
+		int val;
+		list_node *next;
+		list_node(int v) :
+			val(v),
+			next(nullptr)
+		{}
+	};
+
+	list_node *merge_two_lists(list_node *l1, list_node *l2)
+	{
+		list_node *dummy = new list_node(-1), *cur = dummy;
+		while (l1 && l2) {
+			if (l1->val < l2->val) {
+				cur->next = l1;
+				l1 = l1->next;
+			} else {
+				cur->next = l2;
+				l2 = l2->next;
+			}
+			cur = cur->next;
+		}
+		cur->next = l1 ? l1 : l2;
+		return dummy->next;
+	}
+	//测试程序
+	int main()
+	{
+		list_node *l1 = new list_node(1), *cur = l1;
+		cur->next = new list_node(2);
+		cur = cur->next;
+		cur->next = new list_node(4);
+		cur = cur->next;
+	
+		list_node *l2 = new list_node(1);
+		cur = l2;
+		cur->next = new list_node(3);
+		cur = cur->next;
+		cur->next = new list_node(4);
+		cur = cur->next;
+	
+		list_node *res = merge_two_lists(l1, l2);
+		while (res) {
+			cout << res->val << " ";
+			res = res->next;
+		}
+	}
+
+## 22. Remove Nth Node From End of List
+
+### 22.1 Description
+
+### 22.2 Analysis
+
+### 22.3 Code
 
 **1.Solution 1**
