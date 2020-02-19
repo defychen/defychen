@@ -1383,12 +1383,72 @@ Example:
 		}
 	}
 
-## 22. Remove Nth Node From End of List
+## 22. Generate Parentheses
 
 ### 22.1 Description
 
+Given n pairs of parentheses, write a function to generate all combinations of well-formed parentheses.
+
+For example, given  n  = 3, a solution set is:
+
+	[
+	  "((()))",
+	  "(()())",
+	  "(())()",
+	  "()(())",
+	  "()()()"
+	]
+
 ### 22.2 Analysis
 
+给定一个数字n，让生成共有n个括号的所有正确的形式，对于这种列出所有结果的题首先还是考虑用递归 Recursion 来解，由于字符串只有左括号和右括号两种字符，而且最终结果必定是左括号3个，右括号3个，所以这里定义两个变量 left 和 right 分别表示剩余左右括号的个数，如果在某次递归时，左括号的个数大于右括号的个数，说明此时生成的字符串中右括号的个数大于左括号的个数，即会出现 ')(' 这样的非法串，所以这种情况直接返回，不继续处理。如果 left 和 right 都为0，则说明此时生成的字符串已有3个左括号和3个右括号，且字符串合法，则存入结果中后返回。如果以上两种情况都不满足，若此时 left 大于0，则调用递归函数，注意参数的更新，若 right 大于0，则调用递归函数，同样要更新参数。
+
 ### 22.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <string>
+	#include <vector>
+	using namespace std;
+
+	void generate_parentheses_dfs(int left, int right, string out, vector<string> &res)
+	{
+		if (left > right)
+			return;
+		if (left == 0 && right == 0)
+			res.push_back(out);
+		else {
+			if (left > 0)
+				generate_parentheses_dfs(left - 1, right, out + '(', res);
+			if (right > 0)
+				generate_parentheses_dfs(left, right - 1, out + ')', res);
+		}
+	}
+	
+	vector<string> generate_parentheses(int n)
+	{
+		vector<string> res;
+		generate_parentheses(n, n, "", res);
+		return res;
+	}
+	//测试程序
+	int main()
+	{
+		vector<string> res;
+		res = generate_parentheses(3);
+		for (int i = 0; i < res.size(); i++) {
+			cout << res[i] << endl;
+		}
+		return 0;
+	}
+
+## 23. Remove Nth Node From End of List
+
+### 23.1 Description
+
+### 23.2 Analysis
+
+### 23.3 Code
 
 **1.Solution 1**
