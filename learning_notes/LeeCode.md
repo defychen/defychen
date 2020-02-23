@@ -1443,12 +1443,237 @@ For example, given  n  = 3, a solution set is:
 		return 0;
 	}
 
-## 23. Remove Nth Node From End of List
+## 23. Merge K Sorted Lists
 
 ### 23.1 Description
 
 ### 23.2 Analysis
 
 ### 23.3 Code
+
+**1.Solution 1**
+
+## 24. Swap Nodes in Pairs
+
+### 24.1 Description
+
+Given a linked list, swap every two adjacent nodes and return its head. You may not modify the values in the list's nodes, only nodes itself may be changed.
+
+Example:
+
+	Given 1->2->3->4, you should return the list as 2->1->4->3.
+
+### 24.2 Analysis
+
+基本的链表操作题，我们可以分别用递归和迭代来实现。对于迭代实现，还是需要建立 dummy 节点，注意在连接节点的时候，最好画个图，以免把自己搞晕了。
+
+### 24.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	using namespace std;
+
+	struct list_node {
+		int val;
+		list_node *next;
+		list_node(int v) :
+			val(v),
+			next(nullptr)
+		{}
+	};
+
+	list_node *swap_pairs(list_node *head)
+	{
+		list_node *dummy = new list_node(-1), *prev = dummy;
+		dummy->next = head;
+		while (prev->next && prev->next->next) {
+			list_node *t = prev->next->next;
+			prev->next->next = t->next;
+			t->next = prev->next;
+			prev->next = t;
+			prev = t->next;
+		}
+		return dummy->next;
+	}
+	//测试程序
+	int main()
+	{
+		list_node *head = new list_node(1);
+		list_node *cur = head;
+		cur->next = new list_node(2);
+		cur = cur->next;
+		cur->next = new list_node(3);
+		cur = cur->next;
+		cur->next = new list_node(4);
+		cur = cur->next;
+		cur->next = new list_node(5);
+		list_node *res = swap_pairs(head);
+		while (res) {
+			cout << res->val << " ";
+			res = res->next;
+		}
+	}
+
+## 25. Reverse Nodes in k-Group
+
+### 25.1 Description
+
+### 25.2 Analysis
+
+### 25.3 Code
+
+**1.Solution 1**
+
+## 26. Remove Duplicates from Sorted Array
+
+### 26.1 Description
+
+Given a sorted array  nums , remove the duplicates in-place such that each element appear only  once  and return the new length.
+
+Do not allocate extra space for another array, you must do this by modifying the input array in-place with O(1) extra memory.
+
+Example:
+
+	Given _nums_ = [0,0,1,1,1,2,2,3,3,4],
+	Your function should return length = 5, with the first five elements of _nums_ being 
+	modified to 0, 1, 2, 3, and 4 respectively.It doesn't matter what values are set beyond
+	the returned length.
+
+### 26.2 Analysis
+
+这道题的解题思路是使用快慢指针来记录遍历的坐标，最开始时两个指针都指向第一个数字，如果两个指针指的数字相同，则快指针向前走一步，如果不同，则两个指针都向前走一步，这样当快指针走完整个数组后，慢指针当前的坐标加1就是数组中不同数字的个数。
+
+### 26.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <vector>
+	using namespace std;
+
+	int remove_duplicates(vector<int> &nums)
+	{
+		int prev = 0, cur = 0, n = nums.size();
+		while (cur < n) {
+			if (nums[prev] == nums[cur])
+				cur++;
+			else
+				nums[++prev] = nums[cur++];
+		}
+		return nums.empty() ? 0 : (prev + 1);
+	}
+	//测试程序
+	int main()
+	{
+		vector<int> nums{0,0,1,1,1,2,2,3,3,4};
+		cout << remove_duplicates(nums);
+	}
+
+## 27. Remove Element
+
+### 27.1 Description
+
+Given an array  nums  and a value  val , remove all instances of that value in-place and return the new length.
+
+Do not allocate extra space for another array, you must do this by modifying the input array in-place with O(1) extra memory.The order of elements can be changed. It doesn't matter what you leave beyond the new length.
+
+Example:
+
+	Given _nums_ = [0,1,2,2,3,0,4,2], _val_ = 2,
+	Your function should return length = 5, with the first five elements of _nums_ containing
+	0, 1, 3, 0, and 4.
+	Note that the order of those five elements can be arbitrary.
+	It doesn't matter what values are set beyond the returned length.
+
+### 27.2 Analysis
+
+让我们移除一个数组中和给定值相同的数字，并返回新的数组的长度。是一道比较容易的题,只需要一个变量用来计数，然后遍历原数组，如果当前的值和给定值不同，就把当前值覆盖计数变量的位置，并将计数变量加1。
+
+### 27.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <vector>
+	using namespace std;
+
+	int remove_element(vector<int> &nums, int val)
+	{
+		int res = 0;
+		for (int i = 0; i < nums.size(); i++) {
+			if (nums[i] != val)
+				nums[res++] = nums[i];
+		}
+		return res;
+	}
+	//测试程序
+	int main()
+	{
+		vector<int> nums{0,1,2,2,3,0,4,2};
+		cout << remove_element(nums, 2) << endl;
+	}
+
+## 28. Implement strStr()
+
+### 28.1 Description
+
+Implement strStr(). Return the index of the first occurrence of needle in haystack, or -1 if needle is not part of haystack.
+
+Example 1:
+
+	Input: haystack = "hello", needle = "ll"
+	Output: 2
+
+Example 2:
+
+	Input: haystack = "aaaaa", needle = "bba"
+	Output: -1
+
+### 28.2 Analysis
+
+让我们在一个字符串中找另一个字符串第一次出现的位置，那首先要做一些判断，如果子字符串为空，则返回0，如果子字符串长度大于母字符串长度，则返回 -1。然后开始遍历母字符串，这里并不需要遍历整个母字符串，而是遍历到剩下的长度和子字符串相等的位置即可，这样可以提高运算效率。然后对于每一个字符，都遍历一遍子字符串，一个一个字符的对应比较，如果对应位置有不等的，则跳出循环，如果一直都没有跳出循环，则说明子字符串出现了，则返回起始位置即可。
+
+### 28.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <string>
+	using namespace std;
+
+	int str_str(string haystack, string needle)
+	{
+		if (needle.empty())
+			return 0;
+		int m = haystack.size(), n = needle.size();
+		if (m < n)
+			return -1;
+		for (int i = 0; i < m - n; i++) {
+			int j = 0;
+			for (int j = 0; j < n; j++) {
+				if (haystack[i + j] != needle[j])
+					break;
+			}
+			if (j == n)
+				return i;
+		}
+		return -1;
+	}
+	//测试程序
+	int main()
+	{
+		string haystack{"hello"};
+		string needle{"ll"};
+		cout << str_str(haystack, needle) << endl;
+	}
+
+## 29. Remove Duplicates from Sorted Array
+
+### 29.1 Description
+
+### 29.2 Analysis
+
+### 29.3 Code
 
 **1.Solution 1**
