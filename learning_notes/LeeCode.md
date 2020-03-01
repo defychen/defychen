@@ -1735,8 +1735,162 @@ Example 2:
 
 ### 31.1 Description
 
+Implement next permutation, which rearranges numbers into the lexicographically next greater permutation of numbers.If such arrangement is not possible, it must rearrange it as the lowest possible order (ie, sorted in ascending order).
+
+The replacement must be in-place and use only constant extra memory.
+
+Here are some examples. Inputs are in the left-hand column and its corresponding outputs are in the right-hand column.
+
+	1,2,3 → 1,3,2
+	3,2,1 → 1,2,3
+	1,1,5 → 1,5,1
+
 ### 31.2 Analysis
+
+由题目中给的例子可以看出来，如果给定数组是降序，则说明是全排列的最后一种情况，则下一个排列就是最初始情况。
+
+再来看下面一个例子，有如下的一个数组
+
+	1　　2　　7　　4　　3　　1
+
+下一个排列为：
+
+	1　　3　　1　　2　　4　　7
+
+那么是如何得到的呢，我们通过观察原数组可以发现，如果从末尾往前看，数字逐渐变大，到了2时才减小的，然后再从后往前找第一个比2大的数字，是3，那么我们交换2和3，再把此时3后面的所有数字转置一下即可，步骤如下：
+
+	1　　2　　7　　4　　3　　1
+	1　　2　　7　　4　　3　　1
+	1　　3　　7　　4　　2　　1
+	1　　3　　1　　2　　4　　7
 
 ### 31.3 Code
 
 **1.Solution 1**
+
+	#include <iostream>
+	#include <vector>
+	using namespace std;
+
+	void next_permutation(vector<int> &num)
+	{
+		int i, j, n = num.size();
+		for (i = n - 2; i >= 0; i--) {
+			if (num[i + 1] > num[i]) {
+				for (j = n - 1; j > i; j--) {
+					if (num[j] > num[i])
+						break;
+				}
+				swap(num[i], num[j]);
+				reverse(num.begin() + i + 1, num.end());
+				return;
+			}
+		}
+		reverse(num.begin(), num.end());
+	}
+	//测试程序
+	int main()
+	{
+		vector<int> num{1, 2, 7, 4, 3, 1};
+		next_permutation(num);
+		for (int i = 0; i < num.size(); i++) {
+			cout << num[i] << " ";
+		}
+	}
+
+## 32. Longest Valid Parentheses
+
+### 32.1 Description
+
+### 32.2 Analysis
+
+### 32.3 Code
+
+**1.Solution 1**
+
+## 33. Search in Rotated Sorted Array
+
+### 33.1 Description
+
+### 33.2 Analysis
+
+### 33.3 Code
+
+**1.Solution 1**
+
+## 34. Search for a Range
+
+### 34.1 Description
+
+Given an array of integers nums sorted in ascending order, find the starting and ending position of a given target value. Your algorithm's runtime complexity must be in the order of  O (log  n).
+
+If the target is not found in the array, return [-1, -1].
+
+Example 1:
+
+	Input: nums = [5,7,7,8,8,10], target = 8
+	Output: [3,4]
+
+Example 2:
+
+	Input: nums = [5,7,7,8,8,10], target = 6
+	Output: [-1,-1]
+
+### 34.2 Analysis
+
+这道题让我们在一个有序整数数组中寻找相同目标值的起始和结束位置，而且限定了时间复杂度为 O(logn)，这是典型的二分查找法的时间复杂度，所以这里也需要用此方法，思路是首先对原数组使用二分查找法，找出其中一个目标值的位置，然后向两边搜索找出起始和结束的位置。
+
+### 34.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <vector>
+	using namespace std;
+
+	int search(vector<int> nums, int left, int right, int target)
+	{
+		if (left > right)
+			return -1;
+		int mid = left + (right - left) / 2;
+		if (nums[mid] == target)
+			return mid;
+		else if (nums[mid] < target)
+			return search(nums, mid + 1, right, target);
+		else
+			return search(nums, left, mid - 1, target);
+	}
+
+	vector<int> search_range(vector<int> nums, int target)
+	{
+		int idx = search(nums, 0, nums.size() - 1, target);
+		if (idx == -1)
+			return {-1, -1};
+		int left = idx, right = idx;
+		while (left > 0 && (nums[left - 1] == nums[idx]))
+			left--;
+		while ((right < nums.size() - 1) && (nums[right + 1] == nums[idx]))
+			right++;
+		return {left, right};
+	}
+	//测试程序
+	int main()
+	{
+		vector<int> num{ 5,7,7,8,8,10 };
+		vector<int> res;
+		res = search_range(num, 8);
+		for (int i = 0; i < res.size(); i++) {
+			cout << res[i] << " ";
+		}
+	}
+
+## 35. Search for a Range
+
+### 35.1 Description
+
+### 35.2 Analysis
+
+### 35.3 Code
+
+**1.Solution 1**
+
