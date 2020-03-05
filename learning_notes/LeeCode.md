@@ -1818,7 +1818,7 @@ Here are some examples. Inputs are in the left-hand column and its corresponding
 
 **1.Solution 1**
 
-## 34. Search for a Range
+## 34. Find First and Last Position of Element in Sorted Array
 
 ### 34.1 Description
 
@@ -1884,13 +1884,63 @@ Example 2:
 		}
 	}
 
-## 35. Search for a Range
+## 35. Search Insert Position
 
 ### 35.1 Description
 
+Given a sorted array and a target value, return the index if the target is found. If not, return the index where it would be if it were inserted in order. You may assume no duplicates in the array.
+
+Example 1:
+
+	Input: [1,3,5,6], 5
+	Output: 2
+
+Example 2:
+
+	Input: [1,3,5,6], 2
+	Output: 1
+
+Example 3:
+
+	Input: [1,3,5,6], 7
+	Output: 4
+
+Example 4:
+
+	Input: [1,3,5,6], 0
+	Output: 0
+
 ### 35.2 Analysis
+
+遍历一遍原数组，若当前数字大于或等于目标值，则返回当前坐标，如果遍历结束了，说明目标值比数组中任何一个数都要大，则返回数组长度n即可。
 
 ### 35.3 Code
 
 **1.Solution 1**
+
+	#include <iostream>
+	#include <vector>
+	using namespace std;
+
+	int search_insert(vector<int> nums, int target)
+	{
+		for (int i = 0; i < nums.size(); i++) {
+			if (nums[i] >= target) {
+				return i;
+			}
+		}
+		return nums.size();
+	}
+
+## 36. Search Insert Position
+
+### 36.1 Description
+
+### 36.2 Analysis
+
+### 36.3 Code
+
+**1.Solution 1**
+
+
 
