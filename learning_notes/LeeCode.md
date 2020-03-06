@@ -1932,15 +1932,114 @@ Example 4:
 		return nums.size();
 	}
 
-## 36. Search Insert Position
+## 36. Valid Sudoku
 
 ### 36.1 Description
 
+Determine if a 9x9 Sudoku board is valid. Only the filled cells need to be validated according to the following rules:
+
+	Each row must contain the digits 1-9without repetition.
+	Each column must contain the digits 1-9 without repetition.
+	Each of the 9 3x3 sub-boxes of the grid must contain the digits 1-9 without repetition.
+
+![](images/valid_sudoku.png)
+
+A partially filled sudoku which is valid.
+
+The Sudoku board could be partially filled, where empty cells are filled with the character '.'.
+
+Example 1:
+
+	Input:
+	[
+	  ["5","3",".",".","7",".",".",".","."],
+	  ["6",".",".","1","9","5",".",".","."],
+	  [".","9","8",".",".",".",".","6","."],
+	  ["8",".",".",".","6",".",".",".","3"],
+	  ["4",".",".","8",".","3",".",".","1"],
+	  ["7",".",".",".","2",".",".",".","6"],
+	  [".","6",".",".",".",".","2","8","."],
+	  [".",".",".","4","1","9",".",".","5"],
+	  [".",".",".",".","8",".",".","7","9"]
+	]
+	Output: true
+
+Example 2:
+
+	Input:
+	[
+	  ["8","3",".",".","7",".",".",".","."],
+	  ["6",".",".","1","9","5",".",".","."],
+	  [".","9","8",".",".",".",".","6","."],
+	  ["8",".",".",".","6",".",".",".","3"],
+	  ["4",".",".","8",".","3",".",".","1"],
+	  ["7",".",".",".","2",".",".",".","6"],
+	  [".","6",".",".",".",".","2","8","."],
+	  [".",".",".","4","1","9",".",".","5"],
+	  [".",".",".",".","8",".",".","7","9"]
+	]
+	Output: false
+	Explanation: Same as Example 1, except with the 5 in the top left corner being 
+	    modified to 8. Since there are two 8's in the top left 3x3 sub-box, it is invalid.
+
+Note:
+
+	A Sudoku board (partially filled) could be valid but is not necessarily solvable.
+	Only the filled cells need to be validated according to the mentioned rules.
+	The given board contain only digits 1-9and the character '.'.
+	The given board size is always 9x9.
+
 ### 36.2 Analysis
+
+这道题给了一个残缺的二维数组，让我们判断当前的这个数独数组是否合法，即要满足上述的条件。判断标准是看各行各列是否有重复数字，以及每个小的 3x3 的小方阵里面是否有重复数字，如果都无重复，则当前矩阵是数独矩阵，但不代表待数独矩阵有解，只是单纯的判断当前未填完的矩阵是否是数独矩阵。那么根据数独矩阵的定义，在遍历每个数字的时候，就看看包含当前位置的行和列以及 3x3 小方阵中是否已经出现该数字，这里需要三个 boolean 型矩阵，大小跟原数组相同，分别记录各行，各列，各小方阵是否出现某个数字，其中行和列标志下标很好对应，就是小方阵的下标需要稍稍转换一下。
 
 ### 36.3 Code
 
 **1.Solution 1**
 
+	#include <iostream>
+	#include <vector>
+	using namespace std;
+
+	bool is_valid_sudoku(vector<vector<char>> &board)
+	{
+		vector<vector<bool>> row_flag(9, vector<bool>(9));
+		vector<vector<bool>> col_flag(9, vector<bool>(9));
+		vector<vector<bool>> cell_flag(9, vector<bool>(9));
+
+		for (int i = 0; i < 9; i++) {
+			for (int j = 0; j < 9; j++) {
+				if (board[i][j] == '.')
+					continue;
+				int c = board[i][j] - '1';
+				if (row_flag[i][c] || col_flag[c][j] || cell_flag[3*(i/3)+j/3][c])
+					return false;
+				row_flag[i][c] = true;
+				col_flag[c][j] = true;
+				cell_flag[3*(i/3)+j/3][c] = true;
+			}
+		}
+		return true;
+	}
+
+## 37. Sudoku Solver
+
+### 37.1 Description
+
+### 37.2 Analysis
+
+### 37.3 Code
+
+**1.Solution 1**
+
+## 38. Count and Say
+
+### 38.1 Description
+
+### 38.2 Analysis
+
+### 38.3 Code
+
+**1.Solution 1**
 
 
