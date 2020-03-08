@@ -2021,6 +2021,23 @@ Note:
 		}
 		return true;
 	}
+	//测试程序
+	int main()
+	{
+		vector<vector<char>> board{
+		  {'5', '3', '.', '.', '7', '.', '.', '.', '.'},
+		  {'6', '.', '.', '1', '9', '5', '.', '.', '.'},
+		  {'.', '9', '8', '.', '.', '.', '.', '6', '.'},
+		  {'8', '.', '.', '.', '6', '.', '.', '.', '3'},
+		  {'4', '.', '.', '8', '.', '3', '.', '.', '1'},
+		  {'7', '.', '.', '.', '2', '.', '.', '.', '6'},
+		  {'.', '6', '.', '.', '.', '.', '2', '8', '.'},
+		  {'.', '.', '.', '4', '1', '9', '.', '.', '5'},
+		  {'.', '.', '.', '.', '8', '.', '.', '7', '9'}
+		};
+		// char字符应该以单引号''包含,双引号""表示字符串
+		cout << boolalpha << is_valid_sudoku(board) << endl;
+	}
 
 ## 37. Sudoku Solver
 
@@ -2036,10 +2053,141 @@ Note:
 
 ### 38.1 Description
 
+The count-and-say sequence is the sequence of integers with the first five terms as following:
+
+	1.     1
+	2.     11
+	3.     21
+	4.     1211
+	5.     111221
+
+1 is read off as "one 1" or 11.
+11 is read off as "two 1s" or 21.
+21 is read off as "one 2, then one 1" or 1211.
+
+Given an integer  n  where 1 ≤  n  ≤ 30, generate the  n th term of the count-and-say sequence.
+
 ### 38.2 Analysis
+
+其实就是第i+1个字符串是第i个字符串的读法，第一字符串为 “1”。比如第四个字符串是1211，它的读法是 1个1、1个2,2个1，因此第五个字符串是111221。第五个字符串的读法是：3个1、2个2、1个1，因此第六个字符串是312211 
 
 ### 38.3 Code
 
 **1.Solution 1**
 
+	#include <iostream>
+	#include <string>
+	using namespace std;
 
+	string count_and_say(int n)
+	{
+		if (n <= 0)
+			return "";
+		string res = "1";
+		while (--n) {
+			string cur = "";
+			for (int i = 0; i < res.size(); i++) {
+				int cnt = 1;
+				while ((i + 1 < res.size()) && res[i + 1] == res[i]) {
+					++cnt;
+					++i;
+				}
+				cur += to_string(cnt) + res[i];
+			}
+			cout << cur << endl;
+			res = cur;
+		}
+		return res;
+	}
+	//测试程序
+	int main()
+	{
+		string res = count_and_say(12);
+	}
+
+## 39. Combination Sum
+
+### 39.1 Description
+
+Given a set of candidate numbers (candidates) (without duplicates) and a target number (target), find all unique combinations in candidates where the candidate numbers sums to target.The same repeated number may be chosen from candidates unlimited number of times.
+
+Note:
+
+All numbers (including target) will be positive integers.The solution set must not contain duplicate combinations.
+
+Example 1:
+
+	Input: candidates = [2,3,6,7], target = 7,
+	A solution set is:
+	[
+	  [7],
+	  [2,2,3]
+	]
+
+Example 2:
+
+	Input: candidates = [2,3,5], target = 8,
+	A solution set is:
+	[
+	  [2,2,2,2],
+	  [2,3,3],
+	  [3,5]
+	]
+
+### 39.2 Analysis
+
+像这种结果要求返回所有符合要求解的题十有八九都是要利用到递归，而且解题的思路都大同小异，相类似的题目有 Path Sum II，Subsets II，Permutations，Permutations II，Combinations 等等，如果仔细研究这些题目发现都是一个套路，都是需要另写一个递归函数，这里我们新加入三个变量，start 记录当前的递归到的下标，out 为一个解，res 保存所有已经得到的解，每次调用新的递归函数时，此时的 target 要减去当前数组的的数。
+
+### 39.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <vector>
+	using namespace std;
+
+	void combination_sum_dfs(vector<vector<int>> candidates, int target, int start,
+		vector<int> &out, vector<vector<int>> &res)
+	{
+		if (target < 0)
+			return;
+		if (target == 0) {
+			res.push_back(out);
+			return;
+		}
+		for (int i = start; i < candidates.size(); i++) {
+			out.push_back(candidates[i]);
+			combination_sum_dfs(candidates, target - candidates[i], i, out, res);
+			out.pop_back();
+		}
+	}
+
+	vector<vector<int>> combination_sum(vector<int> &candidates, int target)
+	{
+		vector<vector<int>> res;
+		vector<int> out;
+		combination_sum_dfs(candidates, target, 0, out, res);
+		return res;
+	}
+	//测试程序
+	int main()
+	{
+		vector<int> candidates{ 2,3,6,7 };
+		vector<vector<int>> res = combination_sum(candidates, 7);
+		for (int i = 0; i < res.size(); i++) {
+			for (int j = 0; j < res[i].size(); j++) {
+				cout << res[i][j] << " ";
+			}
+			cout << endl;
+		}
+	}
+
+## 40. Combination Sum
+
+### 40.1 Description
+
+### 40.2 Analysis
+
+### 40.3 Code
+
+**1.Solution 1**

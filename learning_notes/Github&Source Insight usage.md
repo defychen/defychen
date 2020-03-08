@@ -212,7 +212,7 @@
 
 ## 2.1 设置背景色
 
-	Options->Preferences->Colors->Window Background->设置红(R):204, 绿(G):232, 蓝(U):207
+	Options->Preferences->Colors->Window Background->设置红(R):204, 绿(G):232, 蓝(B):207
 
 ## 2.2 常用快捷键
 
