@@ -2262,12 +2262,80 @@ Example 2:
 		}
 	}
 
-## 41. Combination Sum II
+## 41. First Missing Positive
 
 ### 41.1 Description
 
+Given an unsorted integer array, find the smallest missing positive integer.
+
+Example 1:
+
+	Input: [1,2,0]
+	Output: 3
+
+Example 2:
+
+	Input: [3,4,-1,1]
+	Output: 2
+
+Example 3:
+
+	Input: [7,8,9,11,12]
+	Output: 1
+
+Note:
+
+Your algorithm should run in  O ( n ) time and uses constant extra space.--->暂时不满足.
+
 ### 41.2 Analysis
 
+使用HashSet来解，这个思路很简单，把所有的数都存入 HashSet 中，然后循环从1开始递增找数字，哪个数字找不到就返回哪个数字，如果一直找到了最大的数字（这里是 nums 数组的长度），则加1后返回结果res。
+
+	限制空间复杂度，暂时不做。
+
 ### 41.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <vector>
+	#include <unordered_set>
+	using namespace std;
+
+	int first_missing_positive(vector<int> &nums)
+	{
+		unordered_map<int> st(nums.begin(), nums.end());
+		int res = 1, n = nums.size();
+		while (res <= n) {
+			if (!st.count(res))
+				return res;
+			res++;
+		}
+		return res;
+	}
+	//测试程序
+	int main()
+	{
+		vector<int> nums{ 7,8,9,11,12 };
+		cout << first_miss_positive(nums) << endl;
+	}
+
+## 42. Trapping Rain Water
+
+### 42.1 Description
+
+### 42.2 Analysis
+
+### 42.3 Code
+
+**1.Solution 1**
+
+## 43. Trapping Rain Water
+
+### 43.1 Description
+
+### 43.2 Analysis
+
+### 43.3 Code
 
 **1.Solution 1**
