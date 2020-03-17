@@ -2515,3 +2515,75 @@ Example:
 ### 48.3 Code
 
 **1.Solution 1**
+
+## 49. Rotate Image
+
+### 49.1 Description
+
+Given an array of strings, group anagrams together.
+
+Example:
+
+	Input: ["eat", "tea", "tan", "ate", "nat", "bat"],
+	Output:
+	[
+	  ["ate","eat","tea"],
+	  ["nat","tan"],
+	  ["bat"]
+	]
+
+Note:
+
+	All inputs will be in lowercase.
+	The order of your output does not matter.
+
+### 49.2 Analysis
+
+这道题让我们群组给定字符串集中所有的错位词，所谓的错位词就是两个字符串中字母出现的次数都一样，只是位置不同，比如 abc，bac, cba 等它们就互为错位词，那么如何判断两者是否是错位词呢，可以发现如果把错位词的字符顺序重新排列，那么会得到相同的结果，所以重新排序是判断是否互为错位词的方法，由于错位词重新排序后都会得到相同的字符串，以此作为 key，将所有错位词都保存到字符串数组中，建立 key 和字符串数组之间的映射，最后再存入结果 res 中即可。
+
+### 49.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <vector>
+	#include <string>
+	#include <unordered_map>
+	using namespace std;
+
+	vector<vector<string>> group_anagrams(vector<string> &strs)
+	{
+		vector<vector<string>> res;
+		unordered_map<string, vector<string>> m;
+		for (string str : strs) {
+			string t = str;
+			sort(t.begin(), t.end());
+			m[t].push_back(str);
+		}
+		for (auto a : m) {
+			res.push_back(a.second);
+		}
+		return res;
+	}
+	//测试程序
+	int main()
+	{
+		vector<string> strs{ "eat", "tea", "tan", "ate", "nat", "bat" };
+		vector<vector<string>> res = group_anagrams(strs);
+		for (vector<string> vec_str : res) {
+			for (string str : vec_str) {
+				cout << str << " ";
+			}
+			cout << endl;
+		}
+	}
+	
+## 50. Rotate Image
+
+### 50.1 Description
+
+### 50.2 Analysis
+
+### 50.3 Code
+
+**1.Solution 1**
