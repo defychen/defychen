@@ -2516,7 +2516,7 @@ Example:
 
 **1.Solution 1**
 
-## 49. Rotate Image
+## 49. Group Anagrams
 
 ### 49.1 Description
 
@@ -2578,12 +2578,231 @@ Note:
 		}
 	}
 	
-## 50. Rotate Image
+## 50. Pow(x, n)
 
 ### 50.1 Description
 
 ### 50.2 Analysis
 
 ### 50.3 Code
+
+**1.Solution 1**
+
+## 51. N-Queens
+
+### 51.1 Description
+
+### 51.2 Analysis
+
+### 51.3 Code
+
+**1.Solution 1**
+
+## 52. N-Queens II
+
+### 52.1 Description
+
+### 52.2 Analysis
+
+### 52.3 Code
+
+**1.Solution 1**
+
+## 53. Maximum Subarray
+
+### 53.1 Description
+
+Given an integer array nums, find the contiguous subarray (containing at least one number) which has the largest sum and return its sum.
+
+Example:
+
+	Input: [-2,1,-3,4,-1,2,1,-5,4],
+	Output: 6
+	Explanation: [4,-1,2,1] has the largest sum = 6.
+
+### 53.2 Analysis
+
+求最大子数组之和.定义两个变量 res 和 curSum，其中 res 保存最终要返回的结果，即最大的子数组之和，curSum 初始值为0，每遍历一个数字 num，比较 curSum + num 和 num 中的较大值存入 curSum，然后再把 res 和 curSum 中的较大值存入 res，以此类推直到遍历完整个数组，可得到最大子数组的值存在res中。
+
+### 53.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <vector>
+	using namespace std;
+
+	int max_sub_array(vector<int> &nums)
+	{
+		int res = INT_MIN, cur_sum = 0;
+		for (int num : nums) {
+			cur_sum = max(cur_sum + num, num);
+			res = max(cur_sum, res);
+		}
+		return res;
+	}
+	//测试程序
+	int main()
+	{
+		vector<int> nums{ -2,1,-3,4,-1,2,1,-5,4 };
+		cout << max_sub_array(nums) << endl;
+	}
+
+## 54. Spiral Matrix
+
+### 54.1 Description
+
+Given a matrix of  m  x  n  elements ( m  rows,  n columns), return all elements of the matrix in spiral order.
+
+Example 1:
+
+	Input:
+	[
+	 [ 1, 2, 3 ],
+	 [ 4, 5, 6 ],
+	 [ 7, 8, 9 ]
+	]
+	Output: [1,2,3,6,9,8,7,4,5]
+
+Example 2:
+
+	Input:
+	[
+	  [1, 2, 3, 4],
+	  [5, 6, 7, 8],
+	  [9,10,11,12]
+	]
+	Output: [1,2,3,4,8,12,11,10,9,5,6,7]
+
+### 54.2 Analysis
+
+对于这种螺旋遍历的方法，重要的是要确定上下左右四条边的位置，那么初始化的时候，上边 up 就是0，下边 down 就是 m-1，左边 left 是0，右边 right 是 n-1。然后进行 while 循环，先遍历上边，将所有元素加入结果 res，然后上边下移一位，如果此时上边大于下边，说明此时已经遍历完成了，直接 break。同理对于下边，左边，右边，依次进行相对应的操作，这样就会使得坐标很有规律，并且不易出错。
+
+### 54.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <vector>
+	using namespace std;
+
+	vector<int> spiral_order(vector<vector<int>> &matrix)
+	{
+		if (matrix.empty() || matrix[0].empty())
+			return {};
+		vector<int> res;
+		int m = matrix.size(), n = matrix[0].size();
+		int up = 0, down = m - 1, left = 0, right = n - 1;
+		while (true) {
+			for (int j = left; j <= right; j++)
+				res.push_back(matrix[up][j]);
+			if (++up > down)
+				break;
+			for (int i = up; i <= down; i++)
+				res.push_back(matrix[i][right]);
+			if (--right < left)
+				break;
+			for (int j = right; j >= left; j--)
+				res.push_back(matrix[down][j]);
+			if (--down < up)
+				break;
+			for (int i = down; i >= up; i--)
+				res.push_back(matrix[i][left]);
+			if (++left > right)
+				break;
+		}
+		return res;
+	}
+	//测试程序
+	int main()
+	{
+		vector<vector<int>> matrix{
+			{1, 2, 3},
+			{4, 5, 6},
+			{7, 8, 9}
+		};
+		vector<int> res = spiral_order(matrix);
+		for (int val : res)
+			cout << val << " ";
+		cout << endl;
+	}
+
+## 55. N-Queens II
+
+### 55.1 Description
+
+Given an array of non-negative integers, you are initially positioned at the first index of the array. Each element in the array represents your maximum jump length at that position.
+
+Determine if you are able to reach the last index.
+
+Example 1:
+
+	Input: [2,3,1,1,4]
+	Output: true
+	Explanation: Jump 1 step from index 0 to 1, then 3 steps to the last index.
+
+Example 2:
+
+	Input: [3,2,1,0,4]
+	Output: false
+	Explanation: You will always arrive at index 3 no matter what. Its maximum jump length is
+		0, which makes it impossible to reach the last index.
+
+### 55.2 Analysis
+
+这道题说的是有一个非负整数的数组，每个数字表示在当前位置的最大跳力（这里的跳力指的是在当前位置为基础上能到达的最远位置），求判断能不能到达最后一个位置。
+
+我们只对最远能到达的位置感兴趣，所以维护一个变量 reach，表示最远能到达的位置，初始化为0。遍历数组中每一个数字，如果当前坐标大于 reach 或者 reach 已经抵达最后一个位置则跳出循环，否则就更新 reach 的值为其和 i + nums[i] 中的较大值，其中 i + nums[i] 表示当前位置能到达的最大位置。
+
+### 55.3 Code
+
+**1.Solution 1**
+
+	bool can_jump(vector<int> &nums)
+	{
+		int n = nums.size(), reach = 0;
+		for (int i = 0; i < n; i++) {
+			if ((i > reach) || (reach >= n - 1))
+				break;
+			reach = max(reach, i + nums[i]);
+		}
+		return reach >= n - 1;
+	}
+	//测试程序
+	int main()
+	{
+		vector<int> nums1{ 2,3,1,1,4 };
+		vector<int> nums2{ 3,2,1,0,4 };
+		cout << boolalpha << can_jump(nums1) << endl;
+		cout << boolalpha << can_jump(nums2) << endl;
+	}
+
+## 56. Merge Intervals
+
+### 56.1 Description
+
+### 56.2 Analysis
+
+### 56.3 Code
+
+**1.Solution 1**
+
+## 57. Insert Intervals
+
+### 57.1 Description
+
+### 57.2 Analysis
+
+### 57.3 Code
+
+**1.Solution 1**
+
+## 58. Length of Last Word
+
+### 58.1 Description
+
+### 58.2 Analysis
+
+### 58.3 Code
 
 **1.Solution 1**
