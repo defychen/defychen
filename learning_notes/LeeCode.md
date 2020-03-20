@@ -2801,8 +2801,118 @@ Example 2:
 
 ### 58.1 Description
 
+Given a string  s  consists of upper/lower-case alphabets and empty space characters ' ', return the length of last word in the string. If the last word does not exist, return 0.
+
+Note: A word is defined as a character sequence consists of non-space characters only.
+
+Example:
+
+	Input: "Hello World"
+	Output: 5
+
 ### 58.2 Analysis
 
+先对输入字符串做预处理，去掉开头和结尾的空格，然后用一个计数器来累计非空格的字符串的长度，遇到空格则将计数器清零。
+
 ### 58.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <string>
+	using namespace std;
+
+	int length_of_last_word(string s)
+	{
+		int left = 0, right = s.size() - 1, res = 0;
+		while (s[left] == ' ')
+			left++;
+		while (s[right] == ' ')
+			right--;
+		for (int i = left; i <= right; i++) {
+			if (s[i] == ' ')
+				res = 0;
+			else
+				res++;
+		}
+		return res;
+	}
+	//程序测试
+	int main()
+	{
+		string s = "hello world";
+		cout << length_of_last_word(s) << endl;
+	}
+
+## 59. Spiral Matrix II
+
+### 59.1 Description
+
+Given a positive integer  n , generate a square matrix filled with elements from 1 to  n 2 in spiral order.
+
+Example:
+
+	Input: 3
+	Output:
+	[
+	 [ 1, 2, 3 ],
+	 [ 8, 9, 4 ],
+	 [ 7, 6, 5 ]
+	]
+
+### 59.2 Analysis
+
+分析和"54 Spiral Matrix"相似.
+
+### 59.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	#include <vector>
+	using namespace std;
+
+	vector<vector<int>> generate_matrix(int n)
+	{
+		vector<vector<int>> res(n, vector<int>(n));
+		int up = 0, down = n - 1, left = 0, right = n - 1, val = 1;
+		while (true) {
+			for (int j = left; j <= right; j++)
+				res[up][j] = val++;
+			if (++up > down)
+				break;
+			for (int i = up; i <= down; i++)
+				res[i][right] = val++;
+			if (--right < left)
+				break;
+			for (int j = right; j >= left; j--)
+				res[down][j] = val++;
+			if (--down < up)
+				break;
+			for (int i = down; i >= up; i--)
+				res[i][left] = val++;
+			if (++left > right)
+				break;
+		}
+		return res;
+	}
+	//测试程序
+	int main()
+	{
+		vector<vector<int>> res = generate_matrix(3);
+		for (vector<int> vec : res) {
+			for (int val : vec)
+				cout << val << " ";
+			cout << endl;
+		}
+	}
+
+## 60. Spiral Matrix II
+
+### 60.1 Description
+
+### 60.2 Analysis
+
+### 60.3 Code
 
 **1.Solution 1**
