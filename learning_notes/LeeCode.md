@@ -3036,12 +3036,89 @@ Example 2:
 		cout << get_permutation(4, 17);
 	}
 
-## 61. Spiral Matrix II
+## 61. Rotate List
 
 ### 61.1 Description
 
+Given a list, rotate the list to the right by  k  places, where  k  is non-negative.
+
+For example:
+
+	Given 1->2->3->4->5->NULL and  k  = 2,
+	return 4->5->1->2->3->NULL.
+
 ### 61.2 Analysis
 
+用快慢指针来解，快指针先走k步，然后两个指针一起走，当快指针走到末尾时，慢指针的下一个位置是新的顺序的头结点，这样就可以旋转链表了，自信满满的写完程序，放到OJ上跑，以为能一次通过，结果跪在了各种特殊情况，首先一个就是当原链表为空时，直接返回NULL，还有就是当k大于链表长度和k远远大于链表长度时该如何处理，我们需要首先遍历一遍原链表得到链表长度n，然后k对n取余，这样k肯定小于n。
+
 ### 61.3 Code
+
+**1.Solution 1**
+
+	#include <iostream>
+	using namespace std;
+
+	struct list_node {
+		int val;
+		list_node *next;
+		list_node(int v) :
+			val(v),
+			next(nullptr)
+		{}
+	};
+
+	list_node *rotate_right(list_node *head, int k)
+	{
+		if (!head)
+			return nullptr;
+		int n = 0;
+		list_node *cur = head;
+		while (cur) {
+			n++;	
+			cur = cur->next;
+		}
+		k %= n;
+		list_node *fast = head, *slow = head;
+		for (int i = 0; i < k; i++) {
+			if (fast)
+				fast = fast->next;
+		}
+		if (!fast)
+			return head;
+		fast->next = slow;
+		fast = slow->next;
+		slow->next = nullptr;
+		return fast;
+	}
+	//测试程序
+	int main()
+	{
+		list_node *l1 = new list_node(1);
+		list_node *res;
+	
+		list_node *cur = l1;
+		cur->next = new list_node(2);
+		cur = cur->next;
+		cur->next = new list_node(3);
+		cur = cur->next;
+		cur->next = new list_node(4);
+		cur = cur->next;
+		cur->next = new list_node(5);
+	
+		res = rotate_right(l1, 2);
+		while (res) {
+			cout << res->val << "->";
+			res = res->next;
+		}
+		cout << "nullptr" << endl;
+	}
+
+## 62. Spiral Matrix II
+
+### 62.1 Description
+
+### 62.2 Analysis
+
+### 62.3 Code
 
 **1.Solution 1**
