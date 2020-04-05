@@ -157,7 +157,7 @@ GNU zip---gzip(gz)和bzip2(bz2)两种压缩格式，压缩比:gzip>bzip2
 
 ## 6.重定向
 
-*"<"标准输入; "1>"标准输出; "2>"错误输出(包括warning)*
+"<"标准输入; "1>"标准输出; "2>"错误输出(包括warning)
 
 	/*将标准输出到normal_output.txt;错误输出到warning.txt*/
 	make 1> ../../../normal_output.txt 2> ../../../warning.txt
@@ -276,10 +276,13 @@ GNU zip---gzip(gz)和bzip2(bz2)两种压缩格式，压缩比:gzip>bzip2
 **重定向**
 
 	1)将标准输出和标准错误输出分别重定向到不同的文件中:
-		kill -HUP 1234 > killout.txt 2> killerr.txt	//将标准输入重定向到killout.txt;将标准错误
-													//输出重定向到killerr.txt
+		kill -HUP 1234 1> killout.txt 2> killerr.txt
+			//将标准输出重定向到killout.txt;将标准错误输出重定向到killerr.txt
+		make 1> ok.txt 2> err.txt
+			//编译时的标准输出重定向到ok.txt文件;标准错误重定向到err.txt文件.
 	2)将标准输出和标准错误输出重定向到同一个文件:
-		kill -l 1234 > killouterr.txt 2>&1		//2--标准错误; >--冲定向; &1--和1(标准输出一样)
+		kill -l 1234 > killouterr.txt 2>&1
+			//2--标准错误; >--冲定向; &1--和1(标准输出一样)
 
 **管道**
 
@@ -725,5 +728,28 @@ rename常用于批量修改文件名.
 zgrep用于查看压缩文件(以tar.gz结尾的文件).
 
 	zgrep "xxxx" yyy.tar.gz -nr	//像grep一样使用即可.
+
+### 36. find命令
+
+	find . -name "april*"
+		//在当前目录下查找以april开头的文件
+	find . -name "april*" fprint file
+		//在当前目录下查找以april开头的文件,并将结果输出到file
+	find . -name "ap*" -o -name "may"
+		//在当前目录下查找以ap或may开头的文件
+	find . -name "tom.txt" -ftype vfat
+		//在当前目录下查找名称为"tom.txt"且文件类型为vfat的文件
+	find . -name "tom.txt" ! -ftype vfat
+		//在当前目录下查找名称为"tom.txt"且文件类型不为vfat的文件
+	find . -name "wa*" -type l
+		//在当前目录下查找名称为"wa"开头且类型为符号链接的文件
+	find /home -empty
+		//在home目录下查找大小为0的文件或空目录
+	find /home -size +512k
+		//在home目录下查找大于512KB的文件
+	find /home -size -512k
+		//在home目录下查找小于512KB的文件
+	find /home -user fred
+		//在home目录下查找属于fred这个用户的文件
 
 ## 13. wget命令
