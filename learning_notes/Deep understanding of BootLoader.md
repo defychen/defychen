@@ -239,4 +239,92 @@ GNU+make有详细的说明.
 
 ## Chapter 3 ARM体系结构
 
+略.
+
+## Chapter 4 ARM指令集
+
+### 4.1 数据处理指令
+
+**1.移动指令**
+
+用于给寄存器设置立即数或在寄存器之间传输数据.
+
+	mov r9, sp	//将sp寄存器中的值复制到r9中
+	mov r0, #0	//将寄存器r0的值设为0
+	mvn r1, #0	//mvn为取反,将0取反后赋给r1,即将寄存器r1的值设为0xFFFF_FFFF
+
+**2.移位器**
+
+共有5中移位操作:LSL(逻辑左移)、LSR(逻辑右移)、ASR(算数右移)、ROR(循环右移)、RRX(扩展的循环右移).通常与数据处理指令一起使用.
+
+	mov r1, r1, LSL #9	//r1的值逻辑左移9位后仍然赋值给r1(LSL后面直接跟立即数,不能加逗号)
+
+**3.算数指令**
+
+算数指令执行32-bit的有符号和无符号数的加减法.
+
+	inst Rd, Rn, N
+	ADC--->带进位的加法		Rd = Rn + N + carry
+	ADD--->加法				Rd = Rn + N
+	RSB--->反向减法			Rd = N - Rn
+	RSC--->带错位的反向减法	Rd = N - Rn - !(carry flag)
+	SBC--->带错位的减法		Rd = Rn - N - !(carry flag)
+	SUB--->减法				Rd = Rn - N
+	//实例
+	#define S_FRAME_SIZE	(72)
+	sub sp, sp, #S_FRAME_SIZE	//sp = sp - 72
+	add r0, sp, #S_FRAME_SIZE	//r0 = sp + 72
+
+**4.使用移位器的算数指令**
+
+	add r0, r1, r1, LSL #2	//r0 = r1 + (r1 << 2),即r0 = r1 * 5
+
+**5.逻辑运算指令**
+
+执行两个源寄存器的逻辑位运算.
+
+	inst Rd, Rn, N
+	AND--->逻辑与操作		Rd = Rn & N
+	ORR--->逻辑或操作		Rd = Rn | N
+	EOR--->逻辑异或操作		Rd = Rn ^ N
+	BIC--->逻辑清位操作		Rd = Rn & (~N)
+	//实例
+	and r1, r0, #0x1f		//r1 = r0 & 0x1f
+	orr r0, r0, #0xc0		//r0 = r0 | 0xc0
+
+**6.比较指令**
+
+将寄存器与一个32-bit的数做比较或测试,根据结果更新cpsr的标志位,但不影响其他的寄存器.
+
+	inst Rn, N
+	CMN--->否定比较,依照Rn + N的结果来设定标志位
+	CMP--->比较,依照Rn - N的结果来设定标志位
+	TEQ--->测试两个32-bit的数是否相等,依照Rn ^ N的结果来设定标志位
+	TST--->测试一个32-bit的数的位,依照Rn & N的结果来设定标志位
+	//实例
+	teq r1, #0x1a	//比较r1与0x1a是否相等,并设定标志位
+
+**7.乘法指令**
+
+乘法指令将一对寄存器的值相乘,将结果存入到另一个寄存器中.长乘法累加指令将一对寄存器相乘后得到一个64-bit的值,结果存入一对寄存器中.
+
+乘法指令
+
+	MLA--->乘法和累加
+	MLA Rd, Rm, Rs, Rn	// Rd = (Rm * Rs) + Rn
+	MUL--->乘法
+	MUL Rd, Rm, Rs		// Rd = Rm * Rs
+
+长乘法指令
+
+	inst RdLo, RdHi, Rm, Rs
+	SMLAL--->有符号的长乘法累加		[RdHi, RdLo] = [RdHi, RdLo] + (Rm * Rs)
+	SMULL--->有符号的长乘法			[RdHi, RdLo] = Rm * Rs
+	UMLAL--->无符号的长乘法累加		[RdHi, RdLo] = [RdHi, RdLo] + (Rm * Rs)
+	UMULL--->无符号的长乘法			[RdHi, RdLo] = (Rm * Rs)
+	//实例
+	mla r3, r4, r1, r3	// r3 = (r4 * r1) + r3
+
+### 4.2 分支指令
+
 	
