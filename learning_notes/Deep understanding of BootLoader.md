@@ -327,4 +327,35 @@ GNU+make有详细的说明.
 
 ### 4.2 分支指令
 
-	
+分支指令用于改变程序执行流程或用于调用子程序.
+
+	B		label		//跳转到label处,PC=label
+	BL		label		//带返回的跳转,PC=label,lr=执行BL后下一条指令的地址
+	BX		Rm			//跳转并切换状态,PC=Rm & 0xffff_fffe, T=Rm & 1
+	BLX		label | Rm	//带返回的分支并切换状态
+	PS:地址label是一个偏移量,必须限制约32M范围内.
+	//实例
+	bl cpu_init_cp15	//带返回的跳转到cpu_init_cpu15的label处
+
+### 4.3 软中断指令
+
+软中断指令会引起软件中断异常,为应用程序进行系统调用提供了一种机制.
+
+	SWI SWI_number(软中断号)
+	//实例---在Linux下用汇编实现一个"hello world"
+	.data
+		msg: .asciz "hello, world\n"
+	.text
+		.global main
+	main:
+		push {r0, r1, r2, lr}
+		ldr r1, =msg	@address
+		mov r0, #1		@stdout
+		mov r2, #13		@length
+		swi #0x900004	@sys_write
+		pop {r0, r1, r2, pc}
+	//编译运行
+		arm-linux-gnueabi-gcc asmhello.s -o asmhello
+	在qemu上运行./asmhello即可.
+	PS:0x900004是system write的SWI数,0x900001是system exit的SWI数.
+
