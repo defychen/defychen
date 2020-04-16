@@ -50,6 +50,8 @@ Boot是BootStrap(鞋带)的缩写,来源于一句谚语"Pull oneself up by one's
 
 ![](images/loader_flow_of_pc.png)
 
+***
+
 ## Chapter 2 Linux开发环境
 
 ### 2.1 编辑器Vim
@@ -241,6 +243,8 @@ GNU+make有详细的说明.
 
 略.
 
+***
+
 ## Chapter 4 ARM指令集
 
 ### 4.1 数据处理指令
@@ -359,3 +363,8 @@ GNU+make有详细的说明.
 	在qemu上运行./asmhello即可.
 	PS:0x900004是system write的SWI数,0x900001是system exit的SWI数.
 
+***
+
+## Chapter 5 ARM寻址模式
+
+## Chapter 6 编译和链接
