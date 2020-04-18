@@ -239,6 +239,8 @@ find/grep/管道在"linux_command_usage.md"中有使用方法.
 
 GNU+make有详细的说明.
 
+***
+
 ## Chapter 3 ARM体系结构
 
 略.
@@ -363,8 +365,39 @@ GNU+make有详细的说明.
 	在qemu上运行./asmhello即可.
 	PS:0x900004是system write的SWI数,0x900001是system exit的SWI数.
 
+### 4.4 程序状态寄存器指令
+
+ARM提供2条指令来控制程序状态寄存器(psr).
+
+	MRS Rd, <cpsr/spsr>
+		将cpsr或spsr的内容传到通用寄存器中--->Rd = psr
+	MSR <cpsr/spsr>, Rm
+		将通用寄存器的内容传到cpsr或spsr中--->psr = Rm
+	MSR <cpsr/spsr>, #immediate
+		将立即数的值传到程序状态寄存器中--->psr = 立即数
+
+实例
+
+	mrs r0, cpsr
+	and r1, r0, #0x1f	@ get mode bits
+	teq r1, #0x1a		@ test form HYP mode
+	bicne r0, r0, #0x1f @ clear all mode bits
+	orrne r0, r0, #0x13 @ set SVC mode
+	orr r0, r0, #0xc0	@ disable FIQ and IRQ
+	msr cpsr, r0
+
+### 4.5 协处理器指令
+
+主要是MCR/MRC,可以看"Assembly instructions(arm & mips).md"文档.
+
+### 4.6 加载常量的伪指令
+
+略.
+
 ***
 
 ## Chapter 5 ARM寻址模式
+
+***
 
 ## Chapter 6 编译和链接
