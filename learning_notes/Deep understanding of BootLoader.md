@@ -401,3 +401,36 @@ ARM提供2条指令来控制程序状态寄存器(psr).
 ***
 
 ## Chapter 6 编译和链接
+
+GNU binutils包是用于分析目标文件的工具包,包含以下工具:
+
+	ar:创建、修改和取出静态库;
+	strings:列出二进制文件内的可显示的字符串;
+	strip:删除目标文件中的符号表信息;
+	nm:列出目标文件中的符号表中定义的所有符号;
+	size:列出目标文件中的节的名字和大小;
+	readelf:显示一个目标文件的完整结构(elf头中的所有信息);
+	objdump:反汇编目标文件中的.text段中的二进制指令.
+
+ELF(可执行和可链接格式)目标文件分为3中类型:
+
+	1.可重定位文件:包含代码和数据,用于链接成可执行文件或共享目标文件,静态库可归结为可重定位文件
+		(静态库实际上是将很多目标文件捆绑在一起后形成一个文件包,再加上一些索引信息);
+		实例:linux下的.o文件和.a静态库;
+		file Socket.o
+		Socket.o: ELF 32-bit LSB relocatable, ARM, version 1 (SYSV), not stripped
+	2.可执行文件:包含二进制代码和数据,可以直接复制到存储器执行;
+		实例:/bin或/usr/bin目录下的文件;
+		file busybox
+		busybox: ELF 32-bit LSB executable, ARM, version 1 (SYSV), dynamically linked
+		(uses shared libs), stripped
+	3.共享目标文件:一种特殊类型的可重定位目标文件,可以在加载或运行时被动态地加载到存储器并链接.
+		实例:/linux下的.so文件.
+		file libQtGui.so.4.8.2
+		libQtGui.so.4.8.4: ELF LSB shared object, ARM, version 1 (SYSV), dynamically
+		linked, stripped
+
+### 6.1 ELF文件结构的描述
+
+
+
