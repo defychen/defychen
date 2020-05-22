@@ -56,7 +56,7 @@ VMware下Linux和Windows共享文件是借助VMware Tools实现的.具体步骤�
 
 	1.打开虚拟机,启动安装的Linux(一定要启动,否则选项"安装/重新VMware Tools"为灰色);
 	2.在启动Linux后的那一页WMware中点击:
-		虚拟机--->安装VMware Tools(已经安装过了就是重新安装VMware Tools);
+	虚拟机--->安装VMware Tools(已经安装过了就是重新安装VMware Tools;否则需要下载,下载需要比较长的时间);
 
 **2.查看加载成功后的VMware Tools中的内容**
 

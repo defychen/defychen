@@ -126,7 +126,16 @@ dd命令用于将原始块写入到目标块.
 
 GNU zip---gzip(gz)和bzip2(bz2)两种压缩格式，压缩比:gzip>bzip2
 
-解压方法:
+1.tar和gzip/bzip2的区别
+
+	1.tar:主要是用于打包,将一堆文件或目录变成一个总的文件;
+	2.gzip/bzip2:用于压缩,将一个大的文件经过某种压缩算法变成一个小文件.
+	// tar打包后一般会调用gzip/bzip2进行压缩,生成tar.gz/tar.bz2.
+
+	gunzip:将命令行中以.gz/-gz/.z/-z/_z/.Z结尾并具有正确标志头的文件进行解压缩,并以去掉扩展名的解压缩
+		文件替换原我呢见.
+
+2.解压方法
 	
 	1.tar.gz压缩包解压:
 	tar -xvzf filename.tar.gz	/*x:解压;v:列出解压出来的文件;z:gz格式;f:后面接文件名*/
@@ -141,7 +150,7 @@ GNU zip---gzip(gz)和bzip2(bz2)两种压缩格式，压缩比:gzip>bzip2
 	unzip -d sourceInsight_downcc.zip ./		//解压*.zip文件到当前目录下
 		帮助方法:unzip --help
 
-创建压缩包的方法:
+3.创建压缩包的方法
 
 	tar -cvz/j/Jf 要创建的压缩包名(filename.tar.gz/bz2/xz) 包含的文件名
 	1.创建tar.gz压缩包:

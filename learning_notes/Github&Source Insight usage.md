@@ -384,6 +384,12 @@ AStyle代码格式工具可用于将source insight中的代码风格全部改为
 		1.在Auto Indent Type选择"Simple"
 		2.去掉Smart Indent Options中的选项.
 
+## 3.3 source insight 4.x的项目文件列表正确显示
+
+在source insight 4.x添加项目工程后,右边的project files可能不会正确的显示在右边,操作方法如下:
+
+	菜单栏Panels->勾选上"Project Windows"即可.
+
 ***
 
 # 4. Beyond Compare的使用
