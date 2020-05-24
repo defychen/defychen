@@ -606,7 +606,8 @@ apt-get(Advanced Package Tool:高级安装工具):linux上的软件包管理器.
 	//apt-get命令一般需要root权限执行,因此一般跟着sudo命令.
 	sudo apt-get install  gcc-arm-linux-gnueabi	//安装交叉编译工具链
 	sudo apt-get update	//更新源
-	sudo apt-get upgrade  	//更新已经安装的包	
+	sudo apt-get upgrade  	//更新已经安装的包
+	sudo apt-get remove gcc-arm-linux-gnueabi //卸载安装的交叉编译工具链
 
 ## 31. shutdown命令
 
@@ -760,5 +761,16 @@ zgrep用于查看压缩文件(以tar.gz结尾的文件).
 		//在home目录下查找小于512KB的文件
 	find /home -user fred
 		//在home目录下查找属于fred这个用户的文件
+
+### 37. "./configure --prefix=path"软件安装的路径指定
+
+一般安装软件时会将软件安装到默认的路径(一般为类似/usr/bin路径),如果需要安装到指定路径,方法如下:
+
+	tar -xvzf libffi-3.0.0.tar.gz
+	cd libffi-3.0.0
+	./configure --prefix=/home/defychen/software
+		//"./configure --prefix":在配置的时候指定安装的路径
+	make -j12
+	make install
 
 ## 13. wget命令
