@@ -1,6 +1,8 @@
 # SMMUv3 Learning
 
-## 1. 术语
+# 1. SMMU基本概念
+
+## 1.1 术语
 
 DVM(Distributed Virtual Memory):广播TLB维护操作的消息的协议.
 
@@ -48,13 +50,13 @@ E2H(EL2 host mode):详见VHE的说明.
 
 TR(Translation request):用于在PCIe ATS的context中,请求SMMU做地址转换.
 
-## 2. 简述
+## 1.2. 简述
 
 SMMU的行为与PE的MMU类似,在系统I/O设备的DMA请求发到系统之前进行地址转换(SMMU只为DMA工作).
 
 ![](images/smmu_in_dma_traffic.png)
 
-### 2.1 描述
+### 1.2.1 描述
 
 	1.对DMA的地址进行转换是为了隔离或快捷:
 		为了将设备通讯与转换相关联,还要区分SMMU背后不同的设备,转换请求还需要除了地址、R/W、权限以外的额外
@@ -66,7 +68,7 @@ SMMU的行为与PE的MMU类似,在系统I/O设备的DMA请求发到系统之前�
 		1阶段VA->IPA,2阶段IPA->PA;
 		1阶段转换主要是为了在一个VM内的DMA隔离,2阶段一般在支持虚拟化扩展的设备实现将DMA设备虚拟化到VM内.
 
-### 2.2 SMMUv3.2特性
+### 1.2.2 SMMUv3.2特性
 
 SMMUv3提供了支持PCIE Root Complexes的特性,并通过支持大量并行转换context来支持其他潜在大量I/O的系统.主要特性如下:
 
@@ -95,7 +97,7 @@ SMMUv3提供了支持PCIE Root Complexes的特性,并通过支持大量并行转
 	3.2阶段页表的EL0 vs EL1 execute never控制;
 	4.ARMv8.2中的PE的概念Common not Private(CnP)并不适用于SMMU架构,所有SMMU转换都按common处理.
 
-## 3. SMMU在系统中的位置
+## 1.3 SMMU在系统中的位置
 
 下图中有两种SMMU的使用方式:
 
@@ -106,7 +108,7 @@ SMMUv3提供了支持PCIE Root Complexes的特性,并通过支持大量并行转
 
 ![](images/smmu_placement_in_an_example_system.png)
 
-### 3.1 SMMU在系统中的位置要求
+### 1.3.1 SMMU在系统中的位置要求
 
 	1.正在发生的对slave设备的访问不能避过SMMU:
 		一般来说,master在SMMU后面,就像PE在MMU后面一样.因此进行中的对slave设备的访问需要master的SMMU
@@ -127,7 +129,7 @@ SMMUv3提供了支持PCIE Root Complexes的特性,并通过支持大量并行转
 		4.将SMMU作为包含全一致性缓存的复杂设备的一部分是可行的,就像PE的MMU一样;不过这意味着缓存就需要
 			用物理地址做标签.
 
-### 3.2 SMMU实现的实例
+### 1.3.2 SMMU实现的实例
 
 ![](images/example_smmu_implementations.png)
 
@@ -145,4 +147,62 @@ SMMUv3提供了支持PCIE Root Complexes的特性,并通过支持大量并行转
 
 在所有情况下,在软件层看来都是一个设备连接在逻辑上分开的SMMU后面.所有实现都像是读写操作从client设备到离散的SMMU,但实际上其实是设备直接执行读写到系统,但使用SMMU提供的转换.这样就允许一个SMMU驱动驱动起各种不同的SMMU实现,设备可能整合了TLB或整个SMMU来提升性能,但是紧耦合的TLB可能还被用于为全一致设备缓存提供物理地址的匹配;无论实现什么实现方式,他们的行为对于软件来说是一致的.
 
-## 4. SMMU的软件接口
+## 1.4 SMMU的软件接口
+
+包含3个软件接口:
+
+	1.基于内存的数据结构,用来将设备映射到负责转换client设备地址的转换表(即页表);
+	2.基于内存的环形缓冲队列:
+		1.一个用于放SMMU的指令的cmdq;
+		2.一个用于放从SMMU回报事件的事件队列(eventq);
+		3.一个PRI队列来接收PCIE页面请求;
+		只有支持PRI服务的SMMU才有priq,这个额外的队列允许处理从设备来的PRI请求而不与eventq混合.
+	3.一组寄存器,有些仅用于安全域.
+		SMMU用寄存器指示内存数据结构、队列的基地址,用寄存器提供功能检测和标志寄存器.
+		另有全局控制寄存器控制启动队列处理和流量转换;如果支持安全域,则存在一组附加的寄存器来允许安全域软件
+		维护安全域设备数据结构,在安全域指令队列中发布命令、读取安全域事件.
+
+# 2. SMMU转换分析
+
+## 2.1 StreamID和SubStreamID
+
+### 2.1.1 StreamID
+
+做一次转换需要地址、size以及相关属性如读/写/安全域/非安全域/可共享性/可缓存性.如果超过1个client设备使用SMMU流量,那么他们还要有StreamID来区分,StreamID在系统里的构建传送是具体实现决定的,逻辑上讲,一个StreamID就关联到一个发起转换的设备.
+
+	1.物理设备到StreamID的映射必须描述给系统软件,ARM推荐StreamID用密集命名空间,从0开始;
+	2.每个SMMU都是独立的StreamID命名空间;
+	3.一个设备可以不止使用一个StreamID触发流量,可以用多个StreamID来区分设备不同的状态;
+	4.StreamID用于从Stream table选出STE(Stream Table Entry),这个STE包含这个设备的配置,Stream table
+		最大包含2^StreamIDSize条位于内存的配置数据结构;
+
+### 2.1.2 SubStreamID
+
+SubstreamID可能选择性的提供给SMMU做一阶段页表转换.
+
+	1.SubstreamID可以是0-20bit.用于区分来自同一逻辑块但去往不同的程序地址空间,比如说一个有8个context的
+		计算加速器,每个context可能映射到不同的用户进程,但是只有一个设备且通用的配置,因此必须将其分配给
+		整个VM;
+	2.SubstreamID等同于PCIE里的PASID,因为也用于非PCIE系统,所以给了一个更通用的名字;
+	3.SubstreamID最大值20bit也与PCIE的PASID一致.
+
+StreamID和SubStreamID通过SMMU_IDR1寄存器配置.
+
+### 2.1.3 StreamID和SubStreamID的使用
+
+	1.StreamID是识别一个transaction所有配置的关键,一个StreamID可以配置成bypass或要转换的项目,而这就
+		决定了要做1或2阶段页表转换;
+	2.SubstreamID提供了一个修饰符,这个修饰符在StreamID指示的一组1阶段转换间做选择,但对有StreamID选择的
+		2阶段转换没有影响.仅实现2阶段的SMMU不能接受SubstreamID;
+	3.安全域的StreamID从安全域的Stream table中找STE,非安全域的StreamID从非安全域Stream table找STE.
+
+### 2.1.4 ARM推荐
+
+ARM希望对于PCI:
+
+	1.StreamID从PCI RequestID生成,这样StreamID[15:0]就是RequestID的[15:0]:
+		如果一个SMMU后有超过1个RootComplex,ARM推荐将这16bit的RequestID命名空间编入更大的StreamID命名
+		空间来管理,高bit位来区分连续的RequestID命名空间,这样StreamID[N:16]就能指示哪个RootComplex是
+		stream的源;
+	2.在PCIE系统里,SubstreamID应该直接从PASID一对一的对应而来.因此,实现与PCI client一起用的SMMU需要
+		支持StreamID最少16bit.
