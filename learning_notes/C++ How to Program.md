@@ -6519,7 +6519,16 @@ map用于快速存取唯一的key-value值对,以pair对象存取.map中的key-v
 	
 		for (auto mapItem : pairs)
 			cout << mapItem.first << "\t" << mapItem.second << "\n";
-	
+		
+		/*
+			map除了使用auto进行遍历外,一般的遍历方法如下:
+			map<int, double>::iterator iter;
+			iter = pairs.begin();
+			while (iter != pairs.end()) {
+				cout << iter->first << "\t" << iter->second << "\n";
+			}
+		*/
+
 		pairs[25] = 9999.99;	//下标引用key,如果key存在则会将value替换.
 		pairs[40] = 8765.43;	//下标引用key,key不存在则在map中插入新的key-value对.
 	
