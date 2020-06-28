@@ -1,8 +1,6 @@
 # SMMUv3 Learning
 
-# 1. SMMU基本概念
-
-## 1.1 术语
+# 1. SMMU术语和缩写
 
 ASID(Address Space ID):用于区分不同地址空间的TLB entry.
 
@@ -74,65 +72,67 @@ E2H(EL2 host mode):ARMv8.1中定义的虚拟化扩展,支持在EL2翻译规则�
 
 TR(Translation request):用于在PCIe ATS的context中,请求SMMU做地址转换.
 
-## 1.2. 简述
+# 2. 简介
 
-SMMU的行为与PE的MMU类似,在系统I/O设备的DMA请求发到系统之前进行地址转换(SMMU只为DMA工作).
+SMMU的行为与PE的MMU类似,为系统I/O设备的DMA提供地址翻译服务.
 
 ![](images/smmu_in_dma_traffic.png)
 
-### 1.2.1 描述
+## 2.1 基本功能
 
-	1.对DMA的地址进行转换是为了隔离或快捷:
-		为了将设备通讯与转换相关联,还要区分SMMU背后不同的设备,转换请求还需要除了地址、R/W、权限以外的额外
-		属性(即需要一个分辨某个流的属性);
-		不同的流在逻辑上与不同的设备相关联,SMMU可以对不同的流实现不同的转换或检查,即使一个系统中只有一个
-		client设备,SMMU的概念仍然不会变,只有一个流与该设备对应.
-	2.一个系统中可能有很多个SMMU,一个SMMU可能为1个或多个设备做转换;
-	3.SMMU支持2阶段页表转换的方式与PE的MMU相似:
-		1阶段VA->IPA,2阶段IPA->PA;
-		1阶段转换主要是为了在一个VM内的DMA隔离,2阶段一般在支持虚拟化扩展的设备实现将DMA设备虚拟化到VM内.
+	1.SMMU行为与PE段的MMU一致;
+	2.为device之间、device和PE之间提供地址空间隔离;
+	3.支持2级翻译(VA->IPA->PA):
+		Stage 1:软件通过S1进行buffer的地址翻译和隔离(e.g.OS内的DMA隔离);
+		Stage 2:用于虚拟化扩展,为VM提供DMA虚拟化.
 
-### 1.2.2 SMMUv3.2特性
+## 2.2 SMMUv3版本特性
 
-SMMUv3提供了支持PCIE Root Complexes的特性,并通过支持大量并行转换context来支持其他潜在大量I/O的系统.主要特性如下:
+**1.SMMUv1**
 
-	1.基于内存的配置结构,支持大量的流;
-	2.具体实现可仅1阶段、仅2阶段或两阶段页表转换,从寄存器里可以查到具体配置,其他根据实现选配的参数也可以
-		查到;
-	3.最高16bit ASID;
-	4.最高16位VMID;
-	5.根据ARMv8.1虚拟内存系统架构实现地址转换和保护.SMMU转换表可与PE们共享,允许软件选择共享页表或SMMU
-		私有页表;
-	6.49bit VA,符合ARMv8-A的2x48bit转换表输入大小.
+	SMMUv1的各种配置项是基于寄存器的,只支持一定数量的contexts/streams.
 
-选配特性:
+**2.SMMUv2**
 
-	1.可支持aarch32 LPAE页表格式和aarch64页表格式;
-	2.支持安全域的流;
-	3.广播TLB失效;
-	4.HTTU可能仅支持硬件更新Access flag或同时支持硬件更新Access flag和Dirty state,也可以没有HTTU;
-	5.兼容Root Complex的PCIE ATS和PRI;
-	6.4K,16K和64K页表粒度,建议基于服务器的系统架构实现应实现两阶段页表转换并使用64KB页表,与PE相对齐.
+	支持ARMv8-A长页表格式,支持大地址空间,但是contexts/streams数量仍受限于寄存器数量.
 
-其他:
+**3.SMMUv3.0**
 
-	1.可以支持52bit VA、IPA、PA;
-	2.Page-Based Hardware Attribute;
-	3.2阶段页表的EL0 vs EL1 execute never控制;
-	4.ARMv8.2中的PE的概念Common not Private(CnP)并不适用于SMMU架构,所有SMMU转换都按common处理.
+	1.Memory-base的配置结构,理论上支持无限的stream个数;
+	2.支持S1 only, S2 only和S1+S2翻译;
+	3.支持最高16-bit的ASID/VMID;
+	4.支持ARMv8.1 Virtual memory system architecture定义的地址翻译和保护,页表可以和PE共享;
+	5.支持49-bit VA(matching ARMv8-A's 2x48-bit translation table input size)(AArch64模式);
+	6.由于配置结构的变化,SMMUv3软件接口不向前兼容SMMUv2.
+	可选支持项:
+	1.S1/S2支持AArch32(LPAE页表格式)和AArch64页表格式;
+	2.Secure stream;
+	3.Broadcast TLB invalidation;
+	4.Hardware Translation Table Update(HTTU),可支持只更新Access Flag或同时支持Access Flag和
+		Dirty state;
+	5.PCIe ATS和PRI;
+	6.16KB和64KB page粒度,ARM建议在基于服务器的架构上支持S1和S2的64KB page粒度.
 
-## 1.3 SMMU在系统中的位置
+**4.SMMUv3.1**
 
-下图中有两种SMMU的使用方式:
+	1.支持52-bit VA,IPA和PA(AArch64);
+	2.Page-Base Hardware Attribute(PBHA);
+	3.EL0 vs EL1 execute never controls in S2 translation tables;
+	4.Supports for transactions that perform cache-stash or destructive read side-effects;
+	5.Performance Monitor Counter Group(PMCG) error status.
 
-	1.一种使用方式是两个client设备经SMMU从系统取数据,设备的DMA可以使用VA、IPA或是其他总线地址,SMMU将这地
+## 2.3 SMMU在系统中的连接关系
+
+SMMU在系统中有两种连接方式:
+
+	1.一种连接方式是client设备经SMMU从系统取数据,设备的DMA可以使用VA、IPA或是其他总线地址,SMMU将这地
 		址转换成PA;
-	2.另一种使用方式是SMMU与PCIE的Root Complex一对一的接到了一起,Root Complex自己管着一票Endpoints,
+	2.另一种连接方式是SMMU与PCIE的Root Complex一对一连接,Root Complex自己管着一票Endpoints,
 		SMMU给出了一个ATS port来支持PCIE的ATS和PRI,当然,这个ATS也可能是兼容其他非PCIE设备的相近功能.
 
 ![](images/smmu_placement_in_an_example_system.png)
 
-### 1.3.1 SMMU在系统中的位置要求
+### 2.3.1 SMMU在系统中的位置要求
 
 	1.正在发生的对slave设备的访问不能避过SMMU:
 		一般来说,master在SMMU后面,就像PE在MMU后面一样.因此进行中的对slave设备的访问需要master的SMMU
@@ -153,80 +153,56 @@ SMMUv3提供了支持PCIE Root Complexes的特性,并通过支持大量并行转
 		4.将SMMU作为包含全一致性缓存的复杂设备的一部分是可行的,就像PE的MMU一样;不过这意味着缓存就需要
 			用物理地址做标签.
 
-### 1.3.2 SMMU实现的实例
+### 2.3.2 SMMU的实现结构
 
 ![](images/example_smmu_implementations.png)
 
-	1.SMMU A作为一个复杂设备的一部分,仅为此设备提供转换服务,这一设计可以提供专用的无需争用的页表翻译和TLB
-		的设备;
-	2.SMMU B则是一个集成了页表转换、编程接口和TTW功能的整体,两个client设备使用此SMMU作为DMA进入系统的途径;
-	3.SMMU C是分布式的,并能提供多路径到系统实现更高带宽,其包含:
-		1.一个中心TTW,具有自己的master接口用于获取转换页表、配置结构及队列,还有自己的slave接口用于接受编程
-			访问;
-		2.一个宏TLB和配置的缓存;
-		3.一些远程TLB单元:在转换miss时向中心TTW发转换请求,并将结果缓存到本地.
-		4.图上展示了两个远程TLB单元,一个远程TLB单元通过1个端口支持了一组3个设备,一个远程TLB单元连接到PCIE
-			Root Complex,第二个远程TLB单元还提供了一个ATS接口给Root Complex,所以PCIE Endpoint可以
-			使用ATS来发起转换请求到中心TTW.
+	1.SMMU A是"嵌入"结构,仅供当前设备使用,避免地址翻译和TLB使用冲突;
+	2.SMMU B是"独立"结构,有单独的配置接口和translation table walk逻辑,可以提供给多个DMA同时进行地址翻译;
+	3.SMMU C是"分布"结构,可以提供更多的翻译通路和更高的带宽,包含:
+		1.一个核心的translation table walk(通常称为TCU),自身包含master接口用于预取各级页表描述符、
+			STE/CD配置表和CMD queue;同时包含slave接口用于接受寄存器配置,内部也可能包含macro-TLB或
+			cache结构,用于加速地址翻译;
+		2.多个TLB单元,当发生TLB miss时,向TCU发起翻译请求并且缓存在本地cache中;
+		3.对于PCIe的RC来说,与TLB之间还可以支持ATS接口,RC通过ATS接口请求TCU进行地址翻译.
+	4.最左边的是一个"智能设备(smart device)",该设备集成本地TLB,向SMMU C中的TCU发起翻译请求.从软件层面
+		来说该设备和其他设备无区别.这种分离的TLB结构可以有效降低设计复杂度.
 
-在所有情况下,在软件层看来都是一个设备连接在逻辑上分开的SMMU后面.所有实现都像是读写操作从client设备到离散的SMMU,但实际上其实是设备直接执行读写到系统,但使用SMMU提供的转换.这样就允许一个SMMU驱动驱动起各种不同的SMMU实现,设备可能整合了TLB或整个SMMU来提升性能,但是紧耦合的TLB可能还被用于为全一致设备缓存提供物理地址的匹配;无论实现什么实现方式,他们的行为对于软件来说是一致的.
+PS:无论是什么结构,从软件角度,每个device都拥有一个专属的、独立的SMMU.
 
-## 1.4 SMMU的软件接口
+# 3. SMMU操作
 
-包含3个软件接口:
+## 3.1 软件接口
 
-	1.基于内存的数据结构,用来将设备映射到负责转换client设备地址的转换表(即页表);
-	2.基于内存的环形缓冲队列:
-		1.一个用于放SMMU的指令的cmdq;
-		2.一个用于放从SMMU回报事件的事件队列(eventq);
-		3.一个PRI队列来接收PCIE页面请求;
-		只有支持PRI服务的SMMU才有priq,这个额外的队列允许处理从设备来的PRI请求而不与eventq混合.
-	3.一组寄存器,有些仅用于安全域.
-		SMMU用寄存器指示内存数据结构、队列的基地址,用寄存器提供功能检测和标志寄存器.
-		另有全局控制寄存器控制启动队列处理和流量转换;如果支持安全域,则存在一组附加的寄存器来允许安全域软件
-		维护安全域设备数据结构,在安全域指令队列中发布命令、读取安全域事件.
+1.支持3个软件接口
 
-# 2. SMMU转换分析
+	1.memory-based数据结构(STE/CD),将device的stream映射到页表;
+	2.memory-based circular buffer queues,cmdq控制SMMU,eventq用于上报event/fault,PRI queue用于接收
+		PCIe的page请求(可选项);
+	3.配置寄存器,可支持安全:
+		配置各种数据结构、queue的首地址;
+		指示SMMU支持的特性;
+		全局行为控制.
 
-## 2.1 StreamID和SubStreamID
+2.在虚拟化场景中,guest OS看到的SMMU软件接口与非虚拟化场景一样.因为guest OS认为其使用的是一个真实的SMMU(实际上只支持S1).
 
-### 2.1.1 StreamID
+## 3.2 Stream编码
 
-做一次转换需要地址、size以及相关属性如读/写/安全域/非安全域/可共享性/可缓存性.如果超过1个client设备使用SMMU流量,那么他们还要有StreamID来区分,StreamID在系统里的构建传送是具体实现决定的,逻辑上讲,一个StreamID就关联到一个发起转换的设备.
+### 3.2.1 StreamID
 
-	1.物理设备到StreamID的映射必须描述给系统软件,ARM推荐StreamID用密集命名空间,从0开始;
-	2.每个SMMU都是独立的StreamID命名空间;
-	3.一个设备可以不止使用一个StreamID触发流量,可以用多个StreamID来区分设备不同的状态;
-	4.StreamID用于从Stream table选出STE(Stream Table Entry),这个STE包含这个设备的配置,Stream table
-		最大包含2^StreamIDSize条位于内存的配置数据结构;
+	1.每个StreamID对应一个逻辑上的device;
+	2.每个SMMU拥有独立的StreamID空间,不同的SMMU之间的StreamID可以相同;
+	3.一个device可以发出多个StreamID,可以认为是多个逻辑device;
+	4.StreamID用于索引Stream Table Entry(STE),对应per-device configuration;
+	5.对于支持安全的场景,SEC_SID用于标记StreamID是否安全,安全StreamID和非安全StreamID是两个独立的
+		StreamID空间.
 
-### 2.1.2 SubStreamID
+### 3.2.2 SubStreamID(可选支持,同PCIe PASID的概念)
 
-SubstreamID可能选择性的提供给SMMU做一阶段页表转换.
-
-	1.SubstreamID可以是0-20bit.用于区分来自同一逻辑块但去往不同的程序地址空间,比如说一个有8个context的
-		计算加速器,每个context可能映射到不同的用户进程,但是只有一个设备且通用的配置,因此必须将其分配给
-		整个VM;
-	2.SubstreamID等同于PCIE里的PASID,因为也用于非PCIE系统,所以给了一个更通用的名字;
-	3.SubstreamID最大值20bit也与PCIE的PASID一致.
+	1.进一步细分同一个逻辑device发出的transaction,区分不同的地址翻译上下文(context);
+	2.仅适用于S1.如果SMMU不支持S1,则SubstreamID不作为输入;如果一个StreamID只包含一个context,则
+		SubStreamID也可以不支持.
 
 StreamID和SubStreamID通过SMMU_IDR1寄存器配置.
 
-### 2.1.3 StreamID和SubStreamID的使用
-
-	1.StreamID是识别一个transaction所有配置的关键,一个StreamID可以配置成bypass或要转换的项目,而这就
-		决定了要做1或2阶段页表转换;
-	2.SubstreamID提供了一个修饰符,这个修饰符在StreamID指示的一组1阶段转换间做选择,但对有StreamID选择的
-		2阶段转换没有影响.仅实现2阶段的SMMU不能接受SubstreamID;
-	3.安全域的StreamID从安全域的Stream table中找STE,非安全域的StreamID从非安全域Stream table找STE.
-
-### 2.1.4 ARM推荐
-
-ARM希望对于PCI:
-
-	1.StreamID从PCI RequestID生成,这样StreamID[15:0]就是RequestID的[15:0]:
-		如果一个SMMU后有超过1个RootComplex,ARM推荐将这16bit的RequestID命名空间编入更大的StreamID命名
-		空间来管理,高bit位来区分连续的RequestID命名空间,这样StreamID[N:16]就能指示哪个RootComplex是
-		stream的源;
-	2.在PCIE系统里,SubstreamID应该直接从PASID一对一的对应而来.因此,实现与PCI client一起用的SMMU需要
-		支持StreamID最少16bit.
+### 3.2.3 数据结构查找
