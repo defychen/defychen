@@ -205,4 +205,55 @@ PS:无论是什么结构,从软件角度,每个device都拥有一个专属的、
 
 StreamID和SubStreamID通过SMMU_IDR1寄存器配置.
 
-### 3.2.3 数据结构查找
+### 3.3 数据结构查找
+
+SMMU内主要有两种数据结构:
+
+![](images/smmu_configure_struct_example.png)
+
+**1.configuration**
+
+将StreamID映射到页表基地址、配置项和context,以便进行地址翻译,包含STE和CD两种数据结构.
+
+	STE(Stream Table Entry):包含S2页表基地址、VMID和CD数据结构的首地址等;
+	CD(Context Descriptor):包含S1页表基地址、per-stream configuration和ASID等.
+
+**2.Translation Table**
+
+用于VA->IPA(S1)和IPA->PA(S2)的地址翻译.
+
+#### 3.3.1 STE
+
+**1.线性STE**
+
+![](images/smmu_linear_stream_table.png)
+
+	1.线性STE在内存中连续存储,每个Stream Table Entry占用64B的存储空间;
+	2.通过SMMU_(S)_STRTAB_BASE.ADDR[51:6]作为基地址,StreamID作为索引来查找,当StreamID递增1时,STE
+		偏移地址递增64B;
+	//优缺点:
+	优点:实现简单,只需要一次索引,速度块;
+	缺点:需要连续空间,当StreamID较多时不推荐使用.
+
+**2.2-level结构STE**
+
+	1.第一级Table,即线性结构的STD(Stream Table Descriptor),包含了指向二级STE的基地址STD.L2Ptr和表
+		征第二级STE数目的STD.Span.每个STD占用8B的存储空间;
+	2.第二级STE是线性结构;
+	3.第一级STD由StreamID[n:SPLIT]作为索引,n为StreamID的最高bit;SPLIT通过SMMU_(S)_STRTAB_BASE_CFG.
+		SPLIT寄存器进行配置;
+	4.第二级STE由第一级STD中的STD.L2Ptr作为基地址加上StreamID[SPLIT-1:0]作为偏移进行索引;
+	5.是否支持2-level STE由寄存器SMMU_IDR0.ST_LEVEL指示;
+	6.StreamID[SPLIT-1:0]中,SPLIT的值只支持6/8/10三种,对应4KB/16KB/64KB三种page size;
+	7.如果线性STE的大小超过4KB时,无法放入同一个4KB page,因此SMMU支持的StreamID超过64时(4KB/64B=64,即
+		StreamID超过6bit),必须支持2-level STE.
+	//优缺点:
+	优点:节约内存空间,特别是StreamID范围很大、且有效的STE分布比较稀疏时;
+	缺点:需要索引两次,进行两次内存访问,速度慢.
+
+**3.StreamID to CD**
+
+	1.S1使能时,STE包含CD数据结构的首地址,指向一个或多个CD(多个CD的情况下,CD由SubStreamID作为index);
+		CD包含S1页表首地址、per-stream configuration和ASID等信息;
+	2.S2使能时,STE包含S2页表首地址和VMID等信息;
+	3.
