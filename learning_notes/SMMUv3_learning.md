@@ -251,9 +251,45 @@ SMMU内主要有两种数据结构:
 	优点:节约内存空间,特别是StreamID范围很大、且有效的STE分布比较稀疏时;
 	缺点:需要索引两次,进行两次内存访问,速度慢.
 
-**3.StreamID to CD**
+#### 3.3.2 StreamID to CD
 
 	1.S1使能时,STE包含CD数据结构的首地址,指向一个或多个CD(多个CD的情况下,CD由SubStreamID作为index);
 		CD包含S1页表首地址、per-stream configuration和ASID等信息;
 	2.S2使能时,STE包含S2页表首地址和VMID等信息;
-	3.
+	3.多个device可以共享使用一个VM,表示多个STE可以共享一套S2页表(相同的VMID);同理,多个stream可以共享
+		一个S1配置,表示多个STE也可以共享同一个CD(相同的ASID);
+	4.ARM建议,hypervisor使能的情况下,STE和S2页表由hypervisor控制,CD和S1页表由guest OS控制,hypervisor
+		也可以使用独立的S1页表用于自身的地址翻译;
+	5.如果使能了substream,但没有提供SubstreamID,SMMU的行为与STE.S1DSS配置有关:
+		1.STE.S1DSS=0b00,缺少SubstreamID将导致出错,该transaction被abort并记录到event;
+		2.STE.S1DSS=0b01,缺少SubstreamID不会导致出错,当作S1-bypass处理;
+		3.STE.S1DSS=0b10,缺少SubstreamID不会导致出错,使用Substream 0的CD,此时如果某个transaction的
+			SubstreamID=0,则会被abort并记录到event.
+	6.ASID和VMID作为TLB的Tag,主要有以下功能:
+		1.地址翻译时,区分不同的stream中的不同地址空间;
+		2.在收到广播的TLB invalidation命令时,匹配TLB entry;
+		3.多个stream间共享页表.
+
+**1.实例1--->线性的STE和线性的CD**
+
+![](images/smmu_linear_ste_linear_cd.png)
+
+	1.STE线性结构,由StreamID索引;
+	2.每个STE指向一个CD和S2页表;
+	3.CD指向一个S1的页表.
+
+**2.实例2--->线性的STE和二级CD**
+
+![](images/smmu_single_ste_multiple_cd.png)
+
+	1.STE指向一个CD阵列的首地址;
+	2.CD阵列中的CD由SubstreamID索引;
+	3.每个CD指向一个S1的页表.
+
+**3.实例3--->二级的STE和二级CD**
+
+![](images/smmu_multiple_ste_multiple_cd.png)
+
+	1.2-level STE和2-level CD复合结构;
+	2.可以灵活的支持更多数量的stream和substream,且节约内存空间.
+
