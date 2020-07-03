@@ -293,3 +293,65 @@ SMMU内主要有两种数据结构:
 	1.2-level STE和2-level CD复合结构;
 	2.可以灵活的支持更多数量的stream和substream,且节约内存空间.
 
+#### 3.3.3 2 stage翻译过程
+
+![](images/smmu_2s_translation.png)
+
+	1.如果SMMU_CR0.SMMUEN==0,表示global bypass,不进行地址翻译,但是可以通过SMMU_GBPA进行属性配置,
+		或者abort所有的transaction.
+	2.如果SMMU_CR0.SMMUEN==1,表示非global bypass:
+		1.通过StreamID查找STE;
+		2.如果STE使能S2(STE.Config),则STE包含S2页表首地址;
+		3.如果STE只能S1(STE.Config),则STE包含CD的首地址.如果S1/S2同时使能,STE包含的CD这个地址是IPA
+			地址,需要通过S2翻译变成PA地址才能访问到真正的CD,否则使用的是PA地址读取CD;
+	3.如果STE和CD配置都有效的话,进行地址翻译:
+		1.如果S1使能且非bypass,CD指向S1页表(S1的TTBx信息),进行PTW,得到IPA地址;否则VA直接作为IPA地址
+			给S2.
+		2.如果S2使能且非bypass,STE指向S2页表,IPA地址需要进行一次S2翻译转换得到PA地址;否则直接作为输出
+			PA地址给到下游.
+	4.安全场景下,bypass由SMMU_S_CR0.SMMUEN和SMMU_S_GBPA控制,且不支持S2.
+
+### 3.4 配置查找和翻译查找
+
+#### 3.4.1 查找过程
+
+![](images/smmu_configuration_translation_lookup.png)
+
+SMMU翻译过程分为两大步骤:
+
+**1.配置查找**
+
+通过寄存器配置和StreamID(SubstreamID)查找到STE(CD)的过程,最终得到stream相关的配置信息:
+
+	1.S1页表基地址、ASID和相关的配置信息(e.g.地址翻译的granule size);
+	2.S2页表基地址、VMID和相关的配置信息;
+	3.Stream的相关的配置信息,e.g.StreamWorld(ELn、安全、翻译规则等);
+
+**2.翻译查找**
+
+通过输入地址、StreamWorld、ASID和VMID等信息得到最终物理地址
+
+	ARM建议用TLB缓存这些信息,不用每次翻译都进行PTW,加速翻译过程.
+
+#### 3.4.2 StreamWorld
+
+StreamWorld定义的是不同的翻译场景,对应不同的翻译规则
+
+	1.查找或失效TLB时作为Tag的一部分;
+	2.StreamWorld由以下几个配置项组合得到:
+		1.STE的安全属性;
+		2.STE.Config;
+		3.STE.STRW;
+		4.SMMU_CR2.E2H.
+
+StreamWorld基本可以对应ARMv8-A里定义的EL概念
+
+![](images/smmu_streamworld_content.png)
+
+#### 3.4.3 总结
+
+	1.StreamID/SubstreamID标记配置查找过程:
+		可用于configuration cache maintenance
+	2.(StreamWorld、VMID、ASID、Address)标记翻译查找过程:
+		可用于Translation cache maintenance(e.g.TLB maintenance)
+
