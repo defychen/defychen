@@ -391,3 +391,23 @@ StreamWorld基本可以对应ARMv8-A里定义的EL概念
 	VHE: Virtualization Host Extensions.
 
 ## 4.2 EL的概念
+
+EL(Exception Level),软件执行环境所处的特权等级,分为EL0, EL1, EL2, EL3.
+
+	1.数字越大,特权级别越高;
+	2.EL0是最低权限,称为unprivileged.EL1/EL2/EL3称为privileged;
+	3.EL2与虚拟化相关,只存在于Non-secure状态;
+	4.EL3涉及到Non-secure和secure切换,只存在于secure状态;
+	5.EL0/EL1必须实现,EL2/EL3可选;
+	6.EL之间的切换只能通过异常处理实现:
+		进入异常时,EL只能上升或者保持不变;
+		从异常返回时,EL只能降低或者保持不变.
+
+EL层级与软件层次之间的对应关系如下:
+
+	EL0--->Applications Secure or Non-secure state;
+	EL1--->Operation system kernel and associated functions that are typically described as
+		privileged Secure or Non-secure;
+	EL2--->Hyperisor. Non-secure only;
+	EL3--->Secure monitor.
+
