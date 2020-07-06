@@ -205,7 +205,7 @@ PS:无论是什么结构,从软件角度,每个device都拥有一个专属的、
 
 StreamID和SubStreamID通过SMMU_IDR1寄存器配置.
 
-### 3.3 数据结构查找
+## 3.3 数据结构查找
 
 SMMU内主要有两种数据结构:
 
@@ -222,7 +222,7 @@ SMMU内主要有两种数据结构:
 
 用于VA->IPA(S1)和IPA->PA(S2)的地址翻译.
 
-#### 3.3.1 STE
+### 3.3.1 STE
 
 **1.线性STE**
 
@@ -251,7 +251,7 @@ SMMU内主要有两种数据结构:
 	优点:节约内存空间,特别是StreamID范围很大、且有效的STE分布比较稀疏时;
 	缺点:需要索引两次,进行两次内存访问,速度慢.
 
-#### 3.3.2 StreamID to CD
+### 3.3.2 StreamID to CD
 
 	1.S1使能时,STE包含CD数据结构的首地址,指向一个或多个CD(多个CD的情况下,CD由SubStreamID作为index);
 		CD包含S1页表首地址、per-stream configuration和ASID等信息;
@@ -293,7 +293,7 @@ SMMU内主要有两种数据结构:
 	1.2-level STE和2-level CD复合结构;
 	2.可以灵活的支持更多数量的stream和substream,且节约内存空间.
 
-#### 3.3.3 2 stage翻译过程
+### 3.3.3 2 stage翻译过程
 
 ![](images/smmu_2s_translation.png)
 
@@ -311,9 +311,9 @@ SMMU内主要有两种数据结构:
 			PA地址给到下游.
 	4.安全场景下,bypass由SMMU_S_CR0.SMMUEN和SMMU_S_GBPA控制,且不支持S2.
 
-### 3.4 配置查找和翻译查找
+## 3.4 配置查找和翻译查找
 
-#### 3.4.1 查找过程
+### 3.4.1 查找过程
 
 ![](images/smmu_configuration_translation_lookup.png)
 
@@ -333,7 +333,7 @@ SMMU翻译过程分为两大步骤:
 
 	ARM建议用TLB缓存这些信息,不用每次翻译都进行PTW,加速翻译过程.
 
-#### 3.4.2 StreamWorld
+### 3.4.2 StreamWorld
 
 StreamWorld定义的是不同的翻译场景,对应不同的翻译规则
 
@@ -348,10 +348,46 @@ StreamWorld基本可以对应ARMv8-A里定义的EL概念
 
 ![](images/smmu_streamworld_content.png)
 
-#### 3.4.3 总结
+### 3.4.3 总结
 
 	1.StreamID/SubstreamID标记配置查找过程:
 		可用于configuration cache maintenance
 	2.(StreamWorld、VMID、ASID、Address)标记翻译查找过程:
 		可用于Translation cache maintenance(e.g.TLB maintenance)
 
+## 3.5 transaction属性
+
+1.一个transaction可能包含以下属性:
+
+	1.Address、Size、Read/Write;
+	2.Access type: Device、Write-Back cached normal memory等;
+	3.Shareability: Inner/Outer shareable
+	4.Cache allocation hints
+	5.Instruction/Data、Privileged/Unprivileged, Secure/Non-secure
+
+2.instruction/data, privileged/unprivileged, secure/non-secure, read/write等都是permission相关的属性,需要和页表中的相关属性做检查,检查不通过SMMU可以驳回此次访问.这些属性可以通过STE中的INTSTCFG, PRIVCFG和NSCFG配置进行覆盖.
+
+3.其他的属性(memory type, shareability, cache hints)等主要用于进行memory访问控制,由输入的属性、页表中的属性和SMMU的配置(STE中的MTCFG/MemAttr, SHCFG, ALLOCCFG等)组合得到.SMMU同样也可以进行覆盖(override):
+
+	1.S1和S2都bypass时,由于没有页表属性,使用输入的属性较为合适;
+	2.S2-only时,由于S2页表是VM通用的,device比VM更清楚自己的访问行为,也使用输入的属性较为合适.
+
+4.ARM建议
+
+	1.在device保证输入的属性正确的情况下,使用输入属性而不进行override;
+	2.在device不保证属性正确或不输出属性时,使用SMMU的配置和页表中的属性进行override.
+
+# 4. 延伸: ARMv8-A
+
+## 4.1 名词解释
+
+	ARMv8-A: ARM architecture version 8-Application profile;
+	AArch64: 64-bit Execution state, supports the A64 instruction set;
+	AArch32: 32-bit Execution state, supports the T32 and A32 instruction set;
+	VMSA: Virtual Memory System Architecture based on a Memory Management Unit(MMU);
+	PE: Processing Element;
+	EL: Exception Level;
+	HYP: Hypervisor;
+	VHE: Virtualization Host Extensions.
+
+## 4.2 EL的概念
