@@ -411,3 +411,43 @@ EL层级与软件层次之间的对应关系如下:
 	EL2--->Hyperisor. Non-secure only;
 	EL3--->Secure monitor.
 
+## 4.3 EL的层次化
+
+![](images/armv8_a_EL_layer.png)
+
+## 4.4 Hypervisor
+
+1.允许多个NS-EL1 guest OS多路复用,运行在同一套硬件上.
+
+	1.自有翻译规则
+		独立的S1翻译,没有S2;
+		支持LPAE格式;
+		只有一个页表基地址(TTBR0_EL2);
+	2.角色:作为一个"world switch"
+		Between guests(baremetal hypervisor/Type-1);
+		Between host and guests(hosted hypervisor/Type-2)---host作为一个特殊的guest
+
+2.KVM/ARM使用Hypervisor切换host和guest
+
+## 4.5 Virtualization Host Extensions
+
+1.Virtualization Host Extensions(VHE) expand the capabilities of EL2:
+
+	1.Designed to improve the support of Type-2 hypervisors;
+	2.Allow the host OS to be run at EL2;
+	3.The host OS requires minimal changes to run at EL2;
+	4.User-space still runs at EL0;
+	5.Guest OS run at EL1;
+	6.Host has no software running at EL1;
+	7.AArch64 specific;
+	8.Consists of two S1 translation tables.
+
+2.Major design goals for VHE:
+
+	1.Make architecture features discoverable;
+	2.Allow EL1 software to run at EL2 transparently;
+	3.Put the burden of the change on Virtualization software.
+
+3.With VHE enabled, the Linux kernel can now be run at EL2.
+
+ 
