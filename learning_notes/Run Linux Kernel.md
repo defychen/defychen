@@ -74,7 +74,7 @@
 
 **1.全过程步骤分解**
 
-	1.指令首先进去流水线(pipeline)的前端(front-end),包括预取(fetch)和译码(decode),经过分发(dispatch)
+	1.指令首先进入流水线(pipeline)的前端(front-end),包括预取(fetch)和译码(decode),经过分发(dispatch)
 		和调度(scheduler)后进入执行单元,最后提交执行结果;
 	2.所有指令采用顺序方式(In-Order)通过前端,并采用乱序的方式(Out-of-Order, OOO)进行发射,然后乱序执行,
 		最后用顺序方式提交结果,并将最终结果更新到LSQ(Load-Store Queue)部件;
@@ -165,40 +165,106 @@
 
 ## 1.4 内存屏障(memory barrier)
 
-**内存访问乱序产生原因**
+### 1.4.1 内存访问乱序概念
 
-	1.编译时,编译器优化导致内存乱序访问;
-	2.运行时,多CPU间交互引起的内存乱序访问.
+程序在运行时内存实际的访问顺序和程序代码编写的访问顺序不一定一致.
 
-**编译时的乱序访问规避**
+	内存访问乱序出现的理由:为了提升程序运行时的性能.
 
-	#define barrier() asm volatile("": : :"memory")
-	/*
-		memory:强制gcc编译器假设RAM所有内存单元均被汇编指令修改,此时CPU中的register和cache中的数据作废.
-		CPU将不得不在需要的时候重新读取内存中的数据.阻止了CPU读取register或cache中的数据用于去优化指令,
-		而不去访问内存.
-	*/
+### 1.4.2 内存访问乱序产生原因
 
-## 1.5 ARM的memory barrier(内存屏障)指令
+	1.编译时,编译器优化导致内存乱序访问(指令重排)--->也叫编译器乱序
+	2.运行时,多CPU间交互引起的内存乱序访问--->也叫CPU乱序
+
+### 1.4.3 memory barrier种类
+
+memory barrier能够让CPU或编译器在内存访问上有序.包含以下两类:
+
+	1.编译器memory barrier;
+	2.CPU memory barrier
+
+#### 1.4.3.1 编译器乱序
+
+**1.编译器乱序**
+
+	int x, y, r;
+	void f()
+	{
+		x = r;
+		y = 1;
+	}
+	//在gcc下使用O2/O3优化参数可能会改变编译后指令的顺序(即导致y=1在x=r之前),进而改变执行的顺序.
+
+**2.编译器乱序的解决办法--->使用编译器barrier(又叫优化barrier)**
+
+linux内核提供了barrier()函数用于让编译器保证其之前的内存访问先于其之后的的完成.
+
+	#define barrier() __asm__ __volatile__("" ::: "memory")
+
+**3.将barrier()加入到程序中**
+
+	int x, y, r;
+	void f()
+	{
+		x = r;
+		__asm__ __volatile__("" ::: "memory");	//或者barrier();即可
+		y = 1;
+	}
+	//此时如果看反汇编就不会出现编译乱序了.
+
+**4.linux内核提供了其他方法也可以避免编译乱序**
+
+	1.声明变量为volatile
+		volatile int x, y;
+		int r;
+		void f()
+		{
+			x = r;
+			y = 1;
+		}
+		//x, y声明为volatile,使得x相对于y、y相对于x在内存访问上有序.
+	2.使用ACCESS_ONCE宏避免指令重排
+		该宏定义如下:
+			#define ACCESS_ONCE(x) (*(volatile typeof(x) *)&(x))
+		使用:
+			int x, y, r;
+			void f()
+			{
+				ACCESS_ONCE(x) = r;
+				ACCESS_ONCE(y) = 1;
+			}
+
+#### 1.4.3.2 CPU乱序执行
+
+**1.CPU乱序执行**
+
+乱序执行是指处理器执行时,后发射的指令可能先执行完.现代CPU会根据自己的缓存特性,将访问执行重新排序执行,主要的乱序处理有两种:
+
+	1.连续的地址访问可能会先执行,因为这样cache命中率高;
+	2.允许访存的非阻塞,如果前面一条访存指令因为cache miss,造成长时间的存储访问,后面的访存指令可以先执行,
+		以便从缓存中取数据.
+
+**2.CPU乱序执行解决方法--->DMB/DSB/ISB**
 
 从ARMv7指令集开始,ARM提供3条内存屏障指令.
 
-**1.DMB(Data Memory Barrier)数据存储屏障**
+**3.DMB(Data Memory Barrier)数据存储屏障**
 
 	该指令可以不带参数.位于此指令前的所有内存访问均完成后,DMB指令才完成.该指令仅保证后面的访存操作
 	(load/store指令)在DMB之后,其他的指令不受影响.
 
-**2.DSB(Data Synchronization Barrier)数据同步屏障**
+**4.DSB(Data Synchronization Barrier)数据同步屏障**
 
-	数据同步隔离,比DMB更严格.要求是所有指令都要等待DSB前面的存储访问完成.
-	DSB比DMB常用.
+	数据同步隔离,比DMB更严格.要求是所有指令都要等待DSB前面的存储访问完成(包括位于该指令前的所有缓存,e.g.
+		分支预测和TLB维护操作全部完成).	DSB比DMB常用.
 
 **3.ISB(Instruction Synchronization Barrier)指令同步屏障**
 
-	指令同步隔离,最严格,会冲洗流水线(Flush Pipeline)和预取buffers.通常用来保证上下文切换的效果.
+	指令同步隔离,最严格,会冲洗流水线(Flush Pipeline)和预取buffers,才会从cache或内存中预取ISB指令之后
+		的指令.通常用来保证上下文切换的效果.
 	e.g.更改ASID(Address Space Identifier)、TLB维护操作和C15寄存器的修改等.
 
-### 1.5.1 内存屏障实例1---两个CPU核同时访问Addr1和Addr2地址
+### 1.4.4 内存屏障实例1---两个CPU核同时访问Addr1和Addr2地址
 
 	Core A:
 		str r0, [addr1]
@@ -210,15 +276,14 @@
 		ldr r3, [addr1]	//取addr1中的值放到寄存器r3中
 
 	/*
-	因为:1.多级流水线;2.没有指令屏障,3.两个CPU属于并行执行.
-	Core A的寄存器r1和Core B的寄存器r3可能得到以下4种结果:
+		因为没有任何同步措施.Core A的寄存器r1和Core B的寄存器r3可能得到以下4种结果:
 		1)r1得到旧的值,r3也得到旧的值;
 		1)r1得到旧的值,r3也得到新的值;
 		1)r1得到新的值,r3也得到旧的值;
 		1)r1得到新的值,r3也得到新的值;
 	*/
 
-### 1.5.2 内存屏障实例2---乱序执行
+### 1.4.5 内存屏障实例2---乱序执行
 
 	Core A:
 		str r0, [msg]	//写r0中的新数据到msg地址
@@ -249,7 +314,7 @@
 	+	dmb				//保证直到flag置位才读入msg
 		ldr r0, [msg]	//不相等,读取msg地址的数据到r0
 
-### 1.5.3 内存屏障实例3---写命令到外设寄存器,等待状态变化
+### 1.4.6 内存屏障实例3---写命令到外设寄存器,等待状态变化
 
 	str r0, [addr]	//写一个命令到外设寄存器(相当于写地址addr)
 	dsb				//强制让该命令完成,写进了addr
@@ -258,9 +323,11 @@
 		cmp r1, #0
 		beq poll_loop	//等于0,执行循环
 
-## 1.6 cache工作方式
+## 1.5 cache工作方式
 
-cache使用的地址编码方式和主存储器的类似,因此处理器可以使用访问主存储器的地址编码访问cache.
+cache使用的地址编码方式和主存储器的类似,因此处理器可以使用访问主存储器的地址编码访问cache,架构如下图.
+
+![](images/cache_architecture.png)
 
 	处理器在访问存储器时,会把地址同时传递给TLB和cache.
 	1.TLB(Translation Lookaside Buffer):用于存储虚拟地址到物理地址转换的小缓存,处理器先使用EPN
@@ -277,10 +344,10 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 			offset:是物理地址在cache line中的偏移量
 				因为数据load时是按照cache line的大小进行load.
 			tag:用于判断cache line中存放的数据是否和处理器想要的一致.
-			新的架构:
+		3.新的架构:
 			set(组):相同的cache line构成一个组.
-			way(路):路相当于整个cache多了若干层.在组相连的cache中,同一个index又多了4/8 way.
-				进一步扩大cache范围,提高cache命中效率.
+			way(路):在组相连的cache中,同一个set又多了4/8 way.提高cache利用率,进而提高命中率.
+			此时:index相当于查找set,在set里查找way(way是遍历匹配),way查找成功,得到对应的cache line.
 	3.cache hit和cache miss:
 		将cache line中存放的地址和通过虚实地址转换得到的物理进行比较.如果相同并且状态为匹配,就会发生
 			cache hit.通过offset等即可获得所需数据.如果发生cache miss,处理器需要用物理地址进一步访问
@@ -288,21 +355,26 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 	4.VIPT(virtual Index physical Tag):虚拟的Index和物理的Tag--->现在用的比较少了;
 	  PIPT(physical Index physical Tag):物理的Index和物理的Tag--->ARM现在的处理器都用这种方式.
 	
-## 1.7 cache映射方式---direct mapping, set-associative, fully-associative
+## 1.6 cache映射方式---direct mapping, set-associative, fully-associative
 
-### 1.7.1 direct mapping(直接映射)
+### 1.6.1 direct mapping(直接映射)
 
-每个组只有一行cache line时(即只有一个层级---1 way),称为直接映射高速缓存.
+每个组只有一行cache line时(1 way),称为直接映射高速缓存.
+
+#### 1.6.1.1 简单的cache
+
+![](images/cache_direct_mapping.png)
 
 	一个简单的cache中:
-		1.只有4行cache line,每行4个字(word,一个word 4byte,一行共16 byte),总共cache大小为64 byte.
-		2.cache控制器使用编码地址的bit[3:2]来选择cache line中的字(总共4个字);使用bit[5:4]来选择index
-		(即选择4行cache line中的哪一行);其他bit用于存储标记值(tag)
+		1.有4行cache line,每行4个字(一个word 4 byte,cache line为16 byte),cache总大小为64byte.
+		2.cache控制器使用编码地址的bit[3:2]选择cache line中的字(总共4个字),bit[1:0]用于选择字中的字
+		节,bit[5:4]来选择index(选择4行cache line中的哪一行);其他bit用于存储标记值(tag)
 	//出现的情况:
 	[5:4]相同的地址会映射到同一个cache line中,当操作地址数据时,会出现频繁的cache line数据换入换出,导致
 	严重的cache颠簸(cache thrashing).
 
-	/*实例*/
+#### 1.6.1.2 direct mapping实例
+
 	void add_array(int *data1, int *data2, int *result, int size)
 	{
 		int i;
@@ -318,7 +390,7 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 	step 3:result写入0x00地址时,先写到cache line中.因此也会在同一个cache line发生替换操作.
 	因此这段代码发生了严重的cache颠簸,性能会很糟糕.
 
-### 1.7.2 set associative(组相联)
+### 1.6.2 set associative(组相联)
 
 8条entry的2路组相连的映射关系:
 
@@ -326,25 +398,29 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 
 	8条entry的2路组相联cache:
 		1.总共有4个set,因此含有4个index;
-		2.每个组(set)有2个cache line可以提供cache line替换(2路组相连).
-	此时地址0x00,0x40,0x80可以映射到同一个组(相同的index构成)中任意一个cache line.当cache line要发生
-	替换操作时,就有50%的概率可以不被替换,较少cache颠簸.
+		2.每个组(set)有2 way,有2个cache line可以提供替换(2路组相连).
+	此时地址0x00,0x40,0x80被映射到同一个set(相同的index)中任意一个cache line.当cache line要发生
+	替换操作时,就有50%的概率可以不被替换,减少cache颠簸.
 
-## 1.8 32 KB的4路组相联的cache
+### 1.6.3 fully associatvie(全相联)
+
+cache以cache line为单位划分,地址可以映射到cache中的任意一条cache line.
+
+## 1.7 32 KB的4路组相联的cache的结构
 
 ![](images/32K-4-way_set-associative.png)
 
 	在Cortex-A7和Cortex-A9的处理器上有32 KB的4路组相联的cache:
-	cache大小:32 KB;		way:4路;		cache line:32 Byte
+	cache大小:32 KB;		way:4 way;		cache line:32 Byte
 	1.总共的cache line数量为: 32KB / 32B = 1K 条
 	2.总共有的set数为: 1K / 4 = 256 个set
 	
 	cache的编码地址address排布:
 	[4:0]---选择一条cache line中的数据(cache line大小为32B).[4:2]寻址8个字;[1:0]寻址每个字中的字节;
 	[12:5]---用于索引(Index)set号;
-	[31:13]---用作标记位(tag)--->其余位用于匹配tag.
+	[31:13]---用作标记位(tag),即匹配tag.
 
-## 1.9 ARM处理器的D-Cache和I-Cache组织方式
+## 1.8 ARM处理器的D-Cache和I-Cache组织方式
 
 	----------------------------------------------------------------------------------
 					Cortex-A7		Cortex-A9		Cortex-A15		Cortex-A53
@@ -364,7 +440,7 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 
 处理器在进行存储器访问时,处理器访问的是虚拟地址(VA),经过TLB和MMU的映射,最终变成了物理地址(PA).
 
-### 1.9.1 VIVT、VIPT、PIPT定义及区别
+### 1.8.1 VIVT、VIPT、PIPT定义及区别
 
 	VIVT(Virtual Index Virtual Tag):使用虚拟地址索引域和虚拟地址标记域.不经过MMU翻译,直接使用虚拟地址
 		的索引域和标记域来查找cache line.这种方式会导致高速缓存别名的问题,形成一个物理地址的内容出现在多
@@ -381,27 +457,31 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 		般使用VIPT.
 	PS:现在更多的使用PIPT.
 
-## 1.10 二级页表架构中虚拟地址到物理地址查询页表的过程
+## 1.9 二级页表架构中虚拟地址到物理地址查询页表的过程
 
-### 1.10.1 ARM内存管理架构
+### 1.9.1 ARM内存管理架构
 
-					MMU								主存储器
-	ARM核心--->TLBs & Table Walk Unit--->Cache缓存--->页表
+![](images/mm_architecture.png)
+
 	MMU(Memory Management Unit):内存管理单元,包括TLB和Table Walk Unit两个部件.
 	TLB:是一块高速缓存,用于缓存页表转换的结果,从而减少内存访问的时间.
 	页表查询(Translation table walk):一个完整的页表翻译和查找的过程.页表查询的过程由硬件自动完成,但是
 		页表的维护需要软件来完成.页表查询是一个相对耗时的过程,理想状态下是TLB里存有页表相关信息.只有当
 		TLB Miss时,才会去查询页表,并且读入页表的内容.
 
-### 1.10.2 ARMv7-A架构的页表
+### 1.9.2 ARMv7-A架构的页表
 
-	ARMv7-A架构:支持安全扩展(Security Extensions),CA-15开始支持大物理地址扩展(Large Physical Address 
-		Extension, LPAE)和虚拟化扩展.如果使能了安全扩展,ARMv7-A分为Secure World和Non-secure World
-		(也叫Normal World).如果使能了虚拟化扩展,处理器就会在Non-secure World里增加一个Hyp模式.
+#### 1.9.2.1 ARMv7-A架构
+
+ARMv7-A架构:支持安全扩展(Security Extensions),CA-15开始支持大物理地址扩展(Large Physical Address Extension, LPAE)和虚拟化扩展.如果使能了安全扩展,ARMv7-A分为Secure World和Non-secure World(也叫Normal World).如果使能了虚拟化扩展,处理器就会在Non-secure World里增加一个Hyp模式.
+
+![](images/armv7_mode_priviledge.png)
+
+#### 1.9.2.2 ARMv7-A特权
 
 在Non-secure World里,ARMv7-A运行特权被划分为PL0、PL1、PL2.
 
-	PL0等级:运行在用户模式(User mode),用于运行用户程序.它是没有系统特权的.
+	PL0等级:运行在用户模式(User mode),用于运行用户程序.没有系统特权的.
 		e.g.没有权限访问处理器内部的硬件资源.
 	PL1等级:包括ARMv6架构中的Sys/SVC/FIQ/IRQ/Undef/Abort模式.Linux内核运行在PL1,应用程序运行在PL0.
 		如果使能了安全扩展,Secure World里有一个monitor模式也是运行在secure PL1等级,用来管理Secure
@@ -409,20 +489,23 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 	PL2等级:如果使能了虚拟化扩展,超级管理程序(Hypervisor)就运行在这个等级,运行在Hyp模式,管理Guest OS之
 		间的切换.
 
-**ARMv7二级页表页大小情况:**
+#### 1.9.2.3 ARMv7-A二级页表页大小情况
 
-	超级大段(Super Section):16MB.
-	段(Section):1MB.
-	大页面(Large page):64KB.
+	超级大段(Super Section):16MB
+	段(Section):1MB
+	大页面(Large page):64KB
 	页面(page):4KB,Linux默认使用4KB的页.
 
-**ARMv7二级页表查询过程:**
+#### 1.9.2.4 ARMv7二级页表查询过程
 
-一级页表:如果只需要支持超级大段和段映射,只需要一级页表即可.
+	一级页表:如果只需要支持超级大段和段映射,只需要一级页表即可.
+	二级页表:如果需要支持4KB页面或64KB大页映射,就需要用到二级页表.
 
-二级页表:如果需要支持4KB页面或64KB大页映射,就需要用到二级页表.
+二级页表查询过程:
 
-	//当TLB miss时,处理器需要查询页表,过程如下:
+![](images/armv7_a_procee_2_level_page.png)
+
+	当TLB miss时,处理器需要查询页表,过程如下:
 	1)处理器根据页表基地址控制寄存器TTBCR和虚拟地址判断使用哪个页表基地址寄存器(TTBR0还是TTBR1).页表基
 		地址寄存器存放的是一级页表的基地址.据此可以确定一级页表的基地址.
 	2)处理器根据虚拟地址的bit[31:20]作为索引值,在一级页表中找到页表项,一级页表共有4096个页表项.一级页表
@@ -433,60 +516,71 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 	PS:当一个页表大小超过一个页面大小,就会产生二级页表.
 	*/
 
-#### 还没有理清楚,需要进一步学习!!!!
+4KB映射的一级页表的表项(即描述符):
 
-### 1.10.2 ARMv8-A架构的页表
+![](images/1_level_page_descriptor.png)
+
+4KB映射的二级页表的表项(即描述符):
+
+![](images/2_level_page_descriptor.png)
+
+### 1.9.3 ARMv8-A架构的页表
 
 ARMv8-A架构支持64-bit操作系统,可以同时支持64-bit和32-bit应用程序.为了兼容ARMv7-A指令集,定义AArch64架构和AArch32架构.
 
 AArch64架构支持安全扩展和虚拟化扩展.安全扩展把ARM世界分为Secure World和Non-secure World.
 
-**AArch64架构的异常等级(Exception Level)划分:**
+#### 1.9.3.1 AArch64架构的异常等级(Exception Level)划分
+
+![](images/aarch64_exception_level.png)
 
 	EL0:用户特权,运行普通用户程序;
 	EL1:系统特权,运行操作系统;
 	EL2:运行虚拟化扩展的Hypervisor;
 	EL3:运行安全世界的Secure Monitor.
 
-**AArch64架构中的MMU:**
+#### 1.9.3.2 AArch64架构中的MMU
 
 	单一阶段页表(非虚拟化扩展时):直接将VA翻译成PA.
 	两阶段页表(虚拟化扩展时):
 		阶段1---虚拟地址翻译成中间物理地址(Intermediate Physical Address, IPA);
 		阶段2---中间物理地址IPA翻译成最终物理地址PA.
 
-**AArch64架构的地址总线:**
+#### 1.9.3.3 AArch64架构的地址总线
 
-	1,地址总线位宽最多48位,虚拟地址VA被划分为2个空间,每个空间最大支持256TB大小.
-	2,低位虚拟地址:0x0000_0000_0000_0000到0x0000_FFFF_FFFF_FFFF.用于用户空间;
-	3,高位虚拟地址:0xFFFF_0000_0000_0000到0xFFFF_FFFF_FFFF_FFFF.用于内核空间.
+	1.地址总线位宽最多48位,虚拟地址VA被划分为2个空间,每个空间最大支持256TB大小.
+	2.低位虚拟地址:0x0000_0000_0000_0000到0x0000_FFFF_FFFF_FFFF(一般只需检测最高bit位[63]为0),该
+		虚拟地址用于用户空间.使用TTBR0(Translation Table Base Register)来存访页表基地址.
+	3.高位虚拟地址:0xFFFF_0000_0000_0000到0xFFFF_FFFF_FFFF_FFFF(一般只需检测最高bit位[63]为1),该
+		虚拟地址用于内核空间.使用TTBR1(Translation Table Base Register)来存访页表基地址.
 
-**AArch64页表:**
+#### 1.9.3.4 AArch64页表特性
 
-	1,最多支持4级页表;
-	2,输入/输出地址最大有效位宽48-bit;
-	3,翻译的最小粒度可以是4KB,16KB或64KB.
+	1.最多支持4级页表
+	2.输入/输出地址最大有效位宽48-bit;
+	3.翻译的最小粒度可以是4KB,16KB或64KB.
 
-## 1.11 多核处理器中cache的一致性
+## 1.10 多核处理器中cache的一致性
 
-### 1.11.1 cache coherency产生的原因
+### 1.10.1 cache coherency产生的原因
 
-	在一个处理器系统中不同CPU核上的D-cache和内存可能具有同一数据的多个副本,仅有一个CPU核的系统中不存在一
-	致性问题.
+在一个处理器系统中不同CPU核上的D-cache和内存可能具有同一数据的多个副本,仅有一个CPU核的系统中不存在一致性问题.
 
-### 1.11.2 一致性维护
+### 1.10.2 一致性维护
 
 跟踪每一个cache line的状态,并根据处理器的读写操作和总线上的相应传输来更新cache line在不同CPU核上的D-cache中的状态,从而维护cache一致性.
 
-### 1.11.3 一致性维护方法
+### 1.10.3 一致性维护方法
 
 ARM或x86广泛使用类似MESI协议来维护cache一致性.
 
 **1.MESI协议定义**
 
+MESI协议源于Modified(M态),Exclusive(E态),Shared(S态),Invalid(I态).
+
 ![](images/MESI_protocol.png)
 
-	1.M态(修改态)和E(独占态)态的cache line,数据都是独有的.不同点:
+	1.M态(修改态)和E(独占态)态的cache line,数据都是独有的,即数据只在本cache中.不同点:
 		M态的数据是dirty的,和内存不一致.E态的数据是干净(clean)的,和内存的一致.
 	2.拥有M态的cache line会在某个合适的时候把该cache line写回到内存中,其他状态变为S态(共享态);
 	3.S态的cache line,数据和其他cache共享,只有clean的数据才能被多个cache共享;
@@ -498,9 +592,9 @@ ARM或x86广泛使用类似MESI协议来维护cache一致性.
 
 ![](images/MESI_status_2.png)
 
-## 1.12 cache在linux内核中的应用
+## 1.11 cache在linux内核中的应用
 
-	1.内核中常用的数据结构通常是L1 cache对齐的.e.g mm_struct,fs_cache等使用"SLAB_HWCACHE_ALIGN"标志
+	1.内核中常用的数据结构通常是L1 cache对齐的.e.g.mm_struct,fs_cache等使用"SLAB_HWCACHE_ALIGN"标志
 		来创建slab缓存描述符.
 	2.一些常用的数据结构在定义时就约定数据结构以L1 cache对齐.使用"____cacheline_aligned_in_smp和
 		____cacheline_internodealigned_in_smp"等宏来定义数据结构:
@@ -513,21 +607,29 @@ ARM或x86广泛使用类似MESI协议来维护cache一致性.
 		以提高获取锁的效率.
 	4.slab的着色区和自旋锁的实现.
 
-## 1.13 ARM big.LITTLE架构
+## 1.12 ARM big.LITTLE架构
 
-ARM big.LITTLE架构:ARM的大小核概念.针对性能优化过的处理器内核称为大核,针对低功耗待机优化过的处理器内核称为小核.
+ARM big.LITTLE架构:ARM的大小核概念.
+
+	针对性能优化过的处理器内核称为大核;
+	针对低功耗待机优化过的处理器内核称为小核.
 
 常见的大核处理器:Cortex-A15, Cortex-A57, Cortex-A72和Cortex-A73.
 
 常见的小核处理器:Cortex-A7, Cortex-A53.
 
-## 1.14 cache coherency和memory consistency
+## 1.13 cache coherency和memory consistency
 
 cache coherency:高速缓存一致性关注的是同一个数据在多个cache和内存中的一致性问题.解决方法主要是总线监听协议,e.g.MESI协议.
 
-memory consistency:处理器系统对多个地址进行存储器访问序列的正确性,即内存访问模型.
+memory consistency:处理器系统对多个地址进行存储器访问序列的正确性,即内存访问模型.学术上内存访问模型有多种:
 
-## 1.15 cache的write back策略
+	1.严格一致性内存模型;
+	2.处理器一致性内存模型;
+	3.弱一致性内存模型.
+	当前弱一致性模型得到广泛应用,其一致性由内存屏障指令保证.
+
+## 1.14 cache的write back策略
 
 存储器读写指令流程:
 
@@ -545,7 +647,7 @@ memory consistency:处理器系统对多个地址进行存储器访问序列的�
 		替换出去时,被改写的数据才会更新到下一级cache或主存储器中.
 			优点:有效降低了总线带宽需求;缺点:增加了cache一致性的实现难度.
 
-## 1.16 cache line替换策略
+## 1.15 cache line替换策略
 
 随机法(Random policy):随机地确定替换的cache block.有一个随机数产生器来生成随机数确定替换块.方法简单,易于实现,但命中率低.
 
@@ -556,9 +658,9 @@ memory consistency:处理器系统对多个地址进行存储器访问序列的�
 	Cortex-A57:L1 cache采用LRU算法,L2 cache采用随机算法;
 	Cortex-A72:L2 cache采用伪随机算法(pseudo-random policy)或伪LRU算法(pseudo-least-recently-used policy).
 
-## 1.17 NUMA架构
+## 1.16 NUMA架构
 
-### 1.17.1 UMA内存架构
+### 1.16.1 UMA内存架构
 
 UMA的内存架构(Uniform Memory Architecture):内存是统一架构和统一寻址.SMP(Symmetric Multiple Processing:对称多处理器)系统大部分都采用UMA内存架构.特点:
 
@@ -571,11 +673,40 @@ UMA的内存架构(Uniform Memory Architecture):内存是统一架构和统一�
 
 ![](images/smp_architecture.png)
 
-### 1.17.2 NUMA架构
+### 1.16.2 NUMA架构
 
 NUMA系统由多个内存节点组成,整个内存体系可以作为一个整体,任何处理器都可以访问,只是处理器访问本地内存节点拥有更小的延迟和更大的带宽,处理器访问远程节点速度要慢一些.
 
 ![](images/numa_architecture.png)
+
+x86的服务器芯片早就支持NUMA架构(e.g.Intel的Xeon处理器);ARM阵营中,2016年Cavium公司发布的基于ARMv8-A架构设计的服务器芯片ThunderX2也支持NUMA架构.
+
+## 1.17 最新进展
+
+### 1.17.1 异构计算
+
+CPU+集成针对某些场景而定制的功能.
+
+	Intel:服务器芯片+FPGA.在数据中心、安防监控领域等实现大量的优化;
+	ARM:A75+DynamIQ技术.DynmaIQ技术新增了针对机器学习和人工智能的全新处理器指令集,并增加了多核配置的
+		灵活性.ARM也发布了用于数据中心应用的指令集--->Scalable Vector Extensions,最高支持2048-bit
+		可伸缩的矢量计算.
+
+### 1.17.2 其他指令集
+
+#### 1.17.2.1 OpenRISC
+
+OpenRISC已被Linux内核接受,称为官方Linux内核支持的一种体系结构.由于OpenRISC是由爱好者维护,更新缓慢.
+
+#### 1.17.2.2 RISC-V
+
+RISC-V由加州伯克利大学设计的全新的开源指令集,不受专利的约束和限制.V表示变化(variation)和向量(vectors).
+
+	RISC-V包含一个非常小的基础指令集和一系列可选的扩展指令集.
+	1.基础指令集只包含40条指令;
+	2.可扩展支持64-bit和128-bit运算以及变长指令.
+
+RISC-V有望成为开源硬件或开源芯片领域的Linux.
 
 ***
 
