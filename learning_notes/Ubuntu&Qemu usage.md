@@ -49,6 +49,8 @@
 
 ### 1.5.1 自动下载安装gcc
 
+**1.普通的gcc/g++**
+
 	sudo apt-get install gcc-arm-linux-gnueabi
 	/*
 		一般会下载最新版本gnu交叉编译工具,最新版本gnu对Linux也是有版本支持的.
@@ -56,6 +58,11 @@
 		(会出现很多error),需要使用4.x版本的linux.
 	*/
 	sudo apt-get install g++-arm-linux-gnueabi	//安装g++
+
+**2.aarch64的gcc/g++**
+
+	sudo apt-get install gcc-aarch64-linux-gnu
+	sudo apt-get install g++-aarch64-linux-gnu
 
 ### 1.5.2 手动安装gcc及版本切换
 
@@ -190,74 +197,65 @@ rar/unrar命令的使用:
 
 	官网下载很慢.
 
-## 1.11 更改软件源
+## 1.11 更改软件源(使用阿里云的源)
 
 ubuntu经常会需要执行更新操作,使用官方的软件源更新会很慢.因此需要更改软件源为国内,这样更新会快很多.
 
 	打开/etc/apt/sources.list文件,在该文件开头添加以下内容:
-	#东北大学：
-	deb-src http://mirror.neu.edu.cn/ubuntu/ xenial main restricted #Added by software-
-		properties
-	deb http://mirror.neu.edu.cn/ubuntu/ xenial main restricted
-	deb-src http://mirror.neu.edu.cn/ubuntu/ xenial restricted multiverse universe #Added by
-		 software-properties
-	deb http://mirror.neu.edu.cn/ubuntu/ xenial-updates main restricted
-	deb-src http://mirror.neu.edu.cn/ubuntu/ xenial-updates main restricted multiverse 
-		universe #Added by software-properties
-	deb http://mirror.neu.edu.cn/ubuntu/ xenial universe
-	deb http://mirror.neu.edu.cn/ubuntu/ xenial-updates universe
-	deb http://mirror.neu.edu.cn/ubuntu/ xenial multiverse
-	deb http://mirror.neu.edu.cn/ubuntu/ xenial-updates multiverse
-	deb http://mirror.neu.edu.cn/ubuntu/ xenial-backports main restricted universe multiverse
-	deb-src http://mirror.neu.edu.cn/ubuntu/ xenial-backports main restricted universe
-		multiverse #Added by software-properties
-	deb http://archive.canonical.com/ubuntu xenial partner
-	deb-src http://archive.canonical.com/ubuntu xenial partner
-	deb http://mirror.neu.edu.cn/ubuntu/ xenial-security main restricted
-	deb-src http://mirror.neu.edu.cn/ubuntu/ xenial-security main restricted multiverse 
-		universe #Added by software-properties
-	deb http://mirror.neu.edu.cn/ubuntu/ xenial-security universe
-	deb http://mirror.neu.edu.cn/ubuntu/ xenial-security multiverse
-	#清华大学
-	# deb cdrom:[Ubuntu 16.04 LTS _Xenial Xerus_ - Release amd64 (20160420.1)]/ xenial main 
-		restricted
-	deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial main restricted
-	deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-updates main restricted
-	deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial universe
-	deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-updates universe
-	deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial multiverse
-	deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-updates multiverse
-	deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-backports main restricted universe 
-		multiverse
-	deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-security main restricted
-	deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-security universe
-	deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ xenial-security multiverse
-	#阿里云
-	# deb cdrom:[Ubuntu 16.04 LTS _Xenial Xerus_ - Release amd64 (20160420.1)]/ xenial main
-		restricted
-	deb-src http://archive.ubuntu.com/ubuntu xenial main restricted #Added by software-
-		properties
-	deb http://mirrors.aliyun.com/ubuntu/ xenial main restricted
-	deb-src http://mirrors.aliyun.com/ubuntu/ xenial main restricted multiverse
-		universe #Added by software-properties
-	deb http://mirrors.aliyun.com/ubuntu/ xenial-updates main restricted
-	deb-src http://mirrors.aliyun.com/ubuntu/ xenial-updates main restricted multiverse
-		universe #Added by software-properties
+
+[aliyun相关的镜像](https://developer.aliyun.com/mirror/)
+
+### 1.11.1 Ubuntu 14.04.5 LTS的源
+
+	deb https://mirrors.aliyun.com/ubuntu/ trusty main restricted universe multiverse
+	deb-src https://mirrors.aliyun.com/ubuntu/ trusty main restricted universe multiverse
+	deb https://mirrors.aliyun.com/ubuntu/ trusty-security main restricted universe multiverse
+	deb-src https://mirrors.aliyun.com/ubuntu/ trusty-security main restricted universe multiverse
+	
+	deb https://mirrors.aliyun.com/ubuntu/ trusty-updates main restricted universe multiverse
+	deb-src https://mirrors.aliyun.com/ubuntu/ trusty-updates main restricted universe multiverse
+	
+	deb https://mirrors.aliyun.com/ubuntu/ trusty-backports main restricted universe multiverse
+	deb-src https://mirrors.aliyun.com/ubuntu/ trusty-backports main restricted universe multiverse
+	
+	## Not recommended
+	# deb https://mirrors.aliyun.com/ubuntu/ trusty-proposed main restricted universe multiverse
+	# deb-src https://mirrors.aliyun.com/ubuntu/ trusty-proposed main restricted universe multiverse
+
+### 1.11.2 Ubuntu 16.04 LTS的源
+
+	deb http://mirrors.aliyun.com/ubuntu/ xenial main
+	deb-src http://mirrors.aliyun.com/ubuntu/ xenial main
+	
+	deb http://mirrors.aliyun.com/ubuntu/ xenial-updates main
+	deb-src http://mirrors.aliyun.com/ubuntu/ xenial-updates main
+	
 	deb http://mirrors.aliyun.com/ubuntu/ xenial universe
+	deb-src http://mirrors.aliyun.com/ubuntu/ xenial universe
 	deb http://mirrors.aliyun.com/ubuntu/ xenial-updates universe
-	deb http://mirrors.aliyun.com/ubuntu/ xenial multiverse
-	deb http://mirrors.aliyun.com/ubuntu/ xenial-updates multiverse
-	deb http://mirrors.aliyun.com/ubuntu/ xenial-backports main restricted universe
-		multiverse
-	deb-src http://mirrors.aliyun.com/ubuntu/ xenial-backports main restricted
-		universe multiverse #Added by software-properties
-	deb http://archive.canonical.com/ubuntu xenial partner
-	deb-src http://archive.canonical.com/ubuntu xenial partner
-	deb http://mirrors.aliyun.com/ubuntu/ xenial-security main restricted
-	deb-src http://mirrors.aliyun.com/ubuntu/ xenial-security main restricted multiverse 
-		universe #Added by software-properties
+	deb-src http://mirrors.aliyun.com/ubuntu/ xenial-updates universe
+	
+	deb http://mirrors.aliyun.com/ubuntu/ xenial-security main
+	deb-src http://mirrors.aliyun.com/ubuntu/ xenial-security main
 	deb http://mirrors.aliyun.com/ubuntu/ xenial-security universe
-	deb http://mirrors.aliyun.com/ubuntu/ xenial-security multiverse
+	deb-src http://mirrors.aliyun.com/ubuntu/ xenial-security universe
+
+### 1.11.3 Ubuntu 18.04 LTS的源(19.04可以使用)
+
+	deb http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse
+	deb-src http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse
+	
+	deb http://mirrors.aliyun.com/ubuntu/ bionic-security main restricted universe multiverse
+	deb-src http://mirrors.aliyun.com/ubuntu/ bionic-security main restricted universe multiverse
+	
+	deb http://mirrors.aliyun.com/ubuntu/ bionic-updates main restricted universe multiverse
+	deb-src http://mirrors.aliyun.com/ubuntu/ bionic-updates main restricted universe multiverse
+	
+	deb http://mirrors.aliyun.com/ubuntu/ bionic-proposed main restricted universe multiverse
+	deb-src http://mirrors.aliyun.com/ubuntu/ bionic-proposed main restricted universe multiverse
+	
+	deb http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse
+	deb-src http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse
 
 /etc/apt/sources.list表示apt install时,ubuntu会从这些站点下载软件包到本地并进行安装.
 
@@ -462,6 +460,27 @@ PS:总结起来,"2.4.4"步最重要.执行完等5-6分钟应该就有Wifi标识�
 	/* 2.ubuntu 19.04设置方法 */
 	右键--->Change Backgound--->Dock--->将"Auto-hide the Dock"打开即可.
 
+4.安装的ubuntu不是全屏
+
+测试发现,在安装了VMWare Tools后,重启虚拟机就是全屏了.
+
+5.问题
+
+	apt-get install vim
+	出现下面这个问题:
+	ubuntu install :The following packages have unmet dependencies:
+	vim: Depends: vim-common(= 2:7.4.1689-3ubuntu1.3)but 2:8.0.1453-1ubuntu1 is to be installed
+	原因:
+	安装该软件包时它需要指定的版本才能安装上(意思就是版本不兼容).
+		e.g.在ubuntu 19.04指定源为16.04的就会出现这个问题.
+	解决方法:
+	1.切换源为18.04的aliyun;
+	2.执行下面命令:
+		sudo apt-get purge vim-common
+		sudo apt-get update
+		sudo apt-get upgrade
+		sudo apt-get install vim	//此时可以成功
+
 ***
 
 # 3. Qemu usage
@@ -483,7 +502,9 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 
 ### 3.1.1 Qemu的下载、编译、安装
 
-**1.下载Qemu**
+#### 3.1.1.1 下载Qemu
+
+**1.qemu 2.8下载**
 
 [qemu 2.8下载地址](http://download.qemu-project.org/qemu-2.8.0.tar.xz)
 
@@ -491,17 +512,28 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 	ubuntu下载方法:
 		wget http://download.qemu-project.org/qemu-2.8.0.tar.xz
 
-**2.下载并安装Qemu安装时所需要的工具软件包**
+**2.qemu 4.1下载**
+
+[qemu 4.1下载地址](https://download.qemu.org/qemu-4.1.0.tar.xz)
+
+	下载下来的文件为:qemu-4.1.0.tar.xz
+	ubuntu下载方法:
+		wget https://download.qemu.org/qemu-4.1.0.tar.xz
+
+#### 3.1.1.2 下载并安装Qemu安装时所需要的工具软件包**
 
 	sudo apt-get install zlib1g-dev
 	sudo apt-get install libglib2.0-dev
 	sudo apt-get install autoconf automake libtool
 	sudo apt-get install libsdl1.2-dev
+	sudo apt-get install libncurses5-dev	//busybox里执行make menuconfig需要该库
 	PS:网上资料说2.7还需要安装下面的包(2.8我安装Qemu时并不需要下面的包),作为一个参考:
 	sudo apt-get install libglib2.0-0	//感觉不需要,有了"libglib2.0-dev"
 	sudo apt-get install flex bison		//没试过
 
-**3.解压Qemu源码包**
+#### 3.1.1.3 解压Qemu源码包**
+
+**1.qemu 2.8**
 
 	//Ubuntu 18.04下载的Qemu会放在/home/defychen/Downloads/qemu-2.8.0.tar.xz
 	cp qemu-2.8.0.tar.xz /root/
@@ -509,47 +541,83 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 	tar -xvJf qemu-2.8.0.tar.xz		//使用-xvJf解压"tar.xz"文件
 	cd qemu-2.8.0
 
-**4.配置、编译、安装**
+**2.qemu 4.1**
+
+	tar -xvJf qemu-4.1.0.tar.xz
+
+#### 3.1.1.4 配置、编译、安装**
 
 全部操作均在qemu目录下完成(安装需要root权限,因此最好全部在root下操作):
 
-	1.配置
-		./configure --target-list=arm-softmmu --audio-drv-list=
-		/*
-			--audio-drv-list必须加,否则运行时会报告有关audio的错误:
-			audio:Could not init `oss' audio driver --->我暂时没碰到
-		*/
-	2.编译
-		make
-		/*
-		编译时,可能出现的问题:
-		1."util/memfd.c:43:12:error: static declaration of ‘memfd_create’ follows non-staticdeclaration"
-		--->解决办法:
-			打开util/memfd.c,将memfd_create函数名重命名为:tmp_memfd_create即可.
-		2."qga/commands-posix.c:634: undefined reference to `minor'"
-		--->解决方法:
-			打开qga/commands-posix.c,在commands.posix.c文件中加上头文件<sys/sysmacros.h>即可.
-		*/
-	3.安装
-		make install	//会安装到系统的"/usr/local/bin/qemu-system-arm"的位置
-	4.查看qemu版本
-		qemu-img -V		//大写的"v",会显示"qemu-img version 2.8.0 xxx"
-		qemu-system-arm --version
-		/*
-			只能用"--version,单纯的"-v"不支持.显示结果为:
-			QEMU emulator version 2.8.0 xxx
-		*/
-	5.查看qemu支持的开发板
-		qemu-system-arm -M help
-		/*
-			会显示支持的开发板,其中包括:
-			vexpress-a15		ARM Versatile Express for Cortex-A15		//支持A15
-			vexpress-a9		ARM Versatile Express for Cortex-A9		//支持A9--->支持最好的一个
-		*/
+**1.配置**
+
+1.qemu 2.8配置(通用的配置)--->qemu 2.8好像也支持AArch64,没试过
+
+	配置通用的Qemu编译(e.g.用于Cortex-A9)
+	./configure --target-list=arm-softmmu --audio-drv-list=
+	/*
+		--audio-drv-list必须加,否则运行时会报告有关audio的错误:
+		audio:Could not init `oss' audio driver --->我暂时没碰到
+	*/
+
+2.qemu 4.0配置(用于AArch64)--->比如A53的核
+		
+	支持AArch64的配置
+	./configure --target-list=aarch64-softmmu	//用于编译AArch64架构
+
+**2.编译(通用的和AArch64一样的编译手法)**
+
+	make
+	/*
+	编译时,可能出现的问题:
+	1."util/memfd.c:43:12:error: static declaration of ‘memfd_create’ follows non-staticdeclaration"
+	--->解决办法:
+		打开util/memfd.c,将memfd_create函数名重命名为:tmp_memfd_create即可.
+	2."qga/commands-posix.c:634: undefined reference to `minor'"
+	--->解决方法:
+		打开qga/commands-posix.c,在commands.posix.c文件中加上头文件<sys/sysmacros.h>即可.
+	*/
+
+**3.安装(通用的和AArch64一样的安装手法)**
+
+	make install	//会安装到系统的"/usr/local/bin/qemu-system-arm"的位置
+
+**4.查看qemu版本**
+
+1.qemu 2.8
+
+	qemu-img -V		//大写的"v",会显示"qemu-img version 2.8.0 xxx"
+	qemu-system-arm --version
+	/*
+		只能用"--version,单纯的"-v"不支持.显示结果为:
+		QEMU emulator version 2.8.0 xxx
+	*/
+		
+2.qemu 4.1
+
+	/* aarch64下的qemu版本查看 */
+	qemu-system-aarch64 --version
+
+**5.查看qemu支持的开发板**
+
+1.qemu 2.8
+
+	qemu-system-arm -M help
+	/*
+		会显示支持的开发板,其中包括:
+		vexpress-a15		ARM Versatile Express for Cortex-A15		//支持A15
+		vexpress-a9		ARM Versatile Express for Cortex-A9		//支持A9--->支持最好的一个
+	*/
+2.qemu 4.1
+
+	/* aarch64的查看 */
+	qemu-system-aarch64 -M help
 
 ### 3.1.2 linux内核编译(在Qemu上运行)
 
-**1.下载并安装gnu交叉编译工具**
+#### 3.1.2.1 下载并安装gnu交叉编译工具**
+
+**1.普通的gcc编译工具安装**
 
 	sudo apt-get install gcc-arm-linux-gnueabi
 	/*
@@ -558,7 +626,11 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 		需要使用4.x版本的linux.
 	*/
 
-**2.内核下载**
+**2.aarch64的gcc编译工具安装--->ARMv8平台使用aarch64模式**
+
+	sudo apt-get install gcc-aarch64-linux-gnu
+
+#### 3.1.2.2 内核下载
 
 可以参考前面"1.10 linux源码下载地址"地址进行下载:
 
@@ -572,39 +644,82 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 	2.到"http://ftp.sjtu.edu.cn/sites/ftp.kernel.org/pub/linux/kernel/v4.x/"国内下载源去下载
 		对应版本即可.
 
-**3.解压、配置、编译**
+#### 3.1.2.3 解压
 
-	1.解压
-		//Ubuntu 18.04下载的linux会放在/home/defychen/Downloads/linux-4.8.tar.gz
-		cp /home/defychen/Downloads/linux-4.8.tar.gz /root/
-		cd /root
-		tar -xvzf linux-4.8.tar.gz
-		cd linux-4.8
-	2.配置
-		1.配置交叉编译器
-		export CROSS_COMPILE=arm-linux-gnueabi-
-		export ARCH=arm
-		/*
-			如果一般用arm架构,且交叉编译器一般不变,可:
-			进入linux源代码目录,修改顶层的Makefile(搜索CROSS_COMPILE):
-				...
-				# Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
-				ARCH			?= arm
-				//默认的为:ARCH			?= $(SUBARCH)
-				CROSS_COMPILE	?= arm-linux-gnueabi-
-				//默认的为:CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
-			PS:有时候修改了不行,只能用第一种export方法.
-		*/
-		2.配置编译参数
-		make vexpress_defconfig
-		/*
-			1.linux支持的arm开发板信息查看目录为:./arch/arm/
-				其中包括"mach-vexpress"--->为支持的vexpress-a9
-			2.linux支持的arm开发板的所有的config文件目录为:./arch/arm/configs/
-				其中包括"vexpress_defconfig",此处配置编译参数即选择该配置文件.
+	//Ubuntu 18.04下载的linux会放在/home/defychen/Downloads/linux-4.8.tar.gz
+	cp /home/defychen/Downloads/linux-4.8.tar.gz /root/
+	cd /root
+	tar -xvzf linux-4.8.tar.gz
+	cd linux-4.8
+	
+#### 3.1.2.4 配置交叉编译器
 
-	3.编译
-		make -j2 	//2线程编译(使用make zImage j2是一样的效果)
+**1.Cortex-A9的交叉编译器的配置**
+
+	export CROSS_COMPILE=arm-linux-gnueabi-
+	export ARCH=arm
+	/*
+		如果一般用arm架构,且交叉编译器一般不变,可:
+		进入linux源代码目录,修改顶层的Makefile(搜索CROSS_COMPILE):
+			...
+			# Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
+			ARCH			?= arm
+			//默认的为:ARCH			?= $(SUBARCH)
+			CROSS_COMPILE	?= arm-linux-gnueabi-
+			//默认的为:CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
+		PS:有时候修改了不行,只能用第一种export方法.
+	*/
+
+**2.Cortex-A57的交叉编译器的配置(aarch64)**
+
+	export CROSS_COMPILE=aarch64-linux-gnu-
+	export ARCH=arm64
+
+##### 3.1.2.5 配置编译参数
+
+**1.Cortex-A9配置编译参数**
+
+	make vexpress_defconfig
+	/*
+		1.linux支持的arm开发板信息查看目录为:./arch/arm/
+			其中包括"mach-vexpress"--->为支持的vexpress-a9
+		2.linux支持的arm开发板的所有的config文件目录为:./arch/arm/configs/
+			其中包括"vexpress_defconfig",此处配置编译参数即选择该配置文件.
+	*/
+	make menuconfig
+	配置initramfs
+		General setup --->
+			[*] Initial RAM filesystem and RAM disk (initramfs/initrd) support
+				(__install) Initramfs source file(s)
+				//此处选中"Initramfs source file(s)"回车后,输入"__install"即可
+		Boot options --->
+			()Default kernel command string
+		配置memory split为3G/1G user/kernel split,并打开高端内存:
+		Kernel Feature --->
+		Memory split (3G/1G user/kernel split) --->
+		[*] High Memory support
+
+**2.Cortex-A57配置编译参数**
+
+	//cp arch/arm64/configs/defconfig .config--->不要去复制配置文件,直接执行make menuconfig
+	执行make menuconfig,配置initramfs
+		General setup --->
+			[*] Initial RAM filesystem and RAM disk (initramfs/initrd) support
+				(__install_arm64) Initramfs source file(s)
+				//此处选中"Initramfs source file(s)"回车后,输入"__install_arm64"即可
+		Boot options --->
+			(Default kernel command string)
+		Kernel Features --->
+			Page size(4KB) --->	//如果拷贝了arm64的配置文件,该选项则会没有,因为不能复制arm64配置文件.
+				Virtual address space size(48-bit) --->
+
+
+##### 3.1.2.6 配置编译参数
+
+**1.Cortex-A9编译**
+
+		mkdir _install	//新建一个_install的目录
+		make -j2 	//2线程编译(使用make bzImage -j2是一样的效果)
 		/*
 			1.image:
 				编译好的image会在:./arch/arm/boot/zImage.
@@ -616,6 +731,14 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 		make modules -j4
 	5.编译dts--->可不执行(make -j2会将该步一起执行)
 		make dtbs
+
+**2.Cortex-A57编译**
+
+	mkdir _install_arm64	//新建一个_install_arm64的目录
+	make -j8	// linux-4.8编译aarch64时会出错,内核本身的问题.使用linux-4.4.189就没问题了.
+	/*
+		image:编译好的image会在:./arch/arm64/boot/Image.
+	*/
 
 ### 3.1.3 根文件系统的制作
 
@@ -637,9 +760,14 @@ busybox:一个集成100多个linux常用命令和工具的软件,是一个特别
 
 **2.配置、编译**
 
-	make defconfig 	//config文件在./configs/下面,但是defconfig没去看到底是哪一个config文件
-	make CROSS_COMPILE=arm-linux-gnueabi-	//编译
-	make CROSS_COMPILE=arm-linux-gnueabi- install	//安装
+	make defconfig 	//config文件在./configs/下面(此步没有也可以)
+	export ARCH=arm
+	export CROSS_COMPILE=arm-linux-gnueabi-
+	make menuconfig	//配置一些选项,此处配置成静态编译
+		Busybox Settings --->
+			Build Options --->
+				[*] Build BusyBox as a static binary (no shared libs)
+	make install	//编译及安装
 	/*
 		生成的根文件系统位于:./busybox-1.25.0/_install/,有"bin/linuxrc/sbin/usr"等.
 	*/
