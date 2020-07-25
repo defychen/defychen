@@ -545,7 +545,7 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 
 	tar -xvJf qemu-4.1.0.tar.xz
 
-#### 3.1.1.4 配置、编译、安装**
+#### 3.1.1.4 配置、编译、安装
 
 全部操作均在qemu目录下完成(安装需要root权限,因此最好全部在root下操作):
 
@@ -592,7 +592,7 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 		只能用"--version,单纯的"-v"不支持.显示结果为:
 		QEMU emulator version 2.8.0 xxx
 	*/
-		
+
 2.qemu 4.1
 
 	/* aarch64下的qemu版本查看 */
@@ -615,7 +615,7 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 
 ### 3.1.2 linux内核编译(在Qemu上运行)
 
-#### 3.1.2.1 下载并安装gnu交叉编译工具**
+#### 3.1.2.1 下载并安装gnu交叉编译工具
 
 **1.普通的gcc编译工具安装**
 
@@ -650,6 +650,10 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 	cp /home/defychen/Downloads/linux-4.8.tar.gz /root/
 	cd /root
 	tar -xvzf linux-4.8.tar.gz
+	/*
+	如果要编译aarch64,linux-4.8存在bug,编译不通过.使用linux-4.4.189就没问题了.
+		tar -xvzf linux-4.4.189.tar.gz
+	*/
 	cd linux-4.8
 	
 #### 3.1.2.4 配置交叉编译器
@@ -718,14 +722,14 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 
 **1.Cortex-A9编译**
 
-		mkdir _install	//新建一个_install的目录
-		make -j2 	//2线程编译(使用make bzImage -j2是一样的效果)
-		/*
-			1.image:
-				编译好的image会在:./arch/arm/boot/zImage.
-			2.dtb:
-				编译好的dtb会在:./arch/arm/boot/dts/vexpress-v2p-ca9.dtb
-				PS:./arch/arm/boot/dts/下存放了linux支持的各种arm开发板的dts文件
+	mkdir _install	//新建一个_install的目录
+	make -j2 	//2线程编译(使用make bzImage -j2是一样的效果)
+	/*
+		1.image:
+			编译好的image会在:./arch/arm/boot/zImage.
+		2.dtb:
+			编译好的dtb会在:./arch/arm/boot/dts/vexpress-v2p-ca9.dtb
+			PS:./arch/arm/boot/dts/下存放了linux支持的各种arm开发板的dts文件
 		*/
 	4.编译内核模块--->可不执行
 		make modules -j4
@@ -744,7 +748,7 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 
 busybox:一个集成100多个linux常用命令和工具的软件,是一个特别适合制作嵌入式文件系统的软件工具.
 
-**1.busybox的下载、解压**
+#### 3.1.3.1 busybox的下载、解压
 
 [busybox下载地址](https://busybox.net/downloads/)
 
@@ -758,7 +762,9 @@ busybox:一个集成100多个linux常用命令和工具的软件,是一个特别
 		wget https://www.busybox.net/downloads/busybox-1.25.0.tar.bz2 --no-check-certificate
 		//没试过,不知道行不行??
 
-**2.配置、编译**
+#### 3.1.3.2 配置、编译
+
+**1.aarch32模式(即普通模式)**
 
 	make defconfig 	//config文件在./configs/下面(此步没有也可以)
 	export ARCH=arm
@@ -778,7 +784,23 @@ busybox:一个集成100多个linux常用命令和工具的软件,是一个特别
 	解决方法:
 		apt-get install libncurses5-dev
 
-**3.制作根目录**
+**2.aarch64模式**
+
+	make defconfig
+	export ARCH=arm64
+	export CROSS_COMPILE=aarch64-linux-gnu-
+	make menuconfig	//配置一些选项,此处配置成静态编译
+		Busybox Settings --->
+			Build Options --->
+				[*] Build BusyBox as a static binary (no shared libs)
+	make install	//编译及安装
+	/*
+		生成的根文件系统位于:./busybox-1.25.0/_install/,有"bin/linuxrc/sbin/usr"等.
+	*/
+
+#### 3.1.3.3 制作根目录
+
+**1.方法1--->单独编译出a9rootfs.ext3**
 
 1.创建必要的目录
 
@@ -845,9 +867,81 @@ busybox:一个集成100多个linux常用命令和工具的软件,是一个特别
 		umount tmpfs	//卸载
 	4.重启就不会再出现这个问题了.
 
+**2.方法2--->编译出来的binary直接拷贝到linux目录,然后与linux一起编译(更常用)**
+
+1.拷贝busybox编译出来的binary到linux目录
+
+	cp ./busybox-1.25.0/_install/ ./linux-4.4.189/_install_arm64 -rf
+
+2.再_install目录创建一些必要的目录
+
+	cd linux-4.4.189/_install_arm64
+	mkdir etc
+	mkdir dev
+	mkdir mnt
+	mkdir -p etc/init.d/
+
+3.etc/init.d/下创建rcS文件,并写入以下内容
+
+	cd etc/init.d
+	touch rcS
+	vi rcS
+	//写入以下内容:
+		mkdir -p /proc
+		mkdir -p /tmp
+		mkdir -p /sys
+		mkdir -p /mnt
+		/bin/mount -a
+		mkdir -p /dev/pts
+		mount -t devpts devpts /dev/pts
+		echo /sbin/mdev > /proc/sys/kernel/hotplug
+		mdev -s
+	//增加可执行权限
+	chmod +x rcS
+
+4.etc/下创建fstab文件,并写入以下内容
+
+	cd etc
+	touch fstab
+	//写入以下内容
+		proc /proc proc defaults 0 0
+		tmpfs /tmp tmpfs defaults 0 0
+		sysfs /sys sysfs defaults 0 0
+		tmpfs /dev tmpfs defaults 0 0
+		debugfs /sys/kernel/debug debugfs defaults 0 0
+	//增加可执行权限
+	chmod +x fstab
+
+5.etc/目录下创建inittab文件,并写入以下内容
+
+	cd etc
+	touch inittab
+	//写入以下内容
+		::sysinit:/etc/init.d/rcS
+		::respawn:-/bin/sh
+		::askfirst:-/bin/sh
+		::ctrlaltdel:/bin/umount -a -r
+	//增加可执行权限
+	chmod +x inittab
+
+6.dev/目录下添加设备节点,需要root权限
+
+	cd dev
+	1.创建4个tty终端设备(串口节点)
+		sudo mknod tty1 c 4 1	//另一种:mknod -m 666 tty1 c 4 1--->效果是一样的.
+		sudo mknod tty2 c 4 2
+		sudo mknod tty3 c 4 3
+		sudo mknod tty4 c 4 4
+	2.创建控制台节点
+		sudo mknod console c 5 1	//另一种:mknod -m 666 console c 5 1--->效果是一样的.
+	3.创建null节点
+		sudo mknod null c 1 3	//另一种:mknod -m 666 null c 1 3--->效果是一样的.
+
+7.然后才是编译内核.
+
 ### 3.1.4 运行虚拟机
 
-**1.运行方法**
+#### 3.1.4.1 Cortex-A9运行方法
 
 在终端输入:
 
@@ -867,6 +961,10 @@ busybox:一个集成100多个linux常用命令和工具的软件,是一个特别
 	"root=/dev/mmcblk0 console=ttyAMA0" -sd a9rootfs.ext3
 
 启动之后即可进入到终端(只运行内核和根文件系统),boot后续增加.
+
+#### 3.1.4.2 Cortex-A57运行方法
+
+
 
 ### 3.1.5 退出虚拟机
 
