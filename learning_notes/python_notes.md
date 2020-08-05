@@ -1,59 +1,67 @@
 # Python
 
-## 1、Python 入门
+## 1. Python简介
 
 python主要是用来编写应用程序的高级编程语言.
 
-python是解释型语言,执行时一行一行的翻译成机器码,翻译过程非常耗时，因此运行速度慢.C语言是在运行前就已经被编译成机器码,因此运行快.
+python是解释型语言,执行时需要一行一行的翻译成机器码,翻译过程非常耗时，因此运行速度慢.C语言是在运行前就已经被编译成机器码,因此运行快.
 
 编译型语言直接发布编译后的机器码(e.g. windows的exe程序);解释性语言必须将源码发布出去.
 
-**1.进入和退出Python:**
+### 1.1 进入和退出Python
 
 	$ python /*在linux中直接敲击命令python*/
 	>>> exit() /*>>>:表明进入python交互式环境.exit():退出python交互式环境*/
 
 python使用最广的解释器是CPython.
 
-**2.运行Python文件(".py"后缀)**
+### 1.2 运行Python文件(".py"后缀)
 
-	#!/usr/bin/python
+	#!/usr/bin/python ---> #!/usr/bin/env python3
 	/*
 	在.py文件开头指定使用/usr/bin/python解析脚本,在linux下如果使用"python xxx.py"该语句则会无效.加上
 	该句可以让python程序使用"./xxx.py"执行.
 	PS:通常有两种指定解释器:
 		1)#!/usr/bin/python:直接写死了使用该路径下的python解释,但有时如果python没有被安装到该目录下
 		或者希望使用其他版本的python去解释就需要修改脚本.因此这种写法不好;
-		2)#!/usr/bin/env python:这种写法会去环境变量PATH指定的第一个python来执行脚本,这种方式比较
+		2)#!/usr/bin/env python3:这种写法会去环境变量PATH指定的第一个python来执行脚本,这种方式比较
 		好.扩展性好,且不易出错.
 	*/
 	$ chmod a+x xxx.py	/*为.py文件增加执行权限(一般注意查看其他脚本的权限,保持一致)*/
 	./xxx.py	/*执行*/
 
-**3.输入:raw_input()函数**
+### 1.3 输入和输出
+
+#### 1.3.1 python2的raw_input()和print函数
+
+##### 1.3.1.1 raw_input()
 
 	name = raw_input('Please enter your name:')	#提示输入,输入的信息会放到name这一变量中
 	print 'hello,', name						#打印出"hello, ...(用户输入的信息)"
-	/*
-		python 3.x去掉了raw_input(),使用input()函数替代raw_input().即:
-		name = input("Please enter your name:")	//返回类型为str
-	*/
-
+	
 raw_input()读取的内容永远是以字符串的形式返回,如果需要整数必须:
 
 	birth = int(raw_input('Please input your date of birth'))	
 	#出生日期是一个整数,需要使用int进行转换,转换为整型
 
-**4.print函数**
+##### 1.3.1.2 print函数
 
 	>>> print 'hello, world' /*输出"hello,world"*/
 	>>> print 'The quick brown fox', 'jumps over', 'the lazy dog'
 	# 其输出为The quick brown fox jumps over the lazy dog(","会输出空格,但是会忽略","后面的空格)
-	/*
-		python 3.x的print函数:
-		print('The quick brown for', 'jumps over', 'the lazy dog')
-		//全部使用双引号或单引号即可.
-	*/
+
+#### 1.3.2 python3的输入和输出
+
+##### 1.3.2.1 input()函数
+
+python 3.x去掉了raw_input(),使用input()函数替代raw_input().即:
+
+	name = input("Please enter your name:")	//返回类型为str
+
+##### 1.3.2.2 print()函数
+
+	print('The quick brown for', 'jumps over', 'the lazy dog')
+	//全部使用双引号或单引号即可.
 
 ***
 

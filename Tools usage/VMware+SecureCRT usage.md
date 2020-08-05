@@ -85,9 +85,10 @@ VMware下Linux和Windows共享文件是借助VMware Tools实现的.具体步骤�
 			read-only.--->即表示成功.
 		PS:如果使用"./",当前可能看不到,需要回退到上一层目录,在回来就可以看到mount之后的内容.
 		*/
-	4.拷贝"VMwareTools-10.2.5-8068393.tar.gz"到需要解压的目录
-		cp VMwareTools-10.2.5-8068393.tar.gz /opt/working
+	4.拷贝"VMwareTools-10.2.5-8068393.tar.gz"到需要解压的目录(此处为/opt/working/)
+		cp VMwareTools-10.2.5-8068393.tar.gz /opt/working/	//在原位置解压会有问题
 	5.解压
+		cd /opt/working
 		tar -xvzf VMwareTools-10.2.5-8068393.tar.gz	//解压到当前目录
 	6.安装
 		cd vmware-tools-distrib		//解压后的目录

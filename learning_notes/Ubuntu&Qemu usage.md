@@ -64,9 +64,11 @@
 	sudo apt-get install gcc-aarch64-linux-gnu
 	sudo apt-get install g++-aarch64-linux-gnu
 
-### 1.5.2 手动安装gcc及版本切换
+### 1.5.2 手动安装gcc及版本切换--->该种方法更好,有gdb调试工具
 
 主要针对需要不同版本的gcc,可以切换gcc版本.
+
+#### 1.5.2.1 aarch32的gcc/gdb版本手动安装
 
 **1.gcc下载地址**
 
@@ -132,6 +134,50 @@
 		g++ -shared -fPCI -o hello.so hello.o
 	5.编译出静态库(即.a)--->由.o压缩成.a
 		ar -r hello.a hello.o
+
+#### 1.5.2.2 aarch64的gcc/gdb版本手动安装
+
+**1.gcc/gdb下载地址**
+
+[arm-linux-gcc历史版本下载地址](https://releases.linaro.org/components/toolchain/binaries/)
+
+	Linaro的官网(https://www.linaro.org/downloads/)--->拉到下面的"Linaro Toolchain"--->
+		点击"GNU cross-toolchain binary archives"--->弹出页面中可以选择历史版本.
+
+**2.选择版本**
+
+	//选择7.5的版本
+	1.下载7.5的gcc/gdb版本
+		网址"https://releases.linaro.org/components/toolchain/binaries/"
+			--->选择"7.5-2019.12"
+			--->选择"aarch64-linux-gnu"
+			--->选择"gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz"
+			PS:下载下来的可能显示为"xxx.tar.tar",只是后缀变了,本质还是xxx.tar.xz文件,改一下后缀即可.
+	2.解压
+		cd /home/defychen/repository_software
+		mv gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.tar 
+			gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz //如果后缀被改
+		mv gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz /home/defychen/toolchain
+		cd /home/defychen/toolchain
+		tar -xvJf gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz
+		PS:gcc/gdb在目录"/home/defychen/toolchain/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux
+			-gnu/bin/"
+	3.修改.bashrc/profile
+		1.仅在当前目录下有效方法:
+			1.打开/root/.bashrc(root用户)和/home/defychen/.bashrc(普通用户)文件,增加下面信息:
+				export PATH="/home/defychen/arm-linux-gcc/bin:$PATH"
+				//放在PATH环境变量的前面,可以保证肯定有效;放在后面如果PATH变量中有gcc版本,则后面的不会用
+			2.让路径生效
+				source /root/.bashrc--->root用户
+				source /home/defychen/.bashrc--->如果为普通用户
+		2.开机就有效(一直有效)方法:
+			在/etc/profile中写入:
+				export PATH="/home/defychen/arm-linux-gcc/bin:$PATH"
+				source /etc/profile	//如果开机,会先扫描该文件.并使能该路径
+	4.查看下环境变量
+		echo $PATH	//可以看到path的路径
+	5.测试gdb是否可用
+		aarch64-linux-gnu-gdb	//显示可用
 
 ## 1.6 ubuntu版本查看
 
@@ -705,8 +751,12 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 
 **2.Cortex-A57配置编译参数**
 
-	//cp arch/arm64/configs/defconfig .config--->不要去复制配置文件,直接执行make menuconfig
-	执行make menuconfig,配置initramfs
+	/*
+		cp arch/arm64/configs/defconfig .config
+		--->网上有人执行这步,但是好像试过起不来,只有后面的make defconfig能起来.
+	*/
+	make defconfig	//一定需要这步骤,否则kernel起不来(不知道是哪里的问题)
+	make menuconfig,配置initramfs
 		General setup --->
 			[*] Initial RAM filesystem and RAM disk (initramfs/initrd) support
 				(__install_arm64) Initramfs source file(s)
@@ -964,7 +1014,12 @@ busybox:一个集成100多个linux常用命令和工具的软件,是一个特别
 
 #### 3.1.4.2 Cortex-A57运行方法
 
+	#!/usr/bin/sh
+	qemu-system-aarch64 -machine virt -cpu cortex-a57 -machine type=virt -nographic -m 2048
+	-smp 2 -kernel /home/defychen/repository_software/linux-4.4.189/arch/arm64/boot/Image 
+	--append "rdinit=/linuxrc console=ttyAMA0"
 
+[qemu-system-aarch64模拟arm64会出现运行时卡住不动,参看该文章](https://blog.csdn.net/snail_coder/article/details/82935081)
 
 ### 3.1.5 退出虚拟机
 
@@ -977,6 +1032,10 @@ busybox:一个集成100多个linux常用命令和工具的软件,是一个特别
 	另外打开一个终端,执行:
 		ps -a	//查看所有进程
 		kill qemu的PID	//qemu的PID是qemu-system-arm进程的PID.
+
+方法3--->该方法最快,可以干掉所有的qemu进程(但是全kill也存在不好).
+
+	killall qemu-system-aarch64		//干掉全部qemu-system-aarch64的进程.
 
 ## 3.2 在Ubuntu系统搭建Qemu模拟ARM(二)--->u-boot启动kernel
 
@@ -1345,3 +1404,114 @@ NFS文件系统是一种网络文件系统,两个机器之间可通过NFS实现�
 ## 3.5 在Ubuntu系统搭建Qemu模拟ARM(五)--->在板卡上运行应用和驱动程序
 
 略.
+
+## 3.6 Qemu调试ARM linux内核
+
+### 3.6.1 安装ARM GDB工具
+
+#### 3.6.1.1 ubuntu 16.x安装gdb方法
+
+	sudo apt-get install gdb-arm-none-eabi	//直接安装即可
+
+#### 3.6.1.2 ubuntu 18.x安装gdb方法
+
+18.x的ubuntu没有将gdb-arm-none-eabi加到系统中,这是一个bug.
+
+[问题描述](https://acassis.wordpress.com/2018/12/27/adding-arm-none-eabi-gdb-to-ubuntu-18-04/)
+
+**1.解决方法1--->最好的办法**
+
+参看"1.5.2.2 aarch64的gcc/gdb版本手动安装"安装linaro的交叉工具链,里面就有aarch64-linux-gnu-gdb.
+
+**2.解决方法2(安装gdb-arm-none-eabi-)--->这种方法安装的是aarch32的gdb,在aarch64有问题.**
+
+	1.在我的百度网盘里,有两个用于安装gdb-arm-none-eabi的文件,路径:
+		06 reposiroty_study/arm-none-eabi-gdb
+	2.下载下来的gdb安装包,包含:
+		libreadline6_6.3-8ubuntu2_amd64.deb
+		gdb-arm-none-eabi_7.10-1ubuntu3 9_amd64.deb
+		//deb包是Debian,ubuntu等linux发行版的软件安装包,类似rpm软件包.
+	3.安装gdb包:
+		sudo dpkg -i libreadline6_6.3-8ubuntu2_amd64.deb	//先安装这个
+		sudo dpkg -i gdb-arm-none-eabi_7.10-1ubuntu3 9_amd64.deb
+	4.安装后就可以使用.
+
+**3.解决方法3(安装gdb-multiarch)--->这种方法在给linux下断点时有问题**
+
+[参考文章](https://zhuanlan.zhihu.com/p/47783910)
+
+	apt-get install gdb-multiarch
+
+### 3.6.2 linux内核支持调试
+
+编译时确保内核包含调试信息,打开如下开关.
+
+	make menuconfig
+	Kernel hacking --->
+		Compile-time checks and compiler options --->
+			[*] Compile the kernel with debug info	//选上
+	make -j8
+
+### 3.6.3 支持gdb调试的脚本
+
+#### 3.6.1.1 aarch32下的脚本
+
+#### 3.6.1.2 aarch64下的脚本
+
+	#!/usr/bin/sh
+	qemu-system-aarch64 -machine virt -cpu cortex-a57 -machine type=virt -nographic -m 2048 
+	-smp 2 -kernel /home/defychen/repository_software/linux-4.4.189/arch/arm64/boot/Image 
+	--append "rdinit=/linuxrc console=ttyAMA0 loglevel=8" -S -gdb tcp::8880
+	/*
+		-S:表示Qemu虚拟机会冻结CPU,直到远程的gdb启动后,再继续运行
+		-gdb tcp::8880:指定gdb链接的端口号.
+		PS:执行完这条命令后,qemu会暂停,等待gdb的接入.
+	*/
+	PS:在一个终端先运行该脚本,不会打印任何东西.等待gdb的接入.
+
+### 3.6.4 启动并运行gdb
+
+#### 3.6.4.1 aarch32
+
+#### 3.6.4.2 aarch64
+
+**1.aarch64-linux-gnu-gdb启动gdb**
+
+重新启动一个终端窗口,运行下面命令
+
+	aarch64-linux-gnu-gdb /home/defychen/repository_software/linux-4.4.189/vmlinux
+	//后面直接指定需要debug的vmlinux,正常会顺利读完symbols.
+
+**2.gdb-multiarch启动gdb---后面有问题**
+
+	gdb-multiarch vmlinx
+	/*
+	启动后会提示没有vmlinx:
+		To enable execution of this file add
+			add-auto-load-safe-path .../vmlinu-gdb.py
+		line to your configuration file "/root/.gdbinit".
+		To completely disable this security protection add
+		    set auto-load safe-path /
+		line to your configuration file "/root/.gdbinit".
+	解决方法:
+		新建:~/.gdbinit文件--->该文件在我的系统中不存在,需要新建.填入以下信息:
+			add-auto-load-safe-path /usr/local/lib64/libstdc++.so.6.0.21-gdb.py
+			set auto-load safe-path /
+		再重新启动gdb即可.
+	*/
+	set architecture aarch64	//设置架构为aarch64
+	directory /home/defychen/repository_software/linux-4.4.189/	//设置kernel代码路径
+
+**2.连接qemu**
+
+	target remote:8880
+
+看到如下信息表示连接成功.
+
+![](images/gdb_remote_connect.png)
+
+**3.打断点**
+
+	b start_kernel
+	c	//输入c继续运行,此时会断在start_kernel函数处.
+

@@ -149,6 +149,12 @@ GNU zip---gzip(gz)和bzip2(bz2)两种压缩格式，压缩比:gzip>bzip2
 	4.*.zip压缩包解压:
 	unzip -d sourceInsight_downcc.zip ./		//解压*.zip文件到当前目录下
 		帮助方法:unzip --help
+	5.tar.zst压缩包解压:
+	tar -I zstd -xvf archive.tar.zst
+	/*
+		扩展名.zst表示存档由zstd压缩.
+		此处"-I"选项指定压缩/解压缩的格式.
+	*/
 
 3.创建压缩包的方法
 
