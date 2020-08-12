@@ -3113,12 +3113,208 @@ For example:
 		cout << "nullptr" << endl;
 	}
 
-## 62. Spiral Matrix II
+## 62. Unique Paths
 
 ### 62.1 Description
 
+![](images/unique_paths_1.png)
+
+A robot is located at the top-left corner of a  m  x  n  grid (marked 'Start' in the diagram below). The robot can only move either down or right at any point in time. The robot is trying to reach the bottom-right corner of the grid (marked 'Finish' in the diagram below). How many possible unique paths are there?
+
+Above is a 7 x 3 grid. How many possible unique paths are there?
+Note:  m  and  n  will be at most 100.
+
+Example 1:
+
+	Input: m = 3, n = 2
+	Output: 3
+	Explanation:
+	From the top-left corner, there are a total of 3 ways to reach the bottom-right corner:
+	1.Right -> Right -> Down
+	2.Right -> Down -> Right
+	3.Down -> Right -> Right
+
+Example 2:
+
+	Input: m = 7, n = 3
+	Output: 28
+
 ### 62.2 Analysis
+
+每次可以向下走或者向右走,求到达最右下角的所有不同走法的个数.需要用动态规划Dynamic Programming来解,可以维护一个二维数组dp,其中dp[i][j]表示到当前位置不同的走法的个数,然后可以得到状态转移方程为:dp[i][j]=dp[i-1][j] +dp[i][j-1],这里为了节省空间,使用一维数组dp,一行一行的刷新也可以.
 
 ### 62.3 Code
 
-**1.Solution 1**
+	#include <iostream>
+	using namespace std;
+
+	int unique_paths(int m, int n)
+	{
+		vector<int> dp(n ,1);
+		for (int i = 1; i < m; i++) {
+			for (int j = 1; j < n; j++) {
+				dp[j] += dp[j - 1];
+			}
+		}
+		return dp[n - 1];
+	}
+	//测试程序
+	int main()
+	{
+		cout << unique_paths(3, 2);	//结果为3.
+	}
+	PS:该题的代码分析为:(dp[j] = dp[j - 1])
+	1	1	1	1	1	1
+		|	|	|	|	|
+	1--	2--	3--	4--	5--	6
+		|	|	|	|	|
+	1--	3--	6--	10--15--21
+
+## 63. Unique Paths II
+
+### 63.1 Description
+
+A robot is located at the top-left corner of a  m  x  n  grid (marked 'Start' in the diagram below). The robot can only move either down or right at any point in time. The robot is trying to reach the bottom-right corner of the grid (marked 'Finish' in the diagram below). Now consider if some obstacles(障碍) are added to the grids. How many unique paths would there be?
+
+An obstacle and empty space is marked as 1 and 0 respectively in the grid. Note:  m  and  n  will be at most 100.
+
+Example 1:
+
+	Input:
+	[
+	  [0,0,0],
+	  [0,1,0],
+	  [0,0,0]
+	]
+	Output: 2
+	Explanation:
+	There is one obstacle in the middle of the 3x3 grid above.
+	There are two ways to reach the bottom-right corner:
+	1.Right -> Right -> Down -> Down
+	2.Down -> Down -> Right -> Right
+
+### 63.2 Analysis
+
+每次可以向下走或者向右走,求到达最右下角的所有不同走法的个数.需要用动态规划Dynamic Programming来解,可以维护一个二维数组dp,其中dp[i][j]表示到当前位置不同的走法的个数,然后可以得到状态转移方程为:dp[i][j]=dp[i-1][j] +dp[i][j-1],这里为了节省空间,使用一维数组dp,一行一行的刷新也可以.当某个位置是障碍物时,其dp值为0,直接跳过该位置即可.这里还需要初始化dp数组的某个值,使得其能正常累加.当起点不是障碍物时,其dp值应该为1,即dp[1][1]=1,由于其是由dp[0][1]+dp[1][0]更新而来,所以二者中任意一个初始化为1即可.
+
+### 63.3 Code
+
+	#include <iostream>
+	#include <vector>
+	using namespace std;
+	
+	int unique_path_with_obstacles(vector<vector<int>> &obstacle_grid)
+	{
+		if (obstacle_grid.empty() || obstacle_grid[0].empty() || obstacle_grid[0][0] == 1)
+			return 0;
+	
+		int m = obstacle_grid.size(), n = obstacle_grid[0].size();
+		vector<int> dp(n, 0);
+		dp[0] = 1;
+		for (int i = 0; i < m; i++) {
+			for (int j = 0; j < n; j++) {
+				if (obstacle_grid[i][j] == 1)
+					dp[j] = 0;
+				else if (j > 0)
+					dp[j] += dp[j - 1];
+			}
+		}
+		return dp[n - 1];
+	}
+	
+	int main()
+	{
+		vector<vector<int>> obstacle_grid = {
+			{0, 0, 0},
+			{0, 1, 0},
+			{0, 0, 0}
+		};
+		cout << unique_path_with_obstacles(obstacle_grid) << endl;
+		return 0;
+	}
+	/*
+		编译:g++ test.cpp -o test -std=c++0x
+		结果为:2
+	PS:该题的代码分析为:(dp[j] = dp[j - 1])
+	0--	0--	0
+	|		|
+	0	1	0
+	|		|
+	0--	0--	0	//总共2条路
+
+## 64. Unique Paths II
+
+### 64.1 Description
+
+Given a  m  x  n  grid filled with non-negative numbers, find a path from top left to bottom right which  minimizes  the sum of all numbers along its path. Note: You can only move either down or right at any point in time.
+
+Example:
+
+	Input:
+	[
+	  [1,3,1],
+	  [1,5,1],
+	  [4,2,1]
+	]
+	Output: 7
+	Explanation: Because the path 1→3→1→1→1 minimizes the sum.
+
+### 64.2 Analysis
+
+这道题给了我们一个只有非负数的二维数组，让找一条从左上到右下的路径，使得路径和最小，限定了每次只能向下或者向右移动。一个常见的错误解法就是每次走右边或下边数字中较小的那个，这样的贪婪算法获得的局部最优解不一定是全局最优解，因此是不行的。实际上这道题需要用动态规划 Dynamic Programming 来做，我们维护一个二维的 dp 数组，其中 dp[i][j] 表示到达当前位置的最小路径和。接下来找状态转移方程，因为到达当前位置 (i, j)  只有两种情况，要么从上方 (i-1, j) 过来，要么从左边 (i, j-1) 过来，我们选择 dp 值较小的那个路径，即比较 dp[i-1][j] 和 dp[i][j-1]，将其中的较小值加上当前的数字 grid[i][j]，就是当前位置的 dp 值了。但是有些特殊情况要提前赋值，比如起点位置，直接赋值为 grid[0][0]，还有就是第一行和第一列，其中第一行的位置只能从左边过来，第一列的位置从能从上面过来，所以这两行要提前初始化好，然后再从 (1, 1) 的位置开始更新到右下角即可.
+
+### 64.3 Code
+
+	#include <iostream>
+	#include <vector>
+	#include <algorithm>
+	using namespace std;
+	
+	int min_path_sum(vector<vector<int>> &grid)
+	{
+		if (grid.empty() || grid[0].empty())
+			return 0;
+		int m = grid.size(), n = grid[0].size();
+		vector<vector<int>> dp(m, vector<int>(n));
+		dp[0][0] = grid[0][0];
+		for (int i = 1; i < m; i++)
+			dp[i][0] = grid[i][0] + dp[i - 1][0];
+		for (int j = 1; j < n; j++)
+			dp[0][j] = grid[0][j] + dp[0][j - 1];
+	
+		for (int i = 1; i < m; i++) {
+			for (int j = 1; j < n; j++) {
+				dp[i][j] = grid[i][j] + min(dp[i - 1][j], dp[i][j - 1]);
+			}
+		}
+		return dp[m-1][n-1];
+	}
+	
+	int main()
+	{
+		vector<vector<int>> grid = {
+			{1, 3, 1},
+			{1, 5, 1},
+			{4, 2, 1}
+		};
+		cout << min_path_sum(grid) << endl;
+		return 0;
+	}
+	//结果:7
+
+
+## 65. Valid number
+
+### 65.1 Description
+
+### 65.2 Analysis
+
+### 65.3 Code
+
+## 66. Valid number
+
+### 66.1 Description
+
+### 66.2 Analysis
+
+### 66.3 Code

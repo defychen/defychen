@@ -134,6 +134,9 @@
 		g++ -shared -fPCI -o hello.so hello.o
 	5.编译出静态库(即.a)--->由.o压缩成.a
 		ar -r hello.a hello.o
+	6.以c++11编译
+		g++ test.cpp -o test -std=c++11
+		g++ test.cpp -o test -std=c++0x
 
 #### 1.5.2.2 aarch64的gcc/gdb版本手动安装
 

@@ -1381,6 +1381,76 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 
 ### 5.4 装饰器
 
+#### 5.4.1 函数名字
+
+	def now():
+		print('2020-08-11')
+	f = now
+	print(f.__name__)	//获取函数名字,使用"函数名.__name__"
+	print(now.__name__)	//结果均为"now".
+
+#### 5.4.2 装饰器(Decorator)
+
+装饰器(Decorator):再代码运行期间动态增加功能的方式称为装饰器.
+
+**1.定义一个能打印log的decorator**
+
+	def log(func):
+		def wrapper(*args, **kw):
+			print('call %s():' % func.__name__)
+			return func(*args, **kw)
+		return wrapper
+
+**2.调用decorator**
+
+	@log
+	def now():
+		print('2020-08-11')
+
+	now()
+	/*
+		结果为:
+			call now():
+			2020-08-11
+	*/
+
+**3.decorator执行流程分析**
+
+	1.@log置于now()函数的定义处,相当于执行了语句:now = log(now),存在一个同名的now变量指向新的函数
+		log(now),但是原来的now()函数依然存在;
+	2.log(now)返回的是wrapper,因此新变量now指向wrapper,此时会调用wrapper函数;
+	3.wrapper函数打印一句话,然后再调用原始的now函数.
+
+#### 5.4.3 decorator本身传入参数
+
+**1.定义一个带参数的decorator**
+
+	def log(text):
+		def decorator(func):
+			def wrapper(*args, **kw):
+				print('%s %s():' % (text, func.__name__))
+				return func(*args, **kw)
+			return wrapper
+		return decorator
+
+**2.调用decorator**
+
+	@log('execute')
+	def now():
+		print('2020-08-11')
+	/*
+		结果为:
+			execute now():
+			2020-08-11
+	*/
+
+**3.decorator执行流程分析**
+
+	1.@log置于now()函数的定义处,相当于执行了语句:now = log(now),存在一个同名的now变量指向新的函数
+		log(now),但是原来的now()函数依然存在;
+	2.log(now)返回的是wrapper,因此新变量now指向wrapper,此时会调用wrapper函数;
+	3.wrapper函数打印一句话,然后再调用原始的now函数.
+
 ***
 
 ## 6. 模块
