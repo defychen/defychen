@@ -1438,6 +1438,7 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 	@log('execute')
 	def now():
 		print('2020-08-11')
+	now()
 	/*
 		结果为:
 			execute now():
@@ -1446,10 +1447,68 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 
 **3.decorator执行流程分析**
 
-	1.@log置于now()函数的定义处,相当于执行了语句:now = log(now),存在一个同名的now变量指向新的函数
-		log(now),但是原来的now()函数依然存在;
-	2.log(now)返回的是wrapper,因此新变量now指向wrapper,此时会调用wrapper函数;
+	1.@log置于now()函数的定义处,相当于执行了语句:now = log('execute')(now),处理text,返回的是
+		decorator函数.再调用decorator函数,参数是now函数,返回的是wrapper函数;
+	2.新变量now指向wrapper,此时会调用wrapper函数;
 	3.wrapper函数打印一句话,然后再调用原始的now函数.
+
+#### 5.4.4 decorator返回正确的函数名
+
+由于log('execute')(now)返回的是wrapper函数,执行:now().__name__	,得到的结果为'wrapper',非now的函数名.
+
+1.普通decorator的修改
+
+	import functools	//函数工具模块
+	def log(func):
+		@functools.wraps(func)	//添加该句代码后顶层能看到返回正确的函数名
+		def wrapper(*args, **kw):
+			print('call %s():' % func.__name__)
+			return func(*args, **kw)
+		return wrapper
+
+2.decorator本身带参数的修改
+
+	import functools
+	def log(text):
+		def decorator(func):
+			@functools.wraps(func)
+			def wrapper(*args, **kw):
+				print('%s %s():' % (text, func.__name__))
+				return func(*args, **kw)
+			return wrapper
+		return decorator
+
+#### 5.4.5 打印某函数执行的时间
+
+	#!/usr/bin/env python3
+	# -*- coding: utf-8 -*-
+	import time, functools
+	def metric(fn):
+		@functools.wraps(fn)
+		def wrapper(*args, **kw):
+			start_time = time.time() * 1000		//time.time()返回的是秒数,*1000返回毫秒
+			execute = fn(*args, **kw)
+			end_time = time.time() * 1000
+			print('%s executed in %s ms' % (fn.__name__, end_time - start_time))
+			return execute
+		return wrapper
+	//测试
+	@metric
+	def fast(x, y):
+		time.sleep(0x0012)
+		return x + y
+
+	@metric
+	def slow(x, y, z):
+		time.sleep(0.1234)
+		return x * y * z
+	f = fast(11, 22)
+	s = slow(11, 22, 33)
+	//结果:
+		fast executed in 1.286865234375 ms 
+		slow executed in 123.606201171875 ms 
+
+### 5.5 偏函数
 
 ***
 
