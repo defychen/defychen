@@ -1510,6 +1510,44 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 
 ### 5.5 偏函数
 
+偏函数的作用主要是为了修改函数的默认值,方便后面的调用.
+
+#### 5.5.1 偏函数的原理
+
+1.定义一个带有默认值的函数
+
+	def hx(x, y = 1):
+		print(x)
+		print(y)
+	print(hx(x))	//结果:x=1, y=1
+
+2.使用偏函数改变函数的默认值
+
+	import functools	//偏函数存在的模块
+	hx1 = functools.partial(hx, y = 3)
+	/*
+		para1:需要改变默认值的函数名;
+		para2:函数的默认参数值修改
+	*/
+	print(hx1(1))	//结果:x=1, y=3
+
+#### 5.5.2 偏函数对内建函数的修改
+
+1.进制转换函数
+
+	import functools
+	int2 = functools.partial(int, base = 2)
+	print(int2('1001'))		//结果为:9
+
+2.最大值函数
+
+	import functools
+	max2 = functools.partial(max, 10)
+	/*
+		因为max函数接收一个list,初始的10会自动加在整个list的最左边.
+	*/
+	max2(5, 6, 7)	//结果为:10
+
 ***
 
 ## 6. 模块
