@@ -3300,7 +3300,10 @@ Example:
 		cout << min_path_sum(grid) << endl;
 		return 0;
 	}
-	//结果:7
+	/*
+		编译:g++ test.cpp -o test -std=c++0x
+		结果:7
+	*/
 
 
 ## 65. Valid number
@@ -3311,10 +3314,136 @@ Example:
 
 ### 65.3 Code
 
-## 66. Valid number
+## 66. Plus One
 
 ### 66.1 Description
 
+Given a non-negative number represented as an array of digits, plus one to the number. The digits are stored such that the most significant digit is at the head of the list.
+
 ### 66.2 Analysis
 
+将一个数字的每个位上的数字分别存到一个一维向量中，最高位在最开头，我们需要给这个数字加一，即在末尾数字加一，如果末尾数字是9，那么则会有进位问题，而如果前面位上的数字仍为9，则需要继续向前进位。具体算法如下：首先判断最后一位是否为9，若不是，直接加一返回，若是，则该位赋0，再继续查前一位，同样的方法，直到查完第一位。如果第一位原本为9，加一后会产生新的一位，那么最后要做的是，查运算完的第一位是否为0，如果是，则在最前头加一个1。
+
 ### 66.3 Code
+
+	#include <iostream>
+	#include <vector>
+	#include <algorithm>
+	using namespace std;
+	
+	vector<int> plus_one(vector<int> &digits)
+	{
+		int n = digits.size();
+		for (int i = n - 1; i >= 0; i--) {
+			if (digits[i] == 9)
+				digits[i] = 0;
+			else {
+				digits[i] += 1;
+				return digits;
+			}
+		}
+		digits.insert(digits.begin(), 1);
+		return digits;
+	}
+	
+	int main()
+	{
+		vector<int> digits = {9, 9, 9, 9};
+		vector<int> results = plus_one(digits);
+		for (int num : results) {
+			cout << num << " ";
+		}
+		cout << endl;
+	}
+	/*
+		编译:g++ test.cpp -o test -std=c++0x
+		结果:1 0 0 0 0
+	*/
+
+## 67. Add Binary
+
+### 67.1 Description
+
+Given two binary strings, return their sum (also a binary string).
+
+For example,
+
+	a = "11"
+	b = "1"
+	Return "100".
+
+### 67.2 Analysis
+
+二进制数相加，并且保存在string中，要注意的是如何将string和int之间互相转换，并且每位相加时，会有进位的可能，会影响之后相加的结果。而且两个输入string的长度也可能会不同。这时我们需要新建一个string，它的长度是两条输入string中的较大的那个，并且把较短的那个输入string通过在开头加字符‘0’来补的较大的那个长度。这时候我们逐个从两个string的末尾开始取出字符，然后转为数字相加，如果大于等于2，则标记进位标志carry，并且给新string加入一个字符'0'。
+
+### 67.3 Code
+
+	#include <iostream>
+	#include <vector>
+	#include <string>
+	#include <algorithm>
+	using namespace std;
+	
+	string add_binary(string a, string b)
+	{
+		string res;
+		int na = a.size();
+		int nb = b.size();
+		int n = max(na, nb);
+		bool carry = false;
+		if (na > nb) {
+			for (int i = 0; i < (na - nb); i++)
+				b.insert(b.begin(), '0');
+		} else if (na < nb) {
+			for (int i = 0; i < (nb - na); i++)
+				a.insert(a.begin(), '0');
+		}
+	
+		for (int i = n - 1; i >= 0; i--) {
+			int tmp = 0;
+			if (carry)
+				tmp = (a[i] - '0') + (b[i] - '0') + 1;
+			else
+				tmp = (a[i] - '0') + (b[i] - '0');
+	
+			if (tmp == 0) {
+				res.insert(res.begin(), '0');
+				carry = false;
+			} else if (tmp == 1) {
+				res.insert(res.begin(), '1');
+				carry = false;
+			} else if (tmp == 2) {
+				res.insert(res.begin(), '0');
+				carry = true;
+			} else if (tmp == 3) {
+				res.insert(res.begin(), '1');
+				carry = true;
+			}
+		}
+	
+		if (carry)
+			res.insert(res.begin(), '1');
+		return res;
+	}
+	
+	int main()
+	{
+		string a = "11";
+		string b = "1";
+		cout << add_binary(a, b) << endl;
+	}
+	/*
+		编译:g++ test.cpp -o test -std=c++0x -g	//挂gdb编译
+			gdb test
+			b 10
+			r
+		结果:100
+	*/
+
+## 68. Add Binary
+
+### 68.1 Description
+
+### 68.2 Analysis
+
+### 68.3 Code
