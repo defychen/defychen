@@ -1560,42 +1560,57 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 
 在Python中,一个".py"文件就是一个模块(module).
 
-模块放置在某个文件夹下,该文件夹称为包(package).只要文件夹名字不同,文件夹下的模块名字以及模块中的变量名可以与其他的模块相同.
+模块放置在某个文件夹下,该文件夹变成包(package).只要文件夹名字不同,文件夹下的模块名字以及模块中的变量名可以与其他的模块相同.
 
 	abc.py---一个名字叫"abc"的模块
 	->mycompany		//顶层目录
 		->web	//
 			->__init__.py	
-		//将"mycompany.web"变成一个包,"__init__.py"可以为空.模块名为"mycompany.web".该文件必须存在
-			->utils.py	//模块名为"mycompany.web.utils".
+			/*
+				"__init__.py"将"mycompany.web"变成一个包,否则为一个普通目录(必须存在该文件).
+				"__init__.py"可以为空.本身也是一个模块,模块名为"mycompany.web".
+			*/
+			->utils.py		//模块名为"mycompany.web.utils".
 			->www.py		//模块名为"mycompany.web.www"
-		->__init__.py//文件夹(包目录)下面的__init__.py将"mycompany"当成一个"包".模块名为"mycompany"
-		->abc.py		//模块名为"mycompany.abc"
-		->utils.py	//模块名为"mycompany.utils",可以与"mycompany.web.utils"名字,但是模块名不同
-		->xyz.py		//模块名为"mycompany.xyz"
+		->__init__.py
+		/*
+			文件夹(包目录)下面的__init__.py将"mycompany"当成一个"包".模块名为"mycompany"
+		*/
+		->abc.py	//模块名为"mycompany.abc"
+		->utils.py	//模块名为"mycompany.utils",可以与"mycompany.web.utils"名字相同,但是模块名不同
+		->xyz.py	//模块名为"mycompany.xyz"
 
-### 6.1 导入模块
+### 6.1 使用模块
 
-	#!/usr/bin/python	//指定可执行程序路径
-	# -*- coding: utf-8	-*-		//使用utf-8编码
+#### 6.1.1 使用模块
 
-	'a test module'		//注释
+	#!/usr/bin/env python3		//指定使用python3
+	# -*- coding: utf-8	-*-
+	//表示该文件使用utf-8编码(文件存在使用utf-8编码,读入内存使用unicode编码)
+
+	'a test module'				//注释文档
 	__author__ = 'Defy Chen'	//作者
 
-	import sys	//导入"sys"模块,使用sys变量指向sys模块.sys模块的变量argv为存储所有命令行参数的list.
-				//至少有一个元素,执行时".py"文件的名称
+	import sys
+	/*
+		导入"sys"模块,使用sys变量指向sys模块.sys模块的变量argv为存储所有命令行参数的list.
+		至少有一个元素,即执行时".py"的文件名.
+	*/
 	
 	def test():
 		args = sys.argv		//运行./hello.py时sys.argv就是['hello.py']
 		if len(args) == 1:
-			print 'Hello, world'
+			print('Hello, world')
 		elif len(args) == 2:	//运行./hello.py Defy时sys.argv就是['hello.py', 'Defy']
-			print 'Hello, %s!' % args[1]
+			print('Hello, %s!' % args[1])
 		else:
-			print 'Too many arguments!'
+			print('Too many arguments!')
 
-	if __name__ == '__main__':	//直接运行./hello.py,python中的特殊变量"__name__"就会置为"__main__"
-								//而在其他地方导入时,就会判断失败.用于测试该模块的正确性.
+	if __name__ == '__main__':
+		/*
+			直接运行./hello.py,python中的特殊变量"__name__"就会置为"__main__"
+			而在其他地方导入时,就会判断失败.用于测试该模块的正确性.
+		*/
 		test()
 
 	//执行
@@ -1603,11 +1618,13 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 	//在交互环境下,导入hello模块
 	$ python
 	>>> import hello
-	>>>     //没有任何打印,没有调用test()函数
+	>>>     //没有任何打印,没有调用test()函数.import时:__name__ == "__main__"不成立.
 	>>> hello.test()      //调用test函数
 	>>> Hello, world      //打印出来了
 
-### 6.2 别名
+#### 6.1.2 别名
+
+import xxx as yyy:给导入的模块xxx起别名yyy,为了更好的编写代码.
 
 	1.python 2.x使用:
 	try:	//Python IO的两套库"cStringIO"和"StringIO",接口和功能相同.cStringIO用c写的,速度快.
@@ -1623,18 +1640,18 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 	except ImportError:
 		import simplejson as json #python <= 2.5	//2.6之前独立第三方库
 
-### 6.3 作用域
+#### 6.1.3 作用域
 
 **1.public/private函数和变量**
 
 	abc, x123, PI	//公开的(public)变量或者函数名,可以直接引用
-	__xxx__		//特殊变量(e.g.__author__, __name__等).自己的变量一般不这么定义
+	__xxx__		//特殊变量(e.g.__author__,__name__,___doc__等).自己的变量一般不这么定义
 	_xxx或__xxx	//非公开的(private)的函数或变量(e.g._abc, __abc).不应该引用private函数或变量
 
 	def _private_1(name):	//定义private的函数,细节被隐藏
-		return 'Hello, %s' % name
+		return('Hello, %s' % name)
 	def _private_2(name):	//细节被隐藏
-		return 'Hi, %s' % name
+		return('Hi, %s' % name)
 	
 	def greeting(name):	//公开greeting函数.接口公开,细节隐藏.
 		if len(name) > 3:
@@ -1642,11 +1659,13 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 		else:
 			return _private_2(name)
 
+PS:外部不需要引用的函数全部定义为private,只有外部需要引用的函数才定义为public--->通过名字前有无"_"/"__"来区分.
+
 **2.global的用法**
 
 在Python中,函数中定义的变量为本地作用域;而模块中的定义的变量为全局作用域.
 
-函数中定义变量加上"global"可以变为全局作用域;或者使用函数中使用全局变量应该加上"global"修饰符
+函数中定义变量加上"global"可以变为全局作用域;在函数中使用全局变量应该加上"global"修饰符
 
 	1.全局变量且函数内无同名变量
 		hehe = 6
@@ -1674,7 +1693,7 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 	4.全局变量和函数中使用global修饰
 		hehe = 6
 		def f():
-			global hehe //明确说明在该函数中使用模块内定义的全局变量,该函数所有操作该变量都是用全局变量
+			global(hehe) //明确说明在该函数中使用模块内定义的全局变量,该函数所有操作该变量都是用全局变量
 			print(hehe) //输出6
 			hehe = 3 //全局变量重新赋值为3,此时全局变量值被改变为3.
 		f()
@@ -1686,10 +1705,12 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 	//搜索路径在sys模块的path变量中
 	>>>import sys
 	>>>sys.path    //为一个list
-	//添加自己的搜索目录, method 1
+	//添加自己的搜索目录
+
+	1.方法1
 	>>>import sys
 	>>>sys.path.append('pathname')    //运行时修改,结束后失效
-	//method 2
+	2.方法2
 	设置环境变量PYTHONPATH---不是很清楚
 
 ***
