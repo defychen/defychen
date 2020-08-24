@@ -24,7 +24,7 @@ ARMv8架构增加了3个特性:
 
 ARMv8架构将运行状态分为AArch64和AArch32两种状态,具体情形如下:
 
-**1.AArch64状态特点**
+#### 1.2.1 AArch64状态特点
 
 	1.64-bit的运行状态,地址存储在64-bit的寄存器中,使用64-bit指令集以及64-bit的寄存器;
 	2.31个64-bit的通用寄存器(X0-X30,通过W0-W30来访问低32-bit,X30一般用作程序链接寄存器);
@@ -38,7 +38,7 @@ ARMv8架构将运行状态分为AArch64和AArch32两种状态,具体情形如下
 		AArch64指令集提供专门的指令来访问这些PSTATE;
 	9.系统寄存器(System Register)名称后面带一个后缀,表示访问该寄存器的最低EL级别.
 
-**2.AArch32状态信息**
+#### 1.2.2 AArch32状态信息
 
 	1.32-bit的运行状态,地址存储在32-bit的寄存器中,使用T32/AArch32指令集以及32-bit的寄存器;
 	2.13个32-bit的通用寄存器(R0-R12);
@@ -90,6 +90,10 @@ ARMv8 4个等级描述如下:
 	4.AArch64 Hypervisor之上可以跑AArch64的Guest OS,也可以跑AArch32的Guest OS,反之不行;
 	5.允许AArch32 Secure与AArch64 Non-secure的组合(手机就是双系统,Android跑在AArch64 Non-secure
 		一侧,支付等跑在Secure一侧).
+
+#### 1.4.1 AArch32和AArch64寄存器映射关系
+
+![](images/aarch32_64_register.png)
 	
 ***
 
