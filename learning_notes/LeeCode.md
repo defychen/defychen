@@ -3492,18 +3492,118 @@ Implement int sqrt(int x). Compute and return the square root of  x.
 	}
 	//结果为:0.25
 
-## 70. Text Justification
+## 70. Climbing stairs
 
 ### 70.1 Description
 
+You are climbing a stair case. It takes  n  steps to reach to the top. Each time you can either climb 1 or 2 steps. In how many distinct ways can you climb to the top? Note: Given  n  will be a positive integer.
+
+Example 1:
+
+	Input: 2
+	Output: 2
+	Explanation: There are two ways to climb to the top.
+	1.1 step + 1 step
+	2.2 steps
+
+Example 2:
+
+	Input: 3
+	Output: 3
+	Explanation: There are three ways to climb to the top.
+	1.1 step + 1 step + 1 step
+	2.1 step + 2 steps
+	3.2 steps + 1 step
+
 ### 70.2 Analysis
+
+假设梯子有n层，那么如何爬到第n层呢，因为每次只能爬1或2步，那么爬到第n层的方法要么是从第 n-1 层一步上来的，要不就是从 n-2 层2步上来的，所以递推公式非常容易的就得出了：dp[n] = dp[n-1] + dp[n-2]。 斐波那契额数列的求解可以用递归，但是递归放到OJ上运行，会显示 Time Limit Exceeded，就是说运行时间超了，因为递归计算了很多分支，效率很低，这里需要用动态规划 (Dynamic Programming) 来提高效率，代码如下。
 
 ### 70.3 Code
 
-## 71. Text Justification
+	#include <iostream>
+	#include <vector>
+	using namespace std;
+
+	int climb_stairs(int n)
+	{
+		if (n <= 1)
+			return 1;
+		vector<int> dp(n);
+		dp[0] = 1, dp[1] = 2;
+		for (int i = 2; i < n; i++) {
+			dp[i] = dp[i - 1] + dp[i - 2];
+		}
+		return dp.back();
+	}
+	int main()
+	{
+		cout << climb_stairs(5);
+	}
+
+## 71. Simplify path
 
 ### 71.1 Description
 
+Given an absolute path for a file (Unix-style), simplify it.
+For example,
+
+	path = "/home/", => "/home"
+	path = "/a/./b/../../c/", => "/c"
+
+click to show corner cases.Corner Cases:
+
+	1.Did you consider the case where path = "/../"?
+	In this case, you should return "/".
+	2.Another corner case is the path might contain multiple slashes '/' together, such as "/home//foo/".
+	In this case, you should ignore redundant slashes and return "/home/foo".
+
 ### 71.2 Analysis
 
+这道题让简化给定的路径，加上两个例子 path = "/a/./b/../c/", => "/a/c"和path = "/a/./b/c/", => "/a/b/c"， 这样我们就可以知道中间是"."的情况直接去掉，是".."时删掉它上面挨着的一个路径，而下面的边界条件给的一些情况中可以得知，如果是空的话返回"/"，如果有多个"/"只保留一个。那么我们可以把路径看做是由一个或多个"/"分割开的众多子字符串，把它们分别提取出来一一处理即可，代码如下.
+
 ### 71.3 Code
+
+	#include <iostream>
+	#include <sstream>
+	#include <string>
+	using namespace std;
+
+	string simplify_path(string path)
+	{
+		string res, t;
+		stringstream ss(path);
+		vector<string> v;
+		while (getline(ss, t, '/')) {
+			if ((t == "") || (t == "."))
+				continue;
+			if ((t == "..") && (!v.empty()))
+				v.pop_back();
+			else if (t != "..")
+				v.push_back(t);
+		}
+		for (string s : v)
+			res += "/" + s;
+		return res.empty() ? "/" : res;
+	}
+
+	int main()
+	{
+		cout << simplify("/a/./b/../../c/");
+	}
+
+## 72. Edit distance
+
+### 72.1 Description
+
+### 72.2 Analysis
+
+### 72.3 Code
+
+## 73. Edit distance
+
+### 73.1 Description
+
+### 73.2 Analysis
+
+### 73.3 Code
