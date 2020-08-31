@@ -3613,6 +3613,20 @@ Follow up:
 	A simple improvement uses O( m  +  n ) space, but still not the best solution.
 	Could you devise a constant space solution?
 
+example 1:
+
+![](images/matrix_zeroes.png)
+
+	Input: matrix = [[1,1,1],[1,0,1],[1,1,1]]
+	Output: [[1,0,1],[0,0,0],[1,0,1]]
+
+example 2:
+
+![](images/matrix_zeroes_2.png)
+
+	Input: matrix = [[0,1,2,0],[3,4,5,2],[1,3,1,5]]
+	Output: [[0,0,0,0],[0,4,5,0],[0,3,1,0]]
+
 ### 73.2 Analysis
 
 新建一个和matrix等大小的矩阵，然后一行一行的扫，只要有0，就将新建的矩阵的对应行全赋0，行扫完再扫列，然后把更新完的矩阵赋给matrix即可，这个算法的空间复杂度太高。将其优化到O(m+n)的方法是，用一个长度为m的一维数组记录各行中是否有0，用一个长度为n的一维数组记录各列中是否有0，最后直接更新matrix数组即可。这道题的要求是用O(1)的空间，那么我们就不能新建数组，我们考虑就用原数组的第一行第一列来记录各行各列是否有0.
@@ -3687,10 +3701,161 @@ Follow up:
 		}
 	}
 
-## 74. Edit distance
+## 74. Search a 2D matrix
 
 ### 74.1 Description
 
+Write an efficient algorithm that searches for a value in an  m  x  n  matrix. This matrix has the following properties:
+Integers in each row are sorted from left to right.
+The first integer of each row is greater than the last integer of the previous row.
+
+Example 1:
+
+	Input:
+	matrix = [
+	  [1,   3,  5,  7],
+	  [10, 11, 16, 20],
+	  [23, 30, 34, 50]
+	]
+	target = 3
+	Output: true
+
+Example 2:
+	
+	Input:
+	matrix = [
+	  [1,   3,  5,  7],
+	  [10, 11, 16, 20],
+	  [23, 30, 34, 50]
+	]
+	target = 13
+	Output: false
+
 ### 74.2 Analysis
 
+这道题要求搜索一个二维矩阵，由于给的矩阵是有序的，所以很自然的想到要用二分查找法，可以在第一列上先用一次二分查找法找到目标值所在的行的位置，然后在该行上再用一次二分查找法来找是否存在目标值。
+
 ### 74.3 Code
+
+	#include <iostream>
+	#include <vector>
+	#include <string>
+	#include <algorithm>
+	using namespace std;
+	
+	bool search_matrix(vector<vector<int>> matrix, int target)
+	{
+		if (matrix.empty() || matrix[0].empty())
+			return false;
+	
+		int m = matrix.size(), n = matrix[0].size();
+		int up_pos = 0, down_pos = matrix.size();
+		
+		while (up_pos < down_pos) {
+			int mid_pos = (up_pos + down_pos) / 2;
+			if (matrix[mid_pos][0] == target)
+				return true;
+			if (matrix[mid_pos][0] < target)
+				up_pos = mid_pos + 1;
+			else
+				down_pos = mid_pos;
+		}
+	
+		int row = (right > 0) ? (down_pos - 1) : down_pos;
+		int left = 0, right = matrix[row].size();
+		while (left < right) {
+			int mid = (left + right) / 2;
+			if (matrix[row][mid] == target)
+				return true;
+			if (matrix[row][mid] < target)
+				left = mid + 1;
+			else
+				right = mid;
+		}
+		return false;
+	}
+	
+	
+	int main()
+	{
+		vector<vector<int>> matrix = {
+			{1,   3,  5,  7},
+			{10, 11, 16, 20},
+			{23, 30, 34, 50}
+		};
+	
+		cout << boolalpha << search_matrix(matrix, 3) << endl;
+	}
+	//结果为:true
+
+## 75. Sort colors
+
+### 75.1 Description
+
+Given an array with  n  objects colored red, white or blue, sort them in-place so that objects of the same color are adjacent, with the colors in the order red, white and blue.
+Here, we will use the integers 0, 1, and 2 to represent the color red, white, and blue respectively.
+Note: You are not suppose to use the library's sort function for this problem.
+
+	Example:
+	
+	Input: [2,0,2,1,1,0]
+	Output: [0,0,1,1,2,2]
+
+Follow up:
+
+A rather straight forward solution is a two-pass algorithm using counting sort.  
+First, iterate the array counting number of 0's, 1's, and 2's, then overwrite array with total number of 0's, then 1's and followed by 2's.
+Could you come up with a one-pass algorithm using only constant space?
+
+### 75.2 Analysis
+
+首先遍历一遍原数组，分别记录 0，1，2 的个数。然后更新原数组，按个数分别赋上 0，1，2。
+
+### 75.3 Code
+
+	#include <iostream>
+	#include <vector>
+	#include <string>
+	#include <algorithm>
+	using namespace std;
+	
+	void sort_colors(vector<int> &nums)
+	{
+		vector<int> colors(3, 0);
+		for (int val : nums)
+			colors[val]++;
+	
+		for (int i = 0, cur = 0; i < 3; i++) {
+			for (int j = 0; j < colors[i]; j++) {
+				nums[cur++] = i;
+			}
+		}
+	}
+	
+	
+	int main()
+	{
+		vector<int> numbers = {2,0,2,1,1,0};
+		sort_colors(numbers);
+		for (int val : numbers)
+			cout << val << ",";
+	
+		cout << endl;
+	}
+	//结果为:0,0,1,1,2,2,
+
+## 76. Minimum Window Substring
+
+### 76.1 Description
+
+### 76.2 Analysis
+
+### 76.3 Code
+
+## 77. Combinations
+
+### 77.1 Description
+
+### 77.2 Analysis
+
+### 77.3 Code
