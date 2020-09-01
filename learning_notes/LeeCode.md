@@ -3856,6 +3856,81 @@ Could you come up with a one-pass algorithm using only constant space?
 
 ### 77.1 Description
 
+Given two integers  n  and  k , return all possible combinations of  k  numbers out of 1 ...  n.
+
+For example,
+	If  n  = 5 and  k  = 3, a solution is:
+	1 2 3
+	1 2 4
+	1 2 5
+	1 3 4
+	1 3 5
+	1 4 5
+	2 3 4
+	2 3 5
+	2 4 5
+	3 4 5
+
 ### 77.2 Analysis
 
+这道题让求1到n共n个数字里k个数的组合数的所有情况，还是要用深度优先搜索DFS调用递归来解。那么我们建立一个保存最终结果的大集合res，还要定义一个保存每一个组合的小集合out，每次放一个数到out里，如果out里数个数到了k个，则把out保存到最终结果中，否则在下一层中继续调用递归。
+
 ### 77.3 Code
+
+	#include <iostream>
+	#include <vector>
+	#include <string>
+	#include <algorithm>
+	using namespace std;
+	
+	void helper(int n, int k, int level, vector<int> &out, vector<vector<int>> &res)
+	{
+		if (out.size() == k) {
+			res.push_back(out);
+			return;
+		}
+		for (int i = level; i <= n; i++) {
+			out.push_back(i);
+			helper(n, k, i, out, res);
+			out.pop_back();
+		}
+	}
+	
+	vector<vector<int>> combine(int n, int k)
+	{
+		vector<vector<int>> res;
+		vector<int> out;
+		helper(n, k, 1, out, res);
+		return res;
+	}
+	
+	int main()
+	{
+		vector<vector<int>> res = combine(4, 2);
+		for (vector<int> vec : res) {
+			cout << "[ ";
+			for (int val : vec) {
+				cout << val << " ";
+			}
+			cout << "]," << endl;
+		}
+	}
+	//结果为:
+	[ 1 1 ],
+	[ 1 2 ],
+	[ 1 3 ],
+	[ 1 4 ],
+	[ 2 2 ],
+	[ 2 3 ],
+	[ 2 4 ],
+	[ 3 3 ],
+	[ 3 4 ],
+	[ 4 4 ],
+
+## 78. Combinations
+
+### 78.1 Description
+
+### 78.2 Analysis
+
+### 78.3 Code
