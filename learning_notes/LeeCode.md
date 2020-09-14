@@ -4005,6 +4005,204 @@ For example,
 
 ### 79.1 Description
 
+Given a 2D board and a word, find if the word exists in the grid.
+
+The word can be constructed from letters of sequentially adjacent cell, where "adjacent" cells are those horizontally or vertically neighboring. The same letter cell may not be used more than once.
+
+For example,
+	Given board =
+	[
+	  ["ABCE"],
+	  ["SFCS"],
+	  ["ADEE"]
+	]
+	word = "ABCCED", -> returns true,
+	word = "SEE", -> returns true,
+	word = "ABCB", -> returns false.
+
 ### 79.2 Analysis
 
+这道题是典型的深度优先遍历 DFS 的应用，原二维数组就像是一个迷宫，可以上下左右四个方向行走，我们以二维数组中每一个数都作为起点和给定字符串做匹配，我们还需要一个和原数组等大小的 visited 数组，是 bool 型的，用来记录当前位置是否已经被访问过，因为题目要求一个 cell 只能被访问一次。如果二维数组 board 的当前字符和目标字符串 word 对应的字符相等，则对其上下左右四个邻字符分别调用 DFS 的递归函数，只要有一个返回 true，那么就表示可以找到对应的字符串，否则就不能找到，代码如下。
+
 ### 79.3 Code
+
+	#include <iostream>
+	#include <vector>
+	#include <string>
+	#include <algorithm>
+	using namespace std;
+	
+	bool search(vector<vector<char>> &board, string word, int idx, int i, int j, 
+		vector<vector<bool>> &visited)
+	{
+		if (idx == word.size())
+			return true;
+	
+		int m = board.size(), n = board[0].size();
+		if (i < 0 || j < 0 || i >= m || j >= n || visited[i][j] || board[i][j] != word[idx])
+			return false;
+	
+		visited[i][j] = true;
+		bool res = search(board, word, idx + 1, i - 1, j, visited)
+			|| search(board, word, idx + 1, i + 1, j, visited)
+			|| search(board, word, idx + 1, i, j - 1, visited)
+			|| search(board, word, idx + 1, i, j + 1, visited);
+		visited[i][j] = false;
+		return res;
+	}
+	
+	bool exist(vector<vector<char>> &board, string word)
+	{
+		if (board.empty() || board[0].empty())
+			return false;
+	
+		int m = board.size(), n = board[0].size();
+		vector<vector<bool>> visited(m, vector<bool>(n, false));
+		for (int i = 0; i < m; i++) {
+			for (int j = 0; j < n; j++) {
+				if (search(board, word, 0, i, j, visited))
+					return true;
+			}
+		}
+		return false;
+	}
+	
+	int main()
+	{
+		vector<vector<char>> board = {
+			{'A','B','C','E'},
+			{'S','F','C','S'},
+			{'A','D','E','E'}
+			//"ABCE", "SFCS", "ADEE"
+		};
+		string word = "ABCCED";
+		cout << boolalpha << exist(board, word) << endl;
+	}
+	//结果为:true.
+
+## 80. word search
+
+### 80.1 Description
+
+Given a sorted array  nums , remove the duplicates in-place such that duplicates appeared at most  twice  and return the new length. Do not allocate extra space for another array, you must do this by modifying the input array in-place with O(1) extra memory.
+
+Example 1:
+
+	Given _nums_ = [1,1,1,2,2,3],
+	Your function should return length = 5, with the first five elements of _nums_ being 1,
+		1, 2, 2 and 3 respectively.
+	It doesn't matter what you leave beyond the returned length.
+
+Example 2:
+
+	Given _nums_ = [0,0,1,1,1,1,2,3,3],
+	
+	Your function should return length = 7, with the first seven elements of _nums_ being
+		modified to 0, 0, 1, 1, 2, 3 and 3 respectively.
+	It doesn't matter what values are set beyond the returned length.
+
+### 80.2 Analysis
+
+这里允许最多重复的次数是两次，那么可以用一个变量cnt来记录还允许有几次重复，cnt初始化为1，如果出现过一次重复，则cnt递减1，那么下次再出现重复，快指针直接前进一步，如果这时候不是重复的，则cnt恢复1，由于整个数组是有序的，所以一旦出现不重复的数，则一定比这个数大，此数之后不会再有重复项。
+
+### 80.3 Code
+
+	#include <iostream>
+	#include <vector>
+	#include <string>
+	#include <algorithm>
+	using namespace std;
+	
+	int remove_duplicates(vector<int> &nums)
+	{
+		int pre = 0, cur = 1, cnt = 1, n = nums.size();
+		while (cur < n) {
+			if (nums[pre] == nums[cur] && cnt == 0)
+				cur++;
+			else {
+				if (nums[pre] == nums[cur])
+					cnt--;
+				else
+					cnt = 1;
+				nums[++pre] = nums[cur++];
+			}
+		}
+		return nums.empty() ? 0 : pre + 1;
+	}
+	
+	int main()
+	{
+		vector<int> nums = {1,1,1,2,2,3};
+		cout << remove_duplicates(nums) << endl;
+	}
+	//结果为:5
+
+## 81. word search
+
+### 81.1 Description
+
+Suppose an array sorted in ascending order is rotated at some pivot unknown to you beforehand.
+(i.e., [0,0,1,2,2,5,6] might become [2,5,6,0,0,1,2]).
+
+You are given a target value to search. If found in the array return true, otherwise return false.
+
+Example 1:
+
+	Input: nums = [2,5,6,0,0,1,2], target = 0
+	Output: true
+
+Example 2:
+
+	Input: nums = [2,5,6,0,0,1,2], target = 3
+	Output: false
+
+### 81.2 Analysis
+
+如果中间的数小于最右边的数，则右半段是有序的，若中间数大于最右边数，则左半段是有序的 。而如果可以有重复值，就会出现来面两种情况，[3 1 1] 和 [1 1 3 1]，对于这两种情况中间值等于最右值时，目标值3既可以在左边又可以在右边，那怎么办么，对于这种情况其实处理非常简单，只要把最右值向左一位即可继续循环，如果还相同则继续移，直到移到不同值为止.
+
+### 81.3 Code
+
+	#include <iostream>
+	#include <vector>
+	#include <string>
+	#include <algorithm>
+	using namespace std;
+	
+	bool search(vector<int> &nums, int target)
+	{
+		int n = nums.size(), left = 0, right = n - 1;
+		while (left <= right) {
+			int mid = (left + right) / 2;
+			if (nums[mid] == target)
+				return true;
+			if (nums[mid] < nums[right]) {
+				if (nums[mid] < target && nums[right] >= target)
+					left = mid + 1;
+				else
+					right = mid - 1;
+			} else if (nums[mid] > nums[right]) {
+				if (nums[left] <= target && nums[mid] > target)
+					right = mid - 1;
+				else
+					left = mid + 1;
+			} else {
+				--right;
+			}
+		}
+		return false;
+	}
+	
+	int main()
+	{
+		vector<int> nums = {2,5,6,0,0,1,2};
+		cout << boolalpha << search(nums, 0) << endl;
+	}
+	//结果为:true
+
+## 82. word search
+
+### 82.1 Description
+
+### 82.2 Analysis
+
+### 82.3 Code
