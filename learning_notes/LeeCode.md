@@ -4199,10 +4199,92 @@ Example 2:
 	}
 	//结果为:true
 
-## 82. word search
+## 82. Remove Duplicates from sorted list II
 
 ### 82.1 Description
 
+Given a sorted linked list, delete all nodes that have duplicate numbers, leaving only  distinct  numbers from the original list.
+
+Example 1:
+
+	Input: 1->2->3->3->4->4->5
+	Output: 1->2->5
+
+Example 2:
+
+	Input: 1->1->1->2->3
+	Output: 2->3
+
 ### 82.2 Analysis
 
+这里要删掉所有的重复项，由于链表开头可能会有重复项，被删掉的话头指针会改变，而最终却还需要返回链表的头指针。所以需要定义一个新的节点，然后链上原链表，然后定义一个前驱指针和一个现指针，每当前驱指针指向新建的节点，现指针从下一个位置开始往下遍历，遇到相同的则继续往下，直到遇到不同项时，把前驱指针的next指向下面那个不同的元素。如果现指针遍历的第一个元素就不相同，则把前驱指针向下移一位。
+
 ### 82.3 Code
+
+	#include <iostream>
+	#include <vector>
+	#include <string>
+	#include <algorithm>
+	using namespace std;
+	
+	struct list_node {
+		int val;
+		list_node *next;
+		list_node(int v) :
+			val(v),
+			next(nullptr)
+		{}
+	};
+	
+	list_node *delete_duplicates(list_node *head)
+	{
+		if (!head || !head->next)
+			return head;
+		list_node *dummy = new list_node(-1), *pre = dummy;
+		dummy->next = head;
+		while (pre->next) {
+			list_node *cur = pre->next;
+			while (cur->next && cur->val == cur->next->val) {
+				cur = cur->next;
+			}
+			if (pre->next != cur)
+				pre->next = cur->next;
+			else
+				pre = pre->next;
+		}
+		return dummy->next;
+	}
+	
+	int main()
+	{
+		list_node *head = new list_node(1);
+		list_node *cur = head;
+		cur->next = new list_node(2);
+		cur = cur->next;
+		cur->next = new list_node(3);
+		cur = cur->next;
+		cur->next = new list_node(3);
+		cur = cur->next;
+		cur->next = new list_node(4);
+		cur = cur->next;
+		cur->next = new list_node(4);
+		cur = cur->next;
+		cur->next = new list_node(5);
+		cur = cur->next;
+	
+		list_node *res = delete_duplicates(head);
+		while (res) {
+			cout << res->val << " ";
+			res = res->next;
+		}
+		cout << endl;
+	}
+	//结果为:1 2 5
+
+## 83. word search
+
+### 83.1 Description
+
+### 83.2 Analysis
+
+### 83.3 Code
