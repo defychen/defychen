@@ -137,5 +137,18 @@ PCIe总线层次结构和网络中的层次结构类似(PCIe总线层次使用�
 
 #### 4.1.4 PCIe链路的扩展
 
-	
+PCIe链路的一端只能连接一个发送/接收设备.需要使用switch扩展PCIe链路后,才能连接多个设备.
 
+![](images/PCIe_switch_extension.png)
+
+	1.switch中与RC直接或间接相连的端口称为上游端口(Upstream Port);下游端口一般与EP相连,或者连接
+		下一级switch继续扩展PCIe链路;
+	2.与上游端口相连的PCIe链路称为上游链路,与下游端口相连的PCIe链路称为下游链路;
+	3.Egress/Ingress端口:与通过switch的数据流向相关:
+		Egress端口:指发送端口,即数据离开switch使用的端口;
+		Ingress端口:指接收端口,即数据进入switch使用的端口.
+		e.g.
+			RC对EP3的内部寄存器进行写操作时,switch的上游端口为Ingress端口;
+			EP3对主存进行DMA写操作时,switch的上游端口为Egress端口,而下游端口为Ingress端口.
+
+#### 4.1.5 PCIe设备的初始化
