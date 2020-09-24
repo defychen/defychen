@@ -152,3 +152,67 @@ PCIe链路的一端只能连接一个发送/接收设备.需要使用switch扩�
 			EP3对主存进行DMA写操作时,switch的上游端口为Egress端口,而下游端口为Ingress端口.
 
 #### 4.1.5 PCIe设备的初始化
+
+PCIe两大类复位方式:传统的复位方式(Conventional Reset)和FLR(Function-Level Reset)方式.
+
+**1.传统复位方式**
+
+分为:Cold、Warm和Hot Reset.Cold Reset时间最长,Hot Reset时间最短.
+
+	Cold Reset:PCIe设备从断电中通过上电来复位.是一种彻底的复位方式;
+	Warm Reset:通过类似Watchdog的方式对PCIe设备进行复位;
+	Hot Reset:当PCIe设备出现某种异常,使用软件手段对该设备进行复位.
+
+**2.FLR方式**
+
+软件过填写某寄存器FLR位(Function Level Reset),PCIe设备将使用FLR的方式复位PCIe设备的内部逻辑.
+
+	FLR方式主要用于复位整个系统中一部分的资源,而且被复位的资源不能影响其他的资源.
+
+### 4.2 PCIe体系结构的组成部件
+
+基于PCIe总线的设备,也叫EP(Endpoint).
+
+#### 4.2.1 基于PCIe架构的处理器系统
+
+**1.处理器系统A--->与Intel的x86处理器系统类似**
+
+![](images/CPU_PCIe_systema.png)
+
+**2.PowerPC处理器系统**
+
+![](images/CPU_PCIe_system_powerpc.png)
+
+**3.基于PCIe总线的通用处理器结构**
+
+![](images/CPU_PCIe_system_general.png)
+
+#### 4.2.2 RC的组成结构
+
+RC只在x86中有明确的RC,其他的处理器系统中不明确.
+
+#### 4.2.3 Switch
+
+使用Switch进行链路扩展后,PCIe链路可挂接多个EP.
+
+![](images/switch_logic_structure.png)
+
+switchn内部由于需要进行链路扩展,使用了虚拟多通路VC(Virtual Channel)技术.数据报文使用TC(Traffic Class)标签(3-bit)将数据报文优先级分为8类.
+
+	8个独立的VC和8个TC进行绑定,TC和VC是"多对一"的关系(即多个TC可透过一个VC进行传输).
+
+#### 4.2.4 VC和端口仲裁
+
+![](images/PCIe_vc_arbitor.png)
+
+**1.仲裁算法**
+
+	Strict Priority:严格的优先级仲裁,发向VC7的数据报文具有最高优先级,发向VC0的优先级最低;
+	RR(Round Robin):所有VC具有相同优先级,乱转调度;
+	WRR(Weighted Round Ronbin):对每个VC进行加权处的RR,此时会适当提高VC7的优先级,降低VC0的优先级.
+
+**2.仲裁实例**
+
+![](images/PCIe_vc_arbitor_eg.png)
+
+## Chapter 6 PCIe总线的事务层
