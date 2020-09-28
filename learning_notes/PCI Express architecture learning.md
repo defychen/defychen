@@ -126,7 +126,7 @@ PCIe总线层次结构和网络中的层次结构类似(PCIe总线层次使用�
 	2.来自TL层的报文在通过DL层时,将被添加Sequence Number前缀和CRC后缀;
 	3.DL层使用ACK/NAK协议保证报文的可靠传递;
 	4.DL层定义了多种DLLP(Data Link Layer Packet),DLLP产生于DL层,终止于DL层;
-	5.TLP和DLLP不相同,DLLP并不是由TLP加上Sequence Number前缀和CRC后缀.
+	5.TLP和DLLP不相同,DLLP并不是简单的由TLP加上Sequence Number前缀和CRC后缀.
 
 **3.物理层(PL层)**
 
@@ -216,3 +216,75 @@ switchn内部由于需要进行链路扩展,使用了虚拟多通路VC(Virtual C
 ![](images/PCIe_vc_arbitor_eg.png)
 
 ## Chapter 6 PCIe总线的事务层
+
+### 6.1 TLP的格式
+
+处理器或其他PCIe设备访问PCIe设备时,所传送的数据报文首先通过TL层被封装为一个或多个TLP,然后通过PCIe总线的其他层次发送出去.
+
+TLP基本格式:
+
+![](images/PCIe_TLP_format.png)
+
+**1.TLP Prefix**
+
+由PCIe v2.1引入,分为Local TLP Prefix和EP-EP TLP Prefix.
+
+	Local TLP Prefix:在PCIe链路的两端传递消息;
+	EP-EP TLP Prefix:在发送设备和接收设备之间传递消息.
+
+**2.TLP Head**
+
+TLP最终的标志.包含当前TLP的总线事务类型、路由信息等.
+
+![](images/PCIe_TLP_head_format.png)
+
+	1.TLP头由3/4个word组成(现在一个word为4B,书中的DW是以前1DW=4B);
+	2.第一个word保存通用的TLP头,由Fmt、Type、TC、Length等组成;
+	3.其他字段与通用TLP头的Type字段相关;
+	4.在64-bit地址模式下,TLP头的长度为4 word,否则为3 word;
+	5.完成报文的TLP头不含有地址信息,此时TLP头长度为3 word.
+
+**3.Data Payload**
+
+Data Payload长度可变,最小为0,最大为1024 word.
+
+	Data Payload是个可选项,有些TLP不需要Data Payload(e.g.存储器读请求).
+
+**4.TLP Digest**
+
+一个TLP是否需要TLP Digest由TLP头决定,TLP Digest是一个可选项.
+
+#### 6.1.1 通用TLP头的Fmt字段和Type字段
+
+**1.Fmt字段**
+
+	Fmt[2:0]						TLP格式
+	0b000							TLP头大小为3 word,不带数据
+	0b001							TLP头大小为4 word,不带数据
+	0b010							TLP头大小为3 word,带数据
+	0b011							TLP头大小为4 word,带数据
+	0b100							TLP Prefix
+	其他								Reserved
+
+**2.Type字段--->一般和Fmt组合使用**
+
+	TLP类型		Fmt[2:0]		Type[4:0]		含义
+	MRd			0b000			0b0 0000		存储器读,TLP头大小为3 word,不带数据
+				0b001							存储器读,TLP头大小为4 word,不带数据
+
+	MWr			0b010			0b0 0000		存储器写,TLP头大小为3 word,带数据
+				0b011							存储器写,TLP头大小为4 word,带数据
+
+	Cpl			0b000			0b0 1010		完成报文,TLP头大小为3 word,不带数据.用于写完成
+	CplD		0b001			0b0 1010		带数据的完成报文,TLP头大小为4 word,带数据.用于读完成
+
+**3.Posted/Non-Posted**
+
+	1.存储器写一般用Posted方式传送,存储器读一般用Non-Posted方式传送;
+	2.写操作的完成报文为Cpl,读操作的完成报文为CplD.
+
+#### 6.1.2 TC字段
+
+略.
+
+#### 6.1.3 Attr字段
