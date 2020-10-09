@@ -288,3 +288,45 @@ Data Payload长度可变,最小为0,最大为1024 word.
 略.
 
 #### 6.1.3 Attr字段
+
+![](images/PCIe_attr_field.png)
+
+	attr[2]:表示该TLP是否支持PCIe总线的ID-based ordering;
+	attr[1]:表示是否支持Relaxed ordering;
+	attr[0]:表示该TLP经过RC到达存储器时,是否需要进行Cache共享一致性处理.
+
+TLP支持的序如下:
+
+![](images/PCIe_TLP_ordering.png)
+
+	attr[2:1]为0b00:表示SO;
+	attr[2:1]为0b01:表示RO;
+	其他暂不用.
+
+**1.SO强序模型**
+
+当attr[2:1]为0b00时,表示强序模型.此时PCIe设备在处理相同类型的TLP时,后面的存储器写必须等前一个写完成才能处理,即便当前报文在传送过程中被阻塞,后一个报文也必须等待.
+
+**2.Relaxed ordering模型**
+
+当attr[2:1]为0b01时,表示Relaxed ordering模型.后一个存储器写可以跨越前一个写操作,提高PCIe总线的利用率.
+
+**3.TLP间乱序**
+
+不同种类的TLP间可以乱序通过同一条链路(SO模型写也可以).
+
+	1.存储器写TLP可以跨越存储器读TLP;
+	2.存储器读TLP不能跨越存储器写TLP.
+
+**4.No Snoop位**
+
+表示该TLP经过RC到达存储器时,是否需要进行Cache共享一致性处理.
+
+大数据量的DMA操作:PCIe设备对存储器进行DMA读操作,读取大小为512M,此时绝大多数情况下,不会在Cache中命中.若进行Snoop会浪费CPU时钟周期.
+
+	正确做法:
+	软件保证Cache和主存储器的一致性,并置"No Snoop attr"位为1,在进行DMA读操作.--->同样适用于写操作.
+
+PS:如果访问的存储器空间是"Non-Cacheable",也置"No Snoop attr"位为1即可.
+
+#### 6.1.4 其他字段
