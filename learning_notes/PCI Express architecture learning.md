@@ -330,3 +330,183 @@ TLP支持的序如下:
 PS:如果访问的存储器空间是"Non-Cacheable",也置"No Snoop attr"位为1即可.
 
 #### 6.1.4 其他字段
+
+**1.TH、TD和EP位**
+
+	TH:是否含有TPH(TLP Processing Hint)信息;
+	TD:TLP中的TLP Digest是否有效(0b1:有效;0b0:无效);
+	EP:TLP中的数据是否有效(0b1:无效;0b0:有效).
+
+**2.AT字段**
+
+与ATC(Address Translation Cache)相关.
+
+**3.Length字段**
+
+描述TLP的有效负载大小.TLP的Data Payload大小在1B-4096B之间.
+
+	PCIe设备进行DMA写操作,写4KB时,会以标准TLP包大小(64B/128B/256B等)进行拆分,然后写DDR.
+
+### 6.2 TLP的路由
+
+三种路由方式:基于地址的路由、基于ID的路由和隐式路由.
+
+	基于地址的路由:存储器和I/O读写请求TLP使用该种路由方式;
+	基于ID的路由:配置读写报文、Cpl和CplD等报文使用该种路由方式;
+	隐式路由:主要用于Message报文的传递.
+
+#### 6.2.1 基于地址的路由
+
+![](images/PCIe_address_route.png)
+
+	1.TLP1:处理器访问EP的BAR空间使用该类报文,从RC发向EP1;
+	2.TLP2:一般DMA操作(访问内存),从EP2发向RC;
+	3.TLP3:EP2访问EP1.
+
+#### 6.2.2 基于ID的路由
+
+![](images/PCIe_id_route.png)
+
+	1.基于ID路由主要用于配置读写请求TLP、Cpl和CplD报文;
+	2.Bus Number(8-bit):表示PCI总线,最多有256条PCI总线;
+	3.Device Number(5-bit):表示一条总线的设备数量,最多有32个设备;
+	4.Function Number(3-bit):表示每个设备的功能,最多8个功能.
+
+#### 6.2.3 隐式路由
+
+隐式路由用于消息报文.
+
+### 6.3 存储器、I/O和配置读写请求TLP
+
+TLP报文类型:
+
+	1.存储器读请求TLP和读完成TLP
+		使用Non-Posted总线事务.主设备访问目标设备的存储器空间.目标设备收到存储器读请求TLP后,发送存储器
+		读完成TLP(读完成TLP中携带数据).
+	2.存储器写请求TLP
+		使用Posted总线事务.主设备发送存储器写请求TLP给目标设备,不需要目标设备的回应报文.
+	3.原子操作请求和完成报文
+		和Non-Posted总线事务类似.主设备发送原子操作请求给目标设备,目标设备向主设备发送原子操作完成报文.
+	4.I/O读写请求TLP和读写完成TLP
+		I/O读写使用Non-Posted总线事务,都需要完成报文;
+		I/O写请求的完成报文不需要携带数据,仅含有是否成功的状态信息.
+	5.配置读写请求TLP和配置读写完成TLP
+		与I/O读写操作类似.
+	6.消息报文
+		略.
+
+#### 6.3.1 存储器读写请求TLP
+
+![](images/PCIe_mem_rw_header_type.png)
+
+分32-bith和64-bit地址模式.
+
+**1.Length字段**
+
+	1.存储器读请求TLP中不包含data payload,Length表示需要读取的数据长度;
+	2.存储器写请求TLP,Length表示当前报文的data payload长度;
+	3.Length字段最小单位为word(4B),当长度为n时(0 <= n <= 0x3FF):
+		n=0表示数据长度为1024 word,即4KB.
+
+**2.DW BE字段**
+
+word中的字节使能(byte enable),因为Length中的最小单位为word.
+
+![](images/PCIe_BE_field.png)
+
+	1.传送1byte时:
+		Last DW BE为:0b0000; First DW BE为:0b0001/0b0010/0b0100/0b1000.
+	2.传送5byte时:
+		Last DW BE为:0b1111; First DW BE为:0b0001/0b0010/0b0100/0b1000;
+		Last DW BE为:0b0001/0b0010/0b0100/0b1000; First DW BE为:0b1111.
+		或其他,但First DW BE不能为:0b0000.
+
+Zero-Length读请求:Length字段为1 word,First DW BE和Last DW BE均为0b0000(所有字节都不使能).
+
+	此时表示:存储器读请求TLP对应的读完成TLP不包含有效数据.主要用于确保Posted写数据达到目的地.
+	PS:Length不能为0是因为为0表示数据长度为1024个word.
+
+**3.Requester ID字段**
+
+	1.Requester ID由Bus Number+Device Number+Function Number构成;
+	2.Requester ID对于存储器写操作无意义,因为写操作需要完成报文作为应答;
+	3.Requester ID对于同一个设备一般是一样的.因此多数使用Tag作为Transaction ID当作包的标识.
+
+**4.I/O读写请求TLP的规则**
+
+略.
+
+#### 6.3.2 完成报文
+
+**1.完成报文需求**
+
+以下2类请求需要提供完成报文:
+
+	1.所有的读请求(存储器读、I/O读、配置读和原子操作):此类完成报文必须包含Data payload;
+	2.部分写请求(I/O写、配置写):此类完成不包含数据,仅包含应答信息.
+
+![](images/PCIe_complete_packet.png)
+
+**2.Requester ID和Tag字段**
+
+和请求中一样.
+
+**3.Completer ID字段**
+
+与Requester ID类似.
+
+**4.Status字段**
+
+表示当前完成报文的状态.
+
+![](images/PCIe_status_field.png)
+
+**5.BCM位与Byte Count字段**
+
+略.
+
+**6.Lower Address字段**
+
+略.
+
+#### 6.3.3 配置读写请求TLP
+
+配置读写请求TLP由RC发起,用来访问PCIe设备的配置空间.支持两种配置请求报文:Type 00h和Type 01h.
+
+![](images/PCIe_config_packet.png)
+
+	1.Ext Register和Register Number存访寄存器号;
+	2.TC[2:0]必须为0;
+	3.TH:Reserved; Attr2:Reserved; Attr[1:0]必须为:00b; AT[1:0]:必须为:0b00,表示不进行地址转换;
+	4.Length[9:0]:为0b00 0000 0001,表示最大Payload为1word;
+	5.Last DW BE为0b0000,First DW BE根据配置读写大小进行设置.
+
+#### 6.3.4 消息请求报文
+
+略.
+
+#### 6.3.5 PCIe总线的原子操作
+
+支持3种原子操作:FetchAdd、Swap和CAS原子操作.
+
+#### 6.3.6 TLP Processing Hint
+
+略.
+
+### 6.4 TLP中与数据负载相关的参数
+
+#### 6.4.1 Max_Payload_Size参数
+
+规定最大负载.总线规定最大为4KB,设计时会根据实际应用场景进行设置.
+
+	Max_Payload_Size参数仅与存储器写请求和读请求完成报文相关.
+
+#### 6.4.2 Max_Read_Request_Size参数
+
+规定PCIe设备一次最大能从目标设备读取多少数据.与Max_Payload_Size无直接联系.
+
+#### 6.4.3 RCB参数
+
+略.
+
+
