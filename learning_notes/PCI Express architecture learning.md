@@ -509,4 +509,82 @@ Zero-Length读请求:Length字段为1 word,First DW BE和Last DW BE均为0b0000(
 
 略.
 
+## Chapter 7 PCIe总线的数据链路层和物理层
 
+### 7.1 数据链路层的组成结构
+
+![](images/PCIe_dl_topology.png)
+
+**1.传递过程**
+
+	TX方向:
+	首先在TL层产生TLP,发送到DL层,DL层将这个TLP加上Sequence前缀和LCRC后缀,然后将这个TLP放入Replay
+		Buffer,然后再发送到物理层.
+	RX方向:
+	从物理层接收TLP,首先获得带前后缀的TLP,该TLP经过DL层将被去掉Sequence前缀和LCRC后缀再发送到TL层.
+
+DL层的TLP格式:
+
+![](images/PCIe_TLP_type_DL.png)
+
+**2.DL层相关概念**
+
+	Sequence:存放当前TLP的序列号,一条PCIe链路不能含有Sequence前缀相同的多个TLP;
+	LCRC:存放当前TLP的校验和;
+	Replay Buffer:暂存TLP;
+	Error Check:检查接收到的TLP,并决定如何向对端设备进行报文回应;
+	ACK DLLP:TLP被正确接收,PCIe设备将向对端设备发送ACK DLLP;
+	NAK DLLP:TLP没有被正确接收,PCIe设备将向对端设备发送NAK DLLP.
+
+PS:DLLP产生于DL层,终止于DL层.
+
+#### 7.1.1 数据链路层的状态
+
+1.数据链路层获取的物理层的状态.有3种状态:
+
+	1.DL_Inactive状态:物理层通知数据链路层当前PCIe链路不可用;
+		e.g.当前PCIe链路对端没有连接PCIe设备或者没有检测到对端设备的存在处于该状态.
+	2.DL_Init状态:物理层通知数据链路层当前PCIe链路可用,但物理层正处于链路初始化状态,此时链路层不能接收
+		或发送TLP和DLLP;
+	3.DL_Active状态:当前PCIe链路处于正常模式,此时物理层已完成PCIe链路训练或重训练.
+
+2.数据链路层告知事务层的状态.有2种状态:
+
+	1.DL_Down:表示PCIe链路的对端没有发现设备,此时数据链路层处于DL_Inactive;
+	2.DL_Up:表示PCIe链路的对端连接了设备,此时数据链路层处于DL_Active.
+
+#### 7.1.2 事务层处理DL_Down和DL_Up状态
+
+1.事务层处理DL_Down
+
+	此时TL层将不再接收DL发来的新的TLP,除非是DL层已经使用ACK/NAK确认过的TLP.
+
+2.事务层处理DL_Up
+
+	链路两端正常收发报文.
+
+#### 7.1.3 DLLP的格式
+
+DLLP的目的是:保证TLP的正确传送和PCIe链路.
+
+![](images/PCIe_DLLP_format.png)
+
+	type字段			类型
+	0b0000_0000		Ack
+	0b0001_0000		Nak
+	其他				略
+
+**1.ACK DLLP**
+
+	1.由接收端发给发送端;
+	2.接收端收到TLP报文后,将根据数据链路层的阈值设置,向对端设备发送Ack DLLP,而不是每接收到一个TLP,都
+		向对端发送一个Ack DLLP;
+	3.ACK DLLP表示接收端正确接收到来自对端的TLP.
+
+**2.NAK DLLP**
+
+	1.由接收端发给发送端;
+	2.NAK DLLP表示接收端有哪些TLP没有被正确接收,发送端收到NAK DLLP后,将重传没有被正确接收的TLP,同时释
+		放已经被正确接收的TLP.
+
+### 7.2 ACK/NAK协议
