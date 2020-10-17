@@ -588,3 +588,82 @@ DLLP的目的是:保证TLP的正确传送和PCIe链路.
 		放已经被正确接收的TLP.
 
 ### 7.2 ACK/NAK协议
+
+#### 7.2.1 发送端使用ACK/NAK协议
+
+	1.发送端DL层首先将TLP封装,加上Sequence前缀和LCRC后缀,再放入Replay Buffer中,准备发送到物理层;
+	2.发送端使用计数器NEXT_TRANSMIT_SEQ(12-bit)记录下一个将发送TLP的Sequence号,初始值为0,最大值为4095;
+		当计数器值达到4095,再加1后卷绕回到0.
+	3.接收端也有一个NEXT_RCV_SEQ(12-bit)记录接收到的TLP的Sequence号,初始值为0,每收到一个加1;
+		当计数器值达到4095,再加1后卷绕回到0.
+	4.发送端使用ACKD_SEQ(12-bit)记录接收端发过来的ACK/NAK DLLP中的AckNak_Seq_Num字段,初始值全1.
+
+**1.发送端收到ACK DLLP报文**
+
+![](images/PCIe_ACK_DLLP_proc.png)
+
+	1.发送端发送TLP3-7,此时发送端的NEXT_TRANSMIT_SEQ计数器为8,表示即将填入到Replay Buffer中的报
+		文序列号为8;
+	2.接收端收到TLP3-5,TLP6和7在链路上.接收端的NEXT_RCV_SEQ计数器为6,表示即将接收的报文序列号为6;
+	3.接收端通过报文检查决定接收TLP3-5,然后发送ACK DLLP.此时ACK DLLP的AckNak_Seq_Num字段为5.表示
+		3-5已经被接收.为提高总线效率,接收端不会为每一个接收到的TLP都做应答;
+	4.发送端收到AckNak_Seq_Num字段为5的ACK_DLLP后,得知TLP3-5已被成功接收.此时将TLP3-5从Replay Buffer
+		中清除;
+	5.TLP6-7做法一样.
+
+**2.发送端收到NAK DLLP报文**
+
+![](images/PCIe_NAK_DLLP_proc.png)
+
+	1.发送端发送TLP3-7,此时发送端的NEXT_TRANSMIT_SEQ计数器为8,表示即将填入到Replay Buffer中的报
+		文序列号为8;
+	2.接收端收到TLP3-5,TLP6和7在链路上;
+	3.接收端通过报文检查决定接收TLP3-4,此时NEXT_RCV_SEQ为5,表示即将接收TLP5;
+	4.TLP5没有通过完整性验证,此时向发送端发送NAK DLLP,这个NAK DLLP的AckNak_Seq_Num字段为4,即为此时
+		NEXT_RCV_SEQ-1.AckNak_Seq_Num表示最后一个正确接收的TLP,其Sequence号为4;
+	5.发送端收到AckNak_Seq_Num字段为5的NAK_DLLP后,得知TLP3-4已被成功接收.首先在TL层停止接收新的TLP,
+		之后将TLP3-4从Replay Buffer中清除;
+	6.发送端重新发送Replay Buffer中从TLP5开始的报文,此处为重传TLP5-7.
+	PS:同一个TLP重传有次数限制,此处略.
+
+#### 7.2.2 接收端使用ACK/NAK协议
+
+接收端从物理层获得TLP,此时在这个TLP中包含Sequence前缀和LCRC后缀.接收端收到这个TLP后,首先将这个报文放入Receive Buffer中,然后进行CRC检查.如果检查成功(包括其他检查),接收端将根据Receive Buffer的阈值发送ACK DLLP给发送端,并将这个TLP传给TL层.
+
+**1.接收端发送ACK DLLP**
+
+接收端不会对每一个正确接收的TLP发出ACK DLLP回应,这样严重影响PCIe链路的效率.而是收集一定数量的TLP后,统一发出一个ACK DLLP表示之前的TLP都正确接收.发送端使用一个ACKNAK_LATENCY_TIMER计数器,当该计数器超时或接收的报文超过一个阈值后,向发送端发送一个ACK DLLP.
+
+接收端发送ACK DLLP原则:
+
+	1.接收端在收到一定数量的报文后,统一发送一个ACK DLLP作为回应;
+	2.接收端收到的报文没有达到阈值,但是ACKNAL_LATENCY_TIMER超时,仍要发出ACK DLLP.
+	3.在某些情况下,发送端发送一个TLP后,在很长一段时间内,都不会发送新的TLP.此时接收端必须及时发出ACK DLLP,
+		以免发送端的Replay Buffer溢出.
+
+详细过程是发送端的逆过程.
+
+**2接收端发送NAK DLLP.**
+
+详细过程是发送端的逆过程.
+
+#### 7.2.3 DL层发送报文的顺序
+
+发送顺序如下:
+
+	1.正在发送的TLP或者DLLP具有最高的优先权;
+	2.PLP(Physical Layer Packet)的传送;
+	3.NAK DLLP;
+	4.ACK DLLP(错误处理报文优于正确的响应);
+	5.重传的TLP;
+	6.其他等待的TLP;
+	7.其他DLLP.
+
+### 7.3 物理层简介
+
+#### 7.3.1 8/10b编码与解码
+
+重要,暂时没看.
+
+## Chapter 13 PCIe总线与虚拟化技术
+
