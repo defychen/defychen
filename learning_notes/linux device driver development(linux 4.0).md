@@ -5409,10 +5409,10 @@ platform的设备称为platform_device(e.g.I2C,RTC,LCD,看门狗等SoC内部集�
 
 	/* 在./include/linux/platform_device.h定义 */
 	struct platform_device {
-		const char *name;
+		const char *name;	/*一般用于与platform_driver.driver.name进行匹配*/
 		int id;
 		bool id_auto;
-		struct device dev;
+		struct device dev;	/* 可使用to_platfrom_device(dev)找到platform_device */
 		u32 num_resources;
 		struct resources *resource;
 		
@@ -5430,16 +5430,20 @@ platform的设备称为platform_device(e.g.I2C,RTC,LCD,看门狗等SoC内部集�
 
 platform的驱动称为platform_driver.
 
-	/* 在./include/linux/platform_device.h定义 */
+	/* 在./include/linux/platform_driver.h定义 */
 	struct platform_driver {
-		int (*probe)(struct platform_device *);
-		int (*remove)(struct platform_device *);
+		int (*probe)(struct platform_device *);		/* probe函数,例化需要给值 */
+		int (*remove)(struct platform_device *);	/* remove函数,例化需要给值 */
 		void (*shutdown)(struct platform_device *);
 		int (*suspend)(struct platform_device *, pm_message_t state);
 		int (*resume)(struct platform_device *);
-		struct device_driver driver;
+		struct device_driver driver;	/* 例化需要给值 */
 		const struct platform_device_id *id_table;
-		boo prevent_deferred_probe;
+		bool prevent_deferred_probe;
+		/**
+		 * 该结构常用的是:probe和remove函数指针以及driver成员,类似:suspend()/resume()更多的是
+		 * 使用struct device_driver里的suspend和resume.
+		 */
 	};
 
 **3.struct device_driver和struct dev_pm_ops**
@@ -5448,14 +5452,15 @@ platform的驱动称为platform_driver.
 	2.电源回调函数suspend,resume现在一般使用:struct platform_driver--->struct device_driver
 		--->const struct dev_pm_ops下的suspend和resume函数;
 	3.struct device_driver--->位于./include/linux/device.h;
-	4.struct dev_pm_ops--->位于./include/linux/pm.h.
+	4.struct dev_pm_ops--->位于./include/linux/pm.h;
+	5.platform_driver中的probe和resume一直使用,不用关注struct device_driver里的相同函数.
 
 1.struct device_driver
 
 	struct device_driver {
-		const char *name;
+		const char *name;	/* 例化需要给值:与platform_device中的name相同*/
 		struct bus_type *bus;
-		struct module *owner;
+		struct module *owner;	/* 一般给:THIS_MODULE即可 */
 		const char *mod_name; /* used for build-in modules */
 		bool suppress_bind_attrs; /* disables bind/unbind via sysfs */
 		enum probe_type probe_type;
@@ -5470,7 +5475,7 @@ platform的驱动称为platform_driver.
 		int (*resume) (struct device *dev);
 		const struct attribute_group **groups;
 
-		const struct dev_pm_ops *pm;
+		const struct dev_pm_ops *pm;	/* suspend/resume使用该成员中的即可. */
 
 		struct driver_private *p;
 	};
@@ -5480,9 +5485,9 @@ platform的驱动称为platform_driver.
 	struct dev_pm_ops {
 		int (*prepare)(struct device *dev);
 		void (*complete)(struct device *dev);
-		int (*suspend)(struct device *dev);
-		int (*resume)(struct device *dev); //电源回调函数
-		int (*freeze)(struct device *dev); //电源回调函数
+		int (*suspend)(struct device *dev);	//电源回调函数,需要时驱动中要使用该成员.
+		int (*resume)(struct device *dev); 	//电源回调函数,需要时驱动中要使用该成员.
+		int (*freeze)(struct device *dev); 
 		int (*thaw)(struct device *dev);
 		int (*poweroff)(struct device *dev);
 		int (*restore)(struct device *dev);

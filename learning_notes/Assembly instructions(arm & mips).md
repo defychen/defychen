@@ -19,7 +19,7 @@
 	----------------------------------------------------------------
 # 1. ARM汇编指令
 
-## Auxcode中的boot.S---适配Cortex A7(CA7)
+## 1. Auxcode中的boot.S---适配Cortex A7(CA7)
 
 	#define SP_MAX_SIZE		(1024*5)	/*堆大小为5K*/
 	#define MONITOR_SP		(1024*1)	/*monitor 堆大小为1K*/
@@ -171,7 +171,7 @@
 		800004fc:	ee012f10 	mcr	15, 0, r2, cr1, cr0, {0}
 		80000500:	e12fff1e 	bx	lr
 		*/
-	------------------------------------------------------------------------------------------------------
+	----------------------------------------------------------------------------------------
 	invalidate_l1_icache:
 		mov r3, #0	/*往r3寄存器写入立即数0*/
 		mcr p15, 0, r3, c8, c7, 0
@@ -190,6 +190,123 @@
 		80000514:	e12fff1e 	bx	lr
 		*/
 	---------------------------------------------------------------------------------------
+
+## 1.2 AArch64的一些汇编
+
+### 1.2.1 get_cpuid
+
+	get_cpuid:
+		mrs		x1, MPIDR_EL1	//读取MPIDR_EL1寄存器的值到x1寄存器
+		/*
+		1.ARMv8提供了31个64-bit的通用寄存器,分别是x0-x30.每个64-bit的寄存器底32-bit包含32-bit
+			的兼容形式,称为w0-w30.读取w不会影响相应的x的高32-bit,但写入w会清零相应的高32-bit;
+		2.MPIDR_EL1(Multiprocessor Affinity Register:多处理器关联的寄存器),部分芯片的用法是:
+			0b[11:8]:表示cluster_id;
+			0b[7:2]:reserved;
+			0b[1:0]:每个cluster_id里面的core_id;
+		3.mrs:将状态寄存器(cpsr/spsr)或系统协处理器(非cp之类的)的寄存器的值搬移到通用寄存器.
+		*/
+		and		w0, w1, #0xf00	// get cluster_id
+		/*
+		w1是x1的低32-bit,将w1的值0x?00取出来放在w0中;
+		*/
+		lsr		w0, w0, #6		// ((cluster_id >> 8) << 2) = (cluster_id >> 6)
+		/*
+		1.lsr:logic shift right;
+		2.将w0右移6-bit后再存放在w0中.此步的目的:0x?00 >> 6--->0b????00,保持该值为4对齐.
+		*/
+		and		w1, w1, #0x3	// get core_id in the cluster
+		/*
+		w1中的0b[1:0]表示core_id,此处取出cluster中的core_id.
+		*/
+		add		w0, w0, w1		// calculate core_id in the multi-cluster system
+		/*
+		w0中存放的是cluster_id,以4对齐.w1存放的是core_id,相加即可得到一个真是的cpuid.
+		*/
+
+内嵌汇编实现
+
+	uint32_t get_core_id(void)
+	{
+		uint32_t core_id = 0;
+		uint64_t reg_val = 0;
+		asm volatile("mrs %0, mpidr_el1" : "=r"(reg_val));
+		/*
+		mrs %0  //编译器会自动选择一个空闲的CPU寄存器来装载reg_val变量的地址(mov必须带寄存器);
+            	//理解为:该空闲寄存器就代表该变量.
+    	: "=r"(reg_val)   //"=r"(reg_val):有"="是output;"r"(x):无"="是input;前面的":"是修饰;
+                //此处表示将mpidr_el1中的值读出来给到reg_val.
+    	完整的语法应该是:
+        	asm volatile("mov %0, r15" : "=r"(x) : "r"(xxx));
+    	此处由于没有input,因此后面的":"也省略了.
+	}
+
+### 1.2.2 页表配置解析
+
+	InitMem:
+		LDR		x0, =page_table_base	/*page_table_base在*.ld文件中有定义,0x81000000*/
+		/*
+		此处将0x8100_0000(一个地址)放到x0寄存器.
+		*/
+		LDR		x1, =0x0060000000000001	/* device memory:0x0000_0000~0x3fff_ffff */
+		STR		x1, [x0, 0x00]		/* 将x1的值存放到x0寄存器中的内容(为一个地址)+0x00的内存中 */	
+		/*
+		整个过程为:给0x0000_0000~0x3fff_ffff配置页表属性,0x0060000000000001值的解析:
+			0b[1:0]=0b01:表示block,此处表示1GB的block页表;
+			0b[4:2]:attr index,用于索引MAIR_ELx寄存器(我们用EL3),该寄存器的索引决定了内存的属性,
+				具体请看下面分析;
+			0b[47:12]:下一级页表的地址--->4k granule size是[47:12],16k/64k与4k不一样;
+			其他位段省略.
+		*/
+		LDR		x1, =0x0060000040000609	/* non-cacheable memory:0x4000_0000~0x7fff_ffff */
+		STR		x1, [x0, 0x08]		/* 将x1的值存放到x0寄存器中的内容(为一个地址)+0x08的内存中 */	
+		/*
+			0b[4:2]值为2.
+		*/
+		LDR		x1, =0x0000000080000605	/* cacheable memory:0x8000_0000~0xbfff_ffff */
+		STR		x1, [x0, 0x10]		/* 将x1的值存放到x0寄存器中的内容(为一个地址)+0x10的内存中 */	
+		/*
+			0b[4:2]值为1.
+		*/
+		LDR		x1, =0x00000000c0000605	/* cacheable memory:0xc000_0000~0xffff_ffff */
+		STR		x1, [x0, 0x18]		/* 将x1的值存放到x0寄存器中的内容(为一个地址)+0x18的内存中 */	
+		/*
+			0b[4:2]值为1.
+		*/
+		LDR		x1, =0x0060000100000601	/* device memory:0x1_0000_0000~0x1_3fff_ffff */
+		STR		x1, [x0, 0x20]		/* 将x1的值存放到x0寄存器中的内容(为一个地址)+0x20的内存中 */	
+		/*
+			0b[4:2]值为0.
+		*/
+	
+		MSR		TTBR0_EL3, x0		/* 将x0寄存器的值(页表基地址)写入TTBR0_EL3 */
+		LDR		x1, =0x44ff04
+		MSR		MAIR_EL3, x1		/* MAIR_EL3每个字节表示一种memattr */
+		/*
+		此处只给了byte0/1/2配置了memattr,其他的默认为0.
+			byte0=0x4:Device-nGnRE memory;
+			byte1=0xff:Normal memory,还有其他的信息,参考reference manual;
+			byte2=0x44:Normal memory.
+		MAIR_EL3使用页表的0b[4:2]去索引,总共3-bit,可以索引8个byte.
+		*/
+
+		LDR		x1, =0x8084251e
+		MSR		TCR_EL3, x1		/* Translation Control Register(EL3) */
+		/*
+		0b[5:0]:T0SZ,控制内存可访问范围大小,为2^(64-T0SZ).
+		此处为0x1e(30):表示内存可访问大小为2^34,即16GB.
+		PS:之前的值为0x20,此时大小为4GB,导致访问超过4GB就出问题了.
+		*/
+
+		MRS		x1, SCTLR_EL3
+		MOV		x2, #1805
+		ORR		x1, x1, x2
+		MSR		SCTLR_EL3, x1
+		/*
+		SCTLR_EL3:System Control Register(EL3).
+		0b[0]:MMU Enable for EL3 stage 1 address translation.
+		不确定有没有影响,之前为0,后来改为了1.
+		*/
 
 ***
 # 2. MIPS汇编指令
@@ -239,15 +356,17 @@
 	//获取PC指针
 	#define get_pc(x) {asm volatile("mov %0, r15" :"=r"(x));}
 	/*
-		mov %0	//编译器会自动选择一个空闲的CPU寄存器来装载x变量的地址.
+		mov %0	//编译器会自动选择一个空闲的CPU寄存器来装载x变量的地址(mov必须带寄存器);
 				//理解为:该空闲寄存器就代表该变量.
-		: "=r"(x)	//语法格式mov %0, r15 :"=r"(x)->output:"r"(x)->input:修饰
+		: "=r"(x)	//"=r"(x):有"="是output;"r"(x):无"="是input;前面的":"是修饰;
 					//此处为代表output为x,即输出r15寄存器中的值给x.也即得到PC指针
-		//PS:如果后面的input没有,中间的":"可以不需要
+		完整的语法应该是:
+			asm volatile("mov %0, r15" : "=r"(x) : "r"(xxx));
+		此处由于没有input,因此后面的":"也省略了.
 	*/
 	//操作PC指针
 	#define set_pc(x) {asm volatile("mov r15, %0" ::"r"(x));}
-	//作为input,中间的":"是肯定需要的
+	//此处没有output,但是中间的":"必须要有,才出现两个":"连着.
 
 ## 3.2 MIPS内嵌汇编
 
