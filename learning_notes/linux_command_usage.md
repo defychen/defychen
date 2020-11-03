@@ -768,6 +768,11 @@ zgrep用于查看压缩文件(以tar.gz结尾的文件).
 	find /home -user fred
 		//在home目录下查找属于fred这个用户的文件
 
+统计代码量
+
+	find . -name "*.cpp" | xargs wc -l	//统计.cpp的代码量
+	find . -name "*.h" | xargs wc -l	//统计.h的代码量
+
 ### 37. "./configure --prefix=path"软件安装的路径指定
 
 一般安装软件时会将软件安装到默认的路径(一般为类似/usr/bin路径),如果需要安装到指定路径,方法如下:

@@ -151,4 +151,61 @@ Cache一致性问题主要是在内存操作过程中如何保持各级Cache中�
 	AArch32与AArch64的本质区别:
 	AArch32指令集使用32-bit寄存器;AArch64指令集使用64-bit寄存器,并使用64-bit计算模式.
 
+#### 2.1.1 ARMv8-A架构的处理器运行模式
+
+**1.ARMv8-A的执行状态**
+
+1.AArch64执行状态
+
+	1.四个异常等级(EL0-EL3);
+	2.支持64-bit VA,48-bit/52-bit PA;
+	3.提供31个64-bit通用寄存器X0-X30.X30是过程链接寄存器(Procedure Link Register, PLR),还包括一个
+		64-bit程序计数器PC,若干堆栈指针寄存器SP和若干异常链接寄存器ELR;
+	4.提供了32个128-bit的寄存器支持SIMD向量和标量浮点操作;
+	5.提供了一组PSTATE(Process STATE,处理状态)参数,用于指示处理单元的当前状态.
+
+2.AArch32执行状态
+
+	1.支持A32和T32指令集;
+	2.支持32-bit VA;
+	3.提供13个32-bit通用寄存器和一个32-bit程序计数器PC,堆栈指针寄存器SP及链接寄存器LR;
+	4.提供了32个64-bit的寄存器支持增强SIMD向量和标量浮点操作;
+	5.提供了一组PSTATE(Process STATE,处理状态)参数,用于指示处理单元的当前状态.
+
+3.状态切换
+
+	AArch64和AArch32状态切换称为交互处理(Interprocessing).
+
+**2.ARMv8-A架构支持的指令集**
+
+	1.AArch64使用A64指令集,该指令集的所有指令均为32-bit等长指令字;
+	2.AArch32使用A32指令集,为32-bit等长指令字结构;
+	3.T32使用之前的Thumb/Thumb-2指令集,为16-bit/32-bit可变长指令字结构.
+
+A64指令集特点
+
+	1.A64去掉ARMv7的LDM/STM(load multiple/store multiple),指令复杂,不利于设计高效的处理器存储系统;
+	2.A64指令集保留很少的条件执行指令,这些指令实现复杂度高,好处不明显;
+	3.A64指令集的大部分指令都不再是条件执行指令;
+	4.ARMv8-A架构将硬件浮点运算设计为必须部件.
+
+实例:
+
+	A64加法
+		AA X0, X1, X2	//将X1+X2的结果送到X0
+	A32加法
+		ADD W0, W1, W2	//将W1+W2的结果送到W0
+
+**3.ARMv8-A支持的数据类型**
+
+	1.支持8-bit的byte, 16-bit的half-word, 32-bit的word, 64-bit的dword以及128-bit的quardword;
+	2.浮点支持half-precision(半精度), single-precision(单精度), double-precision(双精度);
+	3.支持2种向量类型(向量数据由多个相同类型的数据组合而成):
+		1.增强的SIMD(Advanced SIMD),也就是Neon;
+		2.SVE(Scalable Vector Extension,可伸缩向量扩展).
+
+**4.ARMv8-A的异常等级与安全模型**
+
+略.
+
 ## Chapter 3. 服务器与处理器
