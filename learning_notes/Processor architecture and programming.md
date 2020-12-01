@@ -250,4 +250,153 @@ ARMv8-A典型的虚拟化系统的基本架构:
 	8-bit放你问时,寄存器名为B0-B31;
 	低位宽访问时,与w0-w30访问类似.
 
-## Chapter 3. 服务器与处理器
+#### 2.1.3 ARMv8-A架构的异常与中断
+
+根据中断源分为以下4种中断:
+
+**1.共享外设中断(Shared Peripheral Interrupt, SPI)**
+
+外设的这类中断请求可以被连接到任何一个处理器内核(中断号:0~15, 32~1019和4096~5119).
+
+**2.私有外设中断(Private Peripheral Interrupt, PPI)**
+
+只属于某一个处理器内核的外设的中断请求,例如通用定时器的中断请求(中断号:16~31和1056~1119).
+
+**3.软件产生的中断(Software Generated Interrupt, SGI)**
+
+由软件写入中断控制器内的SGI寄存器引发的中断请求,通常用于处理器间通信(中断号:0~15).
+
+**4.特定位置外设中断(Locality-specific Periphral Interrupt, LPI)**
+
+边沿触发的基于消息的中断,其编程模式与其他中断源完全不同(中断号:8192以上).
+
+**MSI**
+
+MSI(Message-Signaled Interrupt-消息信号中断):外设通过向中断控制器中的寄存器执行写操作触发中断请求,不再需要专门的中断请求信号线.一般为LPI中断.
+
+### 2.2 ARMv8-A处理单元的存储系统结构
+
+#### 2.2.1 ARMv8-A架构的内存模型
+
+**1.AArch64地址变换**
+
+内核的地址映射是全局变换,即内核区域对当前运行进程都有效,变换的页面也是全局的;
+
+应用程序地址映射是非全局的,即只针对当前运行的进程,变换的页面是针对进程的.
+
+	ASID(Address Space Identifier,地址空间标识):定义的页面与某个具体进程相关.
+
+**2.TTBR的使用**
+
+	1.AArch64状态下,EL2和EL3运行的程序只能使用TTBR0,没有TTBR1.因此EL2和EL3的虚拟地址范围只能落在:
+		0x00000000_00000000--->0x0000FFFF_FFFFFFFF
+	2.EL0(用户空间)只能使用TTBR0_EL1,地址范围:
+		0x00000000_00000000--->0x0000FFFF_FFFFFFFF
+	3.EL1(kernel空间)只能使用TTBR1_EL1,地址范围:
+		0xFFFF0000_00000000--->0xFFFFFFFF_FFFFFFFF
+
+**3.Device空间特点**
+
+	1.device空间是non-cacheable,且是外部可共享的;
+	2.device空间分为3个属性:
+		G(Gathering):表示是否可聚合,即多次的读写存储器访问是否可以合并为单一的事务;
+		R(Reordering):表示乱序,即是否允许乱序执行;
+		E(Early Write Acknowledgement):表示是否允许提前返回写完成响应,即如果数据写到缓冲区后,可以提前
+		回写完成响应,否则必须等到写操作完成才能结束.
+	3.device属性组合:
+		一般使用4种属性组合:Device-nGnRnE(最严格)、Device-nGnRE、Device-nGRE和Device-GRE(最宽松).
+
+##### 2.2.2 SMMU
+
+略.
+
+#### 2.2.3 ARMv8-A的服务器特性
+
+略.
+
+## Chapter 3. 鲲鹏处理器片上系统架构
+
+RequesterID:PCIe中的请求者标识.
+
+PASID(Process Address Space ID,进程地址空间标识):某个请求者标识的进程地址空间标识,通常与内核中的不同进程的地址空间相关.
+
+StreamID(数据流标识):是SMMU中用于检索地址转换表的索引.
+
+DeviceID(设备标识):是ARM的GIC中的中断翻译服务(ITS部件)用于检索中断翻译表的索引.
+
+对应关系:
+
+	RequesterID--->StreamID;
+	PASID[15:0]--->SubStreamID;
+	RequesterID == SMU StreamID == ITS DeviceID
+
+## Chapter 4. 鲲鹏软件生态和架构
+
+### 4.1 半导体厂商的业务模式
+
+**1.Intel模式**
+
+集成芯片设计和制造.
+
+**2.Fabless(无晶圆)模式**
+
+像NVIDIA、AMD那样,只设计芯片,物理制造交给代工厂(e.g. 台积电、三星电子、UMC联电、GlobalFoundries等).
+
+### 4.2 ARM许可证授权的3种类型
+
+**1.POP授权(Processor Optimization Pack,处理器优化包/物理IP包)**
+
+等级最低的,客户可以直接购买使用ARM优化过的处理器方案,适用于需要ARM处理器却没有能力自己实现的客户.授权费用低,但是处理器类型、代工厂、工艺等都是ARM规定好的,自由发挥的空间很小.
+
+**2.处理器授权**
+
+使用ARM设计的微处理器或GPU的授权.ARM提供有关如何在硅片上实现设计的准则,但如何将设计变成芯片,如配置哪些模块、哪些外设、多少个核心、多少缓存、多高频率、什么工艺、谁来代工等问题,则由客户自行决定.
+
+**3.架构/指令集授权**
+
+等级最高的授权.ARM向客户授权某种架构(e.g.ARMv7,ARMv8),客户可以随意采用该架构并按自己的意愿设计SoC,如对ARM架构进行改造,甚至可以对指令集进行扩展和缩减.授权费用很高,会与ARM公司自己设计的公版处理器构成竞争.
+
+	主要公司:苹果的Swift,Cyclone,Bionic;高通的Scorpion,Krait,Kyro;华为的麒麟,鲲鹏等.
+
+### 4.3 ACPI
+
+ACPI(Advanced Configuration and Power Management Interface,高级配置和电源管理接口):BIOS运行过程种,生成这些表格.然后linux访问ACPI表格来获得一些硬件的内存地址.主要在PC和服务器领域中使用.
+
+**1.linux内核硬件设备探测的方式**
+
+1.通过内核代码静态描述实现
+
+	赢编码方式,早期的linux在arch/arm/plat-xxx和arch/arm/mach-xxx下有很多冗余代码.2011年开始改用
+		Device Tree(DT)方式.
+
+2.通过Device Tree进行静态匹配和加载
+
+3.通过BIOS ACPI表进行动态配置和加载
+
+4.通过总线自动枚举
+
+	适合可以支持自动枚举的总线上的设备(e.g. PCI总线和USB总线).
+
+**2.ACPI表的查看**
+
+1.ACPI表的目录
+
+	所有的ACPI表位于:/sys/firmware/acpi/tables
+
+2.复制表到*.aml
+
+	sudo cat /sys/firmware/acpi/tables/DSDT > /usr/xxx/DSDT.aml
+
+3.安装软件iasl
+
+	sudo apt-get install iasl
+
+4.进行转换
+
+	iasl -d DSDT.aml
+
+5.这样可以在当前目录下发现所要的ACPI表文件
+
+	vim DSDT.dsl
+
+PS:DSDT(Differentiated System Description Table):是ACPI规范的一部分,包含了所有和基本系统不同的设备的信息.

@@ -186,7 +186,7 @@ UML(Unified Modeling Language)统一建模语言:是一种让设计面向对象�
 		cout << "Please enter the course name:" << endl;
 		getline(cin, nameOfCourse);
 		/*
-			cin<<:读取字符,直到遇到第一个空白字符(空格/tab或回车等)为止.
+			cin>>:读取字符,直到遇到第一个空白字符(空格/tab或回车等)为止.
 			getline(cin, variable_name):从标准输入(即cin)读取连续字符(包括空格),
 				直到遇到换行符为止.将读取的字符放到variable_name中,并丢弃换行符.
 			PS:
@@ -223,7 +223,7 @@ UML(Unified Modeling Language)统一建模语言:是一种让设计面向对象�
 	public:
 		/*构造函数:
 			1.无返回值,函数名与类名相同.可以有参数;
-			2.通常声明为public,最好写上.没有就系统会有自动的默认构造函数;
+			2.通常声明为public,最好写上.没有系统会有自动的默认构造函数;
 			3.构造函数主要用于对数据成员进行初始化.
 		*/
 		GradeBook(string name)
@@ -324,7 +324,7 @@ xxx.cpp文件名通常与接口文件名一样.
 
 	/*
 		返回类型 类名::成员函数名(形参类型 形参)
-		1.构造函数无返回类型,因为前面没有;
+		1.构造函数无返回类型,因此前面没有;
 		2."::"二元作用域分辨运算符.用于将成员函数绑定到类.建立两者之间的一个联系.
 	*/
 	GradeBook::GradeBook(string name)
