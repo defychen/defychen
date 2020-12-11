@@ -80,11 +80,15 @@ SMMU的行为与PE的MMU类似,为系统I/O设备的DMA提供地址翻译服务.
 
 ## 2.1 基本功能
 
-	1.SMMU行为与PE段的MMU一致;
-	2.为device之间、device和PE之间提供地址空间隔离;
+	1.SMMU是IO device与总线桥之间的一个地址转换桥,可以实现地址映射、属性转换、权限检查等功能,与PE中的
+		MMU功能相似;
+	2.地址映射的好处:
+		1.IO device的地址配置不需要手动进行地址转换;
+		2.防止IO device错误踩踏别的地址空间,提高系统的安全性.
 	3.支持2级翻译(VA->IPA->PA):
 		Stage 1:软件通过S1进行buffer的地址翻译和隔离(e.g.OS内的DMA隔离);
-		Stage 2:用于虚拟化扩展,为VM提供DMA虚拟化.
+		Stage 2:用于虚拟化扩展,为VM提供DMA虚拟化
+		PS:secure world没有虚拟化,只有non-secure world才有虚拟化.
 
 ## 2.2 SMMUv3版本特性
 
@@ -376,6 +380,65 @@ StreamWorld基本可以对应ARMv8-A里定义的EL概念
 
 	1.在device保证输入的属性正确的情况下,使用输入属性而不进行override;
 	2.在device不保证属性正确或不输出属性时,使用SMMU的配置和页表中的属性进行override.
+
+## 3.6 SMMU page table walk
+
+![](images/view_of_stage_address_translation.png)
+
+PTW:一系列查表过程的总称.TTBR给出查表过程的base addr,每次查表过程都会得到一个描述符,描述符说明如下:
+
+	1.如果该entry是最后一次walk的entry,则该entry包含了OA、权限和属性;
+	2.如果该entry是中间walk的entry,则包含了转换表的基地址,需要额外的lookup过程;
+	3.如果是安全的转换,则描述符会指示当前的基地址是安全的还是非安全的基地址;
+	4.如果描述符是无效的,本次转换产生translation fault.
+	PS:
+	1.除了Non-secure EL1&0 stage1 translation,TTBR和页表描述符返回的基地址都是物理地址;
+	2.对于Non-secure El1&0 stage1+stage2 translation,TTBR和转换表描述符返回的基地址都是IPA,需要经过
+		stage2的转换.总的lookup次数为: (S1+1)*(S2+1)-1,S1为stage1的查找次数,s2为Stage2的查找次数.
+
+### 3.6.1 Control of translation table walks
+
+TCR_EL1.EPD0/1:指示TTBR_EL0/1是否有效.--->Translation Control Register(EL1).
+
+![](images/ttbr_translation_control.png)
+
+	TCR_EL1.EPD1:表明TTBR_EL1是否有效;
+	TCR_EL1.EPD0:表明TTBR_EL0是否有效.
+
+### 3.6.2 Overview of VMSAv8-64 address translation using the 4KB translation granule
+
+S1与S2的初始查找级数的要求不一样.
+
+**1.S1特点**
+
+没有concatenation of translation tables.初始查找级数与TxSZ有关,如下:
+
+![](images/4kb_lookup_level.png)
+
+	1.使用4KB页表粒度,初始查找级数不能是第三级;
+	2.IA[11:0] = OA[11:0],即低12-bit直接填充即可.
+
+**2.S2特点**
+
+最大存在16个concatenated的转换表.初始查找级数与TxSZ、concatenated有关,如下:
+
+![](images/4kb_lookup_level_s2.png)
+
+	1.使用4KB页表粒度,初始查找级数不能是第三级;
+	2.concatenated不能在level0处;
+	3.IA[11:0] = OA[11:0],即低12-bit直接填充即可;
+	4.level0只能是table类型.
+
+**3.注意点**
+
+1.S2 SL0表示起始的查找级数,4KB粒度下的编码如下:
+
+![](images/4kb_lookup_s2_start_level.png)
+
+2.如果T0SZ,SL0不匹配,则会产生stage 2 level zero translation fault.
+
+![](images/4kb_lookup_level_s2_view.png)
+
 
 # 4. 延伸: ARMv8-A
 
