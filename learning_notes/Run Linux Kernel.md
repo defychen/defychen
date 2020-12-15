@@ -716,7 +716,20 @@ RISC-V有望成为开源硬件或开源芯片领域的Linux.
 
 DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bootloader会把DDR的大小传递给linux内核.从linux内核来看DDR就是一段物理内存空间.
 
-### 2.1.1 内存大小
+### 2.1.1 内存管理概述
+
+内存空间分为3个层次,分别是用户空间层、内核空间层和硬件层.
+
+![](images/memory_management_diagram.png)
+
+	1.用户空间层:linux内核内存管理为用户空间暴露的系统调用接口(e.g.brk/mmap等系统调用).通常libc库会
+		封装成常见的C函数(e.g.malloc()和mmap等);
+	2.内核空间层:
+		1)处理系统调用接口的函数(e.g. sys_brk、sys_mmap、sys_madvise等);
+		2)vma管理、缺页中断管理、匿名页面、page cache、页面回收、反向映射、slab分配器、页面管理等模块.
+	3.硬件层:MMU、TLB、Cache以及DDR/LPDDR等.
+
+### 2.1.2 内存大小
 
 在ARM Vexpress平台,内存定义在:arch/arm/boot/dts/vexpress-v2p-ca9.dts中
 
@@ -736,12 +749,18 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 		setup_arch:位于./arch/arm/kernel/setup.c/setup_arch()
 		setup_machine_fdt:位于./arch/arm/kernel/devtree.c/setup_machine_fdt()
 		early_init_dt_scan_nodes:位于./drivers/of/fdt.c/early_init_dt_scan_nodes()
-		early_init_dt_scan_memory:位于./drivers/of/fdt.c/early_init_dt_scan_memory()
+		early_init_dt_scan_memory:位于./drivers/of/fdt.c/early_init_dt_scan_memory(),为一个
+			call_back,在early_init_dt_scan_nodes中会依次调用该call back,遍历
+			arch/arm/boot/dts/vexpress-v2p-ca9.dts文件,最终找到memory的节点.
 	*/
 
 	int __init early_init_dt_scan_memory(unsigned long node, const char *uname,
 					int depth, void *data)
 	{
+		...
+		/* we are scanning "memory" nodes only */
+		if (type == NULL || strcmp(type, "memory") != 0)
+		return 0;
 		...
 		while ((endp - reg) >= (dt_root_addr_cells + dt_root_size_cells)) {
 			u64 base, size;
@@ -761,9 +780,11 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 		return 0;
 	}
 
-### 2.1.2 物理内存映射
+### 2.1.3 物理内存映射
 
-1.内核使用内存前,需要初始化内核的页表,初始化页表主要在map_lowmem()函数中.在映射页表之前,需要把页表中的页表项清零,在函数prepare_page_table()中实现(清除一级页表项的内容):
+1.清除页表
+
+内核使用内存前,需要初始化内核的页表,初始化页表主要在map_lowmem()函数中.在映射页表之前,需要把页表中的页表项清零,在函数prepare_page_table()中实现(清除一级页表项的内容):
 
 	[start_kernel->setup_arch->paging_init->prepare_page_table]
 	/*
@@ -901,9 +922,9 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 	mem_end &= 0x0FFFFFFF;
 	mem_end |= 0xA0000000;		//转成DMA地址.
 
-### 2.1.3 zone初始化
+### 2.1.4 zone初始化
 
-#### 2.1.3.1 struct zone
+#### 2.1.4.1 struct zone
 
 页表初始化完成之后,内核对内存进行管理.内核采用区块zone的方式进行管理.
 
@@ -939,7 +960,14 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 		atomic_long_t		vm_stat[NR_VM_ZONE_STAT_ITEMS];	//zone计数
 	} ____cacheline_internodealigned_in_smp;
 
-#### 2.1.3.2 zone的划分
+**struct zone的特点**
+
+	1.struct zone要求L1 Cache对齐;
+	2.ZONE_PADDING()可以让zone->lock和zone->lru_lock两个热门锁分布在不同的cache line中.
+	PS:一个内存节点最多几个zone,不需要像struct page一样关注数据结构大小,此处的ZONE_PADDING()是为了
+		性能而浪费空间(因为内核中的自旋锁竞争非常激烈),是内核优化的常用技巧.
+
+#### 2.1.4.2 zone的划分
 
 	/*mmzone.h位于./include/linux/mmzone.h中*/
 	enum zone_type {
@@ -960,22 +988,30 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 	+	__MAX_NR_ZONES
 	};
 
-#### 2.1.3.3 平台运行之后zone信息
+#### 2.1.4.3 平台运行之后zone信息
 
 	/*平台跑起来的打印信息,搜索zone就在附近*/
+	Normal zone: 1520 pages used for memmap
+	Normal zone: 0 page reserved
+	Normal zone: 194560 pages, LIFO batch: 31 //ZONE_NORMAL
+	Normal zone: 67584 pages, LIFO batch: 15 //ZONE_HIGHMEM
 	Virtual kernel memory layout:	//虚拟kernel内存布局
 	    vector  : 0xffff0000 - 0xffff1000   (   4 kB)
 	    fixmap  : 0xffc00000 - 0xfff00000   (3072 kB)
-	    vmalloc : 0xf0800000 - 0xff800000   ( 240 MB)
-	+	lowmem  : 0xc0000000 - 0xf0000000   ( 768 MB)	//ZONE_NORMAL
+	    vmalloc : 0xf0000000 - 0xff000000   ( 240 MB)
+	+	lowmem  : 0xc0000000 - 0xef800000   ( 760 MB)	//ZONE_NORMAL
 	    pkmap   : 0xbfe00000 - 0xc0000000   (   2 MB)
 	    modules : 0xbf000000 - 0xbfe00000   (  14 MB)
 	      .text : 0xc3008000 - 0xc36e5b7c   (7031 kB)
 	      .init : 0xc36e6000 - 0xc3722000   ( 240 kB)
 	      .data : 0xc3722000 - 0xc3765c70   ( 272 kB)
 	       .bss : 0xc3765c70 - 0xc391a2d0   (1746 kB)
+	
+	ZONE_NORMAL:0xc000_0000-0xef80_0000,页面总数:(0xef80_0000-0xc000_0000)/4096=194560
+	ZONE_NORMAL:线性映射,pa:0x6000_0000-0x8f80_0000映射为va:0xc000_0000-0xef80_0000;
+	ZONE_HIGHMEM:非线性映射.
 
-#### 2.1.3.4 zone的初始化函数---free_area_init_core
+#### 2.1.4.4 zone的初始化函数---free_area_init_core
 
 	/*start_kernel->setup_arch->paging_init->bootmem_init->zone_sizes_init->
 		free_area_init_node->free_area_init_core*/
@@ -990,7 +1026,13 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 		free_area_init_core:位于./mm/page_alloc.c/free_area_init_core().
 	*/
 
-### 2.1.4 空间划分
+bootmem_init()->调用find_limits()函数,然后计算出min_low_pfn、max_low_pfn和max_pfn这3个值:
+
+	min_low_pfn:内存卡起始地址的页帧号(0x60000--->偏移了4K);
+	max_low_pfn:normal区域的结束页帧号(0x8f800--->偏移了4K),由arm_lowmem_init得到;
+	max_pfn:内存卡结束地址的页帧号(0xa0000--->偏移了4K).
+
+### 2.1.5 空间划分
 
 4GB的虚拟地址空间划分方法---可在linux的menuconfig中进行划分
 
@@ -1034,3 +1076,5 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 	{
 		return x - PHYS_OFFSET + PAGE_OFFSET;
 	}
+
+### 2.1.6 物理内存初始化
