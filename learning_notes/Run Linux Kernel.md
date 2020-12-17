@@ -1078,3 +1078,97 @@ bootmem_init()->调用find_limits()函数,然后计算出min_low_pfn、max_low_p
 	}
 
 ### 2.1.6 物理内存初始化
+
+物理内存页面page是由buddy system(伙伴系统)进行管理的.
+
+buddy system(伙伴系统):OS中最常用的一种动态存储管理方法.用户申请时分配一块大小合适的内存块给用户,反之将用于释放的内存回收.
+
+buddy system以内存块为单位,内存块是2的order次幂(order最大值MAX_ORDER为11).内存块的大小分为:1,2,4,8,...,1024个page(1024个page表示连续的4MB大小的内存).
+
+linux内存管理分为几个zone(e.g. ZONE_NORMAL, ZONE_HIGHMEM等).
+
+![](images/buddy_system_management.png)
+
+#### 2.1.6.1 struct zone的数据结构(./include/linux/mmzone.h)
+
+	struct zone {
+		...
+		/* free areas of different sizes */
+		struct free_area	free_area[MAX_ORDER]; /* 每个块由struct free_area链表维护 */
+	};
+
+#### 2.1.6.2 struct free_area的数据结构(./include/linux/mmzone.h)
+
+	struct free_area {
+		struct list_head	free_list[MIGRATE_TYPES];
+		/*
+			MIGRATE_TYPES:定义块类型.
+			free_list为一个链表头.
+		*/
+		unsigned long		nr_free;
+	};
+
+#### 2.1.6.3 MIGRATE_TYPES的数据结构(./include/linux/mmzone.h)
+
+	enum migratetype {
+		MIGRATE_UNMOVABLE,
+		MIGRATE_MOVABLE,
+		MIGRATE_RECLAIMABLE,
+		MIGRATE_PCPTYPES,	/* the number of types on the pcp lists */
+		MIGRATE_HIGHATOMIC = MIGRATE_PCPTYPES,
+		...
+	#ifdef CONFIG_MEMORY_ISOLATION
+		MIGRATE_ISOLATE,	/* can't allocate from here */
+	#endif
+		MIGRATE_TYPES
+	};
+
+PS:页面分配的状态查看: cat /proc/pagetypeinfo
+
+具体如何管理页面,暂略.
+
+## 2.2 页表的映射过程
+
+### 2.2.1 ARM32页表映射
+
+#### 2.2.1.1 32-bit的linux内核映射特点
+
+	1.一般采用3层映射模型:
+		第1层:PGD(页面目录)	第2层:PMD(页面中间目录)	第3层:PTE(页面映射表)
+	2.实际的ARM32系统只用到2层映射,将PMD和PTE合并为1层;
+	3.页面大小分为: 64KB的大页和4KB的小页.linux内核默认使用4KB的小页.
+
+![](images/arm32_lookup_pagetable.png)
+
+#### 2.2.1.2 32-bit的linux内核映射模式
+
+映射模式分为:段映射和页表映射.
+
+1.段映射
+
+	1.只有1层映射,最后1级页表为1MB的block(占用20-bit);
+	2.存在一个段映射表,共4096个表项,每个表项的大小为4B,因此段映射表的总大小为:4K*4B=16KB,每个表项寻址
+		1MB的地址;
+	3.虚拟地址高12-bit(bit[31:20])用于索引段映射表,段映射表里的每个表项提供12-bit的物理地址,与虚拟
+		地址的低20-bit构成最终的32-bit的物理地址.
+
+2.页表映射
+
+	1.2级映射,高12-bit(bit[31:20])索引PGD,接着的8-bit(bit[19:12])用于索引PTE,无PMD;
+	2.PTE中的表项里提供20-bit的物理地址,与虚拟地址的低12-bit构成最终的32-bit的物理地址.
+
+#### 2.2.1.3 ARM32页表映射建立
+
+#### 2.2.1.4 其他暂略
+
+### 2.2.2 ARM64页表映射
+
+	1.linux ARM64 VA地址宽度配置:make menuconfig->搜索"/CONFIG_ARM64_VA",即可得到相关的VA地址宽
+		度配置;
+	2.ARM64支持4KB/16KB/64KB的页面大小,映射的层级为3级或4级；
+	3.linux内核中关于内存分布信息可以参考:./Documentation/arm64/memory.rst.
+
+其他暂略.
+
+## 2.3 内核内存的布局图
+
