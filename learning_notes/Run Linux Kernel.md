@@ -1159,6 +1159,56 @@ PS:页面分配的状态查看: cat /proc/pagetypeinfo
 
 #### 2.2.1.3 ARM32页表映射建立
 
+1.页表映射建立(start\_kernel->setup->arch->paging\_init->map\_lowmem->create\_mapping->\__create\_mapping)
+
+	/* __create_mapping()位于./arch/arm/mm/mmu.c */
+	static void __init __create_mapping(struct mm_struct *mm, struct map_desc *md,
+					    void *(*alloc)(unsigned long sz),
+					    bool ng)
+	{
+		...
+		const struct mem_type *type;
+		pgd_t *pgd;
+	
+		type = &mem_types[md->type];
+		...
+	}
+
+2.struct map\_desc
+
+	/* 定义位于./arch/arm/include/asm/arch/map.h */
+	struct map_desc {
+		unsigned long virtual;	//虚拟地址的起始地址
+		unsigned long pfn;		//物理地址的开始地址的页帧号
+		unsigned long length;	//内存区间大小
+		unsigned int type;		//内存区间的属性,该值作为mem_types[]数组的索引
+	};
+
+3.struct mem_type
+
+	/* 定义位于./arch/arm/mm/mm.h */
+	struct mem_type {
+		pteval_t prot_pte;
+		pteval_t prot_pte_s2;
+		pmdval_t prot_l1;
+		pmdval_t prot_sect;
+		unsigned int domain;
+	};
+
+4.mem_types数组的定义
+
+	/* 定义位于./arch/arm/mm/mmu.c */
+	static struct mem_type mem_types[] __ro_after_init = {
+		...
+		[MT_DEVICE_CACHED] = {	  /* ioremap_cache */
+			.prot_pte	= PROT_PTE_DEVICE | L_PTE_MT_DEV_CACHED,
+			.prot_l1	= PMD_TYPE_TABLE,
+			.prot_sect	= PROT_SECT_DEVICE | PMD_SECT_WB,
+			.domain		= DOMAIN_IO,
+		},
+		...
+	};
+
 #### 2.2.1.4 其他暂略
 
 ### 2.2.2 ARM64页表映射
@@ -1172,3 +1222,47 @@ PS:页面分配的状态查看: cat /proc/pagetypeinfo
 
 ## 2.3 内核内存的布局图
 
+### 2.3.1 ARM32内核内存布局图
+
+1.内核内存各段划分
+
+	代码段:_text和_etext为代码段的起始和结束地址,包含了编译后的内核代码;
+	init段:__init_begin和__init_end为init段的起始和结束地址,包含了大部分模块初始化的数据;
+	数据段:_sdata和_edata为数据段的起始和结束地址,保存大部分内核的变量;
+	BSS段:__bss_start和__bss_stop为bss段的起始和结束地址,包含初始化为0的所有静态全局变量.
+
+2.各段的查看(各段的划分由链接脚本./arch/arm/kernel/vmlinux.ld.S控制)
+
+查看编译后的System.map文件(vim System.map):
+
+	xxx T _text
+	...
+	xxx A _etext
+	...
+	xxx A __init_begin
+	...
+	xxx A __init_end
+	xxx D _sdata
+	xxx D _edata
+	xxx A __bss_start
+	xxx A __bss_stop
+	xxx A _end
+
+### 2.3.2 ARM64内核内存分布图
+
+ARM64的内核内存布局如下:
+
+![](images/arm64_mm_layout.png)
+
+	1.用户空间:0x0000_0000_0000_0000-0x0000_FFFF_FFFF_FFFF,共256TB;
+	2.非规范区域;
+	3.内核空间:0xFFFF_0000_0000_0000-0xFFFF_FFFF_FFFF_FFFF,共256TB,细分为:
+		vmalloc区域:0xFFFF_0000_0000_0000-0xFFFF_7BFF_BFFF_0000,共126974GB;
+		vmemmap区域:0xFFFF_7BFF_C000_0000-0xFFFF_7FFF_C000_0000,共4TB;
+		PCI IO区域:0xFFFF_7FFF_FAE0_0000-0xFFFF_7FFF_FBE0_0000,共16MB;
+		modules区域:0xFFFF_7FFF_FC00_0000-0xFFFF_8000_0000_0000,共64MB;
+		normal memory线性映射区:0xFFFF_8000_0000_0000-0xFFFF_FFFF_FFFF_FFFF,共128TB.
+
+## 2.4 分配物理页面
+
+伙伴系统是linux内核中最基本的内存分配系统.
