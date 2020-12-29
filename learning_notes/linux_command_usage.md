@@ -706,6 +706,15 @@ rename常用于批量修改文件名.
 	IS_LINUX := $(shell echo $(OS) | grep -i linux) //不区分大小写
 	IS_CYGWIN := $(shell echo $(OS) | grep -i cygwin)
 
+grep时排除指定的文件
+
+	grep "xxx" . -nr --exclude-from=file_name
+
+grep时排除指定的目录
+
+	grep "xxx" . -nr --exclude-dir=dir
+	e.g. grep "xxx" . -nr --exclude-dir=.svn	//排除.svn目录搜索字符
+
 #### 35.2 grep -E
 
 -E:表示扩展的正则表达式.可用于搜索满足任意关键字或同时满足多个关键字.
@@ -783,5 +792,19 @@ zgrep用于查看压缩文件(以tar.gz结尾的文件).
 		//"./configure --prefix":在配置的时候指定安装的路径
 	make -j12
 	make install
+
+### 38. hostname
+
+hostname命令用于显示和设置系统的主机名称.
+
+#### 38.1 显示主机名称
+
+	hostname	//结果为:主机名称
+	uname		//等价于hostname
+
+#### 38.2 查看主机ip地址
+
+	hostname -i		//得到虚拟机ip地址:127.0.0.1,没有虚拟机则是系统的ip地址
+	hostname -I		//得到主机ip地址,与ifconfig等价
 
 ## 13. wget命令
