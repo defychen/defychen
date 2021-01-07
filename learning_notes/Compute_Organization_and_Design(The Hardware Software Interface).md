@@ -205,3 +205,8 @@ SP:对不同的队列设置不同的优先级,高优先级的会优先出队,只
 
 WRR:为每个队列设置一个count,根据权重weight机型初始化.每次轮询一个队列,该队列输出一个报文,且count减1.当count为0时停止调度该队列,继续调度不为0的队列.当所有的队列的count都为0时,重新初始化count,开始新一轮的调度.
 
+![](images/wrr_scheduler1.png)
+
+![](images/wrr_scheduler2.png)
+
+![](images/wrr_scheduler3.png)
