@@ -5984,7 +5984,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 	#include <linux/fs.h>		//用于struct file_operations
 	#include <linux/uaccess.h>	//用于copy_from/to_user
 	#include <linux/slab.h>		//用于kmalloc,devm_kzalloc
-	#include <linux/gfp.h>		//用于alloc_page函数
+	#include <linux/gfp.h>		//用于alloc_pages函数
 	#include <linux/mm.h>		//用于内存管理
 	#include <linux/device.h>	//包括device、class等结构体定义
 	#include <linux/sched.h>	//用于kernel的线程、进程处理

@@ -6047,7 +6047,7 @@ vector是一种占用连续内存地址的数据结构,与数组类似.适合于
 		printVector(integers);
 		cout << "\nReversed contents of vector integers: ";
 	
-		for (auto reverseIterator = integers.crbegin();
+		for (vector<int>::reverse_iterator reverseIterator = integers.crbegin();
 			reverseIterator != integers.crend(); ++reverseIterator)
 			cout << *reverseIterator << ' ';
 		/*反向遍历vector.*/

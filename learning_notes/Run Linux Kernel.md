@@ -1266,3 +1266,27 @@ ARM64的内核内存布局如下:
 ## 2.4 分配物理页面
 
 伙伴系统是linux内核中最基本的内存分配系统.
+
+### 2.4.1 内核内存分配
+
+#### 2.4.1.1 alloc_pages()函数
+
+内核中常用的分配物理内存的接口函数是:alloc_pages(),用于分配一个或多个连续的物理页面(pages),分配的页面个数只能是2的整数次幂.
+
+	/* 位于include/linux/gfp.h */
+	#define alloc_pages(gfp_mask, order) \
+		alloc_pages_node(numa_node_id(), gfp_mask, order)
+	/*
+		para1:分配标志,告诉内核如何分配以及在哪儿分配所需的内存;
+		para2:分配的页面个数,是2的order次幂;
+		retval:成功返回page结构体指针,失败返回NULL.
+	*/
+	PS:alloc_pages在NUMA下定义为inline,非NUMA定义为宏.
+
+#### 2.4.1.2 gfp_mask取值
+
+GFP:__get_free_pages()的缩写,因为内存分配最终调用__get_free_pages()来实现.
+
+	GFP_KERNEL:最常用,内核内存的正常分配,它可能睡眠;
+	GFP_ATOMIC:常用于从中断处理和进程上下文之外的其他代码中分配内存,不能睡眠;
+	GFP_USER:用来从用户空间分配内存页,可能睡眠;
