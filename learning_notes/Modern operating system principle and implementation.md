@@ -56,3 +56,23 @@ MSI协议cacheline的三种状态(M/S/I态).
 		2.该为I态后可以拿到对应cacheline的数据;
 		3.拿到该cacheline的数据后,将全局共享目录中该项的Dirty Bit为1,并将拥有者更新到Bit Vector;
 		4.将本地的cacheline状态设置为M态,将数据与cacheline数据合并后再写入该cacheline.
+
+#### 12.1.2.2 全局共享目录
+
+MSI协议用于说明当前cacheline的状态.全局共享目录用于记录所有cacheline所处位置及状态,每条缓存行都对应目录中的一个目录项,目录项包含两项内容:
+
+	1.用于记录是否有处理器已经修改过这个cacheline的Dirty Bit(1表示被修改,0表示未被修改);
+		--->只有某cacheline是M态时才是1,其他均是0;
+	2.用于记录cacheline的拥有者的Bit Vector(拥有者对应位被置为1,其余置为0).
+
+#### 12.1.2.3 MSI状态迁移
+
+![](images/msi_status_migrate.png)
+
+#### 12.1.2.4 目录式缓存一致性协议实例
+
+![](images/directory_based_cache_coherence_example1.png)
+
+![](images/directory_based_cache_coherence_example2.png)
+
+### 12.1.3 系统软件视角下的缓存一致性
