@@ -76,3 +76,121 @@ MSI协议用于说明当前cacheline的状态.全局共享目录用于记录所�
 ![](images/directory_based_cache_coherence_example2.png)
 
 ### 12.1.3 系统软件视角下的缓存一致性
+
+系统软件对于缓存一致性的影响如下:
+
+	1.多核心竞争同一cacheline带来的性能开销--->e.g.自旋互斥锁;
+	2.伪共享(False Sharing):本身无需共享的内容被错误地划分到同一个cacheline中进行了共享;
+	3.多核环境下的时间局部性和空间局部性:
+		时间局部性:指访问一个地址后程序在一段时间内还会访问相同的地址;
+		空间局部性:指地址相邻的内存很可能会被再次访问;
+		PS:良好的局部性能保证较高的cache命中率,减少访存开销.反之命中率低,访存开销大,影响性能.
+
+## 12.2 内存一致性与硬件内存屏障
+
+### 12.2.1 多核中的访存乱序
+
+![](images/lock_one_algorithm.png)
+
+LockOne算法存在的问题:
+
+	1.仅能保证互斥访问(即两个线程不会同时进入临界区);
+	2.不能保证有限等待与空闲让进(如果两个线程均在读到对方flag之前设置了自己的标志位.此时两个线程
+		都不能进入临界区,陷入了无限等待);
+	PS:如果出现乱序访问,互斥也没办法保证:
+		如果线程0、1中,第3行的读在第2行的写之前发生(访存乱序),此时读到的flag均为false.导致两个线程同时
+		进入临界区,打破LockOne的互斥访问.
+
+### 12.2.2 内存一致性模型
+
+内存一致性模型(Memory Consistency Model)主要针对读写操作之间的4种顺序(读读、读写、写读、写写).
+
+#### 12.2.2.1 严格一致性模型(Strict Consistency)
+
+严格一致性模型要求所有访存操作都是严格按照程序编写的顺序可见.所有核心对一个地址的任意读操作都能读到这个地址最近一次写的数据.
+
+	缺点:需要使用全局的时钟确定不同核心上访存的先后顺序,实现难度.
+
+#### 12.2.2.2 顺序一致性模型(Sequential Consistency)
+
+保证核心自己的读写顺序与程序顺序一致(无乱序),但核间的读不一定能读到其他核上最新的数据,能保证互斥访问.
+
+![](images/sequential_consistency_lockone_algo.png)
+
+#### 12.2.2.3 TSO一致性模型(Total Store Ordering)
+
+TSO保证不同地址且无依赖的读读、读写、写写操作之间的全局可见顺序,只有写读不能得到保证.因此顺序模型种的最后一种情况有可能发生,不能保证互斥访问.
+
+#### 12.2.2.4 弱序一致性模型(Weak-ordering Consistency)
+
+读读、读写、写写、写读均可以乱序.
+
+	int data = 0;
+	int flag = NOT_READY;
+	void proc_a(void)
+	{
+		data = 666;
+		flag = READY;
+	}
+
+	void proc_b(void)
+	{
+		while (flag != READY)
+			;
+		handle(data);
+	}
+
+	上述代码,TSO可以保证正确(写写、读写顺序保证),弱序一致性不能保证正确.
+
+#### 12.2.2.5 4种内存模型总结
+
+![](images/memory_consistency_summary.png)
+
+### 12.2.3 内存屏障
+
+硬件内存屏障(Barrier/Fence):用于指示硬件保证访存操作之间的顺序.
+
+内存屏障例子(针对弱序一致性模型,保证操作的正确性):
+
+	int data = 0;
+	int flag = NOT_READY;
+	void proc_a(void)
+	{
+		data = 666;
+		barrier();	//保证访存顺序
+		flag = READY;
+	}
+
+	void proc_b(void)
+	{
+		while (flag != READY)
+			;
+		barrier();	//保证访存顺序
+		handle(data);
+	}
+
+### 12.2.4 常见架构使用的内存模型
+
+![](images/architecture_memory_consistency.png)
+
+### 12.2.5 硬件视角下的内存模型与内存屏障
+
+ROB(Re-Order Buffer)重排序缓冲区,让指令按照程序顺序退役(Retire).
+
+Retire(退役):意味着对应顺序执行中的执行结束,该条指令对系统的影响终将全局可见.
+
+LSU(Load/Store Unit):存取单元,包含读写缓冲区.用于暂存还没有满足缓存一致性的访存指令.
+
+	LSU主要用于解决访存指令等待缓存一致性结束后再退役进而阻塞后续指令进去ROB,导致性能受损的问题.
+
+Commit(提交):一个访存操作完成缓存一致性流程、真正变得全局可见的过程称为Commit.
+
+整个流程为:
+
+![](images/modern_micro_process_architecture.png)
+
+#### 12.2.5.1 x86架构下的TSO一致性模型
+
+![](images/x86_TSO_consistency.png)
+
+
