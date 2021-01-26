@@ -257,3 +257,76 @@ Back-Off策略:当竞争者拿不到锁时,它就不再继续尝试修改该cach
 	时性能不如spinlock.
 
 #### 12.4.1.3 MCS锁分析
+
+MCS锁拥有一个等待队列.MCS为每一个竞争者都准备了一个节点,并插入到一个链表中.锁的持有者可以通过链表找到下一任竞争者并将锁传递.竞争者只需等待在自己的节点上,由前任锁的持有者通过修改自己节点上的标记来完成锁的传递.
+
+MCS锁代码:
+
+	void *atomic_XCHG(void **addr, void *new_valud)
+	{
+		void *tmp = *addr;
+		*addr = new_value;
+		return tmp;
+	}
+
+	struct MCS_node {
+		volatile int flag;
+		volatile struct MCS_node *next;
+	}__sttribute__((aligned(CACHELINE_SZ)));
+
+	struct MCS_lock {
+		struct MCS_node *tail;
+	};
+
+	void lock(struct MCS_lock *lock, struct MCS_node *me)
+	{
+		struct MCS_node *tail = 0;
+		me->next = NULL;
+		me->flag = WAITING;
+		// 为每个线程调用atomic_XCHG时,会将me加入到lock链表的tail
+		tail = atomic_XCHG(&lock->tail, me);
+		
+		if (tail) {
+			tail->next = me;
+			//加入me之前lock链表存在线程等待,当前线程处于WAITING(me),等待变为GRANTED.否则,直接跳出
+			//函数,进入临界区
+			while (me->flag != GRANTED)
+				;
+		}
+	}
+
+	void unlock(struct MCS_lock *lock, struct MCS_node *me)
+	{
+		if (!me->next) {
+			if (atomic_CAS(&lock->tail, me) == me)	//判断链表是否为空,为空则返回,否则取出me
+				return;
+			while (!me->next)
+				;
+		}
+		me->next->flag = GRANTED;	//链表不为空,设置下一个节点的flag为GRANTED.
+	}
+
+#### 12.4.1.4 MCS锁获取及释放过程
+
+![](images/mcs_lock_free_procedure1.png)
+
+![](images/mcs_lock_free_procedure2.png)
+
+![](images/mcs_lock_free_procedure3.png)
+
+### 12.4.2 NUMA架构中频繁远程内存访问导致的可扩展性问题
+
+暂略.
+
+### 12.5 案例分析:Linux内核中的NUMA感知设计
+
+暂略.
+
+# Chapter 14 网络协议栈与系统
+
+## 14.1 一个网络包的生命周期
+
+![](images/network_packet_send_period.png)
+
+	1.应用层:HTTPS的应用(e.g.网页请求),会将HTTPS请求先封装一个HTTPS的头(用于识别HTTPS请求),然后传递给
+		下一层;
