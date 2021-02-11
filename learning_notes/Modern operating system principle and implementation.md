@@ -1,5 +1,92 @@
 # Modern operating system principle and implementation
 
+# Chapter 1 操作系统概述
+
+## 1.1 操作系统的职责
+
+操作系统的两个职责
+
+	1.对硬件进行管理和抽象;
+	2.为应用提供服务并进行管理.
+
+## 1.2 操作系统接口
+
+从应用的角度来看,操作系统提供了不同层次的接口,包括:系统调用接口、POSIX接口、领域应用接口等.
+
+![](images/OS_interface.png)
+
+### 1.2.1 系统调用接口
+
+系统调用执行过程分解如下:
+
+#### 1.2.1.1 应用程序
+
+	#include <stdio.h>
+	int main()
+	{
+		printf("Hello World!\n");
+		return 0;
+	}
+
+#### 1.2.1.2 libc
+
+	write(1, "Hello World!\n", 13) {
+		...
+		/* 传参过程 */
+		mov x0, #__NR_write		/* 第1个参数:系统调用ID */
+		mov x1, #1				/* 第2个参数:文件描述符 */
+		mov x2, x4				/* 第3个参数:字符串首地址 */
+		mov x3, #13				/* 第4个参数:字符串长度 */
+		svc #0					/* 执行svc指令,进入内核 */
+		...
+	}
+
+#### 1.2.1.3 下陷处理及系统调用处理
+
+	/* 下陷处理 */
+	sys_syscall:
+		...
+		bl syscall_table(__NR_write)
+		...
+	/* 系统调用处理 */
+	sys_write {
+		...
+		return error_no;
+	}
+
+#### 1.2.1.4 执行过程描述
+
+	1.printf调用标准库libc中的write函数;
+	2.libc在准备好相关的参数后,执行svc指令使用控制流从用户地址空间下陷到内核地址空间;
+	3.操作系统内核的下陷处理函数根据系统调用传入的第一个参数,识别出该调用需要执行内核提供的sys_write函数,
+		从而通过系统调用表(syscall_table)调用对应的函数.
+	PS:应用程序和libc均属于用户地址空间.
+
+### 1.2.2 POSIX接口
+
+POSIX(Portable Operating System Interface for uniX,可移植操作系统接口,X表示对UNIX API的传承).
+
+	常见的POSIX有:libc, musl, eglibc, bionic(Andriod的POSIX接口).
+
+### 1.2.3 领域应用接口
+
+#### 1.2.3.1 领域应用接口
+
+领域应用接口:为各个应用领域定义的应用开发接口与软件架构.
+
+	1.AUTOSAR(AUTomotive Open System Architecture):面向汽车领域遵循的软件架构及标准;
+	2.Andriod系统框架:用于开发Android APP;
+	3.iOS:为苹果手机平台定义的应用开发接口.
+
+#### 1.2.3.2 API vs. ABI
+
+	API(Application Programming Interface):应用编程接口.
+		用于定义两层软件(e.g.libc与linux内核)之间源码层面的交互接口;
+	ABI:应用二进制接口.定义某个特定体系结构下两层软件之间二进制层面的交互接口
+		e.g.二进制文件格式(ELF或windows的EXE)、数据模式(大小端模式)等.
+
+# Chapter 2 硬件结构
+
 # Chapter 12 多核与处理器
 
 ## 12.1 缓存一致性
