@@ -87,6 +87,65 @@ POSIX(Portable Operating System Interface for uniX,可移植操作系统接口,X
 
 # Chapter 2 硬件结构
 
+## 2.1 CPU与指令集架构
+
+ISA(Instruction Set Architecture,指令集架构):是CPU与软件之间的桥梁.包括指令集、特权级、寄存器、执行模式、安全扩展、性能加速扩展等诸多方面.
+
+### 2.1.1 指令集
+
+AArch64中的每条指令的长度固定为4 Byte.
+
+### 2.1.2 特权级
+
+AArch64的特权级分为EL0、EL1、EL2、EL3.
+
+#### 2.1.2.1 EL0->EL1的切换场景
+
+EL0(应用程序)到EL1(操作系统)的切换场景如下:
+
+	1.应用程序调用OS提供的系统调用:应用程序通过执行svc(特权调用,supervisor call)指令将CPU特权从EL0
+		切换到EL1;
+	2.应用程序执行一条指令,该指令触发了异常,导致CPU特权级从EL0切换到EL1;
+		e.g.应用程序执行一条访存指令时,触发了缺页异常(page fault),从而切换到OS内核进行处理.
+	3.应用程序在执行的过程中,CPU受到一个外设中断,该中断也会导致CPU特权级从EL0切换到EL1.
+
+#### 2.1.2.2 同步和异步的切换
+
+	同步的CPU特权级切换:系统调用和异常均属于同步切换,因为都是由CPU中正在执行的指令导致的;
+	异步的CPU特权级切换:中断属于异步切换.因为不是由CPU执行应用程序中的指令导致的.
+
+#### 2.1.2.3 EL0->EL1的切换基本流程
+
+![](images/EL0_to_EL1_switch_flow.png)
+
+**1.保存状态**
+
+在发生特权切换的时刻,CPU负责保存当前执行状态,以便OS在处理异常时使用并在处理结束后能够恢复应用程序的执行.主要保存的状态包括:
+
+	1.触发异常的指令地址(即PC(Program Counter)程序计数器中的值)保存到ELR_EL1(Exception Link 
+		Register:异常链接寄存器)中;
+	2.异常原因(由于执行svc指令还是访存缺页导致的)保存到ESR_EL1(Exception Syndrome Register:异常症状
+		寄存器)中;
+	3.CPU将栈指针(SP)从SP_EL0(应用程序使用的栈)切换到SP_EL1(OS使用的栈);
+	4.保存一些其他的状态:
+		1.将CPU的相关状态保存在SPSR_EL1;
+		2.将引发缺页异常的地址保存在FAR_EL1(Fault Address Register:错误地址寄存器)中.
+
+**2.异常处理**
+
+发生特权切换时,CPU会读取VBAR_EL1(Vector Base Address Register:向量基址寄存器)来获取异常向量表(exception vector table)的基地址,然后根据异常原因(ESR_EL1中保存的内容)调用OS设置的对应的异常处理函数进行处理.
+
+	1.如果是系统调用导致的切换:执行相应的系统调用即可;
+	2.如果是缺页异常导致的切换:执行相应的缺页异常处理函数即可.
+
+异常处理完成后,OS会恢复应用程序的上下文,然后执行eret(exception return,异常返回)指令以恢复CPU自动保存的EL0状态(包括PC和SP等),并切回到EL0,继续执行.
+
+### 2.1.3 寄存器
+
+略.
+
+## 2.2 物理内核与CPU缓存
+
 # Chapter 12 多核与处理器
 
 ## 12.1 缓存一致性

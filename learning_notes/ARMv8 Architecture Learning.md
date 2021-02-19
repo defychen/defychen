@@ -27,7 +27,9 @@ ARMv8架构将运行状态分为AArch64和AArch32两种状态,具体情形如下
 #### 1.2.1 AArch64状态特点
 
 	1.64-bit的运行状态,地址存储在64-bit的寄存器中,使用64-bit指令集以及64-bit的寄存器;
-	2.31个64-bit的通用寄存器(X0-X30,通过W0-W30来访问低32-bit,X30一般用作程序链接寄存器);
+	2.31个64-bit的通用寄存器(X0-X30,通过W0-W30来访问低32-bit:
+		X29:FP(Frame Pointer)帧指针寄存器,保存函数调用过程中栈顶的地址;
+		X30:LP(Link Register)链接指针寄存器,CPU在执行bl时会将返回地址保存在LP中;
 	3.64-bit的程序计数器(PC)、64-bit的堆栈指针SP(每个异常等级一个)、64-bit的异常链接寄存器ELR(每个异常
 		等级一个,存储了从中断返回的地址);
 	4.32个128-bit的NEON浮点寄存器(V0-V31),支持SIMD的向量运算及标量浮点的运算;
@@ -72,7 +74,8 @@ ARMv8 4个等级描述如下:
 	2.EL1:用来跑OS,包括虚拟化中的Guest OS(Normal world);Secure状态下的Secure World OS也运行在该层
 		(Secure world);
 	3.EL2:用来支持虚拟化的Hypervisor运行在该层(仅有Normal world存在EL2);
-	4.EL3:用来支持Security的Secure Monitor运行在该层.
+	4.EL3:用来支持Security的Secure Monitor运行在该层,与TrustZone相关,负责normal world和secure
+		world之间的切换.
 
 **在实现架构时,并不是所有的EL都要实现.其中EL0~EL1是必须要实现的,EL2主要用于支持虚拟化,可以不用实现;EL3用来支持Security,也可以不实现.**
 
