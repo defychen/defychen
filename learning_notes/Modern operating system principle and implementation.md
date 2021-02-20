@@ -146,6 +146,48 @@ EL0(应用程序)到EL1(操作系统)的切换场景如下:
 
 ## 2.2 物理内核与CPU缓存
 
+### 2.2.1 缓存结构
+
+物理地址用于索引cacheline的划分如下:
+
+	offset:索引cacheline中的某byte数(e.g. cacheline 64B,用物理地址0b[5:0]索引);
+	set(也叫index):表示cache中组数(e.g.物理地址0b[13:6]表示set数为256个);
+	Tag:用于在同一set中匹配物理地址(e.g.物理地址0b[43:14]表示Tag信息);
+	way:同一set中包含的cacheline数目.
+
+### 2.2.2 缓存寻址
+
+![](images/l1_cache_structure.png)
+
+AArch64架构的Cortext-A57 CPU的中L1-D cache结构参数:
+
+	物理地址长度:44-bit
+	cache大小:32KB,cacheline大小:64B
+	set数:256,way数:2
+
+如果要读取物理地址:0x2fbbc030开始的4字节的物理内存数据的解析:
+
+	Offset:0x30--->0b[5:0];
+	Set:0--->0b[13:6];
+	Tag:0xbeef--->0b[43:14];
+	1.根据Set定位到Set=0的两个cacheline(way:2),对比Tag并检查Valid是否为1(表示该cacheline是否有效);
+	2.然后根据offset进行提取对应的数据(本例为提取4字节的字为23);
+	PS:如果Set和Tag都匹配上了,但是Valid为0(cacheline为无效的),则必须读取内存来获得有效数据.
+
+## 2.3 设备与中断
+
+### 2.3.1 内存映射输入输出
+
+MMIO(Memory-Mapped I/O,内存映射输入输出):把输入输出设备和物理内存放到同一个地址空间,为设备内部的内存和寄存器也分配相应的地址.
+
+CPU通过MMIO的方式为一个设备分配了设备地址,CPU就可以使用和访问物理内存一样的指令(ldr和str)去读写这些属于设备的地址.
+
+### 2.3.2 轮询与中断
+
+略.
+
+# Chapter 3 操作系统结构
+
 # Chapter 12 多核与处理器
 
 ## 12.1 缓存一致性
