@@ -1788,3 +1788,22 @@ unused属性用于函数和变量,表示该函数或变量可能不使用.
 		puts(a); //输出转换后的字符串
 		return 0;
 	}
+
+## 57. 数组索引的另类写法
+
+	#include <stdio.h>
+	#include <stdlib.h>
+
+	static char *directions[] = {
+		"AAA",
+		"BBB",
+		"CCC"
+	};
+
+	int main()
+	{
+		int index = 1;
+		printf("index: %d, string: %s\n", index, index[directions]);
+			//这样的反向索引也是正确的,反汇编看到的和directions[index]是一样的.
+		return 0;
+	}

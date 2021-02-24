@@ -221,7 +221,45 @@ CPU通过MMIO的方式为一个设备分配了设备地址,CPU就可以使用和
 
 ## 3.2 操作系统框架结构
 
+### 3.2.1 Android系统框架
 
+Android采用的是Apache Software License.
+
+	Apache Software License:与GPL(GNU Public License)不同,其不要求使用并修改源码的使用者重新开放源
+		码,而只需要在每个修改的文件中保留license并表明所修改的部分即可.
+
+#### 3.2.1.1 Android系统架构
+
+![](images/android_architecture.png)
+
+**1.硬件抽象层(HAL)**
+
+Android在linux内核之上提供了一层硬件抽象层.封装了一些硬件实现的细节,实现了linux内核与Android系统框架的解耦;并通过用户态驱动模型,使得设备厂商不需要开放源码就能为Android操作系统提供设备驱动,从而促使更多的设备厂商加入到Android生态.
+
+实现HAL层的主要原因:
+
+	1.由于Linux的设备驱动都运行在Linux内核态(宏内核特点),设备驱动的接口依赖于linux内核设备驱动接口的演
+		进,导致Android系统框架与Linux内核版本紧密耦合,不利于Android系统框架的独立演进与升级;
+	2.linux内核采用GPLv2协议,需要开放所有的源代码,HAL采用Apache Software License,有利于保护设备厂商
+		的利益.
+
+**2.Android库(Android library)**
+
+Android库提供了一些方便Android应用开发的自定义库;又重新实现了一些标准库(e.g. glibc等),从而规避了LGPL协议.
+
+**3.Android运行环境(Android RunTime, ART)**
+
+Android开发语言是Java,提供了一个ART用于将字节码转换成可执行代码.
+
+**4.Android应用框架(Android Application Framework)**
+
+Android应用框架提供了应用运行所需要的基础服务(e.g.服务管理(service manager),活动管理(activity manager),包管理(package manager),窗口管理(window manager)等).
+
+### 3.2.2 ROS系统框架
+
+ROS(Robot Operating System):机器人操作系统.
+
+# Chapter 4 内存管理
 
 # Chapter 12 多核与处理器
 

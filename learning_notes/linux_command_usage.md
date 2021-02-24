@@ -696,9 +696,9 @@ rename常用于批量修改文件名.
 	$ ls
 		1 2 3 4
 
-### 35. grep
+## 35. grep
 
-#### 35.1 grep -i
+### 35.1 grep -i
 
 针对单个字符不区分大小写
 
@@ -715,7 +715,7 @@ grep时排除指定的目录
 	grep "xxx" . -nr --exclude-dir=dir
 	e.g. grep "xxx" . -nr --exclude-dir=.svn	//排除.svn目录搜索字符
 
-#### 35.2 grep -E
+### 35.2 grep -E
 
 -E:表示扩展的正则表达式.可用于搜索满足任意关键字或同时满足多个关键字.
 
@@ -737,7 +737,7 @@ grep时排除指定的目录
 	PS:更多使用的是:
 		grep "word1.*word2.*word3" file.txt -nr
 
-#### 25.3 grep -w
+### 25.3 grep -w
 
 精确匹配.
 
@@ -748,13 +748,13 @@ grep时排除指定的目录
 		$1:为进程ID位于匹配后字符串的位置.
 	*/
 
-#### 25.4 zgrep
+### 25.4 zgrep
 
 zgrep用于查看压缩文件(以tar.gz结尾的文件).
 
 	zgrep "xxxx" yyy.tar.gz -nr	//像grep一样使用即可.
 
-### 36. find命令
+## 36. find命令
 
 	find . -name "april*"
 		//在当前目录下查找以april开头的文件
@@ -782,7 +782,7 @@ zgrep用于查看压缩文件(以tar.gz结尾的文件).
 	find . -name "*.cpp" | xargs wc -l	//统计.cpp的代码量
 	find . -name "*.h" | xargs wc -l	//统计.h的代码量
 
-### 37. "./configure --prefix=path"软件安装的路径指定
+## 37. "./configure --prefix=path"软件安装的路径指定
 
 一般安装软件时会将软件安装到默认的路径(一般为类似/usr/bin路径),如果需要安装到指定路径,方法如下:
 
@@ -793,18 +793,46 @@ zgrep用于查看压缩文件(以tar.gz结尾的文件).
 	make -j12
 	make install
 
-### 38. hostname
+## 38. hostname
 
 hostname命令用于显示和设置系统的主机名称.
 
-#### 38.1 显示主机名称
+### 38.1 显示主机名称
 
 	hostname	//结果为:主机名称
 	uname		//等价于hostname
 
-#### 38.2 查看主机ip地址
+### 38.2 查看主机ip地址
 
 	hostname -i		//得到虚拟机ip地址:127.0.0.1,没有虚拟机则是系统的ip地址
 	hostname -I		//得到主机ip地址,与ifconfig等价
+
+## 39. numactl命令
+
+查看系统的numa状态.
+
+### 39.1 安装
+
+linux默认是不安装numactl命令,安装方法如下(ubuntu):
+
+	sudo apt install numactl
+
+### 39.2 查看系统numa状态
+
+	numactl --hardware
+
+### 39.3 运行结果解析
+
+	available: 2 nodes (0-1)	//表示2个node
+	node 0 cpus: 0 1 2 3 4 5 6 7 16 17 18 19 20 21 22 23	//每个node 16个CPU
+	node 0 size: 131037 MB		//每个node占有128GB内存(131037 / 1024 ≈ 128)
+	node 0 free: 3019 MB
+	node 1 cpus: 8 9 10 11 12 13 14 15 24 25 26 27 28 29 30 31
+	node 1 size: 131071 MB
+	node 1 free: 9799 MB
+	node distances:
+	node 0 1
+	 0: 10 20
+	 1: 20 10
 
 ## 13. wget命令
