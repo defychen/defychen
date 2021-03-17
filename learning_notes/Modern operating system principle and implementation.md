@@ -606,6 +606,44 @@ MPAM(Memory System Resouce Partitioning and Monitoring):该技术可以被OS利�
 
 #### 5.1.1.2 进程状态切换的实例
 
+**1.代码**
+
+	#include <stdio.h>
+	#define LEN 10
+
+	int main(int argc, char *argv[])
+	{
+		char name[len] = {0};
+		fgets(name, LEN, stdin);
+		printf("Hello %s\n", name);
+		return 0;
+	}
+
+编译之后生成hello-name,然后执行"./hello-name".
+
+**2.进程状态分解**
+
+1.新生状态
+
+当执行"./hello-name",敲回车后.shello会收到该命令,并请求内核创建对应的进程以处理命令.内核创建出新进程时,该进程尚未完成初始化,处于新生状态.
+
+2.就绪状态
+
+内核对处于新生状态的进程所需的数据结构进行初始化,并将其交给调度器,加入到运行队列,此时变为就绪状态.
+
+3.运行状态
+
+调度器选择该进程执行,此时进程变为运行状态,开始执行main函数.
+
+4.阻塞状态
+
+进程执行到fgets函数,需要接收用户输入,此时进程变为阻塞状态,等到用户输入(此时进程并不在运行队列中).
+
+5.用户输入"world"并回车后,进程从阻塞状态切到就绪状态,重复2-3过程.在运行状态中输出"Hello world".
+
+6.进程执行完main函数,回到内核中,切到终止状态,内核回收该进程的资源.
+
+### 5.1.2 进程的内存空间布局
 
 
 # Chapter 12 多核与处理器
