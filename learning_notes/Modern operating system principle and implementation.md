@@ -713,6 +713,66 @@ MPAM(Memory System Resouce Partitioning and Monitoring):该技术可以被OS利�
 
 ## 5.2 案例分析:linux的进程操作
 
+### 5.2.1 进程的创建:fork
+
+#### 5.2.1.1 使用fork的示例代码
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <unistd.h>
+
+	int main(int argc, char *argv[])
+	{
+		int x = 42;
+		int rc = fork();
+		if (rc < 0) {
+			/* fork失败 */
+			fprintf(stderr, "Fork failed!\n");
+		} else if (rc == 0) {
+			/* 调用fork时,子进程返回0 */
+			printf("Child process: rc is %d; the value of x is: %d\n", rc, x);
+		} else {
+			/* 调用fork时,父进程返回子进程的PID */
+			printf("Parent process: rc is %d; the value of x is: %d\n", rc, x);
+		}
+	}
+	//结果可能为(变量x,进程的内存,寄存器,程序计数器等子进程有一份拷贝,因此打印的x值一样):
+	Child process: rc is 0; the value of x is: 42
+	Parent process: rc is 8283; the value of x is: 42
+
+#### 5.2.1.2 fork子进程后操作文件示例
+
+	#include <fcntl.h>
+	#include <stdio.h>
+	#include <sys/stat.h>
+	#include <sys/types.h>
+	#include <unistd.h>
+
+	char str[11] = {0};
+
+	int main(int argc, char *argv[])
+	{
+		int fd = open("test.txt", O_RDWR);
+		if (fork() == 0) {
+			ssize_t cnt = read(fd, str, 10);
+			printf("Child process: %s\n", str);
+		} else {
+			ssize_t cnt = read(fd, str, 10);
+			printf("Parent process: %s\n", str);
+		}
+		close(fd);
+		return 0;
+	}
+	//结果可能为(父、子进程执行顺序不定),假设文件test.txt内容为"abcdefghijklmnopqrst...":
+	Parent proces: abcdefghij
+	Child process: klmnopqrst
+
+![](images/fork_and_fd.png)
+
+	PS:父子进程维护相同的fd,linux在实现read时会对文件抽象fd进行加锁,实现顺序操作文件.
+
+### 5.2.2 进程的执行:exec
+
 # Chapter 12 多核与处理器
 
 ## 12.1 缓存一致性
