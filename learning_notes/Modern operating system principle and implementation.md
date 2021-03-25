@@ -773,6 +773,27 @@ MPAM(Memory System Resouce Partitioning and Monitoring):该技术可以被OS利�
 
 ### 5.2.2 进程的执行:exec
 
+exec函数的详细用法参考"Advanced Programming in the UNIX Environment.md"中的8.8 exec函数.
+
+### 5.2.3 进程管理
+
+#### 5.2.3.1 进程树
+
+![](images/linux_process_tree.png)
+
+	1.init进程是OS创建的第一个进程,之后所有的进程都是由它之间或简介创建出来的;
+	2.kthreadd是第二个进程,内核创建和管理的所有进程都是由kthreadd fork出来的;
+	3.内核进程创建完了之后,init进程会创建出一个login进程要求用户登录;
+	4.login验证通过后,会从login中fork出bash进程,作为与用户交互的终端.
+
+#### 5.2.3.2 wait
+
+wait的详细用法参考"Advanced Programming in the UNIX Environment.md"中的8.6 函数wait和waitpid.
+
+#### 5.2.3.3 进程组与会话
+
+进程组与会话详细用法参考"Advanced Programming in the UNIX Environment.md"中的9.3和9.4.
+
 # Chapter 12 多核与处理器
 
 ## 12.1 缓存一致性
