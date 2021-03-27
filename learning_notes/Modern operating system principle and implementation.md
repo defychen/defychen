@@ -794,6 +794,110 @@ wait的详细用法参考"Advanced Programming in the UNIX Environment.md"中的
 
 进程组与会话详细用法参考"Advanced Programming in the UNIX Environment.md"中的9.3和9.4.
 
+### 5.2.4 linux进程创建fork、vfork和clone
+
+#### 5.2.4.1 fork、vfork、clone的区别
+
+	fork:fork创造的子进程是父进程的完整副本,复制父进程的资源,包括内存的内容task_struct内容(但是不共享);
+	vfork:vfork创建的子进程与父进程共享数据段,而且由vfork()创建的子进程将先于父进程运行;
+	clone:有选择性的继承父进程的资源.
+
+#### 5.2.4.2 fork的使用说明
+
+**1.代码**
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <sys/types.h>
+	#include <unistd.h>
+
+	int main(void)
+	{
+	    int count = 1;
+	    int child;
+	
+	    child = fork( );
+	
+	    if(child < 0) {
+	        perror("fork error : ");
+	    } else if(child == 0) {
+     		/* fork return 0 in the child process because child can get hid PID by getpid() */
+	        printf("This is son, his count is: %d (%p). and his pid is: %d\n",
+				++count, &count, getpid());
+	    } else {
+			/* the PID of the child process is returned in the parent’s thread of execution */
+	        printf("This is father, his count is: %d (%p), his pid is: %d\n",
+				count, &count, getpid());
+	    }
+	
+	    return EXIT_SUCCESS;
+	}
+	//结果为:
+	This is father, his count is: 1 (0x7fff61a2c4f8), his pid is: 25714
+	This is son, his count is: 2 (0x7fff61a2c4f8). and his pid is: 25715
+
+**2.说明**
+
+	1.子进程改变了count的值,而父进程中的count没有被改变;
+	2.子进程与父进程count的地址(虚拟地址)是相同的(但是他们在内核中被映射的物理地址不同).
+	因此:fork创建出来的子进程的资源是父进程的复制,但是不是共享的,会映射成到的物理内存.
+
+#### 5.2.4.3 vfork的使用说明
+
+**1.代码**
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	
+	#include <sys/types.h>
+	#include <unistd.h>
+	
+	
+	int main(void)
+	{
+	    int count = 1;
+	    int child;
+	
+	    printf("Before create son, the father's count is:%d\n", count);
+	
+	    if((child = vfork()) < 0) {
+	        perror("fork error : ");
+	    } else if(child == 0) {
+	     	/* fork return 0 in the child process because child can get his PID by getpid() */
+	        printf("This is son, his count is: %d (%p). and his pid is: %d\n",
+				++count, &count, getpid());
+	        exit(0);
+	    } else {
+            /* the PID of the child process is returned in the parent’s thread of execution */
+	        printf("After son, This is father, his count is: %d (%p), his pid is: %d\n",
+				++count, &count, getpid());
+	        exit(0);
+	    }
+	
+	    return EXIT_SUCCESS;
+	}
+	//结果为:
+	Before create son, the father's count is:1
+	This is son, his count is: 2 (0x7fff61a2c4f8). and his pid is: 12586
+	This is father, his count is: 2 (0x7fff61a2c4f8), his pid is: 12585
+
+**2.说明**
+
+	1.vfork创建的子进程,子进程的虚拟地址空间也不创建,直接共享父进程的虚拟地址空间,因此也就共享了父进
+		程的物理地址空间;
+	2.vfork创建的子进程共享了父进程的count变量,两者的count指向了同一个内存,所以子进程修改count变量,父
+		进程的count变量同样受到了影响;
+	3.vfork创造出来的子进程会导致父进程挂起,除非子进程exit或者execve才会唤起父进程;
+	4.vfok创建出来的子进程共享了父进程的所有内存,包括栈地址,直至子进程使用execve启动新的应用程序为止;
+	5.vfork创建出来得子进程不应该使用return返回调用者(子进程中的exit(0)去掉,默认是使用return返回的),
+		会有问题(具体问题网上搜索).
+
+**3.fork和vfork的区别**
+
+	1.fork()子进程拷贝父进程的数据段、代码段;vfork()子进程与父进程共享数据段;
+	2.fork()父子进程的执行次序不确定;vfork()保证子进程先运行.
+
+
 # Chapter 12 多核与处理器
 
 ## 12.1 缓存一致性
