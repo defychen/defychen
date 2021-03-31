@@ -573,6 +573,25 @@ ar(archive)命令,归档.通常用于将多个目标文件.o进行归档,形成�
 
 	-i, --node	print the index number of each file. --->得到每个文件的索引数
 		建立的软链接可以使用"ls -il"来查看链接的目标
+	-lh --->以human显示,会以Byte显示文件大小
+
+### 27.1 统计当前目录下含有的文件数(包括子文件夹)
+
+	ls -lR | grep "^-" | wc -l
+	/*
+		ls -lR:列出当前目录下所有的文件(包括字目录下的),也包括目录;
+		grep "^-":搜索以"-"开头的文件(-在ls列出来的表示文件),即为搜出文件,过滤掉目录;
+		wc -l:统计行数并显示.
+	*/
+
+### 27.2 统计当前目录下的目录个数(包括子文件夹)
+
+	ls -lR | grep "^d" | wc -l
+	/*
+		ls -lR:列出当前目录下所有的文件(包括字目录下的),也包括目录;
+		grep "^d":搜索以"d"开头的文件(d在ls列出来的表示目录),即为搜出目录,过滤掉文件;
+		wc -l:统计行数并显示.
+	*/
 
 ## 28.rm命令选项
 
@@ -834,5 +853,68 @@ linux默认是不安装numactl命令,安装方法如下(ubuntu):
 	node 0 1
 	 0: 10 20
 	 1: 20 10
+
+## 40. lspci
+
+lspci用于查看系统中拥有的pci设备,执行后结果如下.
+
+	00:00.0 Host bridge: Intel Corporation 82845 845 (Brookdale) Chipset Host Bridge (rev 04)
+	00:01.0 PCI bridge: Intel Corporation 82845 845 (Brookdale) Chipset AGP Bridge(rev 04)
+	00:1d.0 USB Controller: Intel Corporation 82801CA/CAM USB (Hub #1) (rev 02)
+	00:1d.1 USB Controller: Intel Corporation 82801CA/CAM USB (Hub #2) (rev 02)
+	00:1e.0 PCI bridge: Intel Corporation 82801 Mobile PCI Bridge (rev 42)
+	00:1f.0 ISA bridge: Intel Corporation 82801CAM ISA Bridge (LPC) (rev 02)
+	00:1f.1 IDE interface: Intel Corporation 82801CAM IDE U100 (rev 02)
+	00:1f.3 SMBus: Intel Corporation 82801CA/CAM SMBus Controller (rev 02)
+	00:1f.5 Multimedia audio controller:Intel Corporation 82801CA/CAM AC'97 Audio Controller (rev 02)
+	00:1f.6 Modem: Intel Corporation 82801CA/CAM AC'97 Modem Controller (rev 02)
+	01:00.0 VGA compatible controller: nVidia Corporation NV17 [GeForce4 420 Go](rev a3)
+	02:00.0 FireWire (IEEE 1394): VIA Technologies, Inc. IEEE 1394 Host Controller(rev 46)
+	02:01.0 Ethernet controller: Realtek Semiconductor Co., Ltd. RTL-8139/8139C/8139C+(rev 10)
+	02:04.0 CardBus bridge: O2 Micro, Inc. OZ6933 Cardbus Controller (rev 01)
+	02:04.1 CardBus bridge: O2 Micro, Inc. OZ6933 Cardbus Controller (rev 01)
+
+lspci命令输出(格式为XX:YY.Z)解析如下:
+
+	XX:PCI bus number. A PCI domain can host up to 256 buses;
+	YY:PCI device number. Each bus can connect to a maximum of 32 PCI devices;
+	Z:Function number. Each device implement up to 8 functions.
+
+## 41. lscpu
+
+查看cpu信息.lscpu从sysfs和/proc/cpuinfo中收集CPU体系结构信息.
+
+## 42. chgrp和chown
+
+### 42.1 chgrp(change group)--->改变文件所属用户组
+
+	sudo chgrp -R defychen file	//如果文件file属于root组,需要切换为普通用户组,可以执行sudo chgrp.
+	//-R:表示递归.此处为将属于root组的file改变为属于defychen用户组.
+
+### 42.2 chown(change owner)--->改变文件拥有者
+
+	sudo chown -R defychen file	//如果文件file拥有者属于root组,需要切换为普通用户,可以执行sudo chown.
+	//-R:表示递归.此处为将属于root的file改变为属于defychen用户.
+
+## 43 dmidecode命令
+
+dmidecode命令可以获取有关硬件方面的信息.dmidecode是将DMI数据库中的信息解码,以可读的文本方式显示.
+
+### 43.1 直接查看厂商信息
+
+	dmidecode -s system-product-name //查看当前linux是跑在虚拟机还是物理机上
+	/*
+		1.显示为"VMware Virtual Platform"--->VMWare Workstation虚拟机;
+		2.显示为"VirtualBox"--->VirtualBox虚拟机;
+		3.显示为"KVM"--->Qemu with KVM虚拟机;
+		4.显示为"Bochs"--->Qemu(emulated)虚拟机;
+		5.显示为"HVM domU"--->Intel的Xen虚拟机;
+		6.显示为"D06"--->华为kunpeng物理机;
+		7.显示为"R282-Z90-00"--->GIGABYTE主板,物理机.
+	*/
+
+### 43.2 查看整个系统信息(信息更详细)
+
+	dmidecode -t system
 
 ## 13. wget命令
