@@ -1518,3 +1518,91 @@ NFS文件系统是一种网络文件系统,两个机器之间可通过NFS实现�
 	b start_kernel
 	c	//输入c继续运行,此时会断在start_kernel函数处.
 
+## 3.7 Qemu上调试编译的linux(PC版本)能否boot起来
+
+当将Chapter 4中的需要升级的ubuntu的linux image编译好之后,为了确认该image能否直接boot起来,需要使用qemu进行验证.
+
+	qemu-system-x86_64 -machine pc -m 4G -kernel /boot/vmlinuz-5.12.0-rc4 -initrd /boot/
+	initrd.img-5.12.0-rc4 -monitor none -serial stdio -nographic -append "console=ttyS0"
+
+### 3.7.1 "kernel panic"问题可能情况(initrd.img过大的问题)
+
+linux启动时,出现"Kernel Panic - not syncing: VFS: Unable to mount root fs on unkown-block(0,0)",进一步查看之前log出现过"initramfs unpacking failed: write error".在早期还出现过"can't allocate initrd",此处报这个原因是initrd太大.
+
+	在Qemu上可以尝试将-m改大,此处改为"-m 8G",就可以继续往下走.
+
+### 3.7.2 解决linux编译内核模块(initrd.img)过大的问题
+
+我们一般编译内核时模块会默认把调试信息也塞进去,导致出来的initrd.img会有900M左右的大小,无法开机.这时需要改一下编译模块时的命令:
+
+	sudo make INSTALL_MOD_STRIP=1 modules_install	//编译modules
+	sudo make install //安装,此时安装的initrd.img会变得很小,然后就可以正常起来了.
+
+# Chapter 4. Ubuntu版本升级及内核升级
+
+## 4.1 Ubuntu版本升级
+
+[参考的网址](https://sypalo.com/how-to-upgrade-ubuntu)
+
+### 4.1.1 preparation
+
+#### 4.1.1.1 Update packages list(更新包列表)
+
+	sudo apt-get update
+
+#### 4.1.1.2 Upgrade packages(升级包)
+
+	sudo apt-get upgrade
+
+#### 4.1.1.3 Install update-manager-core package(安装update-manager-core的包)
+
+	sudo apt-get install update-manager-core
+
+### 4.1.2 upgrade Ubuntu
+
+#### 4.1.2.1 Upgrade distro(升级发行版)
+
+	sudo apt-get dist-upgrade //升级到最新的LTS release(LTS:long term supported).针对
+		ubuntu 18.04/20.04/20.10的升级.
+	PS:如果版本时16.x或者更低没有试过,不确定OK不.
+
+#### 4.1.2.2 替换sources.list的内容
+
+	sudo sed -i 's/bionic/groovy/g' /etc/apt/sources.list	//18.04--->20.10的升级
+
+各个发行版本的代号:
+
+	18.04--->bionic
+	18.10--->cosmic
+	19.04--->disco
+	19.10--->eoan
+	20.04--->focal
+	20.10--->groovy
+	21.04--->hirsute (dev branch)
+
+#### 4.1.2.3 Update packages list(更新包列表)
+
+	sudo apt-get update
+
+#### 4.1.2.4 Upgrade packages(升级包)
+
+	sudo apt-get upgrade
+
+#### 4.1.2.5 Run full upgrade
+
+	sudo apt-get dist-upgrade
+	//If any error re-run
+	sudo apt-get update 
+	sudo apt-get dist-upgrade
+
+#### 4.1.2.6 Run cleanup
+
+	sudo apt-get autoremove
+	sudo apt-get clean
+
+#### 4.1.2.7 Reboot the system
+
+	sudo shutdown -r now
+
+### 4.2 Upgrade kernel
+

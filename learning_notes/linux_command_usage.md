@@ -180,10 +180,20 @@ GNU zip---gzip(gz)和bzip2(bz2)两种压缩格式，压缩比:gzip>bzip2
 
 ## 7.cp命令
 
-	1.cp复制文件夹
+1.cp复制文件夹
+
 	cp -r source_file dest_file 
-	2.cp同时复制".c和.h"文件
+
+2.cp同时复制".c和.h"文件
+
 	cp -f dir/*.[ch] tgt_dir/	//*.[ch]:匹配.c和.h文件
+
+3.cp -i--->interactive prompt before overwrite(写之前有提示)
+
+	//当执行alias(查看别名)出现"alias cp='cp -i'",此时执行cp -rf不会强制覆盖,会出现提示,
+		解决方法(暂时去掉提示)
+	\cp -rf src dst	//cp前加上"\"
+
 
 ## 8.linux版本控制
 
