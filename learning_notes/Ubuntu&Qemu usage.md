@@ -1604,5 +1604,72 @@ linux启动时,出现"Kernel Panic - not syncing: VFS: Unable to mount root fs o
 
 	sudo shutdown -r now
 
-### 4.2 Upgrade kernel
+## 4.2 Upgrade kernel
 
+### 4.2.1 下载适合ubuntu的kernel
+
+#### 4.2.1.1 ubuntu维护kernel的网址
+
+[ubuntu维护kernel的网址](https://kernel.ubuntu.com/~kernel-ppa/mainline/)
+
+[kernel社区的网址](https://www.kernel.org)
+
+#### 4.2.1.2 下载kernel
+
+	cd /tmp		//下载到/tmp目录
+
+1.下载5.12.x的版本--->升级到该版本后,再编译自己的版本进行升级就不方便了,只能先下载,更改引导文件.
+
+	wget -c https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.12-rc6/amd64/
+		linux-headers-5.12.0-051200rc6-generic_5.12.0-051200rc6.202104042231_amd64.deb
+	wget -c https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.12-rc6/amd64/
+		linux-headers-5.12.0-051200rc6_5.12.0-051200rc6.202104042231_all.deb
+	wget -c https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.12-rc6/amd64/
+		linux-image-unsigned-5.12.0-051200rc6-generic_5.12.0-051200rc6.202104042231_amd64.deb
+	wget -c https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.12-rc6/amd64/
+		linux-modules-5.12.0-051200rc6-generic_5.12.0-051200rc6.202104042231_amd64.deb
+
+2.下载5.11.x的版本--->可先安装该版本,复制该版本的config配置,再编译自己的image进行替换.
+
+	wget -c https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.11.11/amd64/
+		linux-headers-5.11.11-051111-generic_5.11.11-051111.202103310025_amd64.deb
+	wget -c https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.11.11/amd64/
+		linux-headers-5.11.11-051111_5.11.11-051111.202103310025_all.deb
+	wget -c https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.11.11/amd64/
+		linux-image-unsigned-5.11.11-051111-generic_5.11.11-051111.202103310025_amd64.deb
+	wget -c https://kernel.ubuntu.com/~kernel-ppa/mainline/v5.11.11/amd64/
+		linux-modules-5.11.11-051111-generic_5.11.11-051111.202103310025_amd64.deb
+
+### 4.2.2 安装新kernel并重启系统
+
+#### 4.2.2.1 安装新的kernel
+
+	sudo dpkg -i *.deb	//安装下载下来的所有*.deb文件
+
+PS:deb文件是linux发行版debian系统的安装包格式,ubuntu是基于debian的系统,因此可以使用deb格式安装包.
+
+#### 4.2.2.2 Reboot the system
+
+	sudo shutdown -r now
+
+## 4.3 Finishing up
+
+#### 4.3.1.1 Update packages list(更新包列表)
+
+	sudo apt-get update
+
+#### 4.3.1.2 Upgrade packages(升级包)
+
+	sudo apt-get upgrade
+
+#### 4.3.1.3 Reboot the system if needed
+
+	sudo shutdown -r now
+
+#### 4.3.1.4 Check the OS distro(核对OS的发行版)
+
+	lsb_release -a
+
+#### 4.3.1.5 Check kernel version
+
+	uname -r
