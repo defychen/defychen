@@ -1673,3 +1673,85 @@ PS:deb文件是linux发行版debian系统的安装包格式,ubuntu是基于debia
 #### 4.3.1.5 Check kernel version
 
 	uname -r
+
+## 4.4 查看所有已安装的内核
+
+### 4.4.1 查看已安装的内核
+
+	dpkg --get-selections | grep linux	//查看所有已安装的内核
+	sudo dpkg -l	//查看已安装的软件
+	sudo dpkg -r 软件名	//卸载软件
+
+### 4.4.2 下载已安装的内核(如果需要的话)--->其他已安装的程序也可以用这个方法卸载
+
+	sudo apt-get remove linux-image-2.6.24.16-generic
+		//再查看的显示中将带有install的卸载掉,变成deinstall
+	sudo  dpkg -P linux-image-2.6.24.16-generic
+		//真正删除干净,使用查询命令再也查不到该内核信息了
+	df -h	//查看挂载磁盘的使用情况
+
+# Chapter 5. 手动升级ubuntu的kernel到最新的版本
+
+针对需要测试dma_map_benchmark,该benchmark当前是built-in到kernel中的(5.12版本后面可以编译成模块加载),此时就需要手动编译一版kernel进行安装.
+
+[参考网址](https://blog.csdn.net/qq_36290650/article/details/83052315)
+
+## 5.1 下载kernel源码
+
+[kernel下载地址](https://www.kernel.org)--->通过git下载最新源码即可.
+
+## 5.2 安装必要的依赖项
+
+	sudo apt-get install gcc make libncurses5-dev openssl libssl-dev 
+	sudo apt-get install build-essential 
+	sudo apt-get install pkg-config
+	sudo apt-get install libc6-dev
+	sudo apt-get install bison
+	sudo apt-get install flex
+	sudo apt-get install libelf-dev
+
+## 5.3 编译准备工作
+
+	cd xxx/linux-5.12-rc4
+	sudo cp /boot/config-5.11.0-051100-generic .config //拷贝已经存在的config作为新kernel的.config
+	sudo make menuconfig //进行一些配置
+	sudo make -j 32	//编译的时间会比较长,编译可能出现各种问题,百度即可.
+	sudo make modules_install //将编译好的模块拷贝到/lib/modules目录下
+
+## 5.4 安装
+
+	sudo make install	//将编译好的image进行安装
+	sudo mkinitramfs -o /boot/initrd.img-5.12-rc4	//sudo make install之后/boot/xxx已经有了
+	sudo update-initramfs -c -k 5.12-rc4
+	sudo update-grub2
+	/*
+		/etc/default/grub:可以使用vim打开,里面保存了启动选项,具体可以参考:
+			https://blog.csdn.net/sfslife/article/details/50935867
+		/boot/grub/grub.cfg:可以使用vim打开.搜索关键字"menuentry",可以看到当前电脑安装的
+			linux版本,留意启动顺序;
+		/boot/initrd.img-xxx:根文件系统所在的目录;
+		/boot/vmlinuz-xxx:image所在的目录.
+	*/
+	sudo shutdown -r now
+	uname -a
+
+## 5.5 ubuntu降级到之前的版本
+
+系统启动时,默认会选择最新的版本进行boot.如果ubuntu已经升级到最新的linux版本(使用官方提供的升级包),但是同时希望使用自己编译的linux版本(自己编译的和官方的linux版本时一样的),此时boot会默认选择官方的版本,即使将自己编译的版本已经安装也不会选择这个版本进行启动.此时需要切换系统:
+
+### 5.5.1 查看已安装的内核
+
+	dpkg --get-selections | grep linux	//查看所有已安装的内核
+
+### 5.5.2 卸载内核
+
+	sudo apt-get remove linux-image-5.12-rc4
+		//包括卸载5.12其他已安装的模块
+	sudo  dpkg -P linux-image-5.12-rc4
+		//真正删除干净,使用查询命令再也查不到该内核信息了
+
+### 5.5.3 更新下
+
+	sudo update-grub2
+	vim /boot/grub/grub.cfg	//查看启动的顺序,此时会有变化
+	sudo shutdown -r now
