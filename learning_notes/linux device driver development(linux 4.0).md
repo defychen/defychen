@@ -926,6 +926,10 @@ GNU C将包含在小括号中的复合语句看成是一个表达式,称为语�
 		如果是以下调用:
 			mint(++ia, ++ib)会展开为((++ia) < (++ib) ? (++ia) : (++ib)),此时传入的宏参数会增加两次.
 			而min_t则不会有副作用,因为重新定义了__x和__y两个局部变量.
+		如果是:
+			int ia = 2, ib = 3;
+			printf("compare value: %d\n", min_t(int, ++ia, ++ib));
+			//结果为:compare value: 3(因为ia增加了1)
 	*/
 	int ia, ib, mini;
 	float fa, fb, minf;
@@ -942,7 +946,7 @@ typeof(x)可以获得x的类型.利用typeof重新定义min这个宏:
 			typeof(x):获得x的类型,并声明一个局部变量_x,初始化为x.
 		*/
 		const typeof(y) _y = (y);	\
-		(void) (&_x == &_y);		\	//用于检查_x和_y的类型是否一致.
+		(void) (&_x == &_y);		\	//用于检查_x和_y的类型是否一致.如果不一致,会报warning.
 		_x < _y ? _x : _y;			\
 	})
 
@@ -959,12 +963,15 @@ typeof(x)可以获得x的类型.利用typeof重新定义min这个宏:
 				((__x + __y - 1) / __y) * __y;})
 		调用:
 			int round_up_val = roundup(4, 5);
-			//会将4,5的值代入,最后计算得到8并赋值给round_up_val.
+			//会将4,5的值代入,最后计算得到5并赋值给round_up_val.
 	2.x按y对齐,并向下取整(四舍五入)
 		#define rounddown(x, y) __extension__ ({ \
 				__typeof__(x) __x = (x); \
 				__typeof__(y) __y = (y); \
 				__x - (__x % __y);})
+		调用:
+			int round_down_val = rounddown(4, 5);
+			//会将4,5的值代入,最后计算得到0并赋值给round_down_val.
 	3.x/y整除向上取整
 		#define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
 		/*位于./include/linux/kernel.h中*/
@@ -5760,6 +5767,126 @@ platform的驱动称为platform_driver.
 			3.devm_ioremap_nocache--->将物理地址映射到nocache的虚拟地址.位于./include/linux/io.h
 			  devm_ioremap_resource--->将物理地址映射到虚拟地址(自由分配).位于./include/linux/device.h
 	*/
+
+### 12.4 Linux设备与驱动的手动解绑和手动绑定
+
+#### 12.4.1 device和driver的绑定
+
+##### 12.4.1.1 绑定原理
+
+Linux靠设备与驱动之间的match,来完成设备与驱动的bind,从而触发驱动的probe()成员函数被执行.每个bus都有相应的match方法,完成match的总的入口函数是:
+
+	/* 该函数位于./drivers/base/base.h */
+	static inline int driver_match_device(struct device_driver *drv,                                      
+	struct device *dev){    
+	    return drv->bus->match ? drv->bus->match(dev, drv) : 1;
+	}
+
+##### 12.4.1.2 platform bus的绑定
+
+上面总的入口函数又会调用到各自不同总线的match函数.对于platform bus而言,它的match函数就是platform_match().
+
+	static int platform_match(struct device *dev, struct device_driver *drv)
+	{    
+	        struct platform_device *pdev = to_platform_device(dev);        
+	        struct platform_driver *pdrv = to_platform_driver(drv);
+	
+    	    /* When driver_override is set, only bind to the matching driver */        
+	        if (pdev->driver_override)        
+	                return !strcmp(pdev->driver_override, drv->name);
+	
+	        /* Attempt an OF style match first */        
+	        if (of_driver_match_device(dev, drv))       
+	                return 1;
+	
+	        /* Then try ACPI style match */        
+	        if (acpi_driver_match_device(dev, drv))        
+	                return 1;
+	
+	        /* Then try to match against the id table */        
+	        if (pdrv->id_table)        
+	                return platform_match_id(pdrv->id_table, pdev) != NULL;
+	      
+	  /* fall-back to driver name match */        
+	        return (strcmp(pdev->name, drv->name) == 0);
+	}
+
+#### 12.4.2 device和driver的手动unbind和bind
+
+上述是一种自动绑定的场景,但有时候我们需要手动匹配(e.g. 我们有时候就是希望XXX设备用YYY驱动,而不是用XXX驱动).
+
+	最典型的场景是VFIO的场景,想让设备与内核空间原本绑定的驱动解绑,转而采用内核空间的通用VFIO驱动,因为
+		VFIO驱动提供了userspace驾驭设备的能力.
+
+##### 12.4.2.1 device和driver绑定实例
+
+1.platform_device模块(globalfifo-dev.ko)
+
+	static int __init globalfifodev_init(void)
+	{
+	  int ret;
+	  globalfifo_pdev = platform_device_alloc("globalfifo", -1);
+	  ret = platform_device_add(globalfifo_pdev); 
+	  ...  
+	  return 0;
+	  
+	}
+	module_init(globalfifodev_init);
+
+2.platform_driver模块(globalfifo.ko)
+
+	static struct platform_driver globalfifo_driver = {
+	  .driver = {
+	      .name = "globalfifo",    
+	      .owner = THIS_MODULE,  
+	      },  
+	      .probe = globalfifo_probe,  
+	      .remove = globalfifo_remove,
+	};
+	module_platform_driver(globalfifo_driver);
+
+3.device与driver的匹配
+
+由于其中的platform_driver和platform_device的name都是“globalfifo”,符合此行的匹配规则：
+
+	strcmp(pdev->name, drv->name) == 0
+
+4.查看匹配情况
+
+![](images/device_driver_match_case.png)
+
+	1.通过/sys/bus/platform/drivers目录下的driver信息,可以查看到某driver指向的device;
+	2.通过/sys/bus/platform/devices目录下的device信息,可以查看到某device指向的driver.
+
+##### 12.4.2.2 device与driver手动unbind和bind
+
+写一个第三者driver,名字叫做globalxxx.然后我们想把globalfifo device的driver指定为globalxxx.因此我们要完成2步:
+
+	1.unbind:解除globalfifo driver与globalfifo device的绑定;
+	2.bind:进行globalxxx driver与globalfifo device的绑定.
+
+手动bind和unbind的方法:
+
+切到/sys/bus/platform/drivers/globalfifo目录,把设备globalfifo的名字写进去unbind文件即可完成unbind,将名字写入bind即可完成bind.
+
+![](images/device_driver_unbind_1.png)
+
+![](images/device_driver_bind_1.png)
+
+	echo globalfifo > /sys/bus/platform/drivers/globalfifo/unbind
+	/*
+		通过: ls -l /sys/bus/platform/devices/globalfifo/drivers可以找到globalfifo这个设备对应的
+		driver路劲,将globalfifo写入到对应的driver的unbind文件中,就会执行驱动的remove函数.
+	*/
+	echo globalfifo > /sys/bus/platform/drivers/globalfifo/bind
+	/*
+		将设备名字写入到globalfifo驱动的bind文件中,就会调用platform_match函数,进行驱动和设备名字的
+		匹配,匹配成功后会执行驱动的probe函数.
+	*/
+
+##### 12.4.2.3 第三者的bind/unbind方法
+
+
 
 ***
 
