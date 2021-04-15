@@ -5886,7 +5886,68 @@ Linux靠设备与驱动之间的match,来完成设备与驱动的bind,从而触�
 
 ##### 12.4.2.3 第三者的bind/unbind方法
 
+1.写一个第三者的platform_driver模块,如下:
 
+	static struct platform_driver globalxxx_driver = {
+	  .driver = {
+	      .name = "globalxxx",	/* 此处名字与globalfifo_dev的不一样,但是仍然可以bind/unbind */
+	      .owner = THIS_MODULE,
+	  },
+	  .probe = globalxxx_probe,  
+	  .remove = globalxxx_remove,
+	};
+	module_platform_driver(globalxxx_driver);
+
+2.bind/unbind方法
+
+	1.unbind操作
+	echo globalfifo > /sys/bus/platform/drivers/globalfifo/unbind
+	2.将globalxxx的名字写入到globalfifo这个device的driver_override中
+	echo globalxxx > /sys/bus/platform/devices/globalfifo/driver_override
+	3.将globalfifo设备与globalxxx驱动进行匹配.globalfifo设备中的名字为driver_override中的字段
+	echo globalfifo > /sys/bus/platform/drivers/globalxxx/bind
+
+3.上述的匹配原则为
+
+	if (pdev->driver_override)
+	    return !strcmp(pdev->driver_override, drv->name);
+	PS:pdev为globalfifo; pdev->driver_override为"globalxxx"; drv->name为"globalxxx"
+
+##### 12.4.2.4 实例---将dma_map_benchmark驱动绑定到gpio-keys的设备上
+
+1.解除bind
+
+	echo gpio-keys > /sys/bus/platform/drivers/gpio-keys/unbind
+
+2.将新驱动的名字写入需要绑定设备的override中
+
+	echo dma_map_benchmark > /sys/bus/platform/devices/gpio-keys/driver_override
+
+3.将需要绑定的设备(设备节点)echo到新驱动的bind中完成新的bind
+
+	echo gpio-keys > /sys/bus/platform/drivers/dma_map_benchmark/bind
+
+##### 12.4.2.5 实例---将dma_map_benchmark驱动绑定到pci的设备上
+
+1.lspci
+
+	查看当前系统拥有的pci设备(显示为bridge的不能绑定,挑选非桥的pci设备)
+
+2.查看pci device对应的driver
+
+	ls -l /sys/bus/pci/devices/0000\:00\:02.0/driver	//找到该device对应的driver
+
+3.解除绑定
+
+	echo 0000:00:02.0 > /sys/bus/pci/drivers/cirrus/unbind
+
+4.将新驱动的名字写入需要绑定设备的override中
+
+	echo dma_map_benchmark > /sys/bus/pci/devices/0000\:00\:02.0/driver_override
+
+5.将需要绑定的设备(设备节点)echo到新驱动的bind中完成新的bind
+
+	echo 0000:00:02.0 > /sys/bus/pci/drivers/dma_map_benchmark/bind
 
 ***
 
