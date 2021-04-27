@@ -992,6 +992,84 @@ wait的详细用法参考"Advanced Programming in the UNIX Environment.md"中的
 
 ## 6.3 单核调度策略
 
+### 6.3.1 经典调度
+
+经典调度主要包括:先到先得、最短时间优先和时间片轮转等.
+
+#### 6.3.1.1 先到先得
+
+先到先得(First Come First Served, FCFS)策略,也叫先进先出(First In First Out, FIFO).
+
+1.优点
+
+	简单直观.
+
+2.弊端:
+
+	1.在长短任务混合的场景下对短任务不友好:
+		图中B/C是短任务,但是必须等A任务完成后B/C才能完成,拉长了时间.
+
+![](images/fcfs_scheduler_policy.png)
+
+	2.对I/O密集型任务不友好,对计算密集型任务友好:
+		A任务是计算密集型任务,B任务是I/O密集型任务.B任务先达到,随后发起I/O请求进入阻塞状态;调度A任务.
+		B任务必须等A任务完成后才能执行.
+
+![](images/fcfs_io_policy.png)
+
+#### 6.3.1.2 最短任务优先
+
+最短任务优先(Shortest Job First, SJF)策略.调度时会选择运行时间最短的任务执行.
+
+1.优点:
+
+	可能能让任务的平均周转时间比FCFS要好.
+
+![](images/sjf_scheduler_policy.png)
+
+2.弊端:
+
+	1.需要预知任务的运行时间--->这样才能选取最短任务执行;
+	2.整体表现严重依赖任务到达的时间点--->不再同一时刻达到,和FCFS调度一样.
+
+![](images/sjf_scheduler_issue.png)
+
+#### 6.3.1.3 最短完成时间任务优先
+
+最短完成时间任务优先(Shortest Time-to-Completion First, STCF).
+
+	非抢占式调度(non-preemptive scheduling):调度器必须等前一个任务执行完成或主动退出才能开始下一个调度.
+		--->FCFS和SJF均属于非抢占式调度.
+	抢占式调度(preemptive scheduling):当任务达到系统时就可以进行调度,有可能中断当前正在执行的任务,转
+		而执行其他任务.
+		--->STCF属于抢占式调度.
+
+1.优点:
+
+	确保短任务优先执行.
+
+2.弊端:
+
+	1.需要预知任务的运行时间--->这样才能选取最短任务执行;
+	2.长任务饥饿(starvation)--->长任务得不到调度.
+
+![](images/stcf_scheduler_policy.png)
+
+#### 6.3.1.4 时间片轮转
+
+时间片轮转(Round Robin, RR):为每个任务设置固定的时间片,当前任务执行完时间片后,调度到下一个任务.
+
+1.优点:
+
+	对需要及时响应用户的任务比较友好.
+
+2.弊端:
+
+	1.时间片的选取很重要;
+	2.在任务运行时间相似的场景下平均周转时间高.
+
+![](images/round_robin_scheduler_policy.png)
+
 # Chapter 12 多核与处理器
 
 ## 12.1 缓存一致性
