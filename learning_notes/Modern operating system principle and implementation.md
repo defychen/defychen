@@ -1191,6 +1191,13 @@ wait的详细用法参考"Advanced Programming in the UNIX Environment.md"中的
 
 ### 6.4.4 负载追踪与负载均衡
 
+负载均衡:通过追踪每个CPU Core当前的负载情况,将处于高负载的CPU Core管理的任务迁移到低负载的CPU Core上,尽可能地保证每个Core的负载大致相同.
+
+![](images/linux_numa_split.png)
+
+	1.Core 0/Core 1称为逻辑核,位于一个物理核中,构成一个逻辑CPU域;
+	2.
+
 # Chapter 12 多核与处理器
 
 ## 12.1 缓存一致性
