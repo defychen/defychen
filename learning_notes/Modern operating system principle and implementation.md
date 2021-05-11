@@ -1196,7 +1196,83 @@ wait的详细用法参考"Advanced Programming in the UNIX Environment.md"中的
 ![](images/linux_numa_split.png)
 
 	1.Core 0/Core 1称为逻辑核,位于一个物理核中,构成一个逻辑CPU域;
-	2.
+	2.物理核0和物理核1组成一个NUMA节点,对应于一个物理CPU域;
+	3.两个物理CPU域组成一个NUMA域.
+
+### 6.4.5 能耗感知调度
+
+暂略.
+
+## 6.5 调度进阶机制
+
+### 6.5.1 处理器亲和性
+
+处理器亲和性(processor affinity):允许程序对任务可以使用的CPU核心进行配置.
+
+	linux系统中,任务通过设置cpu_set_t掩码来表示可以执行(以线程为单位)的CPU核心集合,掩码中的每一bit都
+	对应于一个CPU核心.
+
+#### 6.5.1.1 linux操作CPU核心集合掩码的宏
+
+	#include <sched.h>
+
+	1.对set进行初始化,并设置为空
+	void CPU_ZERO(cpu_set_t *set);
+	2.将所对应的CPU核心加入到set中
+	void CPU_SET(int cpu, cpu_set_t *set);
+	3.将所对应的CPU核心从set中删除
+	void CPU_CLR(int cpu, cpu_set_t *set);
+	4.判断对应的CPU核心是否在set中,是则返回1;否则返回0
+	int CPU_ISSET(int cpu, cpu_set_t *set);
+	5.返回当前set中CPU核心数量
+	int CPU_COUNT(cpu_set_t *set);
+
+#### 6.5.1.2 linux的任务(线程)亲和性接口
+
+	#include <sched.h>
+
+	// 设置任务对于CPU核心的亲和性
+	int sched_setaffinity(pid_t pid, size_t cpusetsize, const cpu_set_t *mask);
+	/*
+		pid:linux为每个线程分配的标识符,如果pid为0则表示当前调用者线程.
+	*/
+
+	// 获取任务的亲和性配置
+	int sched_getaffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask);
+
+#### 6.5.1.3 设置任务(线程)亲和性的代码实例
+
+	#include <sched.h>
+	#include <stdio.h>
+	#include <sys/sysinfo.h>
+
+	int main()
+	{
+		cpu_set_t mask;
+		// 初始化mask的CPU集合为空
+		CPU_ZERO(&mask);
+
+		// 在mask的CPU集合中加入CPU Core0和Core2
+		CPU_SET(0, &mask);
+		CPU_SET(2, &mask);
+
+		// 根据mask设置当前任务的亲和性
+		sched_setaffinity(0, sizeof(mask), &mask);
+		/*
+			pid=0:表示当前调用者线程;
+			此处表示:该任务只能在Core 0和Core 2上执行.
+		*/
+	}
+
+### 6.5.2 调度策略设置
+
+暂略.
+
+# Chapter 7 进程间通信
+
+# Chapter 8 同步原语
+
+
 
 # Chapter 12 多核与处理器
 
