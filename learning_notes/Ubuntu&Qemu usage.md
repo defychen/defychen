@@ -894,6 +894,7 @@ busybox:一个集成100多个linux常用命令和工具的软件,是一个特别
 	3.创建挂载点,并进行挂载
 		mkdir tmpfs
 		mount -t ext3 a9rootfs.ext3 tmpfs/ -o loop	//将a9rootfs.ext3(ext3的文件系统)挂载到tmpfs下
+		--->mount时必须以root用户mount,否则会报"mount: xxx failed to set loop device for..."
 	4.拷贝所需的文件系统到挂载点
 		cp -r rootfs/* tmpfs/
 	5.卸载
@@ -1039,6 +1040,139 @@ busybox:一个集成100多个linux常用命令和工具的软件,是一个特别
 方法3--->该方法最快,可以干掉所有的qemu进程(但是全kill也存在不好).
 
 	killall qemu-system-aarch64		//干掉全部qemu-system-aarch64的进程.
+
+### 3.1.6 Qemu启动arm64的方法
+
+#### 3.1.6.1 busybox的配置及编译---和3.1.3.2配置、编译章节里的2.aarch64模式一样
+
+	make defconfig
+	export ARCH=arm64
+	export CROSS_COMPILE=aarch64-linux-gnu-
+	make menuconfig	//配置一些选项,此处配置成静态编译
+		Busybox Settings --->
+			Build Options --->
+				[*] Build BusyBox as a static binary (no shared libs)
+	make install	//编译及安装
+	/*
+		生成的根文件系统位于:./busybox-1.25.0/_install/,有"bin/linuxrc/sbin/usr"等.
+	*/
+
+#### 3.1.6.2 制作根目录
+
+1.创建一些目录
+
+	cd ./busybox-1.25.0/_install //该目录下有:bin/linuxrc/sbin/usr等目录
+	mkdir dev etc lib sys proc tmp var home root mnt
+	
+2.制作lib下的必要文件(为了支持动态编译的应用程序的执行,根文件系统需要支持动态库,所以我们添加了arm64相关的动态库文件到lib下):
+
+	cp /usr/arm-linux-gnueabi/lib* lib -rf
+	cd lib
+	aarch64-linux-gnu-strip *	//对库文件进行瘦身(去除符号表和调试信息,使库文件变小)
+	
+3.制作etc目录下的必要文件
+
+	cd ../etc
+	1.etc/init.d中的rcS
+	mkdir init.d
+	cd init.d
+	touch rcS
+	vim rcS
+	//写入以下内容
+		mkdir -p /proc
+		mkdir -p /tmp
+		mkdir -p /sys
+		mkdir -p /mnt
+		/bin/mount -a
+		mkdir -p /dev/pts
+		mount -t devpts devpts /dev/pts
+		echo /sbin/mdev > /proc/sys/kernel/hotplug
+		mdev -s
+	//增加可执行权限
+	chmod +x rcS
+	2.etc/下的fstab文件
+	cd ../../etc
+	touch fstab
+	vim fstab
+	//写入以下内容(指定挂载的文件系统)
+		proc /proc proc defaults 0 0
+		tmpfs /tmp tmpfs defaults 0 0
+		sysfs /sys sysfs defaults 0 0
+		tmpfs /dev tmpfs defaults 0 0
+		debugfs /sys/kernel/debug debugfs defaults 0 0
+		kmod_mount /mnt 9p trans=virtio 0 0		//用于支持9p文件系统,可以没有
+	//增加可执行权限
+	chmod +x fstab
+	3.etc/下的inittab文件
+	touch inittab
+	vim inittab
+	//写入以下内容(是init进程解析的配置文件,通过这个配置文件决定执行哪个进程,何时执行)
+		::sysinit:/etc/init.d/rcS
+		::respawn:-/bin/sh
+		::askfirst:-/bin/sh
+		::ctrlaltdel:/bin/umount -a -r
+	//增加可执行权限
+	chmod +x inittab
+	4.etc/下的profile文件
+	touch profile
+	//写入以下内容(自定义命令提示符,cd进我们自己指定的home目录,导出环境变量)
+		#!/bin/sh
+		export HOSTNAME=defychen
+		export USER=root
+		export HOME=/home
+		export PS1="[$USER@$HOSTNAME \W]\# "
+		PATH=/bin:/sbin:/usr/bin:/usr/sbin
+		LD_LIBRARY_PATH=/lib:/usr/lib:$LD_LIBRARY_PATH
+	//增加可执行权限
+	chmod +x profile
+
+4.制作dev目录下的必要文件(添加设备节点,需要root权限)
+
+	cd ../dev
+	1.创建4个tty终端设备(串口节点)
+		sudo mknod tty1 c 4 1	//另一种:mknod -m 666 tty1 c 4 1--->效果是一样的.
+		sudo mknod tty2 c 4 2
+		sudo mknod tty3 c 4 3
+		sudo mknod tty4 c 4 4
+	2.创建控制台节点
+		sudo mknod console c 5 1	//另一种:mknod -m 666 console c 5 1--->效果是一样的.
+	3.创建null节点
+		sudo mknod null c 1 3	//另一种:mknod -m 666 null c 1 3--->效果是一样的.
+
+#### 3.1.6.3 编译内核
+
+1.环境配置
+
+	export CROSS_COMPILE=aarch64-linux-gnu-
+	export ARCH=arm64
+	make defconfig	//前面export出来arm的环境后,接下来所有的配置、编译都是arm64的环境
+	make menuconfig,配置initramfs
+		General setup --->
+			[*] Initial RAM filesystem and RAM disk (initramfs/initrd) support
+				(__install_arm64) Initramfs source file(s)
+				//此处选中"Initramfs source file(s)"回车后,输入"__install_arm64"即可
+		Boot options --->
+			(Default kernel command string)
+		Kernel Features --->
+			Page size(4KB) --->	//如果拷贝了arm64的配置文件,该选项则会没有,因为不能复制arm64配置文件.
+				Virtual address space size(48-bit) --->
+		--->有时候比较难找,可以搜索"initramfs_source",然后直接跳过去即可.
+
+2.在内核源代码顶层目录新建_install_arm64目录
+
+	mkdir _install_arm64
+	cp ./busybox-xxx/_install/ _install_arm64 -rf //拷贝busybox制作的文件系统到内核源代码目录
+	lscpu	//查看cpu有多少核(如果16核)
+	make -j 16
+	//编译好的image在./arch/arm64/boot/Image
+
+#### 3.1.6.4 启动
+
+	#!/usr/bin/sh
+	qemu-system-aarch64 -machine virt -cpu cortex-a57 -machine type=virt -nographic -m 2048
+	-smp 2 -kernel /home/defychen/repository_software/linux-4.4.189/arch/arm64/boot/Image 
+	--append "rdinit=/linuxrc console=ttyAMA0"
+	//不出意外就能正常启动
 
 ## 3.2 在Ubuntu系统搭建Qemu模拟ARM(二)--->u-boot启动kernel
 

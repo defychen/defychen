@@ -1,5 +1,18 @@
 # Listen and Writing
 
+# Chapter 368---2021/5/19
+
+	M: Emy, What's in that black box on the bottem shelf?
+	W: You will know if you come over and clean up the garage with me, Jim. All the stuff
+	on the bottem shelf is dad's.
+
+# Chapter 369---2021/5/18
+
+	M: But I want to go on that ride! I'm old enough. Do you have the restriction on
+	the weight?
+	W: No, but you need to stand next to that sign. If you are taller than it, you can go on
+	the ride.
+
 # Chapter 370---2021/5/14
 
 	M: I'm taking Dr. Robinson's poetry class next semester.
