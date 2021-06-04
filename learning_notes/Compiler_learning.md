@@ -120,3 +120,101 @@ CMake可以在linux上生成Makefile,在Windows上生成visual studio的Workspac
 	1.众多开源软件选用CMake:OpenCV、dlib、Qt、KDE4、fast-dnn...
 	2.Android OS底层的Frameworks,凡是C/C++部分,全部用CMake构建;
 	3.Android App开发中凡是用到C/C++代码,全部用CMake构建,Java部分用Gradle构建.
+
+# Chapter 2. 静态库、动态库
+
+## 2.1 示例代码
+
+### 2.1.1 目录结构
+
+	.
+	├── include
+	│   ├── func_a.h
+	│   └── func_b.h
+	├── libs
+	│   ├── func_a.c
+	│   ├── func_a.o
+	│   ├── func_b.c
+	│   ├── func_b.o
+	│   └── libfunc.a
+	└── test.c
+
+### 2.1.2 func_a.h代码
+
+	int func_a(int val);	//只有一行代码
+
+### 2.1.3 func_b.h代码
+
+	nt func_b(int val);		//只有一行代码
+
+### 2.1.4 func_a.c代码
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	
+	static unsigned char g_data_a[128];	//静态全局数组,未被初始化的会被初始化为0,放在bss段.
+	
+	int func_a(int val)
+	{
+	        printf("func:%s, val=%d, sizeof g_data_a=%d\n", __func__, val, sizeof(g_data_a));
+	        return 0;
+	}
+
+### 2.1.5 func_b.c代码
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	
+	char g_data_b[256] = {0x11};	//全局数组,被初始化为非0,放在data段.
+	const int g_data_const = 0x22;	//常量数据(变量),放在rodata段.
+	
+	static void print_b()
+	{
+	        printf("func:%s\n", __func__);
+	}
+	
+	int func_b(int val)
+	{
+	        print_b();
+	        printf("func:%s, val=%d\n", __func__, val);
+	        return 0;
+	}
+
+### 2.1.6 test.c代码
+
+	#include <stdio.h>
+	#include <stdlib.h>
+	
+	#include "func_a.h"
+	#include "func_a.h"
+	
+	int test_id = 0x255;
+	
+	int main()
+	{
+	        printf("hello world! test_id = 0x%x\n", test_id);
+	        func_a(128);
+	        func_b(256);
+	        return 0;
+	}
+
+## 2.2 静态库的构成
+
+### 2.2.1 编译并生成静态库
+
+	1.编译
+	cd libs
+	gcc -c func_a.c func_b.c	//编译生成func_a.o和func_b.o
+	2.合成静态库
+	ar -rcs/rcs libfunc.a func_a.o func_b.o
+
+### 2.2.2 解析静态库的符号表信息
+
+	命令:readelf -s libfunc.a
+
+![](images/lib_a_symbol_parser.png)
+
+
+
+
+
