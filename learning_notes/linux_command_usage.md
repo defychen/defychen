@@ -580,6 +580,8 @@ ar(archive)命令,归档.通常用于将多个目标文件.o进行归档,形成�
 			--->指定等待反汇编文件的格式(e.g. -b binary ->指定反汇编文件的格式为binary)
 	-m, --architecture=MACHINE	Specify the target as MACHINE
 			--->执行等待反汇编文件的架构(e.g. -m mips或者--architecture=mips)
+	-t, --syms Display the contents of the symbol table(s)
+			--->显示符号表信息
 	//用于:
 		dir/mips-sde-elf-objdump -D -b binary --architecture=mips source.abs > target.dis
 		//将source.abs文件反汇编成target.dis.此处为反汇编二进制,默认的.out文件不需要--architecture参数.

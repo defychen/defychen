@@ -214,7 +214,43 @@ CMake可以在linux上生成Makefile,在Windows上生成visual studio的Workspac
 
 ![](images/lib_a_symbol_parser.png)
 
+	1.这是含有symbol talbe的libfunc.a,如果strip后大部分信息就没有了;
+	2.该libfunc.a由func_a.o和func_b.o组成;
+	3.g_data_a是个128 Byte的LOCA OBJECT,作用域仅限于func_a.o;
+	4.g_data_b是个256 Byte的GLOBAL OBJECT,全局可引用;
+	5.func_a、func_b是GLOBAL FUNCTION,全局可引用;
+	6.print_b是LOCAL FUNCTION,作用域仅限于func_b.o.
 
+### 2.2.3 解析静态库的section信息
 
+解析静态库的section信息时也必须还有symbol table,不能做strip处理.
 
+	命令:objdump -t libfunc.a		// dump出符号表信息
 
+![](images/objdum_t_symbol_table.png)
+
+	1).text:代码段;
+	2).data:数据段,被初始化的全局变量(必须初始化为非0), e.g. g_data_b,占用0x100(256)byte;
+	3).bss:数据段,未被初始化的或被初始化为0的全局变量(未被初始化的全局变量初值总是0), e.g. g_data_a,
+		占用0x80(128)byte;
+	4).rodata:常量数据(即只读数据),e.g. g_const_data,大小为4byte.
+
+## 2.3 静态库的用法
+
+对于商业软件来说,一般SDK包会包含以下文件(此处不包含.so文件的用法):
+
+	1).h:提供给开发商的函数、数据结构;
+	2).a:开发商需要链接到自己的可执行文件里的库.
+
+由于ld(程序链接)是通过symbol talbe进行链接的,如果使用strip去掉符号表信息就会出现链接出错:
+
+	1.没有去掉符号表前
+		gcc test.c -Llibs -lfunc -Iinclude -o test	//编译及链接正确
+	2.去掉符号表后
+		strip libs/libfunc.a	//去除symbol table
+		gcc test.c -Llibs -lfunc -Iinclude -o test
+		/*
+		libs/libfunc.a: error adding symbols: Archive has no index; run ranlib to add one
+		collect2: error: ld returned 1 exit status
+		添加symbol时出错了,因为strip将symbol table去除了
+		*/
