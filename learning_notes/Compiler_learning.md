@@ -235,7 +235,9 @@ CMake可以在linux上生成Makefile,在Windows上生成visual studio的Workspac
 		占用0x80(128)byte;
 	4).rodata:常量数据(即只读数据),e.g. g_const_data,大小为4byte.
 
-## 2.3 静态库的用法
+## 2.3 静态库的使用
+
+### 2.3.1 静态库的使用说明
 
 对于商业软件来说,一般SDK包会包含以下文件(此处不包含.so文件的用法):
 
@@ -247,10 +249,45 @@ CMake可以在linux上生成Makefile,在Windows上生成visual studio的Workspac
 	1.没有去掉符号表前
 		gcc test.c -Llibs -lfunc -Iinclude -o test	//编译及链接正确
 	2.去掉符号表后
-		strip libs/libfunc.a	//去除symbol table
+		strip libs/libfunc.a	//静态库是去掉所有的symbol table
 		gcc test.c -Llibs -lfunc -Iinclude -o test
 		/*
 		libs/libfunc.a: error adding symbols: Archive has no index; run ranlib to add one
 		collect2: error: ld returned 1 exit status
 		添加symbol时出错了,因为strip将symbol table去除了
 		*/
+
+### 2.3.2 静态库使用方法
+
+通过前面2.2.2节解析静态库的符号表信息中的信息可以发现,凡是声明为static的变量、函数,其Bind属性都是LOCAL.其他的其Bind属性是GLOBAL.
+
+因为声明为static的变量、函数不需要提供给外界,这些信息不应该让外界看到,即去掉Bind属性为LOCAL的symbol.其方法为:
+
+	cd libs/
+	strip -x libfunc.a	// -x:移除所有非global的符号表
+	readelf -s libfunc.a	// 查看符号表信息,此时可以看到代码中的static变量、函数没有了.
+	cd ../
+	gcc test.c -Llibs -lfunc -Iinclude -o test
+
+## 2.4 动态库的使用
+
+### 2.4.1 动态库的创建及链接
+
+	cd libs/
+	gcc -shared func_a.c func_b.c -o libfunc.so -fPIC
+	strip libfunc.so
+	/*
+		对于不带任何参数的strip作用于.so和.a效果不一样:
+		1.作用于.a,会将每一个.o的symbol table全部删除;
+		2.作用于.so,是将所有的LOCAL符号表删除,相当于strip -x *.a
+	*/
+	gcc test.c -Llibs -lfunc -Iinclude -o test -Wall
+	export LD_LIBRARY_PATH=./libs	//如果执行需要设置好动态库链接路劲,否则执行就会找不到动态库的路径
+	./test	//可以正确运行
+
+## 2.5 strip对静态库、动态库及可执行文件的作用效果
+
+	1.对静态库(*.a):strip默认(不带任何参数)会把所有的符号表都清除,导致.a变得不可用;
+	2.对于动态库(*.so):strip会默认把所有的static变量、函数的符号表清除,.so仍然可用;
+		--->但是那些未被定位为static的变量、函数(包括inline函数)的符号表会保留,此时有暴露算法的风险.
+	3.对于可执行文件,strip默认会把所有的符号表清除,无风险且可执行.

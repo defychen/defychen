@@ -544,6 +544,10 @@ ar(archive)命令,归档.通常用于将多个目标文件.o进行归档,形成�
 			规则可以避免删除了对应的头文件而没有更新"Makefile"匹配新的依赖关系而导致make出错的情况.
 	-MMD	Like -MD but ignore system header files.
 			--->类似"-MD",忽略系统头文件.
+	-shared Create a shared library
+			--->创建共享库(即.so).
+	-fPIC	作用域编译阶段(PIC:position independent code),告诉编译器产生与位置无关代码,一般配合
+		-shared一起使用,生成.so共享库
 
 **查看对应gcc的版本**
 
@@ -703,6 +707,12 @@ apt-get(Advanced Package Tool:高级安装工具):linux上的软件包管理器.
 		hello.so--->有程序头信息
 		hello.a--->无程序头信息
 		hello.debug--->有程序头信息
+
+3.readelf -s
+
+Display the symbol table(显示符号表信息).
+
+	readelf -s xxx.so	//显示xxx.so的符号表信息
 
 ## 34. rename
 
@@ -933,5 +943,14 @@ dmidecode命令可以获取有关硬件方面的信息.dmidecode是将DMI数据�
 ### 43.2 查看整个系统信息(信息更详细)
 
 	dmidecode -t system
+
+## 44 strip命令
+
+	strip -s	// Remove all symbol and relocation information
+		--->移除所有的符号表及重定位信息,对于.a文件(静态库)在链接时会出错
+	strip -x	// Remove all non-global symbols
+		--->移除所有非global的符号表,在release软件时可以对.so这样操作
+	strip -K	// Do not strip symbol
+		--->保留指定的符号表,这样做会导致构建脚本与代码间的耦合性更强,不推荐这样做.
 
 ## 13. wget命令
