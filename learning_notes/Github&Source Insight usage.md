@@ -52,14 +52,23 @@
 	git log		/*整个大目录的历史提交版本*/
 	git log .	/*查看某个目录的历史提交版本(e.g.buildroot)*/
 	git log -p	/*查看最近提交的改动*/
-	git log -p ./output/build/alisee.../see/src/lld/sec/m36f/libssec_m32.a	/*查看具体某个文件的历史提交版本*/
+	git log --pretty=oneline /* 每条log以一行显示(即仅显示:commit id和commit注释) */
+	git log --graph /* 查看分支合并图 */
 	e.g.如果在alidsc目录:
 	git log	/*显示./linux-PDK...这个大目录的提交版本*/
 	git log .	/*显示alidsc这个目录的提交版本,更精确*/
+	git log -p ./output/build/alisee.../see/src/lld/sec/m36f/libssec_m32.a	/*查看具体某个文件的历史提交版本*/
 
 **2)版本回退**
 
-	git reset --hard commit-number
+	git reset --hard commit-number //直接回退到某个commit id
+	git reset --hard HEAD^
+	/*
+		HEAD:表示当前版本;
+		HEAD^:表示上一个版本;
+		HEAD^^:上上个版本(依次类推);
+		HEAD~30:回退30个版本.
+	*/
 
 **3)查看所拉下来的PDK tag指向的分支**
 
@@ -82,11 +91,19 @@
 
 **6)丢掉本地的修改**
 
-	git checkout -- .		//针对有时本地修改了,但是不需要提交.而且此时不能执行"git pull"
+	git checkout -- .		//针对有时本地修改了,但是不需要提交(也没有add).而且此时不能执行"git pull"
 
 **7)查看代码改动情况**
 
 	git show commit-number	//查看某个commit号的代码改动情况
+
+**8)查看操作的历史记录**
+
+	git reflog	// 可以看到自己之前操作的git命令
+
+**9)比较本地与远程仓库的改动**
+
+	git diff filename //查看自己文件filename的修改情况(与远程仓库比较)
 
 ## 1.3 git pull更新时的问题
 
@@ -113,7 +130,10 @@
 		1.放弃本地修改,直接覆盖:
 			git reset --hard
 			git pull
-		2.stash
+		2.使用stash将未提交的修改都保存起来(放入git的栈中),后续可以再恢复:
+			git stash	// 将未提交的修改放入git栈
+			git pull 	// 更新
+			git stash pop	//更新完后,用git stash pop恢复放入git栈中的内容
 
 ## 1.4 github提交错误
 
@@ -142,6 +162,8 @@
 
 	查看所打的tag
 	git tag
+	查看tag信息:
+	git show tagname
 
 ## 1.6 git push origin master提交时出现提交不成功
 
@@ -190,13 +212,26 @@
 	1.本地创建分支
 		git branch branch_name(自己创建的分支名)
 	2.切换到创建的新分支(可以先查看下现在处于什么分支:git branch)
-		git checkout branch_name(自己创建的分支名)
+		git checkout branch_name(分支名)	//分支名为最后的那个名字(不需要前面的路径)
+		git branch -a
+		/*
+		显示:
+			* branch_name_a	// 前面的"*"表示当前所在的分支
+			master
+			remotes/origin/HEAD -> origin/master
+			remotes/origin/branch_name_b
+		*/
+		git checkout branch_name_b	//直接切分支即可
 	3.添加需要提交到该分支的代码,然后进行提交的相关动作
 		git add .
 		git commit -m "Create a new branch"
 		git push origin branch_name(自己创建的分支名)
 	4.查看一下远程仓库有几个分支
 		git branch -a	//会显示新创建的分支
+	5.合并分支到master分支
+		git merge branch1	// 当前应该在master分支,合并branch1到master分支
+	6.删除分支
+		git branch -d branch1
 
 ## 1.11 git clone指定分支拉代码
 
@@ -205,6 +240,65 @@
 	2.指定分支--->从指定分支拉下来
 	git clone -b branch_name git@github.com:defychen/defychen.git
 	//通过"-b branch_name"来指定分支名.
+
+## 1.12 git stash(储藏)
+
+当需要去修改其他内容时,这时候工作还没有做完,可以通过git stash先临时保存起来,等干完其他的事之后,再回来恢复现场,继续干活.
+
+### 1.12.1 git stash
+
+git stash会把所有未提交的修改(包括暂存的和非暂存的)都保存起来,用于后续恢复当前工作目录.
+
+	git status
+		On branch master
+		Changes to be committed:
+			new file:   style.css
+		Changes not staged for commit:
+			modified:   index.html
+	git stash	// git stash保存在本地,不会推到远程
+		Saved working directory and index state WIP on master: 5002d47 our new homepage
+		HEAD is now at 5002d47 our new homepage
+	git status	//再次查看,没有修改记录
+		On branch master
+		nothing to commit, working tree clean
+
+	PS:推荐给每个stash增加一个message,用于版本记录.使用:
+		git stash save "test-cmd-stash"
+			Saved working directory and index state On autoswitch: test-cmd-stash
+			HEAD is 296e8d4 remove unnecessary postion reset in onResume function
+		git stash list	// 查看已经stash到栈的列表
+			stash@{0}: On autoswitch: test-cmd-stash
+
+### 1.12.2 git stash pop
+
+git stash pop弹出stash栈的第一个,用于恢复之前缓存的目录.
+
+	git stash pop	//直接执行即可.
+
+### 1.12.3 git stash apply
+
+应用stash栈的缓存,但不删除stash栈缓存.
+
+	git stash list	// 显示stash栈的列表
+		stash@{0}: WIP on master: 049d078 added the index file
+		stash@{1}: WIP on master: c264051 Revert "added file_size"
+		stash@{2}: WIP on master: 21d80a5 added number to log
+	git stash apply stash@{0} 	// 使用某个stash名字
+	git stash apply				// 如果后面不带stash名字,默认使用最近的stash,即:stash@{0}
+
+### 1.12.4 git stash drop
+
+移除某个stash缓存.在使用git stash apply xxx时,不会删除缓存,需要用git stash drop来移除.
+
+	git stash list
+		stash@{0}: WIP on master: 049d078 added the index file
+		stash@{1}: WIP on master: c264051 Revert "added file_size"
+		stash@{2}: WIP on master: 21d80a5 added number to log
+	git stash drop stash@{0} // 移除stash@{0}
+
+如果要删除所有的stash缓存,可以执行:
+
+	git stash clear	// 删除所有的stash缓存.
 
 ***
 

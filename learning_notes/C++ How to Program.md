@@ -1015,6 +1015,25 @@ srand()函数也是位于<cstdlib>头文件中.
 		作为rand函数的种子.因此,每次值都不一样.
 	*/
 
+#### 6.4.4 clock()函数的使用
+
+	#include <iostream>
+	#include <ctime>
+	using namespace std;
+
+	int main()
+	{
+		long n = 0;
+		clock_t start_time, end_time;
+		start_time = clock();	/* clock()获取CPU的clock tick数 */
+		whlie (n < 1000000000) {
+			n++;
+		}
+		end_time = clock();
+		cout << (end_time - start_time) /  CLOCKS_PER_SEC << "s" << endl;
+		/* CLOCKS_PER_SEC:表示1s含有的clock tick数,此计算得到最终程序的运行秒数 */
+	}
+
 
 ### 6.5 enum枚举简介
 
@@ -5841,8 +5860,8 @@ STL中的算法大部分是使用迭代器来访问容器中的元素,因此一�
 	2.有序关联容器(key按顺序保存)
 		set:快速查找,无重复元素;
 		multiset:快速查找,可有重复元素;
-		map:一对一映射,无重复元素,基于key快速查找;
-		multimap:一对一映射,可有重复元素,基于key快速查找.
+		map:一对一映射,无重复元素(即key必须是唯一的,key对应的value不一定全部不相同),基于key快速查找;
+		multimap:一对一映射,可有重复元素(key可以不唯一),基于key快速查找.multimap不支持[]操作符.
 	3.无序关联容器
 		unordered_set:快速查找,无重复元素;
 		unordered_multiset:快速查找,可有重复元素;
@@ -5852,6 +5871,11 @@ STL中的算法大部分是使用迭代器来访问容器中的元素,因此一�
 		stack(栈):后进先出(LIFO);
 		queue(队列):先进先出(FIFO);
 		priority_queue(优先级队列):优先级最高的元素先出.
+	5.unordered_map和map的优劣势(头文件都是#include <map>)
+		map内部实现是平衡二叉树(红黑树),unordered_map是通过hash_map实现的;
+		在运行效率方面,unordered_map最高,map的效率最低;
+		在内存占用方面,unordered_map略高,map略低;
+		综合来看,如果不需要顺序,一般用unordered_map会好一点.推荐使用unordered_map.
 
 **2.各类容器特点**
 
@@ -6452,7 +6476,7 @@ set位于<set>,仅有唯一的关键字.如果插入一个重复的关键字,则
 
 ### 15.6.3 关联容器multimap
 
-multimap用于快速存取key-value值对,以pair对象存取.multimap允许多个key对应一个value.位于<map>.
+multimap用于快速存取key-value值对,以pair对象存取(multimap不支持[]操作符).multimap允许多个key对应一个value.头文件为:#include <map>.
 
 	#include <iostream>
 	#include <map>
@@ -6480,7 +6504,14 @@ multimap用于快速存取key-value值对,以pair对象存取.multimap允许多�
 		/*
 		pairs.count(15):统计key为15的key-value的个数.
 		*/
-	
+
+		/* multimap查找某key对应的所有value */
+		multimap<int, double>::iterator iter;
+		iter = pairs.find(15);	/* find函数返回一个iterator,所有相同的key会连起来 */
+		for (int i = 0, len = pairs.count(15); i < len; i++, iter++) {
+			cout << iter->second << endl;
+		}
+
 		pairs.insert(make_pair(30, 111.11));
 		pairs.insert(make_pair(10, 22.22));
 		pairs.insert(make_pair(25, 33.333));

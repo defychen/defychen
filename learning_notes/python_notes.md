@@ -932,6 +932,18 @@ python内置的enumerate()函数可以将一个list变成索引-元素对,这样
 	[s.lower() for s in L if isinstance(s, str)]	/*增加判断是否为字符串*/
 	isinstance(s, str)	//判断s是否为字符串.True:表示为字符串;False:不是字符串.
 
+#### 4.3.5 实例--->列表生成式中包含if...else
+
+如果输入的是字符串,全部转为小写,否则转为字符串.
+
+	s = "AAA"
+	a = s.lower() if isinstance(s, str) else str(s) /* if为真,执行if前面的;否则执行else后面的 */
+	print(a)	// 输出:aaa
+	s = 123
+	a = s.lower() if isinstance(s, str) else str(s)
+	print(a)	// 输出: 123
+	type(a)		//显示为字符串<class 'str'>
+
 ### 4.4 生成器
 
 如果列表元素可以按照某种算法推算出来,就没必要创建完整的list,节省空间.生成器(generator)即可达到这个目录(边循环边计算).
@@ -1316,6 +1328,13 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 	f = lazy_sum(1, 3, 5, 7, 9)	/*可变参数的调用方式*/
 		//此时f相当于函数名"sum".因此如果需要得到结果,必须显示调用下:f()
 	f()	//显示调用函数名
+
+**3.函数/遍历返回tuple时,忽略tuple中的元素**
+
+	def f():
+		return (1, 2, 3)
+	_,_,x=f()	// 前两个元素不关心,直接忽略
+	print(x)
 
 #### 5.2.2 闭包
 

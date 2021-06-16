@@ -36,6 +36,10 @@ Example:
 
 		for (int i = 0; i < nums.size();i++) {
 			int t = target - nums[i];
+			/*
+			 避免i和m[t]是同一个值,这种是错误的.e.g. [3, 2, 4],target是6,刚开始nums[0]为3,
+			m[3]为0,这种情况不符合要求.
+			*/
 			if (m.count(t) && m[t] != i) {
 				res.push_back(i);
 				res.push_back(m[t]);
@@ -376,22 +380,13 @@ The string "PAYPALISHIRING" is written in a zigzag pattern on a given number of 
 
 ### 6.2 Analysis
 
-上述理解起来比较苦难，简单理解为就是要把字符串摆成一个之字型的，比如有一个字符串 "0123456789ABCDEF"，转为 zigzag 如下所示：
+思路
 
-	当 n = 2 时：
-	0 2 4 6 8 A C E
-	1 3 5 7 9 B D F
-	当 n = 3 时：
-	0    4    8    C
-	1 3  5 7  9 B  D F		//此行中的"3, 7, B, F"为红色元素
-	2    6    A    E
-	当 n = 4 时：
-	0    6     C
-	1 5  7 B   D	//此行中的"5, B"为红色元素
-	2 4  8 A   E	//此行中的"4, A"为红色元素
-	3    9     F
+通过从左向右迭代字符串,我们可以轻松地确定字符位于Z字形图案中的哪一行.
 
-可以发现，除了第一行和最后一行没有中间形成之字型的数字外，其他都有，而首位两行中相邻两个元素的 index 之差跟行数是相关的，为  2*nRows - 2, 根据这个特点，可以按顺序找到所有的黑色元素在元字符串的位置，将他们按顺序加到新字符串里面。对于红色元素出现的位置也是有规律的，每个红色元素的位置为 j + 2 x numRows-2 - 2 x i, 其中，j为前一个黑色元素的列数，i为当前行数。 比如当 n = 4 中的那个红色5，它的位置为 1 + 2 x 4-2 - 2 x 1 = 5，为原字符串的正确位置。知道了所有黑色元素和红色元素位置的正确算法，就可以一次性的把它们按顺序都加到新的字符串里面。
+算法
+
+我们可以使用\text{min}(\text{numRows}, \text{len}(s))min(numRows,len(s))个列表来表示Z字形图案中的非空行.从左到右迭代ss,将每个字符添加到合适的行.可以使用当前行和当前方向这两个变量对合适的行进行跟踪.只有当我们向上移动到最上面的行或向下移动到最下面的行时,当前方向才会发生改变.
 
 ### 6.3 Code
 
@@ -403,21 +398,23 @@ The string "PAYPALISHIRING" is written in a zigzag pattern on a given number of 
 
 	string convert(string s, int num_rows)
 	{
-		if (num_rows <= 1)
-			return s;
-
-		string res;
-		int step = 2 * num_rows - 2, n = s.size();
-
-		for (int i = 0; i < num_rows; i++) {
-			for (int j = i; j < n; j += step) {
-				res += s[j];
-				int pos = j + step - 2 * i;
-				if (i != 0 && i != num_rows - 1 && pos < n)
-					res += s[pos];
-			}
-		}
-		return res;
+        if (num_rows == 1)
+            return s;
+        
+        bool going_down = false;
+        int n = s.size();
+        string res;
+        vector<string> str_vector(min(num_rows, int(s.size())));
+        int cur_row = 0;
+        for (int i = 0; i < n; i++) {
+            str_vector[cur_row] += s[i];
+            going_down = (cur_row == 0 || cur_row == num_rows - 1) ? !going_down : going_down;
+            cur_row += going_down ? 1 : -1;
+        }
+        for (string str : str_vector) {
+            res += str;
+        }
+        return res;
 	}
 
 	//测试程序
