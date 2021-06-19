@@ -1,16 +1,26 @@
 # LeeCode
 
-## 1. Two Sum
+## 1. 两数之和  
 
 ### 1.1 Description
 
-Given an array of integers, return indices of the two numbers such that they add up to a specific target. You may assume that each input would have exactly one solution, and you may not use the same element twice.
+给定一个整数数组nums和一个整数目标值target,请你在该数组中找出和为目标值target的那两个整数,并返回它们的数组下标.你可以假设每种输入只会对应一个答案.但是,数组中同一个元素在答案里不能重复出现.你可以按任意顺序返回答案。
 
-Example:
+示例1：
 
-	Given nums = [2, 7, 11, 15], target = 9,
-	Because nums[0] + nums[1] = 2 + 7 = 9,
-	return [0, 1].
+	输入：nums = [2,7,11,15], target = 9
+	输出：[0,1]
+	解释：因为 nums[0] + nums[1] == 9 ，返回 [0, 1] 。
+
+示例2：
+
+	输入：nums = [3,2,4], target = 6
+	输出：[1,2]
+
+示例 3：
+
+	输入：nums = [3,3], target = 6
+	输出：[0,1]
 
 ### 1.2 Analysis
 
@@ -74,17 +84,29 @@ Example:
 		}
 	}
 
-## 2. Add Two Number
+## 2. 两数相加
 
 ### 2.1 Description
 
-You are given two non-empty linked lists representing two non-negative integers. The digits are stored in reverse order and each of their nodes contain a single digit. Add the two numbers and return it as a linked list.You may assume the two numbers do not contain any leading zero, except the number 0 itself.
+给你两个非空的链表,表示两个非负的整数.它们每位数字都是按照逆序的方式存储的,并且每个节点只能存储一位数字.请你将两个数相加,并以相同形式返回一个表示和的链表.你可以假设除了数字0之外,这两个数都不会以0开头.
 
-Example:
+![](images/leecode_2.png)
 
-	Input: (2 -> 4 -> 3) + (5 -> 6 -> 4)
-	Output: 7 -> 0 -> 8
-	Explanation: 342 + 465 = 807.
+示例1:
+
+	输入：l1 = [2,4,3], l2 = [5,6,4]
+	输出：[7,0,8]
+	解释：342 + 465 = 807.
+
+示例2:
+
+	输入：l1 = [0], l2 = [0]
+	输出：[0]
+
+示例3:
+
+	输入：l1 = [9,9,9,9,9,9,9], l2 = [9,9,9,9]
+	输出：[8,9,9,9,0,0,0,1]
 
 ### 2.2 Analysis
 
@@ -178,11 +200,11 @@ Example:
 		return dummy->next;		
 	}
 
-## 3. Longest Substring Without Repeating Characters
+## 3. 无重复字符的最长子串
 
 ### 3.1 Description
 
-Given a string, find the length of the longest substring without repeating characters.
+给定一个字符串,请你找出其中不含有重复字符的最长子串的长度.
 
 Example 1:
 
