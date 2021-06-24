@@ -1,6 +1,7 @@
 # 1. Github usage
 
 ## 1.1 How to use git to commit code
+
 ****
 
 **1)新建一个目录:**
@@ -299,6 +300,26 @@ git stash pop弹出stash栈的第一个,用于恢复之前缓存的目录.
 如果要删除所有的stash缓存,可以执行:
 
 	git stash clear	// 删除所有的stash缓存.
+
+## 1.13 git分支管理(删除冗余分支)
+
+### 1.13.1 将远程的分支情况同步到本地
+
+1.查看本地分支和追踪情况
+
+	git remote show origin
+
+![](images/git_usage_1.png)
+
+	红框中的分支是远程分支已被删除的分支(stale).
+
+2.根据提示,可以使用git remote prune来同步删除这些分支
+
+	git remote prune origin
+
+### 1.13.2 删除本地多余分支
+
+	git branch -D branch_name
 
 ***
 
