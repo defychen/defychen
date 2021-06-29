@@ -11,7 +11,12 @@ python是解释型语言,执行时需要一行一行的翻译成机器码,翻译
 ### 1.1 进入和退出Python
 
 	$ python /*在linux中直接敲击命令python*/
+	1.使用exit()
 	>>> exit() /*>>>:表明进入python交互式环境.exit():退出python交互式环境*/
+	2.快捷键
+	>>> ctrl+d /* linux用的是:ctrl+d; windows用的是:ctrl+z */
+	3.quit()
+	>>> quit() /* quit()和exit()是一样的 */
 
 python使用最广的解释器是CPython.
 
@@ -62,6 +67,8 @@ python 3.x去掉了raw_input(),使用input()函数替代raw_input().即:
 
 	print('The quick brown for', 'jumps over', 'the lazy dog')
 	//全部使用双引号或单引号即可.
+	print('aaa', end=' ')	// 默认print输出后,后面会跟着换行.增加end=' ':表示取消换行,变成' '.
+	print('-'*40)	// '-'*40:表示循环出现40个'-',方便输出分隔符.
 
 ***
 
@@ -83,13 +90,45 @@ python使用"\n"换行,还可以用'''...'''表示多行内容(另起一行就�
 
 #### 2.1.1 字符串
 
+**1.基本用法**
+
 	print('I\'m ok.')	//使用'\'做转义,输出I'm ok
-	print('\\\n\\')
+	print('\\\n\\')		// "\n"表示换行.
 	/* 输出结果:
 		\
 		\
 	*/
+	>>> s = 'First line.\nSecond line.'
+	>>> s /* 得到的结果是:'First line.\nSecond line.',此时换行符不会显示 */
+	>>> print(s) /* print出来就会显示换行. */
+	
+	// 去掉转义
 	print(r'\\\t\\')	//r''表示''内部的字符串默认不转义.结果为:\\\t\\
+	print('C:\some\name')	// 此时的输出为'C:\some',后面的\n当作换行处理
+	print(r'C:\some\name')	// 输出为:'C:\some\name'
+
+**2.高级用法**
+
+1.多行连续输入,使用"""..."""(3个双引号)或'''...'''(3个单引号)可对多行进行处理.当在'''...'''中另起一行时,默认是换行,如果需要在同一行,在行尾添加'\'即可.
+
+	print("""\	//此处表示下一行和它在同一行)
+		Usage: thingy [OPTIONS]
+			-h				Display this usage message
+			-H hostname		Hostname to connect to
+		""")
+	// 结果为:
+	Usage: thingy [OPTIONS]
+		-h				Display this usage message
+		-H hostname		Hostname to connect to
+
+2.相邻字符串自动合并
+
+	>>> 'Py' 'thon'
+	>>> 'Python'
+	// 在.py文件里按照下面的方式下(交互式命令行不行),适用于字符串特别长,在一行写不下,另起一行代码看着美观:
+	text = ('aaa '
+			'bbb')
+	print(text)	//结果为:'aaa bbb'
 
 #### 2.1.2 布尔值
 
@@ -388,6 +427,19 @@ tuple与list非常类似,但tuple一旦初始化就不能修改.使用"(...)"识
 		if n % 2 == 0:
 			continue	//过滤掉偶数
 		print(n)	//结果为:1, 3, 5, 7, 9
+
+**5.循环支持的else字句**
+
+	for n in range(2, 10):
+		for x in range(2, n):
+			if n % x == 0:
+				print(n, ' equals ', x, ' * ', n // x)
+				break
+		else:
+			print(n, ' is a prime number')
+		/* 上面的else字句属于for循环,不属于if语句.else字句在未运行break时才会执行,否则不执行.
+			即如果有break执行,else字句不执行,其他情况else字句都会执行.
+		 */
 
 ### 2.6 dict和set
 
@@ -1397,6 +1449,12 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 	def build(x, y):
 		return lambda: x * x + y * y	
 		//此处省略了para,正常的为"return lambda x, y: x * x + y * y"
+
+	def make_incrementor(n):
+		return lambda x: x + n
+	f = make_incrementor(42) // 42会被传递给n,从而形成一个以x为形参,return x + 42的函数.
+	f(0)	// 输出42
+	f(1)	// 输出43
 
 #### 5.3.1 实例--->使用匿名函数输出奇数
 
