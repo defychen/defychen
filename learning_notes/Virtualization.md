@@ -68,3 +68,12 @@ IOMMU的主要作用如下:
 
 ### 1.1.4 Source Identifier
 
+IOMMU利用设备的Source Identifier(包含Bus、Device、Func)找到页表项来完成地址映射.针对PCIe switch的处理:
+
+	对于由PCIe switch扩展出的PCI桥及桥下设备,在发起DMA请求时,Source Identifier是PCIe switch的.这样
+	该PCI桥及桥下所有设备都会使用PCIe switch的Source Identifier去定位Context Entry,找到的页表也是
+	同一个.如果将这个PCI桥下的不同设备分给不同虚机,由于会使用同一份页表,这样会产生问题.针对这种情况,必须
+	将PCI桥及桥下的所有设备分配给同一个虚机,这就是VFIO中组(group)的概念.
+
+## 1.2 VFIO
+
