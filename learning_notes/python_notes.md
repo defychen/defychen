@@ -438,6 +438,9 @@ list可实现队列,但是效率很低(因为要移动元素).使用collections.
 	range(101)	#生成0-100的整型序列
 	range(1, 11) //从1开始到11(不包括11).即为: 1,2,3,4,5,6,7,8,9,10
 	range(0, 30, 5) //从0开始到30(不包括),步长为5.即为:0,5,15,20,25.
+	//利用for...in实现逆序
+	for i in reversed(range(1, 10, 2)):
+		print(i)	// 结果为:9, 7, 5, 3, 1
 
 **2.while循环**
 
@@ -484,14 +487,27 @@ list可实现队列,但是效率很低(因为要移动元素).使用collections.
 
 #### 2.6.1 dict
 
-dict:字典,键-值(key-value)存储,具有极快的查找速度.使用"{}"标识.
+dict:字典,键-值(key-value)存储,具有极快的查找速度.
 
-	d = {'Michael':95, 'Bob':75, 'Tracy':85}	/*初始化指定"key-value"*/
-	d['Michael']		//会得到:95
-	d['Adam'] = 67		/*在字典中加入key为Adam,value为67的元素.*/
-	d['Adam'] = 88		/*多次对一个key放入新的value,后面的会冲掉前面的值*/
-	d['Adam']			//会得到88,而非67
-	d['Thomas']			//key不存在,dict报错.显示为"KeyError: 'Thomas'"
+	1.创建空的dict
+		a = {}	// 创建空的dict
+	2.直接{key:value, ...}创建
+		d = {'Michael':95, 'Bob':75, 'Tracy':85}	/*初始化指定"key-value"*/
+		d['Michael']	//会得到:95
+		d['Adam'] = 67	/*在字典中加入key为Adam,value为67的元素.*/
+		d['Adam'] = 88	/*多次对一个key放入新的value,后面的会冲掉前面的值*/
+		d['Adam']		//会得到88,而非67
+		d['Thomas']		//key不存在,dict报错.显示为"KeyError: 'Thomas'"
+		del d['Bob']	//删除key-value对,此时结果为:{'Michael':95, 'Tracy':85, 'Adam':88}
+		list(d)			//取出dict中所有的key值,结果为:['Michael', 'Trace', 'Adam']
+		sorted(d)		//排序dict中的key值,结果为:['Adam', 'Michael', 'Trace']
+		'Adam' in d		//判断key是否在dict中,结果为: True
+	3.dict([(), (), ...])构造函数创建dict
+		dict([('Michael', 95), ('Bob', 75), ('Trace', 85)])
+	4.字典生成式创建dict
+		{x : x**2 for x in (2, 4, 6)}
+	5.dict(key0=value0, key1=value1)
+		dict(Michael=95, Bob=75, Trace=85)	//此时key字符串不需要加''--->需要注意
 
 判断dict中key存在的两种方法
 
@@ -510,15 +526,30 @@ dict相比于list查找和插入的速度快,但是浪费内存(同时存储"key
 
 set只存储key,不存储value.使用"set([])"标识.
 
-	s = set([1, 2, 3])	/*相比较tuple,增加了"set"标识符,括号中间为一个"list"*/
-	s = set([1, 1, 2, 2, 3, 3])	/*自动去掉重复元素,因此最后显示结果为"set([1, 2, 3])"*/
-	s.add(4)	/*添加一个元素使用add方法,重复的会去掉*/
-	s.remove(4)	/*删除元素*/
+	1.创建空set
+		s_empty = set()	//创建空set
+	2.使用set([])创建
+		s = set([1, 2, 3])	/*相比较tuple,增加了"set"标识符,括号中间为一个"list"*/
+		s = set([1, 1, 2, 2, 3, 3])	/*自动去掉重复元素,因此最后显示结果为"set([1, 2, 3])"*/
+		s.add(4)	/*添加一个元素使用add方法,重复的会去掉*/
+		s.remove(4)	/*删除元素*/
+	
+		s1 = set([1, 2, 3])
+		s2 = set([2, 3, 4])
+		s1 & s2		/*数学意义上的交集,显示为"set([2, 3])"*/
+		s1 | s2		/*数学意义上的并集,显示为"set([1, 2, 3, 4])"*/
 
-	s1 = set([1, 2, 3])
-	s2 = set([2, 3, 4])
-	s1 & s2		/*数学意义上的交集,显示为"set([2, 3])"*/
-	s1 | s2		/*数学意义上的并集,显示为"set([1, 2, 3, 4])"*/
+		a = set('abracadabra')	//字符串是一个list,此时a为:{'r', 'd', 'a', 'b', 'c'}
+		b = set('alacazam')		// 此时b为:{'z', 'l', 'a', 'c', 'm'}
+		a - b	//在a中但不在b中,结果为:{'r', 'd', 'b'}
+		a | b	//在a中或在b中,结果为:{'a', 'c', 'r', 'd', 'b', 'm', 'z', 'l'}
+		a & b	//同时在a和b中,结果为:{'a', 'c'}
+		a ^ b	//要么在a中,要么在b中,但不同时在,结果为:{'r', 'd', 'b', 'm', 'z', 'l'}
+	3.使用{}创建,{xxx, yyy},不存在key-value对
+		basket = {'apple', 'orange', 'pear', 'orange'}
+		print(basket)	// 结果为:{'orange', 'pear', 'apple'}
+		'orange' in basket	//返回True
+		'crabgrass' in basket	//返回False
 
 #### 2.6.3 可变对象和不可变对象
 
@@ -1868,6 +1899,39 @@ PS:外部不需要引用的函数全部定义为private,只有外部需要引用
 	>>>sys.path.append('pathname')    //运行时修改,结束后失效
 	2.方法2
 	设置环境变量PYTHONPATH---不是很清楚
+
+### 6.2 pyc的介绍
+
+pyc文件,是python编译后的字节码(bytecode)文件.只要你运行了py文件,python编译器就会自动生成一个对应的pyc字节码文件.这个pyc字节码文件,经过python解释器,会生成机器码运行(这也是为什么pyc文件可以跨平台部署,类似于java的跨平台,java中JVM运行的字节码文件).下次调用直接调用pyc,而不调用py文件.直到你这个py文件有改变,python解释器会检查pyc文件中的生成时间,对比py文件的修改时间,如果py更新,那么就生成新的pyc.
+
+	e.g.在同一个包(目录)下,存在一些python文件,当运行一次后,会出现一些同名的.pyc文件,此即为bytecode文件
+		(类似一个同名文件的缓存版本).
+
+### 6.3 包的使用
+
+python只把含有__init__.py文件的目录当成包.包的作用可以用于其他模块的from...import...
+
+1.文件module.py的内容--->路径为:./test/module.py
+
+	class Foo:
+		def __init__(self):
+			print('Initializating Foo')
+
+2.tree图
+
+	tree
+	.
+	|__ test
+		|__ module.py
+		|__ __init__.py	// 需要这个文件,据说python 3.3之后可以不用,但是尝试没成功.
+
+3.测试程序
+
+	python3
+	>>> from test import module // from...import...
+	>>> module.Foo()
+	Initializating Foo
+	<xxx object at xxx>
 
 ***
 
