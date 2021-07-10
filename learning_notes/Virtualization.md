@@ -77,3 +77,80 @@ IOMMU利用设备的Source Identifier(包含Bus、Device、Func)找到页表项�
 
 ## 1.2 VFIO
 
+VFIO是内核针对IOMMU提供的软件框架,支持DMA Remapping和Interrupt Remapping(此处只讲DMA Remapping).VFIO利用IOMMU这个特性,可以屏蔽物理地址对上层的可见性,可以用来开发用户态驱动,也可以实现设备透传.
+
+### 1.2.1 VFIO重要概念
+
+#### 1.2.1.1 Group
+
+	1.group是IOMMU能够进行DMA隔离的最小硬件单元;
+	2.一个group内可能只有一个device,也可能有多个device,硬件IOMMU拓扑结构;
+	3.设备直通的时候一个group里面的设备必须都直通给一个虚拟机.
+	4.不能够让一个group里的多个device分别从属于2个不同的VM;
+	--->因为这样一个guest中的device可以利用DMA攻击获取另外一个guest里的数据,无法做到物理上的DMA隔离.
+	5.也不允许部分device在host上而另一部分被分配到guest里.
+
+#### 1.2.1.2 Container
+
+	1.对于虚机,Container可以简单理解为一个VM Domain的物理内存空间;
+	2.对于用户态驱动,Container可以是多个Group的集合.
+
+![](images/vfio_group.png)
+
+	图中PCIe-PCI桥下的两个设备,在发送DMA请求时,PCIe-PCI桥会为下面两个设备生成Source Identifier.
+	其中Bus域为红色总线号bus,device和func域为0.这样的话,PCIe-PCI桥下的两个设备会找到同一个Context
+	Entry和同一份页表,所以这两个设备不能分别给两个虚机使用,这两个设备就属于一个Group.
+
+### 1.2.2 使用实例
+
+vfio的用户态驱动,利用vfio实现设备透传.
+
+	int container, group, device, i;
+	struct vfio_group_status gruop_status = 
+		{ .argsz = sizeof(groups status) };
+	struct vfio_iommu_type1_info iommu_info = { .argsz = sizeof(iommu_info) };
+	struct vfio_iommu_type1_dma_map dma_map = { .argsz = sizeof(dma_map) };
+	struct vfio_device_info device_info = { .argsz = sizeof(device_info) };
+
+	/* Create a new container */
+	container = open("/dev/vfio/vfio", O_RDWR);
+
+	if (ioctl(container, VFIO_GET_API_VERSION) != VFIO_API_VERSION)
+		/* Unknown API version */
+
+	if (!ioctl(container, VFIO_CHECK_EXTENSION, VFIO_TYPE1_IOMMU))
+		/* Doesn't support the IOMMU driver we want. */
+
+	/* Open the group */
+	group = open("/dev/vfio/26", O_RDWR);
+
+	/* Test the group is viable(可实施的,切实可行的) and available */
+	ioctl(group, VFIO_GROUP_GET_STATUS, &group_status);
+
+	if (!(group_status.flags & VFIO_GROUP_FLAGS_VIABLE))
+		/* Group is not viable (ie, not all devices bound for vfio) */
+
+	/* Add the group to the container */
+	ioctl(group, VFIO_GROUP_SET_CONTAINER, &container);
+
+	/* Enable the IOMMU model we want */   // type 1 open | attatch
+	ioctl(container, VFIO_SET_IOMMU, VFIO_TYPE1_IOMMU);
+
+	/* Get addition IOMMU info */
+	ioctl(container, VFIO_IOMMU_GET_INFO, &iommu_info);
+
+	/* Allocate some space and setup a DMA mapping */
+	dma_map.vaddr = mmap(0, 1024 * 1024, PROT_READ | PROT_WRITE,
+			     MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+	dma_map.size = 1024 * 1024;
+	dma_map.iova = 0; /* 1MB starting at 0x0 from device view */
+	dma_map.flags = VFIO_DMA_MAP_FLAG_READ | VFIO_DMA_MAP_FLAG_WRITE;
+
+	ioctl(container, VFIO_IOMMU_MAP_DMA, &dma_map);
+
+	/* Get a file descriptor for the device */
+	device = ioctl(group, VFIO_GROUP_GET_DEVICE_FD, "0000:06:0d.0");
+
+	/* Test and setup the device */
+	ioctl(device, VFIO_DEVICE_GET_INFO, &device_info);
+
