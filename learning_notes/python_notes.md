@@ -2942,15 +2942,15 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 
 ## 11 序列化及JSON
 
-需要在不同的编程语言之间传递对象,必须将对象序列化为标准格式(e.g.XML,JSON).但是最好的方法是序列化为JSON.
+需要在不同的编程语言之间传递对象,必须将对象序列化为标准格式(e.g.XML,JSON).但是最好的方法是序列化为json.json(JavaScript Object Notation, Java脚本对象表示符),是一种特殊的数据格式.
 
 优点:
 
-1)JSON表示出来就是字符串(易读);
+1)json数据格式独立于脚本语言(e.g. C++/python/matlab等),可以被各种脚本语言调用,便于数据的跨语言调用;
 
-2)可以被所有语言读取,也可以方便的存储到磁盘或者网络传输;
+2)json数据格式将数据序列化,便于机器的解析、生成、传输,有利于提升数据的传输速率;
 
-3)速度比XML块,可以直接在Web页面中读取.JSON表示的对象就是标准的JavaScript语言的对象.
+3)json能把常用的数据类型序列化,e.g.数字、字符串、列表、dict等.
 
 ### 11.1 JSON类型与Python类型对比
 
@@ -2962,24 +2962,55 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 		true/false	True/False
 		null		None
 
-### 11.2 Python与JSON格式的转换
+### 11.2 Python对json数据格式的处理
 
-**json.dumps(Python对象)---Python对象转换为JSON格式(也叫序列化)**
+#### 11.2.1 解析json数据
+
+**1.json.dumps(Python对象(e.g.dict))---将Python对象编码为json(也叫序列化)**
 
 	import json
 	d = dict(name='Bob', age=20, score=88)
-	json.dumps(d)
-	//得到的结果为:{"age":20, "score":88, "name":"Bob"} //JSON的为双引号
+	json.dumps(d)	//返回json的string类型(字符串)
+	//得到的结果为:{"age":20, "score":88, "name":"Bob"}--->json里的dict为双引号
 
-**json.loads(json格式)---JSON格式转换为Python(也叫反序列化)**
+**2.json.loads('json字符串')---将json字符串解码为Python对象(也叫反序列化)**
 
 	json_str = '{"age":20, "score":88, "name":"Bob"}'
 	/*
-		json.loads(para)的参数para必须是str类型,此处使用'{}'为了避免单引号和双引号解析错误,{}外面使用
-		双引号("")会报错,因为不能分辨出双引号的匹配.
+		json_str = 'xxx':外面的单引号表示一个字符串;
+		'{"xxx":aa, ...}':'xxx'里面的必须是json格式,json的字符串是双引号.
+		--->因此,对于json字符串,外面的单引号括起来,里面是双引号表示的json字符串.
+		e.g. json_str = '"aaa"',如果json.loads(json_str)
+			此时可以显示正确的结果'aaa'--->python表示的字符串.
 	*/
 	json.loads(json_str)
-	//得到的结果为:{'age':20, 'score':88, 'name':'Bob'}
+	//得到的结果为:{'age':20, 'score':88, 'name':'Bob'}--->python表示的dict.
+
+#### 11.2.2 解析json文件
+
+**json.dump(python对象(e.g.dict), fd(以写的方式打开的json文件fd))--->将python对象写入json文件**
+
+**json.load(fd(以读的方式打开的json文件fd))--->读取json文件解析为python对象**
+
+	import json
+	def save_json(file_name, data):
+		assert file_name.split('.')[-1] == 'json'
+		with open(file_name, 'w') as fd:
+			json.dump(data, fd)
+
+	def load_json(file_name):
+		assert file_name.split('.')[-1] == 'json'
+		with open(file_name, 'r') as fd:
+			data = json.load(fd)
+			return data
+
+	data = {'name':'0.jpg', 'weight':50, 'height':50}
+	// 保存为json文件
+	save_json('./data.json', data)
+	//从json文件读取数据
+	data_load = load_json('./data.json')
+	print(data)
+	print(load_data)	//可以看到当前路径下存在一个data.json文件
 
 ***
 
