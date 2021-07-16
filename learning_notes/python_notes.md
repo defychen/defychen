@@ -4023,6 +4023,71 @@ re.match从字符串的起始位置开始匹配一个模式,如果起始位置�
 			res_data.append(float(res1[0]))
 	print (res_data)	//python 3.x需要括起来.
 
+### 16.3.2 删除整行的方法
+
+1.留下一行的方法--->没有成功
+
+	import re
+	test_str = "aba\naaa\naba\naaa\naba"
+	print(test_str)
+	/*
+		aba
+		aaa
+		aba
+		aaa
+		aba
+	*/
+	print(re.sub(".*b.*", "", test_str))	//留下3个空行,因为"\n"没被替换
+	/*
+
+		aaa
+
+		aaa
+
+	*/
+	print(re.sub(".*b.*\n", "", test_str))	//最后一行不匹配,因为没有"\n"
+	/*
+		aaa
+		aaa
+		aba
+	*/	
+	print(re.sub("\n.*b.*", "", test_str))	//第一行不匹配,因为开头不是换行
+	print(re.sub(".*b.*\n?", "", test_str))	//最后一行匹配没有换行,只是把内容清掉了.留下最后一行空行
+	/*
+		aa
+		aaa
+
+	*/
+	print(re.sub("\n?.*b.*", "", test_str))	//清掉第一行的内容,第一行的"\n"没有被替换.留下第一行空行
+	/*
+		
+		aa
+		aaa
+	*/
+	print(re.sub("\n?.*b.*\n", "", test_str))	//所有的换行都被干掉了,导致两行合并为一行
+	/*
+		aaaaaa
+	*/
+
+2.多行正则表达式实现--->正确的方法
+
+	line_pattern = "(.*b.*)"
+	list_pattern = "(line\n)+(line$)?|(\nline$)|(^line$)"
+	pattern = re.sub("line", line_pattern, list_pattern)
+	/*
+		pattern为:
+			((.*b.*)
+			)+((.*b.*)$)?|(
+			(.*b.*)$)|(^(.*b.*)$)
+	*/
+
+	test_str = "aba\naaa\naba\naaa\naba"
+	print(re.sub(pattern, "", test_str)	//此时结果正确了
+	/*
+		aaa
+		aaa
+	*/
+
 ***
 
 ## 17. Python中常用的函数
