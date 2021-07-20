@@ -154,3 +154,27 @@ vfio的用户态驱动,利用vfio实现设备透传.
 	/* Test and setup the device */
 	ioctl(device, VFIO_DEVICE_GET_INFO, &device_info);
 
+### 1.2.3 group映射流程--->代码解析
+
+![](images/group_mapping.png)
+
+	1.利用mmap映射出1MB字节的虚拟空间.因为物理地址对于用户态不可见,只能通过虚拟地址访问物理空间;
+	2.执行ioctl的VFIO_IOMMU_MAP_DMA命令,传入参数主要包含vaddr及iova.
+		1.iova代表的是设备发起DMA请求时要访问的地址,是IOMMU映射前的地址,此处自行给值为0;
+		2.vaddr就是mmap时返回的地址.
+	3.VFIO_IOMMU_MAP_DMA命令会为虚拟地址vaddr找到物理页并pin住(物理页面被pin住表示不能交换出去).然后
+		找到Group对应的Contex Entry,建立页表项.页表项能将iova地址映射成上面pin住的物理页对应的物理地
+		址.这样对用户态程序完全屏蔽了物理地址,实现了用户空间驱动.
+		--->因为用户空间在此处可以看到vaddr和iova,看上去和驱动差不多,因此叫用户空间驱动.
+		PS:VFIO_IOMMU_MAP_DMA命令的主要作用:将iova通过iommu映射到vaddr对应的物理地址上去.
+	4.此处地址关系:0x0(iova)----0x10000000(pa),0x100000(iova)--->0x10100000(pa),大小为:1M
+
+## 1.3 设备透传分析
+
+设备透传就是由虚机直接接管设备,虚机可以直接访问MMIO空间.VMM配置好IOMMU之后,设备DMA读写请求无需VMM介入.
+
+	PS:设备的配置空间不会透传,因为VMM已经配置好了BAR空间.如果将这部分空间也透传给虚机,虚机会再次对BAR
+		空间进行配置,会导致设备无法正常工作.
+
+### 1.3.1 虚机地址映射
+
