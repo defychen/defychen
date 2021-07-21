@@ -178,3 +178,85 @@ vfio的用户态驱动,利用vfio实现设备透传.
 
 ### 1.3.1 虚机地址映射
 
+![](images/vm2host_mapping.png)
+
+	客户机中完成GVA->GPA转换(S1),EPT完成GPA->HPA转换(S2);
+
+GVA,GPA,HAV,HPA的关系梳理:
+
+	1.Qemu是应用程序,唯一可见的只是HVA.Qemu根据虚机的ram大小,即GPA大小范围,mmap出与之对应的大小,即HVA;
+	2.通过KVM_SET_USER_MEMORY_REGION命令控制KVM,与这个命令一起传入的参数主要包括两个值:
+		guest_phys_addr代表虚机GPA地址起始;
+		userspace_addr代表上面mmap得到的首地址(HVA).
+	3.传入进去后,KVM就会为当前虚机GPA建立EPT映射表实现GPA->HPA,同时会为VMM建立HVA->HPA映射;
+	4.当vm_exit发生时,VMM需要对异常进行处理,异常发生时VMM能够获取到GPA,有时VMM需要访问虚机GPA对应的
+		HPA,VMM的映射和虚机的映射方式不同,是通过VMM完成HVA->HPA,且只能通过HVA才能访问HPA,这就需要VMM
+		将GPA及HVA的对应关系维护起来,这个关系是Qemu维护的.
+		总结起来就是给定一个虚机的GPA,虚机就能获取到GPA对应的HVA.
+
+整个访问流程如下图:
+
+![](images/cpu_vcpu_access_memory.png)
+
+### 1.3.2 IOMMU虚拟化的翻译流程
+
+**1.x86(Intel/AMD)IOMMU翻译流程**
+
+![](images/x86_iommu_address_translation.png)
+
+
+	1.gCR3(guest CR3)存放的是GPA(i.e.IPA);
+	2.gCR3+gIOVA[47:39]--->IPA0--->S2转换(访存4次->对应nL4-nL1)--->PA0--->读取PA0的值(访存1次,
+		用于后续和gIOVA[38:30]组合)--->得到IPA1 base_addr;
+	3.IPA1 base_addr+gIOVA[38:30]--->IPA1--->S2转换(访存4次)--->PA1--->读取PA1的值(访存1次,
+		用于后续和gIOVA[29:21]组合)--->得到IPA2 base_addr;
+	4.IPA2 base_addr+gIOVA[29:21]--->IPA2--->S2转换(访存4次)--->PA2--->读取PA2的值(访存1次,
+		用于后续和gIOVA[20:12]组合)--->得到IPA3 base_addr;
+	5.IPA3 base_addr+gIOVA[20:12]--->IPA3--->S2转换(访存4次)--->PA3--->读取PA3的值(访存1次,
+		用于后续和gIOVA[11:0]组合)--->得到IPA4 base_addr;
+	6.IPA4 base_addr+gIOVA[11:0]--->IPA4--->S2转换(访存4次)--->PA4(最终的物理地址,i.e. hPA);
+	--->总共访存24次.
+
+**2.ARM SMMU翻译流程**
+
+![](images/arm_smmu_address_translation.png)
+
+	1.STE.CD PTR(IPA)--->经过S2转换(4次访存)--->得到CD PA;
+	2.CD PA+ssid(计算CD的偏移地址)--->访存1次--->得到CD信息--->从CD中提取出TTx Base的信息(是一个IPA);
+	3.TTx Base+gIOVA--->IPA0--->S2转换(访存4次)--->PA0--->读取PA0的值(访存1次,用于后续和
+		gIOVA[38:30]组合)--->得到IPA1 base_addr;
+	4.IPA1 base_addr+gIOVA[38:30]--->IPA1--->S2转换(访存4次)--->PA1--->读取PA1的值(访存1次,
+		用于后续和gIOVA[29:21]组合)--->得到IPA2 base_addr;
+	5.IPA2 base_addr+gIOVA[29:21]--->IPA2--->S2转换(访存4次)--->PA2--->读取PA2的值(访存1次,
+		用于后续和gIOVA[20:12]组合)--->得到IPA3 base_addr;
+	6.IPA3 base_addr+gIOVA[20:12]--->IPA3--->S2转换(访存4次)--->PA3--->读取PA3的值(访存1次,
+		用于后续和gIOVA[11:0]组合)--->得到IPA4 base_addr;
+	7.IPA4 base_addr+gIOVA[11:0]--->IPA4--->S2转换(访存4次)--->PA4(最终的物理地址,i.e. hPA);
+	--->总共访存24次+CD的访存5次(一般CD的访存可以不算,因为CD的访问一般只有一次).
+
+**3.ARM MMU的翻译流程**
+
+	1.CPU的TTBRx_EL1寄存器存放的IPA base_addr;
+	2.TTBRx_EL1+gIOVA[47:39]--->IPA0--->S2转换(访存4次)--->PA0--->读取PA0的值(访存1次,用于后续
+		和gIOVA[38:30]组合)--->得到IPA1 base_addr;
+	3.IPA1 base_addr+gIOVA[38:30]--->IPA1--->S2转换(访存4次)--->PA1--->读取PA1的值(访存1次,
+		用于后续和gIOVA[29:21]组合)--->得到IPA2 base_addr;
+	4.IPA2 base_addr+gIOVA[29:21]--->IPA2--->S2转换(访存4次)--->PA2--->读取PA2的值(访存1次,
+		用于后续和gIOVA[20:12]组合)--->得到IPA3 base_addr;
+	5.IPA3 base_addr+gIOVA[20:12]--->IPA3--->S2转换(访存4次)--->PA3--->读取PA3的值(访存1次,
+		用于后续和gIOVA[11:0]组合)--->得到IPA4 base_addr;
+	6.IPA4 base_addr+gIOVA[11:0]--->IPA4--->S2转换(访存4次)--->PA4(最终的物理地址,i.e. hPA);
+	--->总共访存24次.
+
+### 1.3.3 设备透传实现
+
+![](images/cpu_vcpu_device_access_memory.png)
+
+工作流程:
+
+	1.VM访问memory:
+		VCPU--->发出GVA--->经过guest中的MMU转换为GPA--->经过EPT转换为HPA1--->用HPA1访问memory;
+	2.VM中的device driver访问memory:
+		guestOS DMA--->直接透传给物理设备,物理设备发给IOMMU--->IOMMU 2-level转换--->HPA2--->用HPA2	访问memory.
+
+
