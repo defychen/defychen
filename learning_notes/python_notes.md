@@ -1028,6 +1028,52 @@ A、B、C三个柱子,A上有n个盘子,需要将所有盘子从A借助B移动�
 	B --> A
 	B --> C 
 
+### 3.5 函数参数
+
+python的函数的参数如果是可变对象(e.g. dict, list),此时传参是引用传参,在函数里修改信息会修改对象的原始值;如果是不可变对象(e.g. 数字, 字符或tuple),此时相当于传值,不能修改原始对象.
+
+#### 3.5.1 传递不可变对象
+
+	def test(x):
+		x = x + 10
+	x = 10
+	test(x)
+	print(x)	//由于x是一个数字,是不可变对象.结果为:10--->不变
+
+#### 3.5.2 传递可变对象
+
+	def test(L):
+		L.append(4)
+	L = [1, 2, 3]
+	test(L)
+	print(L)	//传递一个可变对象list,结果为:[1, 2, 3, 4]
+
+#### 3.5.3 将可变对象赋值给另一个变量
+
+	L = [1, 2, 3]
+	A = L	//将L赋值给A,相当于A对L的引用.A/L的更改互相影响
+	L.append(4)
+	print(A)	//结果为:[1, 2, 3, 4]
+	A.append(5)
+	print(L)	//结果为:[1, 2, 3, 4, 5]
+
+#### 3.5.4 将可变对象赋值给另一个变量但去掉引用
+
+copy.copy(var)和copy.deepcopy(var)与普通赋值的区别:
+
+	普通赋值:赋值相当于引用,互相影响;
+	copy.copy(var):浅复制,简单的可变对象去掉引用,复杂的表达式会互相影响;
+		--->效果介于copy.deepcopy(var)和普通赋值之间
+	copy.deepcopy(var):深复制,完全独立的两个个体.
+
+实例--->仅展示深复制.
+
+	import copy
+	L = [1, 2, 3, 4]
+	A = copy.deepcopy(L)
+	L.append(5)
+	print(A)	//结果为:[1, 2, 3, 4],L的更改不会影响A
+
 ***
 
 ## 4. 高级特性
@@ -3915,7 +3961,7 @@ Python的re模块就是正则表达式(Regular Expressions).
 
 ### 16.2 re模块的函数
 
-**1.re.findall(pattern, string)**
+**1.re.findall(pattern, string, flags=0)**
 
 找到所有的匹配,并返回一个匹配列表
 
@@ -3933,6 +3979,11 @@ Python的re模块就是正则表达式(Regular Expressions).
 	print (m_findall)
 	//结果为:
 	['12345', '23456']	//[0-9]:表示0-9的任意数字;"+"表示匹配前一个字符一次或多次,此处为多次.
+
+flags的说明:
+
+	flags=re.IGNORECASE		//表示忽略大小写
+	flags=re.MULTILINE		//表示多行匹配
 
 **2.re.search(pattern, string)**
 
@@ -4112,6 +4163,37 @@ re.match从字符串的起始位置开始匹配一个模式,如果起始位置�
 		xxxx
 		xxxx
 		ffff
+	*/
+### 16.3.5 替换多行出现的某字段信息为其他信息
+
+	import re
+	test = 'defychen------\nincludexxxxxx\nincludeaaaaaaa\nxxxxxxxx\ndefychen--------'
+	pattern = r'^include.*\n'	//匹配以include打头的行,包含后面的换行.
+	print(re.findall(pattern, test, flags=re.MULTILINE))
+	/*
+		必须加上flags=re.MULTILINE才会匹配多行,否则只匹配第一行.
+		结果为: ['includexxxxxx\n', 'includeaaaaaaa\n']
+	*/
+	//将匹配的前几行全部替换为空
+	count=len(re.findall(pattern, test, flags=re.MULTILINE))	//此时的len为2
+	new_test = re.sub(pattern, "", test, count - 1, flags=re.MULTILINE)
+		//re.sub的原型: re.sub(pattern, repl, string, count=0, flags=0)
+	print(new_test)
+	/*
+		结果为:
+		defychen------
+		includeaaaaaaa
+		xxxxxxxx
+		defychen--------
+	*/
+	new_test=re.sub(pattern, 'AAAAAAA\n', new_test, count=1, flags=re.MULTILINE)
+	print(new_test)
+	/*
+		结果为:
+		defychen------
+		AAAAAAA
+		xxxxxxxx
+		defychen-------- 
 	*/
 
 ***
