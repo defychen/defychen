@@ -390,3 +390,93 @@ Xeon系列也从Westmere开始推出了第一代E命名的E7-x8xx系列.
 ```
 
 **Ring Bus**
+
+![](images/Intel_sandy_bridge_ring_bus.png)
+
+相比上一代的性能:
+
+```
+1.11.3%的clock-to-clock性能提升;
+2.2倍的显示性能提升.
+```
+
+**Ivy Bridge**
+
+Tick到22nm的架构叫Ivy Bridge,包括三代Core i系列和二代XeonE 系列.主要特点为:
+
+```
+1.支持16位浮点指令;
+2.片内硬件随机数生成器;
+3.PCIE 3.0;
+4.其他各个部分都做了很多提升.
+```
+
+#### 1.3.5 Haswell
+
+![](images/Intel_haswell_architecture.png)
+
+22nm的Tock到了Haswell,四代Core i 系列和三代Xeon E系列.主要特点为:
+
+```
+1.每个核内的部分进一步升级,更多的ALU、各种带宽增加等等;
+2.支持DDR4内存;
+3.提供部分雷电接口(Thunderbolt)支持;
+4.完整集成电压调节器(FIVR),把主板上的一部分电源控制做到了片内;
+5.更高级的功耗控制系统,增加了L6和L7两级CPU睡眠状态;
+6.其他指令扩展升级等等.
+```
+
+相对上一代的性能:
+
+```
+1.8%的向量运算能力提升;
+2.5%的单线程性能和6%的多线程性能提升.
+```
+
+从这开始,Intel开始挤牙膏了.
+
+**Broadwell**
+
+Tick到14nm的架构叫Broadwell,五代Core i系列和四代Xeon E系列.各种指令集升级、支持了很多新功能特性.
+
+#### 1.3.6 Skylake
+
+14nm的Tock到了Skylake,进入 XXlake 时代,六代Core i系列.
+
+```
+1.一系列指令集升级、新功能特性等等(e.g.雷电3.0升级);
+2.上一代的一些特性又被拿掉了(上一代加入的FIVR这代又拿掉了);
+3.从比较粗粒度的架构图来看,Skylake的架构基本上跟前面那张Haswell的没什么差别,大概就是寄存器什么的数字上往上涨了一些.
+```
+
+Intel开始了挤牙膏.这个阶段的微架构除了升级指令、加上更多扩展功能以外,不像Nehalem和Sandy Bridge那时候能有更多革新的设计,
+
+由于制程已经达到了很小的程度,再往下可能很快就要碰到工艺极限了,所以摩尔定律开始放缓,性能很难有特别大的提升了.所以Intel开始从Tick-Tock两步升级战略转变到Process-Architecture-Optimization(PAO)的三步升级战略,分别是提升工艺制程、升级微架构、再在微架构基础上进行优化.其实这个三步战略从上面 Haswell 时代就已经开始了,Broadwell前面还有个refresh的Haswell升级版(e.g. i3/i5/i7 4x20系列).
+
+**KabyLake**
+
+Skylake优化版的下一代是Kaby Lake,即七代 Core i 系列.相比 Skylake 提升了主频,频率切换更快、提升了显示核心等等.
+
+**CofferLake**
+
+Kaby Lake继续优化到了Coffee Lake,八代Core i系列.这个系列的i3升级到了4 核,i5、i7都从6核开始,然后继续提升主频、各种优化等等.
+
+#### 1.3.7 What's new?
+
+在KabyLake和Coffee Lake这几代,Intel又推出了新的Core i系列,命名为**Core i9**,第一代的桌面版Core i9是Skylake架构(Skylake-X),第一代笔记本版i9是CoffeeLake架构.
+
+**服务器版本**
+
+本该在这个时候推出的第五代Xeon,也就是E3/E5/E7的xxxxv5版本.但是Intel更改了策略:
+
+```
+Skylake的第五代Xeon摆脱了原本的系列名,而是重新改成了Bronze、Silver、Gold、Platinum 4个系列.青铜和白银系列支持双路(i.e. 原本的E5-24xx、E7-28xx系列),黄金系列支持四路(i.e. 原本的E5-46xx、E7-48xx系列),白金系列支持八路(i.e. 原本的E7-88xx系列).
+```
+
+**总线改动**
+
+这里还有个重要变动，Intel 沿用了很多年的 Ring Bus 片内总线从 Skylake-X 开始改掉了！前面说 Sandy Bridge 开始，微架构设计上已经全面采用了 Ring Bus，其实最早到 Nehalem 时代的 Xeon 系列就已经开始用上 Ring Bus 了，主要用于解决多核（非常非常多的核）之间的共享、扩展等等的问题。
+
+然而随着 CPU 的发展，核越来越多，所以一个 CPU 片内还可能有多个 Ring Bus，就像下面这样。这会有什么问题呢？
+
+以前我们考虑多路服务器里面的 CPU 亲和性的时候，只考虑过 socket 之间的 NUMA 关系，两片 CPU 核之间会有亲和性问题。。。。。。谁想过在下面这种结构的单片 CPU 里面其实也已经是个 NUMA 结构了！！！
