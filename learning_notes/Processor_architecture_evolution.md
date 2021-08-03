@@ -463,20 +463,64 @@ Kaby Lake继续优化到了Coffee Lake,八代Core i系列.这个系列的i3升�
 
 #### 1.3.7 What's new?
 
-在KabyLake和Coffee Lake这几代,Intel又推出了新的Core i系列,命名为**Core i9**,第一代的桌面版Core i9是Skylake架构(Skylake-X),第一代笔记本版i9是CoffeeLake架构.
+在KabyLake和Coffee Lake这几代,Intel又推出了新的Core i系列,命名为**Core i9**,第一代的桌面版Core i9是Skylake架构(Skylake-X),第一代笔记本版i9是Coffee Lake架构.
 
-**服务器版本**
+**1.服务器版本改动**
 
-本该在这个时候推出的第五代Xeon,也就是E3/E5/E7的xxxxv5版本.但是Intel更改了策略:
+本该在这个时候推出的第五代Xeon,也就是E3/E5/E7的xxxx v5版本.但是Intel更改了策略:
 
 ```
-Skylake的第五代Xeon摆脱了原本的系列名,而是重新改成了Bronze、Silver、Gold、Platinum 4个系列.青铜和白银系列支持双路(i.e. 原本的E5-24xx、E7-28xx系列),黄金系列支持四路(i.e. 原本的E5-46xx、E7-48xx系列),白金系列支持八路(i.e. 原本的E7-88xx系列).
+Skylake的第五代Xeon摆脱了原本的系列名,而是重新改成了Bronze、Silver、Gold、Platinum(白金)4个系列.青铜和白银系列支持双路(i.e. 原本的E5-24xx、E7-28xx系列),黄金系列支持四路(i.e. 原本的E5-46xx、E7-48xx系列),白金系列支持八路(i.e. 原本的E7-88xx系列).
 ```
 
-**总线改动**
+**2.总线改动**
 
-这里还有个重要变动，Intel 沿用了很多年的 Ring Bus 片内总线从 Skylake-X 开始改掉了！前面说 Sandy Bridge 开始，微架构设计上已经全面采用了 Ring Bus，其实最早到 Nehalem 时代的 Xeon 系列就已经开始用上 Ring Bus 了，主要用于解决多核（非常非常多的核）之间的共享、扩展等等的问题。
+从Sandy Bridge开始,Intel在微架构设计上全面采用了Ring Bus,主要用于解决多核之间的共享、扩展等等的问题.然而随着CPU的发展,核越来越多,一个CPU内可能存在多个Die,每个Die一个Ring Bus用于互联(Core多了,在Ring上走的Node就变多了,延迟就变大了).如下图所示:
 
-然而随着 CPU 的发展，核越来越多，所以一个 CPU 片内还可能有多个 Ring Bus，就像下面这样。这会有什么问题呢？
+```
+1.HCC:High Core Count,核很多的版本;
+2.图中两个Ring Bus之间采用双向Pipe Line连接,保证通讯顺畅;
+3.Ring 0的模块访问Ring 1中的模块延迟明显高于本Ring,亲和性不同.所以两个Ring分属于不同的NUMA(Non-Uniform Memory Access Architecture) node.
+```
 
-以前我们考虑多路服务器里面的 CPU 亲和性的时候，只考虑过 socket 之间的 NUMA 关系，两片 CPU 核之间会有亲和性问题。。。。。。谁想过在下面这种结构的单片 CPU 里面其实也已经是个 NUMA 结构了！！！
+![](images/Intel_ring_bus.png)
+
+当核的数量持续增长,Ring Bus 的延迟也会越来越高,终究不是个办法.Intel 在KNL上已经试过2D Mesh的总线结构了,估计是效果比较好.于是从Skylake-X开始,之后的系列开始全部改用Mesh结构.
+
+![](images/Intel_mesh_bus.png)
+
+## 2. NVIIDA GPU架构演进
+
+NV的GPU都是使用历史上杰出的科学家的名字来命名自己的硬件架构(e.g. Tesla, Fermi--->核反应堆的发明者).
+
+NV GPU用到的SIMT(Single Instruction Multi Thread,与ARM的SMID类似)基本编程模型都是一致的,每一代相对前代基本都会在SM数量、SM内部各个处理单元的流水线结构等等方面有一些升级和改动.
+
+```
+1.显存(Global Memory):显存是在GPU板卡上的DRAM,类似于CPU的内存.特点是容量大(可达16GB),速度慢,CPU和GPU都可以访问.
+2.计算单元(Streaming Multiprocessor--->SM):执行计算的.每一个SM都有自己的控制单元(Control Unit),寄存器(Register),缓存(Cache),指令流水线(execution pipelines).
+```
+
+![](images/GPU_picture.png)
+
+### 1.Tesla
+
+初代GPU架构,资料不多.网上都是从Fermi开始,暂略.
+
+### 2. Fermi
+
+<img src="images/fermi_architecture.svg" style="zoom: 50%;" />
+
+特点:
+
+```
+每个SM中包含:
+1.2个Warp Scheduler/Dispatch Unit;
+2.32个CUDA Core(分在两条lane上,每条16个);
+3.每个CUDA Core里面是1个单精浮点单元(FPU(Float Processing Unit,浮点处理单元))和1个整数单元(ALU),可以直接做FMA的乘累加;
+4.每个cycle可以跑16个双精的FMA(浮点的加减乘);
+5.16个LD/ST Unit;
+6.4个SFU(Special Function Unit):特殊函数单元,用于进行超越函数核属性插值函数(根据顶点属性对像素进行插值)计算.
+PS:按理解应该是做一个双精FMA需要用到两个CUDA Core.所以才是是32/2=16个LD/ST unit.
+```
+
+### 3. Kepler
