@@ -502,11 +502,11 @@ NV GPU用到的SIMT(Single Instruction Multi Thread,与ARM的SMID类似)基本�
 
 ![](images/GPU_picture.png)
 
-### 1.Tesla
+### 2.1 Tesla
 
 初代GPU架构,资料不多.网上都是从Fermi开始,暂略.
 
-### 2. Fermi
+### 2.2 Fermi
 
 <img src="images/fermi_architecture.svg" style="zoom: 50%;" />
 
@@ -523,4 +523,120 @@ NV GPU用到的SIMT(Single Instruction Multi Thread,与ARM的SMID类似)基本�
 PS:按理解应该是做一个双精FMA需要用到两个CUDA Core.所以才是是32/2=16个LD/ST unit.
 ```
 
-### 3. Kepler
+### 2.3 Kepler
+
+<img src="images/kepler_architecture.png" style="zoom:80%;" />
+
+特点:
+
+```
+每个SM(这里叫SMX了)中包含：
+1.4个Warp Scheduler,8个Dispatch Unit;
+2.CUDA Core增加到192个(4*3*16=192,每条lane上还是16个);
+3.单独分出来64个DP Unit双精运算单元(4*16=64,每条lane上16个);
+	DP:IEEE Double Precision/64-Bit Floating Point,双精度浮点;
+	SP:IEEE Single Precision/32-Bit Floating Point,单精度浮点.
+4.SFU和LD/ST Unit分别也都增加到32个.
+```
+
+Kepler是拥有双精度运算单元的架构,不用通过单精度单元去做双精度.因此,双精度浮点的性能会比之前的高出一截.
+
+### 2.4 Maxwell
+
+<img src="images/maxwell_architecture.png" style="zoom: 67%;" />
+
+特点:
+
+```
+Maxwell在Kepler的基础上做减法:
+1.一个SM里包含4个Process Block,这样布局更合理;
+2.每个Process Block的组成:
+	1.1个Warp Scheduler和2个Dispatch Unit;
+	2.32个CUDA Core;
+	3.8个SFU和LD/ST Unit.
+3.移除Kepler里的DP双精度浮点单元;
+4.Maxwell每个CUDA Core的性能相比Kepler提升了1.4倍,每瓦性能提升了2倍.
+```
+
+之所以Maxwell移除DP双精度浮点单元,估计是认为只有少数 HPC 科学计算才用的上的双精度浮点单元,在这代上没有这个必要.
+
+### 2.5 Pascal
+
+![](images/pascal_architecture.png)
+
+Pascal这代有了质的飞跃,特点:
+
+```
+1.一个SM里包含2个Process Block;
+2.每个Process Block的组成:
+	1.1个Warp Scheduler和2个Dispatch Unit;
+	2.32个CUDA Core;
+	3.8个SFU和LD/ST Unit;
+	4.多个16个DP Unit.
+3.面向Deep Learning做了一些专门的定制(CuDNN等);
+4.除了PCIe外,P100还有NVLink版,单机卡间通信带宽逆天,多机之间通过Infiniband进一步扩展NVLink(GPUDirect);
+5.P100上把GDDR5换成了HBM2,Global Memory的带宽涨了一个数量级;
+6.16nm FinFET工艺,性能提升一大截,功耗控制良好;
+7.Unified Memory,支持把GPU的显存和CPU的内存统一到一个相同的地址空间,驱动层自己会做好DtoH和HtoD的内存拷贝,编程模型上更加友好;
+8.CUDA Core支持FP16半精度计算--->应该是将一个单精度单元来进行两个半精度计算.
+```
+
+### 2.6 Volta
+
+<img src="images/volta_architecture.png" style="zoom: 67%;" />
+
+增加了深度学习支持,特点:
+
+```
+1.一个SM里包含4个Process Block;
+2.每个Process Block的组成:
+	1.1个Warp Scheduler和1个Dispatch Unit;
+	2.16个FP32 Core;
+	3.16个INT32 Core;
+	4.8个FP64 Core;
+	5.2个Tensor Core--->用于深度学习;
+	6.8个LD/ST Unit;
+	7.4个SFU.
+```
+
+Tensor Core介绍暂略.
+
+### 2.7 Turing
+
+<img src="images/turing_architecture.png" style="zoom:67%;" />
+
+特点:
+
+```
+1.一个SM里包含4个Process Block;
+2.每个Process Block的组成:
+	1.1个Warp Scheduler和1个Dispatch Unit;
+	2.16个FP32 Core;
+	3.16个INT32 Core;
+	4.2个Tensor Core--->用于深度学习;
+	6.4个LD/ST Unit;
+	7.4个SFU.
+	--->去掉了FP64 Core,LD/ST单元砍半.
+3.增加了Int8/Int4的推理能力,设计更新重心集中在实时光追这种渲染能力上,让GForce系列游戏卡有了质的飞跃.
+```
+
+### 2.8 Ampere
+
+![](images/ampere_architecture.png)
+
+一个大版本更新,特点:
+
+```
+1.一个SM里包含4个Process Block;
+2.每个Process Block的组成:
+	1.1个Warp Scheduler和1个Dispatch Unit;
+	2.16个FP32 Core;
+	3.16个INT32 Core;
+	4.8个FP64 Core;
+	5.1个Tensor Core;
+	6.8个LD/ST Unit;
+	7.4个SFU.
+3.主要改进在Tensor Core以及各部分的memory工作效率上.
+	Ampere的Tensor比Volate/Turing的Tensor Core都强大.
+```
+
