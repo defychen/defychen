@@ -1,4 +1,4 @@
-# Processor Architecture Evolution
+# Hardware Component Architecture Evolution
 
 ## 1. Intel处理器架构演进
 
@@ -640,3 +640,302 @@ Tensor Core介绍暂略.
 	Ampere的Tensor比Volate/Turing的Tensor Core都强大.
 ```
 
+## 3. 内存介绍
+
+### 3.1 内存条分类
+
+#### 3.1.1 DIMM条
+
+在80286时代,内存颗粒(Chip)是直接插在主板上的,叫做DIP(Dual In-line Package).到了80386时代,换成1片焊有内存颗粒的电路板,叫做SIMM(Single-Inline Memory Module).由阵脚形态变化成电路板带来了很多好处:模块化,安装便利等等,由此DIY市场才有可能产生.当时SIMM的位宽是32-bit,即一个周期读取4个字节;到了奔腾时,位宽变为64-bit(即8个字节),于是SIMM就顺势变为DIMM（Double-Inline Memory Module).这种形态一直延续至今,也是内存条的基本形态.DIMM分为以下几种:
+
+##### 3.1.1.1 RDIMM
+
+RDIMM(Registered DIMM):寄存型模组,主要用在服务器上,为了增加内存的容量和稳定性分有ECC和无ECC两种,但市场上几乎都是ECC的.
+
+```
+服务器用RDIMM,且是ECC的.
+```
+
+
+
+##### 3.1.1.2 UDIMM
+
+UDIMM(Unbuffered DIMM):无缓冲型模组,这是我们平时所用到的标准台式电脑DIMM,分有ECC和无ECC两种,一般是无ECC的.
+
+```
+台式机用UDIMM,无ECC.
+```
+
+##### 3.1.1.3 SO-DIMM
+
+SO-DIMM(Small Outline DIMM):小外型DIMM,笔记本电脑中所使用的DIMM,分ECC和无ECC两种.
+
+```
+笔记本用SO-DIMM.
+```
+
+##### 3.1.1.4 Mini-DIMM
+
+Mini-DIMM:DDR2时代新出现的模组类型,它是Registered DIMM的缩小版本,用于刀片式服务器等对体积要求苛刻的高端领域.
+
+```
+Mini-DIMM用于刀片式服务器等对体积要求严苛的高端领域.
+```
+
+### 3.2 DDR到DDR4
+
+#### 3.2.1 DDR的介绍
+
+DDR SDRAM(Double Data Rate SDRAM--->双倍数据流SDRAM):DDR SDRAM是在原有的SDRAM的基础上改进而来.也正因为如此,DDR能够凭借着转产成本优势来打败昔日的对手RDRAM(Rambus DRAM,另一种标准,价格贵以及专利许可限制渐渐没落)成为当今的主流.
+
+```
+和SDRAM(Synchronous DRAM)相比,DDR SDRAM一个时钟周期要传输两次数据(上升沿和下降沿均可传递数据)--->不确定带宽能否增大一倍???
+```
+
+![](images/DDR_transfer_data.png)
+
+#### 3.2.2 DDR到DDR4
+
+DDR到DDR4主要的区别是在于传输速率的不同,随着时钟周期的不断降低(DDR频率的提高),传输率(带宽=传输率*8)也不断提高.
+
+```
+1.大部分台式机DIMM厂商都会标注DDRx-yyy,x代表第几代,yyy代表数据传输率;
+2.大部分的SO-DIMM和RDIMM等则标注PCx-zzzz,x还代表第几代,zzzz则代表最大带宽.
+	--->DDR位宽为64位(8个字节),所以zzzz=yyy * 8,而yyy又是时钟的2倍.
+```
+
+#### 3.2.3 DDR的规格表
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-9wq8{border-color:inherit;text-align:center;vertical-align:middle}
+.tg .tg-0pky{border-color:inherit;text-align:left;vertical-align:top}
+.tg .tg-0lax{text-align:left;vertical-align:top}
+</style>
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-9wq8">内存</th>
+    <th class="tg-0pky">时钟</th>
+    <th class="tg-0pky">带宽</th>
+    <th class="tg-0pky">标注</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-0pky">DDR200</td>
+    <td class="tg-0pky">100 MHz</td>
+    <td class="tg-0pky">1,600MB/s</td>
+    <td class="tg-0pky">PC-1600</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">DDR266</td>
+    <td class="tg-0pky">133 MHz</td>
+    <td class="tg-0pky">2,133MB/s</td>
+    <td class="tg-0pky">PC-2100</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">DDR333</td>
+    <td class="tg-0pky">166 MHz</td>
+    <td class="tg-0pky">2,666MB/s</td>
+    <td class="tg-0pky">PC-2700</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">DDR400</td>
+    <td class="tg-0pky">200 MHz</td>
+    <td class="tg-0pky">3,200MB/s</td>
+    <td class="tg-0pky">PC-3200</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">DDR2-400</td>
+    <td class="tg-0pky">200 MHz</td>
+    <td class="tg-0pky">3,200MB/s</td>
+    <td class="tg-0pky">PC-3200</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">DDR2-533</td>
+    <td class="tg-0pky">266 MHz</td>
+    <td class="tg-0pky">4,266MB/s</td>
+    <td class="tg-0pky">PC-4200</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">DDR2-667</td>
+    <td class="tg-0pky">333 MHz</td>
+    <td class="tg-0pky">5,333MB/s</td>
+    <td class="tg-0pky">PC-5300</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">DDR2-800</td>
+    <td class="tg-0pky">400 MHz</td>
+    <td class="tg-0pky">6,400MB/s</td>
+    <td class="tg-0pky">PC-6400</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">DDR2-1066</td>
+    <td class="tg-0pky">533 MHz</td>
+    <td class="tg-0pky">8,533MB/s</td>
+    <td class="tg-0pky">PC-8500</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">DDR3-800</td>
+    <td class="tg-0pky">400 MHz</td>
+    <td class="tg-0pky">6,400MB/s</td>
+    <td class="tg-0pky">PC-6400</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">DDR3-1066</td>
+    <td class="tg-0pky">533 MHz</td>
+    <td class="tg-0pky">8,500MB/s</td>
+    <td class="tg-0pky">PC-8500</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">DDR3-1333</td>
+    <td class="tg-0pky">666 MHz</td>
+    <td class="tg-0pky">10,666MB/s</td>
+    <td class="tg-0pky">PC-10600</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">DDR3-1600</td>
+    <td class="tg-0pky">800 MHz</td>
+    <td class="tg-0pky">12,800MB/s</td>
+    <td class="tg-0pky">PC-12800</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">DDR4-1600</td>
+    <td class="tg-0pky">800 MHz</td>
+    <td class="tg-0pky">12,800MB/s</td>
+    <td class="tg-0pky">PC-12800</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">DDR4-1866</td>
+    <td class="tg-0pky">933 MHz</td>
+    <td class="tg-0pky">14,900MB/s</td>
+    <td class="tg-0pky">PC-14900</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">DDR4-2133</td>
+    <td class="tg-0pky">1066 MHz</td>
+    <td class="tg-0pky">17,000MB/s</td>
+    <td class="tg-0pky">PC-17000</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">DDR4-2400</td>
+    <td class="tg-0pky">1200 MHz</td>
+    <td class="tg-0pky">19,200MB/s</td>
+    <td class="tg-0pky">PC-19200</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">DDR4-2666</td>
+    <td class="tg-0pky">1333 MHz</td>
+    <td class="tg-0pky">21,300MB/s</td>
+    <td class="tg-0pky">PC-21300</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">DDR4-3200</td>
+    <td class="tg-0pky">1600 MHz</td>
+    <td class="tg-0pky">25,600MB/s</td>
+    <td class="tg-0pky">PC-25600</td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">DDR5-4800</td>
+    <td class="tg-0lax">2400 MHz</td>
+    <td class="tg-0lax">38,400MB/s</td>
+    <td class="tg-0lax">PC-38400</td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">DDR5-5200</td>
+    <td class="tg-0lax">5200 MHz</td>
+    <td class="tg-0lax">41,600MB/s</td>
+    <td class="tg-0lax">PC-41600</td>
+  </tr>
+</tbody>
+</table>
+
+### 3.3 BANK和RANK
+
+![](images/memory_bank_rank.png)
+
+```
+从大到小的顺序为:channel>DIMM>rand>chip>bank>row/column
+```
+
+#### 3.3.1 channel
+
+channel和内存控制器具有一一对应关系(即有几个内存控制器,就是几通道).
+
+```
+双通道性能强于单通道:双通道使用了2个内存控制器,一次可以读/写128-bit,相比同规格的单通道性能可翻倍;且两个内存控制器独立.
+```
+
+channel的支持通常在CPU的"内存规格"说明中会呈现.
+
+##### 3.3.1.1 Intel CPU支持的channel数
+
+![](images/intel_memory_channel_support.png)
+
+##### 3.3.1.2 AMD CPU支持的channel数<img src="images/AMD_memory_channel.png" style="zoom:75%;" />
+
+```
+AMD 7763,支持8通道,支持的最大内存速度3200MHz,带宽计算为: 3200MHz * 8B(数据位宽) * 8-channel = 204.8GB/s(与上图中的内存带宽(每路)对用).
+```
+
+#### 3.3.2 DIMM条
+
+DIMM:双列直插式存储模块,每个DIMM条提供64-bit的数据通道.一个channel可以带多个DIMM条.
+
+![](images/memory_dimm_number.png)
+
+```
+如上图所示:每颗CPU支持3 channel,每个channel有8条dimm,总共48条dimm条,每条dimm是8GB,总共384GB.
+```
+
+每条dimm上支持有8颗内存颗粒,排列在dimm的一面或两面上.有些dimm会存在第9颗颗粒,该颗粒用于存储4-bit/8-bit的ECC.
+
+```
+服务器的内存条可能存在18个内存颗粒--->还不明白原因???
+```
+
+#### 3.3.3 Rank
+
+通常dimm上一部分或所有内存颗粒产生一个64-bit的block(由于CPU的位宽是64-bit).一个Rank可以产生一个64-bit.
+
+```
+1.1R(Single-Rank):产生1个64-bit block,由1个片选信号控制;
+2.2R(Double-Rank):产生2个64-bit block,由2个片选信号控制.但是这2个片选信号是交错的,不争抢总线资源;
+3.4R(Quad-Rank):产生4个64-bit block,由4个片选信号控制.但是这4个片选信号是交错的,不争抢总线资源.
+```
+
+内存控制器只允许CPU每次与内存进行一组64-bit的数据交换,其实也就是跟一个Rank交互.
+
+一个Rank的组成,可能需要4颗x16(颗粒位宽16-bit)的芯片或者8颗x8(颗粒位宽8-bit)等组成.不能出现x16和x8混用情况.
+
+#### 3.3.4 Chip
+
+Chip:内存颗粒,提供4-bit/8-bit/16-bit/32-bit的数据,提供4-bit的芯片记作x4,提供8-bit的芯片记作x8.
+
+#### 3.3.5 Bank
+
+多Row和多Column构成Rank.类似于C/C++的二维数组.
+
+#### 3.3.6 Row和Column
+
+Row/Column用于寻址到最终的存储单元.
+
+### 3.4 内存条解析
+
+![](images/memory_picture.png)
+
+```
+4GB:表示大小为4GB;
+2Rx8:2个Rank,每个Rank由8个内存颗粒组成;
+PC3-10600S:3表示第3代(即DDR3),10600表示最大带宽10600(其实是:10633MB/s),S表示SO-DIMM,笔记本用的DIMM.
+9-10-F2:表示内存颗粒的时延数据(CL-tRCD-tRP-tRAS,可能少值,对应关系也不清楚),数值越小表示性能越好.
+```
+
+
+
+​	
