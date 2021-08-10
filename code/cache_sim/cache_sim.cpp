@@ -232,7 +232,7 @@ bool cache_sim::proc_cache_access(char * trace_str)
 	return true;
 }
 
-bool cache_sim::check_cache_hit(bitset <32> access_addr_binary)
+bool cache_sim::check_cache_hit(bitset<32> access_addr_binary)
 {
 	bool ret = false;
 
@@ -363,7 +363,7 @@ void cache_sim::cache_lru_unhit_process(bool need_evict)
 	}
 }
 
-void cache_sim::cache_read_memory(bitset <32> access_addr_binary)
+void cache_sim::cache_read_memory(bitset<32> access_addr_binary)
 {
 	if (m_assoc_type == DIRECT_MAPPED) {
 		if (m_cache_item[m_current_line][30] == false) {
@@ -428,5 +428,42 @@ void cache_sim::cache_write_memory()
 {
 	m_cache_item[m_current_line][29] = false;
 	m_cache_item[m_current_line][30] = false;	
+}
+
+void cache_sim::cache_replace(bitset<32> access_addr_binary)
+{
+	if (m_assoc_type == FULL_ASSOCIATIVE) {
+		if (m_replace_type == Random) {
+			m_current_line = rand() / (RAND_MAX / m_cacheline_num + 1);
+			// m_current_line = rand() % m_cacheline_num; /* can't sure which type is the best? */
+		} else if (m_replace_type == LRU) {
+			cache_lru_unhit_process(true);
+		}
+	} else if (m_assoc_type == SET_ASSOCIATIVE) {
+		if (m_replace_type == Random) {
+			uint32_t rand_offset = rand() / (RAND_MAX / m_way_num + 1);
+			m_current_line = m_current_set * m_way_num + rand_offset;
+		} else if (m_replace_type == LRU) {
+			cache_lru_unhit_process(true);
+		}
+	}
+
+	if (m_cache_item[m_current_line][29] == true) { /* dirty data must write into memory */
+		cache_write_memory();
+	}
+
+	/* save tag into cache */
+	int i, j;
+	for (i = 31, j = 28; i > (31 - m_tag_bit_num); i--, j--) {
+		m_cache_item[m_current_line][j] = access_addr_binary[i];
+	}
+	m_cache_item[m_current_line][30] = true;
+}
+
+void cache_sim::calc_hit_rate()
+{
+	m_hit_rate = ((double)m_hit_num / m_access_num);
+	m_load_hit_rate = ((double)m_load_hit_num) / m_load_num;
+	m_store_hit_rate = ((double)m_store_hit_num) m_store_num;
 }
 
