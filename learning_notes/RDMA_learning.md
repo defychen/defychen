@@ -45,6 +45,16 @@ RDMA(Remote direct memory access,远程直接访问内存).利用RDMA技术通�
 
 在实现上,RDMA实际上是一种智能网卡与软件架构充分优化的远端内存直接高速访问技术.将RDMA协议固化于硬件(即网卡)上,以及支持Zero-copy和Kernel bypass这两种途径来达到高性能的远程直接数据存取的目标.
 
+### 1.2.6 Traditional TCP DMA v.s RDMA
+
+![](images/Traditional_TCP_receiving_data.png)
+
+<img src="images/Traditional_TCP_sending_data.png" style="zoom:80%;" />
+
+![](images/rdma_receiving_data.png)
+
+<img src="images/rdma_sending_data.png"  />
+
 ### 1.2.5 RoCE(RDMA Over Converged Ethernet)
 
 由于当前网络还是以以太网为主,为了实现IB向以太网的兼容,产生了融合以太网的RoCE.RoCE是在原有IB协议的基础上,将link层的LRH修改为以太网的MAC头,将VCRC修改为FCS,其他不变.
