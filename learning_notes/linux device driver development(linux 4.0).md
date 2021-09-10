@@ -84,7 +84,7 @@ Linux针对Nor, Nand等提供了独立的内存技术设备(Memory Technology De
 						/* some private member*/
 						struct test_dev *test; //设备结构体成员
 					};
-
+	
 					struct test_dev *test = container_of(inode->i_cdev,
 						struct test_dev, cdev);
 					struct test_priv *priv = NULL;
@@ -98,7 +98,7 @@ Linux针对Nor, Nand等提供了独立的内存技术设备(Memory Technology De
 		filp->private_data = dev;
 		...
 	}
-
+	
 	/*release function*/
 	int xxx_release(struct inode *inode, struct file *filp)
 	{
@@ -125,7 +125,7 @@ Linux针对Nor, Nand等提供了独立的内存技术设备(Memory Technology De
 			return -EFAULT;	/*EFAULT:Bad address*/
 		...
 	}
-
+	
 	/*write function*/
 	ssize_t xxx_write(struct file *filp, const char __user *buf, size_t count, loff_t *f_pos)
 	{
@@ -134,7 +134,7 @@ Linux针对Nor, Nand等提供了独立的内存技术设备(Memory Technology De
 		/*通过filp(fd)获得设备结构体或私有数据结构*/
 		struct light_cdev *dev = filp->private_data;
 		/*使用dev进行相关的写操作*/
-
+	
 		/*copy_from_user函数
 		para1:目标地址e.g.(&(dev->value))--->内核空间(kernel space)
 		para2:源地址e.g.(buf)--->用户空间(user space)
@@ -144,7 +144,7 @@ Linux针对Nor, Nand等提供了独立的内存技术设备(Memory Technology De
 			return -EFAULT;	/*(14)EFAULT:Bad address*/
 		...
 	}
-
+	
 	/*ioctl function*/
 	int xxx_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	{
@@ -158,7 +158,7 @@ Linux针对Nor, Nand等提供了独立的内存技术设备(Memory Technology De
 		}
 		...
 	}
-
+	
 	/*llseek  function*/
 	loff_t xxx_llseek(struct file *filp, loff_t offset, int orig)
 	{
@@ -200,7 +200,7 @@ Linux针对Nor, Nand等提供了独立的内存技术设备(Memory Technology De
 		}
 		return ret;
 	}
-
+	
 	struct file_operations light_fops = {
 		.owner = THIS_MODULE,
 		.open = xxx_open,
@@ -223,7 +223,7 @@ Linux针对Nor, Nand等提供了独立的内存技术设备(Memory Technology De
 			para3:次设备号的个数(一般为1);
 			para4:设备名称.在"/dev/devname"显示的名称.
 		*/
-
+	
 		/*light_devp = kmalloc(sizeof(struct light_dev), GFP_KERNEL);
 		kmalloc中:
 			para1分配块大小(单位为字节);
@@ -233,7 +233,7 @@ Linux针对Nor, Nand等提供了独立的内存技术设备(Memory Technology De
 		一般分配了内存都会调用memset()进行初始化.
 		kmalloc分配的内存在物理上是连续的.
 		*/
-
+	
 		/*字符设备初始化*/
 		cdev_init(&light_devp->cdev, &light_fops);	
 		/*
@@ -253,7 +253,7 @@ Linux针对Nor, Nand等提供了独立的内存技术设备(Memory Technology De
 		/*其他操作*/
 		...
 	}
-
+	
 	/*Module exit function*/
 	void __exit xxx_exit(void)
 	{
@@ -269,7 +269,7 @@ Linux针对Nor, Nand等提供了独立的内存技术设备(Memory Technology De
 		/*释放申请的字符设备结构体内存*/
 		kfree(light_devp);
 	}
-
+	
 	module_init(xxx_init);
 	module_exit(xxx_exit);
 	
@@ -295,7 +295,7 @@ Linux针对Nor, Nand等提供了独立的内存技术设备(Memory Technology De
 ### 2.2 存储器
 
 #### 2.2.1 ROM & Flash
- 
+
 ROM:EEPROM完全可以用软件来擦写.
 
 NOR Flash(或非):类SRAM接口(CPU的接口也是类SRAM接口),特点是可芯片内执行(execute in place, XIP).
@@ -731,7 +731,7 @@ Kconfig在某个目录下编辑好后,需要在./arch/arm/Kconfig中添加:
 	source "drivers/alidrivers/modules/Kconfig" 
 	/*在"./drivers/Kconfig"中添加,包括了modules下面的Kconfig*/
 	/*(drivers/alidrivers/modules/Kconfig)中描述alixxx的菜单信息*/
-
+	
 	/*S3922目录结构*/
 	source "drivers/Kconfig"	/*在"./arch/arm/Kconfig中添加,包括了drivers下面的Kconfig"*/
 	source "drivers/alidrivers/modules/Kconfig"
@@ -739,7 +739,7 @@ Kconfig在某个目录下编辑好后,需要在./arch/arm/Kconfig中添加:
 	source "drivers/alidrivers/modules/alirpc/Kconfig"	
 		/*在"drivers/alidrivers/modules/Kconfig"中添加,包括了alirpc下面的Kconfig*/
 	/*(drivers/alidrivers/modules/aliprc/Kconfig)中描述alixxx的菜单信息*/---因为这些都会依赖rpc模块
-	
+
 2)Makefile
 
 	obj-y += alidrivers/modules/	
@@ -877,7 +877,7 @@ linux用的C编译器为GNU C编译器.GNU C编译器对标准C语言进行了�
 		{
 			int i, n = argc;
 			double x[n];	//n为一个传进来的变量,可通过该变量定义一个数组
-
+	
 			for (i = 0; i < n; i++)
 				x[i] = i;
 			return;
@@ -1084,10 +1084,10 @@ __attribute__((format(printf, x, y)))的使用:
 
 	#include <stdio.h>
 	#include <stdarg.h>
-
+	
 	#define __formatted_print __attribute__((format(printf, 1, 2)))
 		//表示检查函数的第一个参数作为格式化字符串,从第二个参数开始检查是否符合格式化的形式.
-
+	
 	__formatted_print void TRACE(const char *fmt, ...)
 	{
 		//第一个参数为格式化,第二个参数为需要检查的参数
@@ -1096,7 +1096,7 @@ __attribute__((format(printf, x, y)))的使用:
 		(void)vprintf(fmt, ap);
 		va_end(ap);
 	}
-
+	
 	int main(void)
 	{
 		TRACE("iValue = %d\n", 6);	//检查时,第一个参数为格式,第二个参数需要检查的.此处符合要求.
@@ -1131,7 +1131,7 @@ likely()和unlikely()内部实现:
 	*/
 	#define likely(x) __builtin_expect((x), 1)		//表示x的值为真的可能性比较大.
 	#define unlikely(x) __builtin_expect((x), 0)	//表示x的值为假的可能性比较大.
-
+	
 	//还有一种用法:
 	#define likely(x) __builtin_expect(!!(x), 1)
 		//"!!"是将x转换成bool型,表示为true的可能性比较大.
@@ -1150,7 +1150,7 @@ do{} while(0)主要用于宏,目的是保证宏定义的使用者能无编译错
 		SAFE_FREE(p);
 	else
 		...	/*do something*/
-
+	
 	//会被展开为:
 	if (NULL != p)
 		do{free(p); p=NULL;}while(0);
@@ -1170,7 +1170,7 @@ linux内核源代码中对goto应用非常广泛,但一般只用于错误处理(
 	if (register_b() != 0)
 		goto err1;
 	...
-
+	
 	err1:
 		unregister_a();
 	err:
@@ -1202,18 +1202,18 @@ ARM linux工具链解析:
 
 	#include <linux/init.h>
 	#include <linux/module.h>
-
+	
 	static int __init hello_init(void)
 	{
 		printk(KERN_INFO "Hello World Enter!\n");
 		return 0;
 	}
-
+	
 	static void __exit hello_exit(void)
 	{
 		printk(KERN_INFO "Hello World exit!\n");
 	}
-
+	
 	module_init(hello_init);
 	module_exit(hello_exit);
 	
@@ -1345,7 +1345,7 @@ PS:可以使用perror(errno)将错误编码转成有意义的错误信息字符�
 		#define __init		__attribute__((__section__(".init.text")))
 	2.__initdata(数据)
 		static int hello_data __initdata = 1;	// __initdata的声明
-
+	
 		static int __init hello_init(void)
 		{
 			printk(KERN_INFO "Hello, world %d\n", hello_data);
@@ -1407,29 +1407,29 @@ PS:可以使用perror(errno)将错误编码转成有意义的错误信息字符�
 	
 	static char *book_name = "dissecting Linux Device Driver";
 	module_param(book_name, charp, S_IRUGO);	//定义book_name为模块参数.为一个全局静态变量
-
+	
 	static int book_num = 4000;
 	module_param(book_num, int, S_IRUGO);	//定义book_num为模块参数.为一个全局静态变量
-
+	
 	static int __init book_init(void)
 	{
 		pr_info("Book name: %s\n", book_name);
 		pr_info("Book num: %d\n", book_num);
 	}
-
+	
 	static void __exit book_exit(void)
 	{
 		pr_info("book module exit\n");
 	}
-
+	
 	module_init(book_init);
 	module_exit(book_exit);
-
+	
 	MODULE_AUTHOR("Defy");
 	MODULE_LICENSE("GPL v2");
 	MODULE_DESCRIPTION("A simple Module for Testing module param");
 	MODULE_VERSION("V0.0.1");
-
+	
 	1.不传递模块参数(使用默认值):
 		insmod book.ko
 	  查看"/var/log/messages"日志文件,查看到内核的输出:
@@ -1469,20 +1469,20 @@ linux的/proc/kallsyms文件对应着内核符号表,记录了符号以及符号
 
 	#include <linux/init.h>
 	#include <linux/module.h>
-
+	
 	int add_integer(int a, int b)
 	{
 		return a + b;
 	}
 	EXPORT_SYMBOL_GPL(add_integer);	//导出函数名add_integer(即函数指针,其他模块可直接调用)
-
+	
 	int sub_integer(int a, int b)
 	{
 		return a - b;
 	}
 	EXPORT_SYMBOL_GPL(sub_integer);	//导出函数名sub_integer(即函数指针,其他模块可直接调用)
 	MODULE_LICENSE("GPL v2");
-
+	
 	PS:从/proc/kallsyms文件中可以找到add_integer/sub_integer等相关信息(有多个).
 
 ### 4.7 模块声明及描述
@@ -1497,14 +1497,14 @@ linux的/proc/kallsyms文件对应着内核符号表,记录了符号以及符号
 Makefile文件(待完善).
 
 	KVERS = $(shell uname -r)
-
+	
 	# Kernel modules
 	obj-m += hello.o
-
+	
 	#EXTRA_CFALGS=-g -O0
-
+	
 	build: kernle_modules
-
+	
 	kernel_modules:
 		make -C /lib/modules/$(KVERS)/build M-$(CURDIR) mdoules
 	
@@ -1613,12 +1613,12 @@ Makefile文件(待完善).
 	#include <stdio.h>
 	
 	#define LENGTH 100
-
+	
 	int main(int argc, char *argv[])
 	{
 		int fd, len;
 		char str[LENGTH];
-
+	
 		fd = open("hello.txt", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 		/*
 			创建并打开文件,用户可读、可写.
@@ -1629,7 +1629,7 @@ Makefile文件(待完善).
 			write(fd, "Hello world", strlen("Hello world")); //strlen():求字符串长度
 			close(fd);
 		}
-
+	
 		fd = open("hello.txt", O_RDWR);
 		len = read(fd, str, LENGTH);	//读取LENGTH长度的字节,返回实际读取的长度
 		str[len] = '\0';	//结尾必须添加上'\0'(结束符).
@@ -1685,23 +1685,23 @@ C库函数的文件操作独立于具体的操作系统平台,即在DOS, Windows
 
 	#include <stdio.h>
 	#define LENGTH 100
-
+	
 	int main()
 	{
 		FILE *fd;
 		char str[LENGTH];
-
+	
 		fd = fopen("hello.txt", "w+"); //读写方式打开文件,不存在会创建
 		if (fd) { //打开成功
 			fputs("Hello World", fd);
 			fclose(fd);
 		}
-
+	
 		fd = fopen("hello.txt", "r"); //只读打开
 		fgets(str, LENGTH, fd);
 		printf("%s\n", str);
 		fclose();
-
+	
 		return 0;
 	}
 
@@ -1742,7 +1742,7 @@ C库函数的文件操作独立于具体的操作系统平台,即在DOS, Windows
 	操作系统运行时进程及内核信息(e.g.CPU、硬盘分区、内存信息等)放置在该目录.
 	/proc目录为伪文件系统proc(不是真正的文件系统)的挂载目录,proc文件系统存在于内存中.
 	其他的文件系统一般放置在Flash上,会挂载在根目录"/".
-
+	
 	PS:
 		cat /proc/devices:获知系统中注册的设备(字符设备和块设备)
 
@@ -1818,7 +1818,7 @@ VFS inode包含文件访问权限、属主、组、大小、生成时间、访�
 		gid_t i_gid;		/* inode所属的群组id */
 		dev_t i_rdev;		/* 若是设备文件,该字段记录设备的设备号 */
 		loff_t i_size;		/* inode所代表的文件大小 */
-
+	
 		struct timespec i_atime;	/* inode最近一次的存取时间 */
 		struct timespec i_mtime;	/* inode最近一次的修改时间 */
 		struct timespec i_ctime;	/* inode的产生时间 */
@@ -1874,39 +1874,39 @@ udev完全工作在用户态,利用设备加入或移除时内核所发送的热
 
 	//netlink的使用范例
 	#include <linux/netlink.h>
-
+	
 	static void die(char *s)
 	{
 		write(2, s, strlen(s));
 		exit(1);
 	}
-
+	
 	int main(int argc, char *argv[])
 	{
 		struct sockaddr_nl nls;
 		struct pollfd pfd;
 		char buf[512];
-
+	
 		// open hotplug event netlink socket
 		memset(&nls, 0, sizeof(struct sockaddr_nl));
 		nls.nl_family = AF_NETLINKE;
 		nls.nl_pid = getpid();
 		nls.nl_groups = -1;
-
+	
 		pfd.events = POLLIN;
 		pfd.fd = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_KOBJECT_UEVENT);
 		if (pfd.fd == -1)
 			die("Not root\n");
-
+	
 		// Listen to netlink socket
 		if (bind(pfd.fd, (void *)&nls, sizeof(struct sockaddr_nl)))
 			die("Bind failed\n");
-
+	
 		while (-1 != poll(&pfd, 1, -1)) {
 			int i, len = recv(pfd.fd, buf, sizeof(buf), MSG_DONTWAIT);
 			if (len == -1)
 				die("recv\n");
-
+	
 			// print data to stdout
 			i = 0;
 			while (i < len) {
@@ -1917,7 +1917,7 @@ udev完全工作在用户态,利用设备加入或移除时内核所发送的热
 		die("poll\n");
 		return 0;
 	}
-
+	
 	/*
 	编译并运行上述代码,把Apple Facetime HD Camera USB摄像头插入Ubuntu,程序会dump出一些信息.
 	udev就是采用上面这种方式接受netlink消息,并根据它的内容和用户设备给udev的规则做匹配来进行工作的.
@@ -2092,7 +2092,7 @@ cdev_del():删除一个cdev设备,在注销设备时调用(即模块卸载函数
 				--->只是在/dev下显示的名字,"/dev"不会作为para5参数的一部分.
 			retval:struct device *设备结构体指针.
 		*/
-	
+
 **2.字符设备注销**
 
 	1.卸载设备节点
@@ -2341,7 +2341,7 @@ mmap的实例---进程中通过mmap实现进程间通信
 	
 	    return 0;
 	}
-
+	
 	编译:
 		gcc write.c -o write
 		gcc read.c -o read
@@ -2489,7 +2489,7 @@ poll函数实现了调用select而阻塞的进程可以被等待队列头部唤�
 		arg:用户空间的地址--->(int *)arg:对用户空间地址的整形数据进行赋值.
 		put_user:类似于赋值操作((int *)arg = val).即用户空间传某地址,内核空间将数据赋值到该地址.
 	*/
-	
+
 PS:无论是get_user/put_user,内核空间变量在前面,用户空间变量在后面(使用地址取内容操作得到变量).
 
 **5.access_ok()**
@@ -2718,7 +2718,7 @@ ioctl()命令生成:
 2.Makefile文件内容
 
 	ifneq ($(KERNELRELEASE), )
-
+	
 	obj-m := globalmem.o
 	
 	else
@@ -2993,7 +2993,7 @@ ioctl()命令生成:
 										进行判断device(设备节点)创建成功与否*/
 	#define DEVICE_NAME "xxx_device_name" /*xxx_device_name是在/dev目录下显示的设备节点*/
 	#define XXX_CLASS_NAME	"xxx_class_name"	/*xxx_class_name是/sys/class目录下的一个类名*/
-
+	
 	xxx_class = class_create(THIS_MODULE, XXX_CLASS_NAME);	/*创建/sys/class目录下"XXX_CLASS_NAME"类名*/ 
 	...
 	xxx_device = device_create(xxx_class, NULL, devno, NULL, DEVICE_NAME) /*创建设备节点DEVICE_NAME*/
@@ -3012,7 +3012,7 @@ ioctl()命令生成:
 	device_destroy(xxx_device, devno);
 	/*注销class*/
 	class_destroy(xxx_class);
-	
+
 2.手动创建设备节点
 
 	1.单个globalmem设备创建及测试
@@ -3069,7 +3069,7 @@ ioctl()命令生成:
 	指令,而不去访问内存.
 	"":::表示空指令.barrier操作不能在此插入一条串行化的汇编指令.
 	*/
-
+	
 	1)e = d[4095];
 	barrier();	/*未加barrier()时,1和3、4句可能会在编译时乱序,加上之后按照正常的逻辑顺序排布*/
 	3)b = a;
@@ -3092,7 +3092,7 @@ volatile一般用于修饰register,因为register容易被其他的操作更改�
 		unsigned int chip_id = ((chip_dw & 0xffff0000)>>16);	//取高16bit
 		...	/*other operations*/
 	}
-
+	
 	/*
 		如果有多个地方调用get_soc_chip_id.因为都会使用GET_CHIP_DWORD去获得chip_dw,没有volatile
 		会导致第一次调用之后所有其他操作都使用第一次取得的值.有可能会出错.因此使用volatile.
@@ -3109,7 +3109,7 @@ volatile一般用于修饰register,因为register容易被其他的操作更改�
 	//CPU1上执行:
 	x = 42;
 	f = 1;
-
+	
 	/*
 		疑问:CPU0上打印的x不一定是42.
 		解释:因为CPU1即使"f=1"编译在"x=42"后面,执行时仍然可能先于"x=42"完成.所以这时候CPU0上的
@@ -3121,7 +3121,7 @@ volatile一般用于修饰register,因为register容易被其他的操作更改�
 	DSB(数据同步屏障):等待所有在DSB指令之前的指令完成(1,所有显示内存访问均完成;2,所有缓存、跳转预测和TLB
 		维护操作均完成);
 	ISB(指令同步屏障):Flush流水线,使得所有ISB之后执行的指令都是从缓存或内存中获得的.
-
+	
 	PS:Linux内核中的自旋锁、互斥体等互斥逻辑,都用到上述指令.
 
 在linux内核中的"./include/asm-generic/io.h"中,定义了读写IO就具有读写IO寄存器屏障的功能.
@@ -3133,7 +3133,7 @@ volatile一般用于修饰register,因为register容易被其他的操作更改�
 		return readl(addr);		//readl的实现中具有__iormb(),读IO屏障
 	}
 	#endif
-
+	
 	#ifndef iowrite32
 	#define iowrite32 iowrite32
 	static inline void iowrite32(u32 value, volatile void __iomem *addr)
@@ -3223,7 +3223,7 @@ volatile一般用于修饰register,因为register容易被其他的操作更改�
 实例代码:
 
 	static atomic_t xxx_available = ATOMIC_INIT(1);	/*定义原子变量并初始化为1*/
-
+	
 	static int xxx_open(struct inode *inode, struct file *filp)
 	{
 		...
@@ -3245,7 +3245,7 @@ volatile一般用于修饰register,因为register容易被其他的操作更改�
 		...
 		return 0;
 	}
-
+	
 	static int xxx_release(struct inode *inode, struct file *filp)
 	{
 		atomic_inc(&xxx_available);	/*释放了设备,自增1*/
@@ -3293,7 +3293,7 @@ volatile一般用于修饰register,因为register容易被其他的操作更改�
 		spin_lock_init(&lock);	/*在设备初始化函数中初始化自旋锁*/
 		...
 	}
-
+	
 	int xxx_open(struct inode *inode, struct file *filp)
 	{
 		...
@@ -3319,7 +3319,7 @@ volatile一般用于修饰register,因为register容易被其他的操作更改�
 		spin_lock(&lock);
 		xxx_count--;	/*减少计数值*/
 		spin_unlock(&lock);
-
+	
 		return 0;
 	}
 
@@ -3337,12 +3337,12 @@ volatile一般用于修饰register,因为register容易被其他的操作更改�
 
 	rwlock_t rwlock;			/*定义读写自旋锁rwlock*/
 	rwlock_init(&rwlock);		/*初始化rwlock*/
-
+	
 	//下面是获得读锁定函数,多个进程都可以调用.
 	read_lock(&rwlock);		/*读锁定,正常每个需要读取临界资源的操作都应该调用读锁定函数*/
 	...						/*读临界资源*/
 	read_unlock(&rwlock);		/*读解锁*/
-
+	
 	//下面是获得写锁定函数,只能有一个进程可以调用.
 	write_lock(&rwlock);		/*写锁定,只能有一个进程可获得写锁定*/
 	...						/*操作临界资源*/
@@ -3405,7 +3405,7 @@ PS:新的linux内核倾向于直接使用mutex作为互斥手段,semaphore不再
 	int mutex_trylock(struct mutex *my_mutex);
 	//尝试获取互斥体,成功获取返回0;失败立即返回非0值.不会导致调用者睡眠,因此可以用于中断上下文
 	void mutex_unlock(struct mutex *my_mutex);	//释放互斥体
-
+	
 	//实例
 	mutex_lock(&my_mutex);		/*获取互斥体mutex,一般在操作临界资源前调用*/
 	mutex_unlock(&my_mutex);	/*释放互斥体mutex,对临界资源操作完成后调用*/
@@ -3513,13 +3513,13 @@ PS:新的linux内核倾向于直接使用mutex作为互斥手段,semaphore不再
 **实例:**
 
 	wait_queue_head_t xxx_wait; //定义等待队列xxx_wait
-
+	
 	ssizt_t xxx_write(struct file *filp, const char __user *buf, size_t count, loff_t *f_pos)
 	{
 		...
 		DECLARE_WAITQUEUE(wait, current);	/*定义一个等待队列元素wait,并与当前进程绑定*/
 		add_wait_queue(&xxx_wait, &wait);	/*添加wait到等待队列头部xxx_wait*/
-
+	
 		/*等待设备缓冲可写*/
 		do {
 			avail = device_writable(...);	/*是否可写*/
@@ -3537,7 +3537,7 @@ PS:新的linux内核倾向于直接使用mutex作为互斥手段,semaphore不再
 				}
 			}
 		}while(avail < 0);	/*不可写一直循环*/
-
+	
 		/*可写设备了,写设备*/
 		device_write(...);
 	out:
@@ -3558,7 +3558,7 @@ PS:新的linux内核倾向于直接使用mutex作为互斥手段,semaphore不再
 		wait_queue_head_t r_wait;
 		wait_queue_head_t w_wait;
 	};
-
+	
 	struct globalfifo_dev *devp = NULL;
 
 2.globalfifo模块加载函数
@@ -3578,25 +3578,25 @@ PS:新的linux内核倾向于直接使用mutex作为互斥手段,semaphore不再
 		}
 		if (ret < 0)
 			return ret;
-
+	
 		globalfifo_devp = kzalloc(sizeof(struct globalfifo_dev), GFP_KERNEL);
 		if (globalfifo_devp == NULL) {
 			ret = -ENOMEM;
 			goto fail_malloc;
 		}
-
+	
 		globalfifo_setup_cdev(globalfifo, 0);
 		
 		mutex_init(&globalfifo_devp->mutex);	  //初始化mutex
 		init_waitqueue_head_t(&globalfifo_devp->r_wait);  //初始化读队列头
 		init_waitqueue_head_t(&globalfifo_devp->w_wait);  //初始化写队列头
-
+	
 		return 0;
 	fail_malloc:
 		unregister_chrdev_region(devno, 1);
 		return ret;
 	}
-
+	
 	module_init(globalfifo_init);
 
 3.globalfifo读函数
@@ -3616,7 +3616,7 @@ PS:新的linux内核倾向于直接使用mutex作为互斥手段,semaphore不再
 				ret = -EAGAIN;
 				goto out;
 			}
-
+	
 			__set_current_state(TASK_INTERRUPTIBLE);  //改变当前进程的状态为TASK_INTERRUPTIBLE
 			mutex_unlock(&dev->mutex);  //释放mutex
 			schedule();  //切换进程,当前进程会进入睡眠状态
@@ -3627,10 +3627,10 @@ PS:新的linux内核倾向于直接使用mutex作为互斥手段,semaphore不再
 			}
 			mutex_lock(&dev->mutex);
 		}
-
+	
 		if (count > dev->current_len) //如果需要读取的长度比fifo中的数据长度大
 			count = dev->current_len;
-
+	
 		if (copy_to_user(buf, dev->mem, count)) {
 			ret = -EFAULT;
 			goto out;
@@ -3667,7 +3667,7 @@ PS:新的linux内核倾向于直接使用mutex作为互斥手段,semaphore不再
 				ret = -EAGAIN;
 				goto out;
 			}
-
+	
 			__set_current_state(TASK_INTERRUPTIBLE);  //改变当前进程的状态为TASK_INTERRUPTIBLE
 			mutex_unlock(&dev->mutex);  //释放mutex
 			schedule();  //切换进程,当前进程会进入睡眠状态
@@ -3678,10 +3678,10 @@ PS:新的linux内核倾向于直接使用mutex作为互斥手段,semaphore不再
 			}
 			mutex_lock(&dev->mutex);
 		}
-
+	
 		if (count > GLOBALFIFO_SIZE - dev->current_len) //如果需要写的长度比fifo中剩下的空间大
 			count = GLOBALFIFO_SIZE - dev->current_len;
-
+	
 		if (copy_from_user(dev->mem + dev->current_len, buf, count)) {
 			ret = -EFAULT;
 			goto out;
@@ -3836,11 +3836,11 @@ PS:新的linux内核倾向于直接使用mutex作为互斥手段,semaphore不再
 			//将r_wait等待队列头部加入到poll_table,使得唤醒读队列的也可以唤醒select进程
 		poll_wait(filp, &dev->w_wait, wait);
 			//将w_wait等待队列头部加入到poll_table,使得唤醒写队列的也可以唤醒select进程
-
+	
 		if (dev->current_len != 0) {
 			mask |= POLLIN | POLLRDNORM; //非空返回可读标志
 		}
-
+	
 		if (dev->current_len != GLOBALFIFO_SIZE) {
 			maks |= POLLOUT | POLLWRNORM; //非满返回可写标志
 		}
@@ -3867,7 +3867,7 @@ PS:新的linux内核倾向于直接使用mutex作为互斥手段,semaphore不再
 				FD_ZERO(&wfds); //将wfds文件描述符集清空
 				FD_SET(fd, &rfds); //将fd加入到rfds
 				FD_SET(fd, &wfds); //将fd加入到wfds
-
+	
 				select(fd+1, &rfds, &wfds, NULL, NULL); //不返回就一直睡眠.
 				//数据可获得
 				if (FD_ISSET(fd, &rfds)) //可读
@@ -3879,7 +3879,7 @@ PS:新的linux内核倾向于直接使用mutex作为互斥手段,semaphore不再
 			printf("Device open fail\n");
 		}
 	}
-
+	
 	PS:当调用echo命令时,相当于调用驱动的write函数,往里面写数据.
 
 **2.用户空间使用epoll监控globalfifo的可读状态**
@@ -3891,20 +3891,20 @@ PS:新的linux内核倾向于直接使用mutex作为互斥手段,semaphore不再
 		int fd;
 		int epfd;
 		int ret;
-
+	
 		fd = open("/dev/globalfifo", O_RDONLY | O_NONBLOCK);
 		if (fd != -1) {
 			struct epoll_event ev_globalfifo;
 			int epfd;
 			if (ioctl(fd, FIFO_CLEAR, 0) < 0)
 				printf("Error ioctl fail\n");
-
+	
 			epfd = epoll_create(1); //创建epfd
 			if (epfd < 0) {
 				perror("epoll create fail\n");
 				return;
 			}
-
+	
 			memset(&ev_globalfifo, 0x0, sizeof(struct epoll_event));
 			ev_globalfifo.events = EPOLLIN | EPOLLPRI; //读事件
 			
@@ -3913,7 +3913,7 @@ PS:新的linux内核倾向于直接使用mutex作为互斥手段,semaphore不再
 				perror("epoll ctl fail\n");
 				return;
 			}
-
+	
 			ret = epoll_wait(epfd, &ev_globalfifo, 1, 15000);
 			if (ret < 0) {
 				perror("epoll wait fail\n");
@@ -3922,7 +3922,7 @@ PS:新的linux内核倾向于直接使用mutex作为互斥手段,semaphore不再
 			} else {
 				printf("FIFO is not empty\n");
 			}
-
+	
 			ret = epoll_ctl(epfd, EPOLL_CTL_DEL, fd, &ev_globalfifo); //从epfd中去掉fd
 			if (ret < 0)
 				perror("epoll ctl fail\n");
@@ -3965,13 +3965,13 @@ linux有众多信号(SIGIO、SIGINT(Ctrl+c)、SIGTERM(kill进程))
 	{
 		char data[MAX_LEN];
 		int len;
-
+	
 		/*读取STDIN_FILENO(是一个文件句柄)上的输入并输出*/
 		len = read(STDIN_FILENO, data, MAX_LEN);
 		data[len] = 0;
 		printf("input available:%s\n", data);
 	}
-
+	
 	main()
 	{
 		int oflags;	/*文件标记*/
@@ -3981,7 +3981,7 @@ linux有众多信号(SIGIO、SIGINT(Ctrl+c)、SIGTERM(kill进程))
 		fcntl(STDIN_FILENO, F_SETOWN, getpid()); /*para1:文件句柄; para2:文件拥有者; para3:进程号(getpid()表示本进程)*/
 		oflags = fcntl(STDIN_FILENO, F_GETFL);	/*获得STDIN_FILENO文件句柄的flag*/
 		fcntl(STDIN_FILENO, F_SETFL, oflags | FASYNC);	/*为STDIN_FILENO文件增加FASYNC flag(异步通知模式标志)*/
-
+	
 		while(1);	/*设置一个死循环,防止退出*/
 	}
 
@@ -4043,7 +4043,7 @@ e.g. 一个程序中同时对两个文件进行读/写操作,使用异步I/O时,
 	{
 		struct aiocb my_aiocb;	/*aio操作所需的结构体*/
 		int fd, ret;
-
+	
 		fd = open("file.txt", O_RDONLY);
 		if(fd < 0)
 			...
@@ -4057,15 +4057,15 @@ e.g. 一个程序中同时对两个文件进行读/写操作,使用异步I/O时,
 		my_aiocb.aio_fildes = fd;
 		my_aiocb.aio_nbytes = BUFFER_SIZE;
 		my_aiocb.aio_offset = 0;
-
+	
 		/*异步读操作*/
 		ret = aio_read(&my_aiocb);
 		if(ret < 0)
 			...
-
+	
 		while(aio_error(&my_aiocb) == EINPROGRESS)	/*等待读操作结束*/
 			continue;	/*aio_error:确定请求的状态(EINPROGRESS:请求未完成)*/
-
+	
 		if((ret = aio_return(&my_aiocb)) > 0) {
 			print("返回值:%d\n", ret);	
 			/*aio_return:返回值等同于read/write函数返回值,返回传输的字节数;错误返回负数*/
@@ -4154,7 +4154,7 @@ ARM中断类型
 	PS:如果中断要处理的工作本身很少,完成可以直接在顶颁布全部完成,不需要底半部.
 
 #### 10.2.2 查看系统的中断统计信息
-	
+
 	cat /proc/interrupts
 
 ### 10.3 Linux中断编程
@@ -4196,7 +4196,7 @@ ARM中断类型
 		para5:...(没看懂);
 		para6:一般设置为设备结构体(表示传递给中断服务程序的私有数据);
 	*/
-
+	
 	实例:
 	struct device *dev = &pdev->dev;
 	struct resource *irq[2];
@@ -4272,7 +4272,7 @@ tasklet执行上下文为"软中断",运行于软中断上下文,不允许睡眠
 	{
 		...	/*底半部处理函数的实现*/
 	}
-
+	
 	//中断处理顶半部
 	irqreturn_t xxx_interrupt(int irq, void *dev_id)
 	{
@@ -4281,7 +4281,7 @@ tasklet执行上下文为"软中断",运行于软中断上下文,不允许睡眠
 		/*顶半部中调用tasklet_schedule():系统会在适当的时候进行调度运行与xxx_tasklet关联的底半部函数*/
 		...
 	}
-
+	
 	int __init xxx_init(void)
 	{
 		...
@@ -4290,7 +4290,7 @@ tasklet执行上下文为"软中断",运行于软中断上下文,不允许睡眠
 		...
 		return IRQ_HANDLED;
 	}	
-
+	
 	void __exit xxx_exit(void)
 	{
 		...
@@ -4321,12 +4321,12 @@ tasklet执行上下文为"软中断",运行于软中断上下文,不允许睡眠
 
 	struct work_struct xxx_wq;	/*定义一个工作队列*/
 	void xxx_do_work(struct work_struct *work);	/*定义一个底半部处理函数*/
-
+	
 	void xxx_do_work(struct work_struct *work)
 	{
 		...	/*底半部处理函数实现*/
 	}
-
+	
 	/*中断顶半部*/
 	irqreturen_t xxx_interrupt(int irq, void *dev_id)
 	{
@@ -4336,7 +4336,7 @@ tasklet执行上下文为"软中断",运行于软中断上下文,不允许睡眠
 		...
 		return IRQ_HANDLED;
 	}
-
+	
 		int __init xxx_init(void)
 	{
 		...
@@ -4345,7 +4345,7 @@ tasklet执行上下文为"软中断",运行于软中断上下文,不允许睡眠
 		...
 		INIT_WORK(&xxx_wq, xxx_do_work);	/*初始化工作队列,完成工作队列与底半部函数的绑定*/
 	}	
-
+	
 	void __exit xxx_exit(void)
 	{
 		...
@@ -4410,7 +4410,7 @@ linux下的./drivers/input/keyborad/gpio_keys.c是一个通用的GPIO按键驱�
 		...
 		return IRQ_HANDLED;		//返回IRQ_HANDLED表示中断已被处理
 	}
-
+	
 	//设备驱动模块加载函数
 	int xxx_init(void)
 	{
@@ -4419,7 +4419,7 @@ linux下的./drivers/input/keyborad/gpio_keys.c是一个通用的GPIO按键驱�
 		result = request_irq(sh_irq, xxx_interrupt, IRQF_SHARED, "xxx", xxx_dev);
 		...
 	}
-
+	
 	//设备驱动模块卸载函数
 	void xxx_exit(void)
 	{
@@ -4444,10 +4444,10 @@ timer_list结构体的一个实例对应一个定时器:
 		struct list_head entry;
 		unsigned long expires;	//指定定时器到期的时间(jiffies)
 		struct tvec_base *base;
-
+	
 		void (*function)(unsigned long); //定时器满后,函数指针function指向的函数将被调用
 		unsigned long data;		//传入函数指针的参数
-
+	
 		int slack;
 	#ifdef CONFIG_TIMER_STATS
 		int start_pid;
@@ -4498,7 +4498,7 @@ timer_list结构体的一个实例对应一个定时器:
 		...
 		struct timer_list xxx_timer;
 	};
-
+	
 	//xxx驱动中的某函数
 	xxx_func1(...)
 	{
@@ -4513,7 +4513,7 @@ timer_list结构体的一个实例对应一个定时器:
 		//指定到期时间.一般为jiffies的基础上添加一个时间,如为Hz,则表示延迟1s.
 		add_timer(&dev->xxx_timer);	//注册定时器
 	}
-
+	
 	//xxx驱动中的某函数
 	xxx_func2(...)
 	{
@@ -4521,7 +4521,7 @@ timer_list结构体的一个实例对应一个定时器:
 		//删除定时器
 		del_timer(&dev->xxx_timer);
 	}
-
+	
 	//定时器处理函数
 	static void xxx_do_timer(unsigned long arg)
 	{
@@ -4704,7 +4704,7 @@ timer_list结构体的一个实例对应一个定时器:
 		}else {
 			printf("Device open failure!\n");
 		}
-		
+
 **5.编译并运行应用程序**
 
 	arm-linux-guneabi-gcc second_app.c -o second_app
@@ -4749,7 +4749,7 @@ timer_list结构体的一个实例对应一个定时器:
 	/*延迟100jiffies*/
 	unsigned long delay = jiffies + 100;
 	while (time_before(jiffies, delay));
-
+	
 	/*再延迟2s*/
 	unsigned long delay = jiffies + 2*Hz;
 	while (time_before(jiffies, delay));
@@ -5188,7 +5188,7 @@ ARM属于I/O内存,一般ARM板卡的寄存器用I/O内存来访问.
 	2.释放申请的I/O端口
 	void release_region(unsigned long start, unsigned long n);
 	/*从start开始,释放n个端口*/
-	
+
 PS:devm_request_region不需要明显的调用释放动作.
 
 **2.I/O内存申请**
@@ -5425,10 +5425,10 @@ platform的设备称为platform_device(e.g.I2C,RTC,LCD,看门狗等SoC内部集�
 		
 		const struct platform_device_id *id_entry;
 		char *driver_override; /*Driver name to force a match */
-
+	
 		/* MFD cell pointer */
 		struct mfd_cell *mfd_cell;
-
+	
 		/* arch specific additions */
 		struct pdev_archdata archdata;
 	};
@@ -5471,19 +5471,19 @@ platform的驱动称为platform_driver.
 		const char *mod_name; /* used for build-in modules */
 		bool suppress_bind_attrs; /* disables bind/unbind via sysfs */
 		enum probe_type probe_type;
-
+	
 		const struct of_device_id *of_match_table;
 		const struct acpi_device_id *acpi_match_table;
-
+	
 		int (*probe) (struct device *dev);
 		int (*remove) (struct device *dev);
 		void (*shutdown) (struct device *dev);
 		int (*suspend) (struct device *dev, pm_message_t state);
 		int (*resume) (struct device *dev);
 		const struct attribute_group **groups;
-
+	
 		const struct dev_pm_ops *pm;	/* suspend/resume使用该成员中的即可. */
-
+	
 		struct driver_private *p;
 	};
 
@@ -5540,28 +5540,28 @@ platform的驱动称为platform_driver.
 	{
 		struct platform_device *pdev = to_platform_device(dev);
 		struct platform_driver *pdrv = to_platform_driver(drv);
-
+	
 		/* When driver override is set, only bind to the matching driver */
 		if (pdev->driver_override)
 			return !strcmp(pdev->driver_override, drv->name);
-
+	
 		/* 总共有4中匹配方法: */
 		/* Attempt an OF style match first--->1.基于设备树的风格匹配 */
 		if (of_driver_match_device(dev, drv))
 			return 1;
-
+	
 		/* Then try ACPI style match--->2.基于ACPI风格匹配 */
 		if (acpi_driver_match_device(dev, drv))
 			return 1;
-
+	
 		/* Then try to match against the id table--->3.基于ID表匹配 */
 		if (pdrv->id_table)
 			return platform_match_id(pdrv->id_table, pdev) != NULL;
-
+	
 		/* fall-back to driver name match--->4.匹配platform_device的设备名和驱动名 */
 		return (strcmp(pdev->name, drv->name) == 0);
 	}
-
+	
 	PS:Linux 3.x之后的,一般使用设备树来匹配.
 
 #### 12.2.2 将globalfifo作为platform设备
@@ -5578,7 +5578,7 @@ platform的驱动称为platform_driver.
 				compatible = "defy, test";
 				reg = <2>;
 				... //其他信息
-
+	
 				test_0 {
 					... //第一个子节点信息
 				};
@@ -5620,7 +5620,7 @@ platform的驱动称为platform_driver.
 			char compatible[128]; //与dts中的compatible匹配
 			const void *data;
 		};
-
+	
 		//例子
 		static const struct of_device_id test_matchtbl[] = { //一个of_device_id数组
 			{ .compatible = "defy, test" }, //与dts中的compatible一样.name可省略.
@@ -5661,7 +5661,7 @@ platform的驱动称为platform_driver.
 			
 			return platform_driver_register(&test1_drv); //platform_driver的注册
 		}
-
+	
 		static void __exit test1_exit(void)
 		{
 			platform_driver_unregister(&test1_drv);
@@ -5689,7 +5689,7 @@ platform的驱动称为platform_driver.
 			char compatible[128]; //与dts中的compatible匹配
 			const void *data;
 		};
-
+	
 		//例子
 		static const struct of_device_id test1_matchtbl[] = { //一个of_device_id数组
 			{ .compatible = "defy, test1" }, //与dts中的compatible一样.name可省略.
@@ -5716,7 +5716,7 @@ platform的驱动称为platform_driver.
 			ret = of_property_read_u32(dn, (const char *)"dev-index",
 				dev_index); //读dts中匹配"dev-index"信息,结果填写到"dev_index"这个变量中
 		}
-
+	
 		test = devm_kzalloc(&pdev->dev, sizeof(struct test_dev), GFP_KERNEL);
 			//申请内存
 		...
@@ -5744,7 +5744,7 @@ platform的驱动称为platform_driver.
 					IORESOURCE_DMA--->DMA资源
 				para3:取dts中相同资源的第几个索引值
 			*/
-
+	
 			1.struct resource结构体--->位于./include/linux/ioport.h
 				struct resource {
 					resource_size_t start;	//存放内存或中断号的起始值
@@ -5761,7 +5761,7 @@ platform的驱动称为platform_driver.
 						reg = <0x18050000 0x1000>,
 								<0x18080000 0x300>;
 					*/
-
+	
 					interrupts = <114 141>; //描述irq信息
 				};
 			3.devm_ioremap_nocache--->将物理地址映射到nocache的虚拟地址.位于./include/linux/io.h
@@ -5791,7 +5791,7 @@ Linux靠设备与驱动之间的match,来完成设备与驱动的bind,从而触�
 	        struct platform_device *pdev = to_platform_device(dev);        
 	        struct platform_driver *pdrv = to_platform_driver(drv);
 	
-    	    /* When driver_override is set, only bind to the matching driver */        
+		    /* When driver_override is set, only bind to the matching driver */        
 	        if (pdev->driver_override)        
 	                return !strcmp(pdev->driver_override, drv->name);
 	
@@ -5913,7 +5913,32 @@ Linux靠设备与驱动之间的match,来完成设备与驱动的bind,从而触�
 	    return !strcmp(pdev->driver_override, drv->name);
 	PS:pdev为globalfifo; pdev->driver_override为"globalxxx"; drv->name为"globalxxx"
 
-##### 12.4.2.4 实例---将dma_map_benchmark驱动绑定到gpio-keys的设备上
+#### 12.4.3 实例---将dma_map_benchmark驱动绑定到某设备上
+
+##### 12.4.3.1 编译dma_map_benchmark驱动
+
+dma_map_benchmark是用于测试iommu/smmu map/unmap的性能的,在linux-5.10之后的版本已经存在.
+
+```
+1.驱动所在目录:
+	./kernel/dma/map_benchmark.c
+2.驱动编译进内核方法:
+	make menuconfig--->搜索"DMA_MAP_BENCHMARK"即可找到--->跳转到对应位置,打开即可.
+3.编译内核
+```
+
+##### 12.4.3.2 编译dma_map_benchmark应用程序
+
+dma_map_benchmark应用程序用于测试dma_map_benchmark驱动(两者名字相同).
+
+```
+1.应用程序所在目录:
+	./tools/testing/selftests/dma
+2.直接在上述目录执行:
+	make	//即可编译出dma_map_benchmark应用程序
+```
+
+##### 12.4.3.3 将dma_map_benchmark驱动绑定到gpio-keys的设备上
 
 1.解除bind
 
@@ -5927,7 +5952,7 @@ Linux靠设备与驱动之间的match,来完成设备与驱动的bind,从而触�
 
 	echo gpio-keys > /sys/bus/platform/drivers/dma_map_benchmark/bind
 
-##### 12.4.2.5 实例---将dma_map_benchmark驱动绑定到pci的设备上
+##### 12.4.3.4 将dma_map_benchmark驱动绑定到pci的设备上
 
 1.lspci
 
@@ -5950,6 +5975,14 @@ Linux靠设备与驱动之间的match,来完成设备与驱动的bind,从而触�
 	echo 0000:00:02.0 > /sys/bus/pci/drivers/dma_map_benchmark/bind
 
 ***
+
+##### 12.4.3.5 运行dma_map_benchmark应用程序
+
+```
+./dma_map_benchmark -t 1 -s 1 -n 0
+```
+
+
 
 ## Chapter 15 Linux I2C核心、总线与设备驱动
 
@@ -6013,7 +6046,7 @@ dtsi:Soc公用的部分或者多个设备共同使用的部分写成".dtsi",类�
 		#address-cells = <1>;	/*表示这一层结构下的地址address为一个32 bit的无符号整型,对应于reg<address ...>*/
 		#size-cells = <1>;		/*表示这一层结构下的长度length为一个32 bit的无符号整型,对应于reg<... length>*/
 		interrupt-parent = <&intc>;
-
+	
 		cpus {	/*cpu node*/
 			#address-cells = <1>;	/*cpu@0中的"reg<0>",地址为0为一个32 bit的无符号整数*/
 			#size-cells = <0>;		/*cpu@0中的"reg<0>",此处"#size-cell = <0>",因此不带长度*/
@@ -6026,26 +6059,26 @@ dtsi:Soc公用的部分或者多个设备共同使用的部分写成".dtsi",类�
 				reg = <1>
 			};
 		};
-
+	
 		serial@101f1000 {	/*"name@address":name=serial,address:101f1000*/
 			compatible = "arm, p1011";
 			reg = <0x101f1000 0x1000>;	/*起始地址(address):0x101f1000,大小(length)为0x1000*/
 			interrupts = <1 0>;
 		};
-
+	
 		serial@101f2000 {	/*"name@address":name=serial,address:101f2000*/
 			compatible = "arm, p1011";
 			reg = <0x101f2000 0x1000>;	/*起始地址:0x101f2000,大小为0x1000*/
 			interrupts = <2 0>;
 		};
-
+	
 		gpio@101f3000 {	/*"name@address":name=gpio,address:101f3000*/
 			compatible = "arm, p1061";
 			reg = <0x101f3000 0x1000
 				   0x101f4000 0x0010>;
 			interrupts = <3 0>;
 		};
-
+	
 		intc: interrupt-controller@10140000 {	/*"name@address":name=interrupt-controller,address:10140000
 												intc:为label,在驱动中可以通过"@intc"即"@label"来引用.*/
 			compatible = "arm, p1190";
@@ -6053,13 +6086,13 @@ dtsi:Soc公用的部分或者多个设备共同使用的部分写成".dtsi",类�
 			interrupt-controller;
 			#interrupt-cells = <2>;
 		};
-
+	
 		spi@10115000 {	/*"name@address":name=spi,address:10115000*/
 			compatible = "arm, p1022";
 			reg = <0x10115000 0x1000>;
 			interrupts = <4 0>;
 		};
-
+	
 		external-bus {	/*外部总线节点*/
 			#address-cells = <2>;	
 			/*表示这一层结构下的地址address为两个32 bit的无符号整型,对应于reg<address1 address2 ...>*/
@@ -6069,7 +6102,7 @@ dtsi:Soc公用的部分或者多个设备共同使用的部分写成".dtsi",类�
 					  1 0 0x10160000 0x10000	//Chipselect 2, i2c controller
 					/*external-bus这一层的address<1 0>转换到CPU内存映射的"reg<0x10160000 0x10000>"*/
 					  2 0 0x30000000 0x1000000>;//Chipselect 3, Nor Flash
-
+	
 			ethernet@0,0 {	/*"name@address":name=ethernet,address:0*/
 				compatible = "smc, smc91c111";
 				reg = <0 0 0x1000>;	/*address1:0(片选); address2:0(基地址); length:0x1000*/
@@ -6088,7 +6121,7 @@ dtsi:Soc公用的部分或者多个设备共同使用的部分写成".dtsi",类�
 					interrupts = <7 3>;
 				};
 			};
-
+	
 			flash@2, 0 {	/*"name@address":name=flash,address:2*/
 				compatible = "samsung, k8f1315ebm", "cfi-flash";
 				reg = <2 0 0x4000000>;	/*64MB*/
@@ -6111,7 +6144,7 @@ DTB:Device Tree Blob,是".dts"被DTC编译后设备树描述的二进制格式,�
 	/ {
 		compatible = "manufacturer(制造商), model(型号)";		/*通过其可以知道启动的是什么设备*/
 	};
-
+	
 	// e.g.
 	/ {
 		compatible = "alitech, 3922";	/*alitech corp, 3922芯片*/
@@ -6138,14 +6171,14 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 			};
 		};
 	};
-	
+
 驱动中需要与".dts"中描述的设备节点进行匹配,进而使驱动的probe()函数执行.
 
 	static const struct of_device_id see_dsc_matchtbl[] = {	/*device挂在see bus这条总线上*/
 		{ .compatible = "alitech,dsc"},	/*与dts中的需要匹配*/
 		{ },
 	};
-
+	
 	static struct see_client_driver dsc_drv = {
 		.probe = ca_dsc_probe,
 		.remove = ca_dsc_remove,
@@ -6191,7 +6224,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 	#include <linux/highmem.h>	//file_operations中需要用内存,必须有
 	#include <linux/dma-mappint.h>	//与dma相关
 	#include <linux/err.h>		//错误处理
-
+	
 	/**********************一般包括的头文件*********************/
 	#include <linux/slab.h>
 	#include <linux/of_platform.h>
@@ -6210,7 +6243,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 
 	#ifndef __TEST_PRIV_H__
 	#define __TEST_PRIV_H__
-
+	
 	/*xxx_priv.h用于定义驱动中使用的结构体或变量等*/
 	#include <linux/ioctl.h>
 	#include <linux/types.h>
@@ -6218,7 +6251,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 	#include <linux/idr.h>
 	#include <linux/cdev.h>
 	#include <linux/sysfs.h>
-
+	
 	/*
 	* Device structure		//自定义设备结构体
 	*/
@@ -6227,7 +6260,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 		struct device *dev;		//描述linux下的device的结构体
 		struct cdev;			//字符设备的结构体
 	};
-
+	
 	/*
 	* Session structure 	//Session的结构体
 	*/
@@ -6237,9 +6270,9 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 		unsigned int tee_memory_basic;	//addr_select = 2
 		unsigned int see_memory_basic;	//addr_select = 3
 	};
-
+	
 	#define TEST_BASE_ADDR	0x18034000		//IO空间的基址(属于寄存器的物理地址,在读取前需要ioremap成虚拟地址再进行读取)
-
+	
 	#endif
 
 #### 2.2 test.h---用于定义使用driver时用到的数据结构(e.g.设备节点位置,ioctl,调用时需要的填充的结构体)
@@ -6277,7 +6310,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 	#define __TEST_IOCTL_H__
 		
 	long test_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
-
+	
 	#endif
 
 #### 2.4 test_core.c---用于实现驱动的主体结构(probe/remove/read/write等,不包括ioctl)
@@ -6292,7 +6325,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 	#include <linux/err.h>
 	#include <linux/idr.h>
 	#include <linux/kernel.h>
-
+	
 	#include "test_priv.h"
 	#include "test.h"
 	#include "test_ioctl.h"
@@ -6300,7 +6333,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 	#define TEST_VERSION "0.0.1"
 	#define NO_CHRDEVS	(1)		//表示没有child device
 	#define FIRST_MIN	(0)		//次设备号从0开始
-
+	
 	static struct class *g_test_class = NULL;	//存放设备类,全局指针
 
 **file_opeations相关函数**
@@ -6315,7 +6348,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 		para2:设备结构体(表明具体是哪个字符设备);---自己定义的设备结构体
 		para3:cdev(为inode->i_cdev结构体成员的类型).通过结构体成员的指针获得设备结构体的指针---不变
 		*/
-
+	
 		struct test_session *s = NULL;
 		
 		s = devm_kzalloc(test->dev, sizeof(struct test_sesion), GFP_KERNEL);
@@ -6331,19 +6364,19 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 			ret = -ENOMEM;	//没有足够的内存
 			return ret;
 		}
-
+	
 		memset(s, 0, sizeof(struct test_session));
 		s->test = test;	//指定父设备
 		file->private_data = (void *)s;	//将s赋给file->private_data并回传出去,便于s这一个数据在write/read/ioctl中传输
 		return 0;
 	}
-
+	
 	static int test_release(struct inode *inode, struct file *file)
 	{
 		struct test_dev *test = NULL;
 		struct test_session *s= NULL;
 		int ret = 0;
-
+	
 		s = file->private_data;		//得到file下的private_data数据(此前在open时填充进去的)
 		if (!s) {
 			ret = -EBADF;	//bad file number,其值为9
@@ -6360,12 +6393,12 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 		*/
 		return 0;
 	}
-
+	
 	static ssize_t test_read(struct file *file, char __user *buf, size_t count, loff_t *f_pos)
 	{
 		struct test_session *s = file->private_data;		//得到file下的private_data数据(此前在open时填充进去的)
 		int ret = 0;
-
+	
 		if (s->write_mem_flag == 1)
 		{
 			ret = copy_to_user(buf, &s->tee_mem_base_addr, count);
@@ -6379,7 +6412,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 		/*...其他操作...*/
 		return ret;
 	}
-
+	
 	static ssize_t test_write(struct file *file, const char __user *buf, size_t count, loff_t *pos)
 	{
 		struct test_session *s = file->private_data;
@@ -6392,7 +6425,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 			para3:由用户空间传进来需要拷贝的字节数	
 		*/
 	}
-
+	
 	/*mmap:建立内核空间到用户空间(即进程)的虚拟地址空间的映射(即内核内存到用户内存的映射).映射成功后,
 	用户对这段内存的操作直接反应到内核空间(内核内存),同样内核空间对这段内存的操作也直接反应到用户空间*/
 	static int test_mmap(struct file *file, struct vma_area_struct *vma)
@@ -6404,7 +6437,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 		size_t size = vma->vm_end - vma_start;	//用户空间映射buf的大小
 		
 		size = (size >= PAGE_SIZE) ? size : PAGE_SIZE;	//最小一个page(4k),最大到size
-
+	
 		if (s->write_mem_flag == 1)	//tee memory
 		{
 			ret = remap_pfn_range(vma, vma->start, s->tee_mem_base_addr >> PAGE_SHIFT,
@@ -6414,7 +6447,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 		}
 		return 0;
 	}	//mmap这段code有点问题,映射有点不成功
-
+	
 	static const struct file_opeations test_fops = {
 		.owner		= THIS_MODULE,
 		.open		= test_open,
@@ -6432,7 +6465,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 		struct device *dev = &pdev->dev;		//得到pdev下面的device信息
 		struct test_dev *test;	//自定义设备结构体对象
 		int ret = -1;
-
+	
 		/*1. 分配设备使用的内存*/
 		test = devm_kzalloc(dev, sizeof(struct test_dev), GFP_KERNEL);	//给设备结构体分配内存
 		/*
@@ -6459,14 +6492,14 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 		*/
 		if (ret < 0)
 			goto chrdev_alloc_fail;		//分配设备号失败
-
+	
 		/*3. 字符设备初始化*/
 		cdev_init(&test->cdev, &test_fops);	//字符设备与struct file_opeations绑定
 		/*
 			para1:struct cdev.一般为自定义设备结构体下面的cdev结构体地址
 			para2:struct file_operations结构体对象
 		*/
-
+	
 		/**4. 添加一个字符设备/
 		ret = cdev_add(&test->cdev, test->devt, 1);	//添加一个字符设备
 		/*
@@ -6477,7 +6510,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 		*/
 		if (ret < 0)
 			goto cdev_add_fail;
-
+	
 		test->dev = device_create(g_test_class, dev, test->devt, test, 
 					"%s%d", TEST_DEVNAME, MINOR(test->devt));		
 		/*
@@ -6495,13 +6528,13 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 			ret = PTR_ERR(test->dev);	//PTR_ERR将指针转为错误号返回
 			goto device_create_fail;
 		}
-
+	
 		platform_set_drvdata(pdev, test);	//将自定义设备结构体对象设为platform的driver数据.
 			//后面在remove中可以拿到该设备结构体对象
-
+	
 		dev_info(dev, "[%s: %d] probe version %s succeed!\n", __func__, __LINE__, TEST_VERSION);
 		return 0;
-
+	
 		/*返回值错误处理*/
 		device_create_fail:
 			cdev_del(&test->cdev);	//删除掉一个字符设备
@@ -6514,16 +6547,16 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 			devm_free(dev, test);	//释放devm_kzallo分配的内存
 			return ret;
 	}
-
+	
 	static int test_remove(struct platform_device *pdev)
 	{
 		struct device *dev = &pdev->dev;
 		struct test_dev *test = platform_get_drvdata(pdev);	
 			//得到probe时挂载platform下的driver数据
-
+	
 		if (!test)
 			return -ENODEV;		//表示没有设备结构体对象
-
+	
 		platform_set_drvdata(pdev, NULL);	//将platform的driver data设为0
 		
 		/*注销设备*/
@@ -6537,19 +6570,19 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 		
 		/*注销设备号*/
 		unregister_chrdev_region(test->devt, NO_CHRDEVS);
-
+	
 		/*释放分配的内存*/
 		devm_free(dev, test);
-
+	
 		dev_info(dev, "[%s: %d] remove version %s succeed!\n", __func__, __LINE__, TEST_VERSION);
 		return 0;
 	}
-
+	
 	static void platform_test_release(struct device *dev)	//该函数必须要有.para为"struct device *dev"
 	{
 		return;		//可以没有任何的实现,但必须有
 	}
-
+	
 	static struct platform_driver test_drv = {	//platform_driver的对象
 		.probe = test_probe,	//在init时调用probe进行driver的一系列注册
 		.remove = test_remove,	//在exit时调用remote进行driver的释放
@@ -6558,7 +6591,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 			.owner = THIS_MODULE
 		}
 	};
-
+	
 	static struct platform_device test_device = {	//platform_device的对象
 		.name = TEST_DEVNAME,	//与driver name相同
 		.id = 0,				//生成的driver name会带上一个id.即:"TEST_DRVNAME.0"->"xxx_test.0"
@@ -6566,7 +6599,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 			.release = platform_test_release,	//一定需要有这个release函数指针,不然会报错
 		}
 	};
-
+	
 	static int __init test_init(void)
 	{
 		int ret;
@@ -6576,23 +6609,23 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 			TEST_PRINTK("Register Test device failed!\n");
 			return -ENODEV;		//No such device,其值为19.
 		}
-
+	
 		g_test_class = class_create(THIS_MODULE, TEST_DRVNAME);		//创建一个设备类,para2为driver name
 		if (IS_ERR(g_test_class))	//IS_ERR:判断返回的指针是错误信息(返回非0)还是实际地址(返回0).
 		{							//即指针是否落在最后一页
 			return PTR_ERR(g_test_class);	//PTR_ERR将指针转为错误号返回
 		}
-
+	
 		ret = platform_driver_register(&test_drv);	//再注册driver
 		if (ret) {
 			platform_device_unregister(&test_device);	//取消注册device
 			return -ENODEV;
 		}
-
+	
 		TEST_PRINTK("Test driver init succeed!\n");
 		return 0;
 	}
-
+	
 	static void __exit test_exit(void)
 	{
 		platform_driver_unregister(&test_drv);		//取消注册driver
@@ -6600,7 +6633,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 		class_destory(g_test_class);	//销毁创建的类
 		TEST_PRINTK("Test driver exit succeed!\n");
 	}
-
+	
 	module_init(test_init);
 	moudule_exit(test_exit);
 	
@@ -6624,7 +6657,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 	#include "test_priv.h"
 	#include "test.h"
 	#include <test_ioctl.h>
-
+	
 	static unsigned int test_read_register(unsigned int base_addr, unsigned int offset)
 	{
 		unsigned int value = ioread32((void *)base_addr + offset);
@@ -6635,7 +6668,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 		*/
 		return value;
 	}
-
+	
 	long test_ioctl(struct file *file, unsigned int cmd, unsigned long args)
 	{
 		int ret = -1;
@@ -6663,7 +6696,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 		case TEST_TEE_RANGE_CHECK:
 		{
 			s->tee_mem_range = (u32)test_get_range_rpc(check_select);	/*rpc到see得到tee range*/
-
+	
 			/*parser dts*/
 			node = of_find_compatible_node(NULL, NULL, "xxxtech,memory-partition");
 			/*
@@ -6686,7 +6719,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 				pr_info("xxxtech,memory-partition node is NULL!\n");
 				return PTR_ERR(node);
 			}
-
+	
 			of_property_read_u32_index(node, "tee_area", 0, (u32 *)&tee_mem_base_addr);
 			/*
 				of_property_read_u32_index:寻找节点(para1)下的与属性(para2)匹配的信息.
@@ -6701,7 +6734,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 				此处为:
 				将dtsi中的(tee_area = <0x80000000 0x2900000>)第1个属性0x2900000保存到tee_mem_range中
 			*/
-
+	
 			if (s->tee_mem_range == tee_mem_range)
 			{
 				s->tee_mem_base_addr = tee_mem_base_addr;
@@ -6744,7 +6777,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 					(UINT32)sec_feature_integrity_check_test,
 					(UINT32)sec_feature_see_executable_range_check,	//发起rpc调用时see对应的函数
 				};
-
+	
 				void hld_sec_feature_callee(UINT8 *msg)		//该名字有讲究,在rpc注册中的需要对应
 				{
 					if (NULL == msg)
@@ -6771,7 +6804,7 @@ dts中设备节点的兼容性用于驱动和设备的绑定.
 		4.添加会rpc的注册:
 			在alisee.../see/src/see/m36f/Makefile.cmd中:
 			查找casi的注册,像casi一样将HLD_SEC_FEATURE注册进去即完成see这边rpc的注册.
-
+	
 	在ree端:
 		在./driver/alidriver/include/linux/ali_rpc.h添加ree端的rpc.
 			在enum REMOTE_MODULES{};中,在和see那边相同位置:
@@ -6801,7 +6834,7 @@ linux的gpio子系统帮助我们管理整个系统gpio的使用情况,同时通
 		struct device *cdev;
 		struct module *owner;
 		struct list_head list;
-
+	
 		int (*request)(struct gpio_chip *chip, unsigned offset);
 			//请求gpio
 		void (*free)(struct gpio_chip *chip, unsigned offset);
@@ -6847,14 +6880,14 @@ linux的gpio子系统帮助我们管理整个系统gpio的使用情况,同时通
 	#include <linux/bitops.h>
 	#include <linux/pinctrl.h/consumer.h>
 	#include <linux/version.h>
-
+	
 	static test_gpio {
 		void __iomem *base; //表示io空间ioremap后的虚拟地址
 		int irq;
 		struct gpio_chip gc;
 		char label[16];
 	};
-
+	
 	static inline struct test_gpio *to_test_gpio(struct gpio_chip *chip)
 	{
 		return container_of(chip, struct test_gpio, gc);
@@ -6862,7 +6895,7 @@ linux的gpio子系统帮助我们管理整个系统gpio的使用情况,同时通
 			通过struct test_gpio中的gc成员的首地址找到struct test_gpio的首地址
 		*/
 	}
-
+	
 	static test_gpio_direction_in(struct gpio_chip *chip, unsigned offset)
 	{
 		struct test_gpio *test_gpio = to_test_gpio(chip);
@@ -6870,7 +6903,7 @@ linux的gpio子系统帮助我们管理整个系统gpio的使用情况,同时通
 			其他操作,设置gpio为输入.
 		*/
 	}
-
+	
 	static int test_probe(struct platform_device *pdev)
 	{
 		struct test_gpio *test_gpio;
@@ -6879,7 +6912,7 @@ linux的gpio子系统帮助我们管理整个系统gpio的使用情况,同时通
 		int ret;
 		u32 ngpio = 0;
 		u32 gpio_base = 0;
-
+	
 		if (!dn)
 			return -EINVAL;
 		pr_info("Enter %s\n", __func__); //如果dts中含有多个匹配信息,probe函数会调用多次
@@ -6887,13 +6920,13 @@ linux的gpio子系统帮助我们管理整个系统gpio的使用情况,同时通
 		if (of_property_read_u32(dn, "ngpio", &ngpio)) {
 			...
 		}
-
+	
 		if (of_property_read_u32(dn, "gpio-base", &gpio_base)) {
 			...
 		}
-
+	
 		test_gpio = devm_kzalloc(&pdev->dev, sizeof(struct test_gpio), GFP_KERNEL);
-
+	
 		mem = platform_get_resource(pdev, IORESOURCE, 0); //透过platform拿到dts中属于reg的信息
 		/*
 			一般dts中描述为:
@@ -6906,7 +6939,7 @@ linux的gpio子系统帮助我们管理整个系统gpio的使用情况,同时通
 			//将物理地址影射成kernel space的虚拟地址
 		
 		...
-
+	
 		/*以下是一些struct gpio_chip的操作函数*/
 		test_gpio->gc.label = of_node_full_name(dn); //内核函数,不需要自己实现
 		test_gpio->gc.dev = &pdev->dev;
@@ -6920,29 +6953,29 @@ linux的gpio子系统帮助我们管理整个系统gpio的使用情况,同时通
 		test_gpio->gc.base = gpio_base; //此处填物理地址
 		test_gpio->gc.ngpio = ngpio;
 		test_gpio->gc.can_sleep = false;
-
+	
 		ret = gpiochip_add(&test_gpio->gc); //将gpio注册进系统
 			...
 		platform_set_drvdata(pdev, test_gpio);
 			...
 	}
-
+	
 	static int __exit test_gpio_remove(struct platform_device *pdev)
 	{
 		struct test_gpio *test_gpio = platform_get_drvdata(pdev);
-
+	
 		return gpiochip_remove(&test_gpio->gc);
 	}
-
+	
 	static const struct of_device_id ali_gpio_dt_ids[] = {
 		{.compatible = "test, test-gpio"},
 			//在dts中parse该信息,匹配对应的字符串(即硬件信息)就会调用probe函数.
 			//如果多个匹配,probe函数会调用多次
 		{}
 	};
-
+	
 	MODULE_DEVICE_TABLE(of, test_gpio_dt_ids);
-
+	
 	static struct platform_driver test_gpio_driver = {
 		.probe = test_gpio_probe,
 		.remove = test_gpio_remove,
@@ -6951,12 +6984,12 @@ linux的gpio子系统帮助我们管理整个系统gpio的使用情况,同时通
 			.of_match_table = test_gpio_dt_ids, //匹配dts信息,相当于匹配硬件信息
 		}
 	};
-
+	
 	static int __init test_gpio_init(void)
 	{
 		return platform_driver_register(&test_gpio_driver);
 	}
-
+	
 	arch_initcall(test_gpio_init); //不需要exit
 	MODULE_AUTHOR("defy");
 	MODULE_LICENSE("GPL");

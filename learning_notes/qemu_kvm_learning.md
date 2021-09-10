@@ -217,7 +217,7 @@ Qemu+KVM联合起来共同完成虚拟机各个组件的虚拟化.
 
 #### 1.2.3.3 外设虚拟化
 
-外设虚拟化模拟方式:
+外设虚拟化发展历程:
 
 ![](images/qemu_io_virtualization_implement.png)
 
@@ -238,4 +238,8 @@ Qemu+KVM联合起来共同完成虚拟机各个组件的虚拟化.
 略.
 
 ## 1.3 KVM API使用实例
+
+暂略.
+
+# Chapter  2. Qemu基本组件
 

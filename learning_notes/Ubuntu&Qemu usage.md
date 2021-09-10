@@ -477,7 +477,7 @@ Ubuntu18.04安装后可能会出现找不到Wifi,不能连接到Wifi.
 		sudo vim /etc/modprobe.d/blacklist.conf
 	2.在最后一行加入下面的命令
 		blacklist acer-wmi	//加上之后,我后面又注视掉才成功.
-	
+
 PS:总结起来,"2.4.4"步最重要.执行完等5-6分钟应该就有Wifi标识了.
 
 ## 2.5 Ubuntu 16.04小技巧
@@ -704,7 +704,7 @@ Qemu是纯软件实现的虚拟化模拟器,几乎可以模拟任何硬件设备
 		tar -xvzf linux-4.4.189.tar.gz
 	*/
 	cd linux-4.8
-	
+
 #### 3.1.2.4 配置交叉编译器
 
 **1.Cortex-A9的交叉编译器的配置**
@@ -1002,7 +1002,7 @@ busybox:一个集成100多个linux常用命令和工具的软件,是一个特别
 	qemu-system-arm -M vexpress-a9 -m 512M -kernel /root/linux-4.8/arch/arm/boot/zImage
 	-dtb /root/linux-4.8/arch/arm/boot/dts/vexpress-v2p-ca9.dtb -nographic -append
 	"root=/dev/mmcblk0 console=ttyAMA0" -sd a9rootfs.ext3
-
+	
 	参数解析:
 		-M:表示Machine;
 		-m:表示memory.
@@ -1063,13 +1063,13 @@ busybox:一个集成100多个linux常用命令和工具的软件,是一个特别
 
 	cd ./busybox-1.25.0/_install //该目录下有:bin/linuxrc/sbin/usr等目录
 	mkdir dev etc lib sys proc tmp var home root mnt
-	
+
 2.制作lib下的必要文件(为了支持动态编译的应用程序的执行,根文件系统需要支持动态库,所以我们添加了arm64相关的动态库文件到lib下):
 
 	cp /usr/arm-linux-gnueabi/lib* lib -rf
 	cd lib
 	aarch64-linux-gnu-strip *	//对库文件进行瘦身(去除符号表和调试信息,使库文件变小)
-	
+
 3.制作etc目录下的必要文件
 
 	cd ../etc
@@ -1220,7 +1220,7 @@ busybox:一个集成100多个linux常用命令和工具的软件,是一个特别
 			u-boot支持的开发板的所有的config文件目录为:./configs/
 				其中包括"vexpress_ca9x4_defconfig",此处配置编译参数即选择该配置文件.
 		*/
-
+	
 	3.编译
 		make -j4 	//4线程编译
 		/*
@@ -1258,7 +1258,7 @@ busybox:一个集成100多个linux常用命令和工具的软件,是一个特别
 		# interfaces(5) file used by ifup(8) and ifdown(8)
 		auto lo
 		iface to inet loopback
-
+	
 		//下面的代码是新增的
 		auto ens33		//ens33网络为ifconfig显示的网卡信息
 		auto br0
@@ -1284,7 +1284,7 @@ busybox:一个集成100多个linux常用命令和工具的软件,是一个特别
 			//此处的ip:我的是与虚拟机主机ifconfig中的ip一致,不确定是否有问题?
 		2./etc/qemu-ifdown内容如下:
 			#!/bin/sh
-
+	
 			echo sudo brctl delif br0 $1
 			sudo brctl delif br0 $1
 			
@@ -1850,7 +1850,13 @@ PS:deb文件是linux发行版debian系统的安装包格式,ubuntu是基于debia
 	sudo cp /boot/config-5.11.0-051100-generic .config //拷贝已经存在的config作为新kernel的.config
 	sudo make menuconfig //进行一些配置
 	sudo make -j 32	//编译的时间会比较长,编译可能出现各种问题,百度即可.
-	sudo make modules_install //将编译好的模块拷贝到/lib/modules目录下
+	sudo make INSTALL_MOD_STRIP=1 modules_install	//编译modules,并将编译好的模块拷贝到/lib/modules目录下
+	/*
+		这种方式会去掉调试信息--->参考3.7.2描述
+		如果使用:sudo make modules_install会有很多调试信息,后面执行make install(安装内核时),会报错:
+			"cannot write compressed block",表示系统/boot目录空间不足,因为有调试信息,导致initrd.img过大,放不下.
+		PS:查看磁盘目录空间(/boot目录):df -h
+	*/
 
 ## 5.4 安装
 

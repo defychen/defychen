@@ -131,7 +131,7 @@ GNU zip---gzip(gz)和bzip2(bz2)两种压缩格式，压缩比:gzip>bzip2
 	1.tar:主要是用于打包,将一堆文件或目录变成一个总的文件;
 	2.gzip/bzip2:用于压缩,将一个大的文件经过某种压缩算法变成一个小文件.
 	// tar打包后一般会调用gzip/bzip2进行压缩,生成tar.gz/tar.bz2.
-
+	
 	gunzip:将命令行中以.gz/-gz/.z/-z/_z/.Z结尾并具有正确标志头的文件进行解压缩,并以去掉扩展名的解压缩
 		文件替换原我呢见.
 
@@ -211,7 +211,7 @@ GNU zip---gzip(gz)和bzip2(bz2)两种压缩格式，压缩比:gzip>bzip2
 	ifconfig eth0 down
 	ifconfig eth0 hw ether de:ad:be:ef:f1:f5
 	ifconfig eth0 up
- 	udhcpc
+	udhcpc
 	mkdir /mnt/nfs
 	mount -t nfs -o nolock 192.168.9.202:/zhsa022/usrhome/defy.chen/gitwork/ci/ref /mnt/nfs
 	/*
@@ -264,12 +264,16 @@ GNU zip---gzip(gz)和bzip2(bz2)两种压缩格式，压缩比:gzip>bzip2
 	:s/old/new/g		---将光标所在行的所有old替换为new
 	:%s/old/new/gc		---全文执行替换"后面c表示询问是否替换,可以不带c"
 	:3,10s/old/new/gic	---3到10行执行替换,"i忽略大小写,c询问"	
-	
+
 ## 12. df命令
 
 查看硬盘使用情况
 
-	df -hl
+1.df -hl
+
+得到磁盘空间的布局.和命令df -kh是一样的.
+
+	df -hl/-kh
 	//得到的信息如下:
 	Filesystem      Size  Used Avail Use% Mounted on
 	df: `/var/lib/lightdm/.gvfs': Permission denied
@@ -413,7 +417,7 @@ awk是一个强大的文本分析工具.awk是把文件逐行读入,以空格为
 	P.Bunny     02/99     48     Yellow     12     35     28
 	J.Troll     07/99     4842     Brown-3     12     26     26
 	L.Tansley     05/99     4712     Brown-2     12     30     28
-
+	
 	awk '{print $0}' grade.txt	//输出整个文件.使用$0输出整个文件
 	awk '{print $1, $4}' grade.txt	//输出第1列和第4列.中间的,表示以空格分开;如果是"\t"是使用tab分开
 	awk 'BEGIN {print "Name     Defy\n------------------------"}
@@ -635,7 +639,7 @@ ar(archive)命令,归档.通常用于将多个目标文件.o进行归档,形成�
 	//然后输入当前用户的密码
 	2.进入到root账户,执行:passwd	//修改root密码
 	//输入两次新的root密码.
-
+	
 	PS:用户账户切换
 	su //切换到root用户,需要输入root密码
 	su defychen	//切换到defychen用户
@@ -972,7 +976,7 @@ taskset命令,可用于将进程指定在某个CPU上工作(此处的进程就�
 	/*
 		显示为:pid 23989's current affinity mask: f
 		表示该进程在4个Core上运行.0xf(0b1111)--->从右往左分别表示Core #0到Core #3(共4个核).
-
+	
 	*/
 	PS:查看进程运行的Core的更好方法:
 	taskset -pc pid(进程ID)
@@ -1003,5 +1007,48 @@ taskset命令,可用于将进程指定在某个CPU上工作(此处的进程就�
 5.直接在启动时与Core绑定
 
 	taskset -c 1 ./test.sh &	// 将进程test.sh绑定到Core #1上运行
+
+## 46 ldd命令
+
+### 46.1 ldd可以用于查看动态库的依赖.
+
+```
+cd /usr/lib/x86_64-linux-gnu
+ldd libSM.so.6
+结果为:
+	linux-vdso.so.1 =>  (0x00007ffde8f78000)
+	libICE.so.6 => /usr/lib/x86_64-linux-gnu/libICE.so.6 (0x00007f41836d2000)
+	libuuid.so.1 => /lib/x86_64-linux-gnu/libuuid.so.1 (0x00007f41834cd000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f4183103000)
+	/lib64/ld-linux-x86-64.so.2 (0x00005572ea307000)
+```
+
+### 46.2 ldd查看当前系统的glibc的版本
+
+```
+ldd --version
+结果为:--->glibc版本为2.23
+ldd (Ubuntu GLIBC 2.23-0ubuntu11.2) 2.23
+Copyright (C) 2016 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+Written by Roland McGrath and Ulrich Drepper.
+```
+
+## 47 tkdiff命令
+
+tkdiff是ubuntu下比较好的文件比较工具.
+
+### 47.1 tkdiff安装
+
+```
+apt install tkdiff
+```
+
+### 47.2 tkdiff的使用
+
+```
+tkdiff file1 file2
+```
 
 ## 13. wget命令
