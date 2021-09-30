@@ -18,7 +18,7 @@
 
 **3)模式查询:**
 
-	sed -n '/defy/p' ab.txt	//查询包括"defy"的所在行
+	·sed -n '/defy/p' ab.txt	//查询包括"defy"的所在行
 
 **4)增加行或字符串:**
 	
@@ -820,6 +820,21 @@ grep时排除指定的目录
 zgrep用于查看压缩文件(以tar.gz结尾的文件).
 
 	zgrep "xxxx" yyy.tar.gz -nr	//像grep一样使用即可.
+
+### 25.5 查找进程并kill掉
+
+```
+ps -ef | grep firefox | grep -v grep | cut -c 9-15 | xargs kill -s 9
+/*
+	grep firefox:输出含有关键字"firefox"的进程;
+	grep -v grep:在列出的进程中去除含有关键字"grep"的进程;
+	cut -c 9-15:截取输入行的第9个字符到第15个字符,此时刚好是进程的PID;
+	xargs kill -s 9:把前面命令的输出结果(PID)作为"kill -s 9"命令的参数,并执行该命令,"kill -s 9"会强制kill掉进程.
+*/
+bjobs -w | grep "Sep 28" | cut -c 1-9 | xargs bkill	//删掉进程
+```
+
+
 
 ## 36. find命令
 
