@@ -249,33 +249,162 @@ out-of-source build的特点:
 3.PROJECT_BINARY_DIR变量的值为:/home/defychen/repository_test/cmake_test/build
 ```
 
+# Chapter 3 cmake合理用法
 
+第2章节里的工程构建方法比较粗暴,不利于工程管理.(重新新建一个测试目录:cmake_test2)
 
+## 3.1 工程布局
 
+在目录cmake_test2下进行如下操作:
 
+```
+1.新建一个子目录src,用于存放源代码;
+2.新建一个子目录doc,用于存放hello.txt;
+3.新建一个字目录lib,用于存放编译好的库文件;
+3.创建文本文件COPYWRITE,README;
+4.创建runhello.sh脚本,用于安装目标文件
+```
 
+## 3.2 编译的布局
 
+### 3.2.1 源代码
 
+拷贝上一章节的main.c和CMakeLists.txt到src目录:
 
+```
+cd cmake_test2
+mkdir src doc
+cp ../cmake_test/main.c ./src
+cp ../cmake_test/CMakeLists.txt ./		//此处的CMakeLists.txt为顶层的CMakeLists.txt
+```
 
+### 3.2.2 在源代码目录中创建CMakeLists.txt
 
+进入到src目录,创建CMakeLists.txt,并编辑
 
+```
+cd src
+touch CMakeLists.txt
+vim CMakeListst.txt
+//在CMakeListst.txt中写入如下内容
+	SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+	/*
+		EXECUTABLE_OUTPUT_PATH:指定编译后的二进制文件路径的变量,系统变量,此处为更改变量值.
+		PROJECT_BINARY_DIR:如果是out-of-source编译,该变量值则为:工程目录+build
+		此处为指定二进制文件输出路径为:./build/bin
+	*/
+	SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
+	/*
+		LIBRARY_OUTPUT_PATH:指定编译后的lib文件路径的变量,系统变量,此处为更改变量值.
+		PROJECT_BINARY_DIR:如果是out-of-source编译,该变量值则为:工程目录+build
+		此处为指定库文件输出路径为:./build/lib
+	*/
+	MESSAGE(STATUS "binary path" ${EXECUTABLE_OUTPUT_PATH})
+	MESSAGE(STATUS "lib path" ${LIBRARY_OUTPUT_PATH})
+	SET(SRC_LIST main.c)
+	ADD_EXECUTABLE(hello ${SRC_LIST})
+	INSTALL(TARGETS hello RUNTIME DESCTINATION bin)
+	//指定安装的目录,不指定后面的安装hello不会拷贝到bin目录.即没有hello
+```
 
+### 3.2.3 修改顶层的CMakeLists.txt
 
+顶层仅仅是一个宏观的编译,具体编译、二进制输出路径的指定等都在子目录下的CMakeLists.txt指定.
 
+```
+PROJECT(HELLO)
+ADD_SUBDIRECTORY(src bin)
+/*
+	ADD_SUBDIRECTORY(source_dir [binary_dir] [EXCLUDE_FROM_ALL])
+	1.该语法用于向当前工程在编译时指定源代码存放的目录,编译后目标文件存放的位置;
+	2.param1:指定源代码存放的目录;
+	3.param2:指定编译输出的目录,此处为bin目录(此处为out-of-source编译后会放在./build/bin目录下).整个流程为:
+		1.在build目录下新建一个src目录;
+		2.如果param2存在,将src目录重命名为bin目录,之后的目标文件存放在该目录;
+		3.如果param2不存在,之后的目标文件则会存放在src目录中.
+	4.param3:指定在编译过程中排除某目录.
+*/
+```
 
+### 3.2.4 编译
 
+out-of-source编译
 
+```
+mkdir build
+cd build
+cmake ..
+make
+```
 
+编译后的结果为:
 
+![](images/cmake_result.png)
 
+## 3.3 安装的布局
 
+### 3.3.1 doc目录
 
+在cmake_test2目录下新建doc目录
 
+```
+mkdir doc
+cd doc
+touch hello.txt
+vim hello.txt
+//写入以下内容
+	The first cmake using!
+```
 
+### 3.3.2 执行脚本
 
+在cmake_test2目录下新建一个脚本:runhello.sh
 
+```
+touch runhello.sh
+vim runhello.sh
+//写入以下内容
+	./hello
+chmod +x runhello.sh
+```
 
+### 3.3.3 添加COPYWRITE, README等文件
+
+在cmake_test2目录下新建COPPYWRITE, README文件
+
+```
+touch COPYWRITE
+touch README
+```
+
+### 3.3.4 更新顶层CMakeLists.txt
+
+```
+1.安装COPYWRITE/README
+INSTALL(FILES COPYWRITE README DESTINATION share/doc/cmake/cmake_test2)
+2.安装runhello.sh
+INSTALL(PROGRAMS runhello.sh DESTINATION bin)
+3.安装doc目录下的hello.txt
+INSTALL(DIRECTORY doc/ DESTINATION share/doc/cmake/cmake_test2)
+```
+
+### 3.3.5 编译并安装相关信息
+
+```
+mkdir result_install
+cd build
+rm -rf *
+cmake -DCMAKE_INSTALl_PREFIX=../result_install ..
+/*
+	—DCMAKE_INSTALL_PREFIX:指定安装的目录前缀.没有指定会被安装到/usr/local下
+*/
+make
+make install
+```
+
+安装之后的目录结构如下:
+
+![](images/cmake_install_result.png)
 
 
 
