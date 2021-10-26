@@ -406,19 +406,85 @@ make install
 
 ![](images/cmake_install_result.png)
 
+# Chapter 4 静态库与动态库构建
 
+## 4.1 构建静态库和动态库
 
+### 4.1.1 建立共享库
 
+#### 4.1.1.1 准备工作
 
+```
+mkdir cmake_test3
+cd cmake_test3
+mkdir lib	//存放共享库的源代码及库文件
+```
 
+#### 4.1.1.2 添加源代码及CMakeLists.txt
 
+**1.顶层CMakeLists.txt**
 
+在cmake_test3目录下新建一个CMakeListst.txt:
 
+```
+touch CMakeLists.txt
+// 并写入以下内容
+PROJECT(HELLOLIB)
+ADD_SUBDIRECTORY(lib)
+```
 
+**2.源代码**
 
+在lib新建源代码文件:
 
+```
+touch hello.h
+touch hello.c
+```
 
+hello.h内容如下:
 
+```
+#ifndef __HELLO_H__
+#define __HELLO_H__
+#include <stdio.h>
+void hello_func();
+#endif
+```
 
+hello.c内容如下:
 
+```
+#include "hello.h"
+void hello_func()
+{
+	printf("Hello world!\n");
+}
+```
+
+**3.源代码目录下的CMakeLists.txt**
+
+在lib目录下新建一个CMakeLists.txt:
+
+```
+touch CMakeLists.txt
+```
+
+CMakeLists.txt内容如下:
+
+```
+SET(LIBHELLO_SRC hello.c)
+ADD_LIBRARY(hello SHARED ${LIBHELLO_SRC}
+```
+
+### 4.1.1 编译共享库
+
+编译时仍然采用out-of-source编译:
+
+```
+mkdir build
+cd build
+cmake ..
+make
+```
 
