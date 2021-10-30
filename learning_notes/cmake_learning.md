@@ -157,7 +157,7 @@ PROJECT(projectname [CXX][C][Java])
 		${HELLO_SOURCE_DIR}--->/home/defychen/repository_test/cmake_test
 		如果是外部编译,两个变量的值就会不一样.
 		cmake系统也预定义了PROJECT_BINARY_DIR和PROJECT_SOURCE_DIR变量,与projectname_BINARY/SOURCE_DIR是一样的.
-		--->今后使用:PROJECT_BINARy_DIR和PROJECT_SOURCE_DIR,这样修改了工程名,不需要修改变量名.
+		--->今后使用:PROJECT_BINARY_DIR和PROJECT_SOURCE_DIR,这样修改了工程名,不需要修改变量名.
 	[CXX][C][Java]:指定工程支持的语言,默认表示支持所有语言,因此一般省略.
 */
 ```
@@ -431,6 +431,16 @@ touch CMakeLists.txt
 // 并写入以下内容
 PROJECT(HELLOLIB)
 ADD_SUBDIRECTORY(lib)
+/*
+	ADD_SUBDIRECTORY(source_dir [binary_dir] [EXCLUDE_FROM_ALL])
+	1.该语法用于向当前工程在编译时指定源代码存放的目录,编译后目标文件存放的位置;
+	2.param1:指定源代码存放的目录;
+	3.param2:指定编译输出的目录,此处为没有指定目录(在out-of-source编译后会放在./build/lib目录下).整个流程为:
+		1.在build目录下新建一个src目录--->此处为lib目录;
+		2.如果param2存在,将src目录重命名为bin目录,之后的目标文件存放在该目录--->param2不存在;
+		3.如果param2不存在,之后的目标文件则会存放在src目录中--->此处编译后的库文件会放在lib目录.
+	4.param3:指定在编译过程中排除某目录.
+*/
 ```
 
 **2.源代码**
@@ -455,6 +465,7 @@ void hello_func();
 hello.c内容如下:
 
 ```
+#include <stdio.h>
 #include "hello.h"
 void hello_func()
 {
@@ -475,6 +486,16 @@ CMakeLists.txt内容如下:
 ```
 SET(LIBHELLO_SRC hello.c)
 ADD_LIBRARY(hello SHARED ${LIBHELLO_SRC}
+/*
+	ADD_LIBRARY(libname [SHARED|STATIC|MODULE] [EXCLUDE_FROM_ALL] source1 source 2 ... source N)
+	param1:生成的库名字--->此处写上hello,系统会自动补全为libhello.x;
+	param2:指定生成的库类型:
+		SHARED:动态库(扩展名为.so),此时生成:libhello.so;
+		STATIC:静态库(扩展名为.a),此时生成:libhello.a;
+		MODULE:在使用dyld的系统有效,如果不支持dyld,会被当做SHARED对待.
+	param3:意思是这个库不会被默认构建,除非由其他组件依赖或手工构建--->暂时不关心该参数;
+	param4:源文件--->此处用SET指定一个源文件列表的变量,然后取该变量的值即可.
+*/
 ```
 
 ### 4.1.1 编译共享库
@@ -485,6 +506,136 @@ ADD_LIBRARY(hello SHARED ${LIBHELLO_SRC}
 mkdir build
 cd build
 cmake ..
-make
+make	//生成的lib是:./build/lib/libhello.so
 ```
+
+#### 4.1.1.1 指定编译后的目标文件存放的位置的方法
+
+**方法1**
+
+在顶层的CMakeListst.txt中修改ADD_SUBDIRECTORY指定来实现:
+
+```
+ADD_SUBDIRECTORY(src bin)
+/*
+	ADD_SUBDIRECTORY(source_dir [binary_dir] [EXCLUDE_FROM_ALL])
+	1.该语法用于向当前工程在编译时指定源代码存放的目录,编译后目标文件存放的位置;
+	2.param1:指定源代码存放的目录;
+	3.param2:指定编译输出的目录,此处为bin目录(此处为out-of-source编译后会放在./build/bin目录下).整个流程为:
+		1.在build目录下新建一个src目录;
+		2.如果param2存在,将src目录重命名为bin目录,之后的目标文件存放在该目录;
+		3.如果param2不存在,之后的目标文件则会存放在src目录中.
+	4.param3:指定在编译过程中排除某目录.
+*/
+```
+
+**方法2**
+
+在源代码目录中的CMakeLists.txt中添加SET(EXECUTABLE/LIBRARY_OUTPUT_PATH ...)变量来实现:
+
+```
+SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+/*
+    EXECUTABLE_OUTPUT_PATH:指定编译后的二进制文件路径的变量,系统变量,此处为更改变量值.
+    PROJECT_BINARY_DIR:如果是out-of-source编译,该变量值则为:工程目录+build
+*/
+SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
+/*
+    LIBRARY_OUTPUT_PATH:指定编译后的lib文件路径的变量,系统变量,此处为更改变量值.
+    PROJECT_BINARY_DIR:如果是out-of-source编译,该变量值则为:工程目录+build
+*/
+```
+
+## 4.2 构建相同名字的静态库和动态库
+
+要构建相同名字的静态库和动态库需要其他的cmake指令,此处暂略.
+
+[相同名字的动态库与静态库的构建参考](https://www.cnblogs.com/52php/p/5681755.html)
+
+## 4.3 动态库版本号添加
+
+一般情况下,动态库存在版本号,显示如下:
+
+```
+libhello.so.1.2
+libhello.so -> libhello.so.1
+libhello.so.1 -> libhello.so.1.2
+```
+
+实现动态库版本号方法:
+
+```
+//在lib/CMakeLists.txt(即源代码下的CMakeLists.txt)中添加如下代码
+SET(LIBHELLO_SRC hello.c)
+ADD_LIBRARY(hello SHARED ${LIBHELLO_SRC}
++ SET_TARGET_PROPERTIES(hello PROPERTIES VERSOIN 1.2 SOVERSION 1)
+/*
+	param1:动态库名字;
+	param2-4(PROPERTIES VERSION 1.2):指代动态库版本号;
+	param5-6(SOVERSOIN 1):指代API版本.
+	此时会生成:
+		libhello.so.1.2						//真正的动态库(具有版本号和API版本信息)
+		libhello.so.1 -> libhello.so.1.2	//中间的link文件
+		libhello.so -> libhelo.so.1			//一般使用动态库的名字,最终link到真正的动态库
+*/
+```
+
+执行编译后的结果--->在build/lib目录会生成:
+
+```
+libhello.so.1.2
+libhello.so -> libhello.so.1
+libhello.so.1 -> libhello.so.1.2
+```
+
+## 4.4 安装共享库和头文件
+
+将生成的libhello.so.x以及hello.h安装到系统/或其他目录,供其他人使用的方法如下:
+
+### 4.4.1 修改源代码下的CMakeLists.txt
+
+本例修改lib/CMakeLists.txt文件:
+
+```
+SET(LIBHELLO_SRC hello.c)
+ADD_LIBRARY(hello SHARED ${LIBHELLO_SRC}
+SET_TARGET_PROPERTIES(hello PROPERTIES VERSOIN 1.2 SOVERSION 1)
+INSTALL(TARGET hello LIBRARY DESTINATION lib)	//此处仅安装动态库
+INSTALL(FILES hello.h DESTINATION include/hello)
+```
+
+### 4.4.2 编译并安装
+
+切到build目录下,执行下面命令:
+
+```
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=../result_install ..
+make
+make install
+```
+
+安装之后的目录结构如下:
+
+![](images/cmake_install_result1.png)
+
+# Chapter 5 使用外部共享库和头文件
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
