@@ -621,17 +621,81 @@ make install
 
 # Chapter 5 使用外部共享库和头文件
 
+## 5.1 准备工作
 
+```
+mkdir cmake_test4
+cd cmake_test4
+mkdir src	//存放共享库的源代码
+```
 
+## 5.2 源代码编写
 
+在src新建源代码文件:
 
+```
+cd src
+touch main.c
+```
 
+main.c的内容如下:
 
+```
+#include "hello.h"
 
+int main()
+{
+	hello_func();
+	return 0;
+}
+```
 
+## 5.3 顶层CMakeLists.txt
 
+顶层的CMakeLists.txt内容如下:
 
+```
+PROJECT(NEWHELLO)
+ADD_SUBDIRECTORY(src)
+```
 
+## 5.4 源代码目录下的CMakeLists.txt
+
+src/CMakeLists.txt的内容如下:
+
+```
+/*
+	SET(CMAKE_INCLUDE_DIRECTORIES_BEFORE/AFTER ON)
+	/*
+		设置添加头文件搜索路径是在当前目录的前面还是后面(BEFORE/AFTER),默认是在当前目录的前面?
+	*/
+*/
+1.添加编译搜索的头文件路径信息
+INCLUDE_DIRECTORIES(/home/defychen/repository_test/cmake_test3/result_install/include/hello)
+	//填入头文件路劲即可
+2.添加链接的库文件路径信息
+LINK_DIRECTORIES(/home/defychen/repository_test/cmake_test3/result_install/lib)
+3.指定编译源文件
+ADD_EXECUTABLE(main main.c)
+4.指定链接库
+TARGET_LINK_LIBRARIES(main hello)	//也可以写成:TARGET_LINK_LIBRARIES(main libhello.so)
+```
+
+## 5.5 编译及执行
+
+```
+cd ..
+mkdir build
+cd build
+cmake ..
+make
+cd src/
+ldd main	//查看main的链接情况
+```
+
+## 5.6 特殊环境变量
+
+系统包含两个特殊的环境变量"CMAKE_INCLUDE_PATH"和"CMAKE_LIBRARY_PATH",可用于设置搜索的头文件和库目录.此处暂略.
 
 
 
