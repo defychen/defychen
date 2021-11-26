@@ -331,6 +331,7 @@ info b	// 查看断点
 d 2		// 删除2号断点
 dis 3	// disable 3号断点,让程序不在3号断点断下.
 ena 3	// enable 3号断点,使能3号断点
+d		// 直接输入d,会删除所有断点
 ```
 
 ### 5.3.12 改变变量的值
@@ -349,25 +350,112 @@ PS:改功能可以在运行时随意修改变量的值.
 
 # 6. GDB的基本用法2
 
+## 6.1 attach到进程
 
+如果要调试守护进程(daemon process)等已经启动的进程,或是调试陷入死循环而无法返回控制台的进程时,可以使用attach到对应进程的PID.
 
+### 6.1.1 源代码
 
+```
+/* debug_test.c */
+#include <stdio.h>
 
+int main()
+{
+	while (1) {
+	}	//一个死循环
+	return 0;
+}
+```
 
+### 6.1.2 编译(带debug信息编译)
 
+```
+gcc -g debug_test.c -o debug_test
+```
 
+### 6.1.3 运行
 
+```
+./debug_test	// 此时程序是挂在了while (1)循环处
+```
 
+### 6.1.4 attach到进程的PID
 
+**1.查找debug_test进程的PID**
 
+```
+ps aux | grep "debug_test"
 
+root@defychen-pc:/home/defychen/repository_test/cmake_test3/result_install/lib# ps aux | grep "debug_test"
+root      16263 48.9  0.0   4220   780 pts/4    R+   22:37   0:21 ./debug_test
+root      16267  0.0  0.0  15960  1092 pts/2    S+   22:38   0:00 grep --color=auto debug_test
+```
 
+**2.启动gdb并attach到对应进程的PID**
 
+```
+gdb	// 在命令行输入gdb,启动gdb
 
+(gdb) attach 16263	// attach到对应进程的PID(16263)
+Attaching to process 16263
+Reading symbols from /home/defychen/repository_test/debug_test...done.
+Reading symbols from /lib/x86_64-linux-gnu/libc.so.6...Reading symbols from /usr/lib/debug//lib/x86_64-linux-gnu/libc-2.23.so...done.
+done.
+Reading symbols from /lib64/ld-linux-x86-64.so.2...Reading symbols from /usr/lib/debug//lib/x86_64-linux-gnu/ld-2.23.so...done.
+done.
+main () at debug_test.c:6
+6		}	// 此时gdb会断在while (1)循环的地方,进而可以进行调试
+(gdb) 
+```
 
+## 6.2 条件断点
 
+条件断点方法如下:
 
+```
+b file_name.cpp:line_num if condition
+/*
+	正常下断点后面加上if 条件即可.如果条件为真,则程序会断下来.
+*/
+```
 
+## 6.3 ignore忽略断点次数
+
+ignore使用方法:
+
+```
+ignore 断点编号 次数
+/*
+	比如存在断点编号1,2,3,4...
+	如果要忽略断点编号2,需要忽略5次,即前5次不需要断下来,第6次才断下来.可以使用:
+	ignore 2 5
+*/
+ignore和continue优点类似.
+```
+
+## 6.4 跳出函数或代码块的命令
+
+```
+finish	// 直接输入finish,gdb在执行完当前函数后暂停
+until	// 直接输入until,gdb在执行完当前函数等代码块后暂停,如果是循环,常用于跳出循环
+```
+
+## 6.5 禁用和使能断点
+
+临时禁用断点,使用disable(简写为dis)+断点名;将禁用的断点重新启用,使用enable(简写为en)+断点名.
+
+```
+dis 2	// 临时禁用2号断点
+
+(gdb) info b
+Num     Type           Disp Enb Address            What
+2       breakpoint     keep n   0x000000000040053c in main at debug_test.c:6	// 禁用2号断点后,显示为"n".
+3       breakpoint     keep y   0x0000000000400556 in main at debug_test.c:8
+	breakpoint already hit 1 time
+
+enable/en 2	//使用2号断点
+```
 
 
 
