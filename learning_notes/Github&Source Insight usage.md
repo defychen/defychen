@@ -142,12 +142,12 @@
 	There is no tracking information for the current branch.
 	Please specify which branch you want to merge with.
 	See git-pull(1) for details
-
-    git pull <remote> <branch>
-
+	
+	git pull <remote> <branch>
+	
 	If you wish to set tracking information for this branch you can do so with:
-
-    git branch --set-upstream-to=origin/<branch> master
+	
+	git branch --set-upstream-to=origin/<branch> master
 	
 	//原因:本地分支和远程分支没有建立联系.解决:
 	git branch --set-upstream-to=origin/master master	/*远程的和本地的分支都为master分支,并建立联系*/
@@ -160,7 +160,7 @@
 	//方法 2
 	git tag -a v0.0.1_20170705C  -m "update viaccess tag"
 	git push origin --tags
-
+	
 	查看所打的tag
 	git tag
 	查看tag信息:
@@ -194,7 +194,7 @@
 	2.推送的区别:
 	https协议每次进行代码提交到远程服务器都需要进行"账号和密码"的输入.
 	ssh协议只需要首次进行账号和密码的输入,之后push不再需要输入"账号和密码"
-
+	
 	如果一直用的ssh协议进行代码的提交,突然进行了:
 		git clone https://github.com/defychen/defychen.git--->使用了https
 	在进行代码提交时会出现"unable to access 'https://github.com/defychen/defychen.git'...";
@@ -231,8 +231,10 @@
 		git branch -a	//会显示新创建的分支
 	5.合并分支到master分支
 		git merge branch1	// 当前应该在master分支,合并branch1到master分支
-	6.删除分支
-		git branch -d branch1
+	6.删除本地分支
+		git branch -d branch1	//本地分支的删除不影响远程分支
+	7.删除远程分支
+		git push origin --delete remote_branch_name
 
 ## 1.11 git clone指定分支拉代码
 
@@ -262,7 +264,7 @@ git stash会把所有未提交的修改(包括暂存的和非暂存的)都保存
 	git status	//再次查看,没有修改记录
 		On branch master
 		nothing to commit, working tree clean
-
+	
 	PS:推荐给每个stash增加一个message,用于版本记录.使用:
 		git stash save "test-cmd-stash"
 			Saved working directory and index state On autoswitch: test-cmd-stash
@@ -389,11 +391,11 @@ git stash pop弹出stash栈的第一个,用于恢复之前缓存的目录.
 		将uft-8编码的file.py文件转换为gb18030编码的file2.py.
 		可以使用iconv --help/iconv --usage查看使用方法
 		*/
-
+	
 	方法 2->借助于ultra edit完成转换:
 		使用UE打开文件->file->另存为(F12)->在"另存为"对话框中的"编码"选择(ANSI/ASCII)
 		(位于保存的右边)->点击保存即可.然后用source insight打开显示的即为正确的中文.
-
+	
 	方法 3->借助于"记事本"完成转换:
 		使用"记事本"打开文件->文件->另存为->在"另存为"对话框中的"编码"选择(ANSI)(原本为UTF-8)
 		(位于保存的右边)->点击保存即可.然后用source insight打开显示的即为正确的中文.
@@ -484,6 +486,16 @@ AStyle代码格式工具可用于将source insight中的代码风格全部改为
 		2.去掉Smart Indent Options中的选项.
 
 ***
+
+## 2.12 source insight解决对C++ namespace支持不友好的方法
+
+当我们在C++头文件中使用using namespace xxx,但是在source insight中会出现无法解析到头文件中定义的信息(e.g. 宏、枚举变量等),此时显示的引用是灰色的.解决方法如下:
+
+```
+Options->Preferences->选择"Languages"页面->选中"C++ Language"->选择"Special"->将"Ignore namespace declarations"勾选上.
+```
+
+![](images/source_insight_fix_c++_issue.png)
 
 # 3. Source Insight 4.x版本的使用
 

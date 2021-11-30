@@ -834,7 +834,17 @@ ps -ef | grep firefox | grep -v grep | cut -c 9-15 | xargs kill -s 9
 bjobs -w | grep "Sep 28" | cut -c 1-9 | xargs bkill	//删掉进程
 ```
 
+### 25.6 grep出关键字,并提取文件名
 
+```
+grep "key_word" export_*/trace.log | cut -d '/' -f 1
+/*
+	从export_*目录的trace.log中搜索出key_word,并将文件名提取出来.
+	cut -d:自定义搜索符,默认是制表符;
+		-f:与-d一起使用,指定需要的区域,从1开始计数;
+		此处表示以'/'作为分隔符,提取第一个区域.
+*/
+```
 
 ## 36. find命令
 
