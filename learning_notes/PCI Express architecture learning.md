@@ -278,15 +278,32 @@ TLP最终的标志.包含当前TLP的总线事务类型、路由信息等.
 
 ![](images/PCIe_TLP_head_format.png)
 
-	1.TLP头由3/4个word组成(现在一个word为4B,书中的DW是以前1DW=4B);
-	2.第一个word保存通用的TLP头,由Fmt、Type、TC、Length等组成;
+	1.TLP头由3/4个DW组成(ARM平台一个word为4B,x86平台一个DW是4B--->历史遗留问题);
+	2.第一个DW保存通用的TLP头,由Fmt、Type、TC、Length等组成;
 	3.其他字段与通用TLP头的Type字段相关;
-	4.在64-bit地址模式下,TLP头的长度为4 word,否则为3 word;
-	5.完成报文的TLP头不含有地址信息,此时TLP头长度为3 word.
+	4.在64-bit地址模式下,TLP头的长度为4DW,否则为3DW;
+	5.完成报文的TLP头不含有地址信息,此时TLP头长度为3DW.
+
+PS:关于PCIe中的DW的说明如下:
+
+```
+在x86的PC机中的定义如下:
+	byte: 8-bit
+	half word: 8-bit
+	word: 16-bit
+	double word(DW): 32-bit--->PCIe主要由x86在主导,因此采用了和x86一样的定义方法.
+	quadword: 64-bit
+	octaword: 128-bit
+在ARM AMBA总线中,定义有区别:
+	byte: 8-bit
+	half word: 16-bit
+	word: 32-bit
+	double word: 64-bit
+```
 
 **3.Data Payload**
 
-Data Payload长度可变,最小为0,最大为1024 word.
+Data Payload长度可变,最小为0,最大为1024 DW(即最大为4K-byte).
 
 	Data Payload是个可选项,有些TLP不需要Data Payload(e.g.存储器读请求).
 
@@ -299,24 +316,24 @@ Data Payload长度可变,最小为0,最大为1024 word.
 **1.Fmt字段**
 
 	Fmt[2:0]						TLP格式
-	0b000							TLP头大小为3 word,不带数据
-	0b001							TLP头大小为4 word,不带数据
-	0b010							TLP头大小为3 word,带数据
-	0b011							TLP头大小为4 word,带数据
+	0b000							TLP头大小为3 DW,不带数据
+	0b001							TLP头大小为4 DW,不带数据
+	0b010							TLP头大小为3 DW,带数据
+	0b011							TLP头大小为4 DW,带数据
 	0b100							TLP Prefix
 	其他								Reserved
 
 **2.Type字段--->一般和Fmt组合使用**
 
 	TLP类型		Fmt[2:0]		Type[4:0]		含义
-	MRd			0b000			0b0 0000		存储器读,TLP头大小为3 word,不带数据
-				0b001							存储器读,TLP头大小为4 word,不带数据
-
-	MWr			0b010			0b0 0000		存储器写,TLP头大小为3 word,带数据
-				0b011							存储器写,TLP头大小为4 word,带数据
-
-	Cpl			0b000			0b0 1010		完成报文,TLP头大小为3 word,不带数据.用于写完成
-	CplD		0b001			0b0 1010		带数据的完成报文,TLP头大小为4 word,带数据.用于读完成
+	MRd			0b000			0b0 0000		存储器读,TLP头大小为3 DW,不带数据
+				0b001							存储器读,TLP头大小为4 DW,不带数据
+	
+	MWr			0b010			0b0 0000		存储器写,TLP头大小为3 DW,带数据
+				0b011							存储器写,TLP头大小为4 DW,带数据
+	
+	Cpl			0b000			0b0 1010		完成报文,TLP头大小为3 DW,不带数据.用于写完成
+	CplD		0b001			0b0 1010		带数据的完成报文,TLP头大小为4 DW,带数据.用于读完成
 
 **3.Posted/Non-Posted**
 
@@ -445,12 +462,12 @@ TLP报文类型:
 
 	1.存储器读请求TLP中不包含data payload,Length表示需要读取的数据长度;
 	2.存储器写请求TLP,Length表示当前报文的data payload长度;
-	3.Length字段最小单位为word(4B),当长度为n时(0 <= n <= 0x3FF):
-		n=0表示数据长度为1024 word,即4KB.
+	3.Length字段最小单位为DW(4B),当长度为n时(0 <= n <= 0x3FF):
+		n=0表示数据长度为1024 DW,即4KB.
 
 **2.DW BE字段**
 
-word中的字节使能(byte enable),因为Length中的最小单位为word.
+DW中的字节使能(byte enable),因为Length中的最小单位为DW.
 
 ![](images/PCIe_BE_field.png)
 
@@ -461,10 +478,10 @@ word中的字节使能(byte enable),因为Length中的最小单位为word.
 		Last DW BE为:0b0001/0b0010/0b0100/0b1000; First DW BE为:0b1111.
 		或其他,但First DW BE不能为:0b0000.
 
-Zero-Length读请求:Length字段为1 word,First DW BE和Last DW BE均为0b0000(所有字节都不使能).
+Zero-Length读请求:Length字段为1 DW,First DW BE和Last DW BE均为0b0000(所有字节都不使能).
 
 	此时表示:存储器读请求TLP对应的读完成TLP不包含有效数据.主要用于确保Posted写数据达到目的地.
-	PS:Length不能为0是因为为0表示数据长度为1024个word.
+	PS:Length不能为0是因为为0表示数据长度为1024个DW.
 
 **3.Requester ID字段**
 
@@ -518,7 +535,7 @@ Zero-Length读请求:Length字段为1 word,First DW BE和Last DW BE均为0b0000(
 	1.Ext Register和Register Number存访寄存器号;
 	2.TC[2:0]必须为0;
 	3.TH:Reserved; Attr2:Reserved; Attr[1:0]必须为:00b; AT[1:0]:必须为:0b00,表示不进行地址转换;
-	4.Length[9:0]:为0b00 0000 0001,表示最大Payload为1word;
+	4.Length[9:0]:为0b00 0000 0001,表示最大Payload为1DW;
 	5.Last DW BE为0b0000,First DW BE根据配置读写大小进行设置.
 
 #### 6.3.4 消息请求报文
