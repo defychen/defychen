@@ -47,7 +47,7 @@ UML(Unified Modeling Language)统一建模语言:是一种让设计面向对象�
 ### 2.1 第一个C++程序:打印一行文本
 
 	#include <iostream>	//输入/输出流头文件(e.g.cout, cin, cerr等)--->C++标准头文件.
-
+	
 	int main()
 	{
 		std::cout << "Welcome to C++!\n";
@@ -70,7 +70,7 @@ UML(Unified Modeling Language)统一建模语言:是一种让设计面向对象�
 ### 2.2 另一个C++程序:两数相加
 
 	#include <iostream>
-
+	
 	int main()
 	{
 		int number1, number2;
@@ -92,7 +92,7 @@ UML(Unified Modeling Language)统一建模语言:是一种让设计面向对象�
 **1.方法1:每个需要使用的地方都用std::xxx来写--->比较麻烦.**
 
 	#include <iostream>
-
+	
 	int main()
 	{
 		std::cin >> ...	;
@@ -102,11 +102,11 @@ UML(Unified Modeling Language)统一建模语言:是一种让设计面向对象�
 **2.方法2:在程序开头部分用类似using std::cout/cin/endl;后面可以直接用cout/cin/endl--->稍微简单一点.**
 
 	#include <iostream>
-
+	
 	using std::cout;
 	using std::cin;
 	using std::endl
-
+	
 	int main()
 	{
 		cin >> ...;
@@ -117,7 +117,7 @@ UML(Unified Modeling Language)统一建模语言:是一种让设计面向对象�
 
 	#include <iostream>
 	using namespace std;
-
+	
 	int main()
 	{
 		cin >> ...;
@@ -134,7 +134,7 @@ UML(Unified Modeling Language)统一建模语言:是一种让设计面向对象�
 
 	#include <iostream>
 	using namespace std;
-
+	
 	class GradeBook		//类名:大写字母开头,随后每个单词首字母也大写.
 	{
 	public:	//成员访问说明符,其后有一个":"
@@ -143,7 +143,7 @@ UML(Unified Modeling Language)统一建模语言:是一种让设计面向对象�
 			cout << "Welcome to the Grade Book!" << endl;
 		}
 	};	//类的定义是以分号";"结束
-
+	
 	int main()
 	{
 		GradeBook myGradeBook;	//类实例化对象
@@ -163,7 +163,7 @@ UML(Unified Modeling Language)统一建模语言:是一种让设计面向对象�
 	#include <iostream>
 	#include <string>	//包含C++标准的string类
 	using namespace std;
-
+	
 	class GradeBook
 	{
 	public:
@@ -173,7 +173,7 @@ UML(Unified Modeling Language)统一建模语言:是一种让设计面向对象�
 				<< endl;
 		}
 	};
-
+	
 	int main()
 	{
 		string nameOfCourse;
@@ -217,7 +217,7 @@ UML(Unified Modeling Language)统一建模语言:是一种让设计面向对象�
 	#include <iostream>
 	#include <string>
 	using namespace std;
-
+	
 	class GradeBook
 	{
 	public:
@@ -235,12 +235,12 @@ UML(Unified Modeling Language)统一建模语言:是一种让设计面向对象�
 		{
 			courseName = name;
 		}
-
+	
 		string getCourseName()
 		{
 			return courseName;
 		}
-
+	
 		void displayMessage()
 		{
 			cout << "Welcome to the grade book for\n" << getCourseName()
@@ -249,7 +249,7 @@ UML(Unified Modeling Language)统一建模语言:是一种让设计面向对象�
 	private:
 		string courseName;	//数据成员(或者成员变量).通常为private.
 	};
-
+	
 	int main()
 	{
 		GradeBook gradeBook1("CS101 Introduction for C++ Programming");
@@ -299,7 +299,7 @@ C++对象通常只包含数据(数据成员/成员变量).编译器仅创建类�
 	#include <iostream>
 	#include <string>
 	using namespace std;
-
+	
 	class GradeBook
 	{
 	public:
@@ -321,7 +321,7 @@ xxx.cpp文件名通常与接口文件名一样.
 	#include <string>
 	#include "GradeBook.h"	//必须包含接口声明头文件.""在当前目录下寻找头文件.
 	using namespace std;
-
+	
 	/*
 		返回类型 类名::成员函数名(形参类型 形参)
 		1.构造函数无返回类型,因此前面没有;
@@ -331,17 +331,17 @@ xxx.cpp文件名通常与接口文件名一样.
 	{
 		setCourseName(name);	//类内部可以直接调用成员.
 	}
-
+	
 	void GradeBook::setCourseName(string name)
 	{
 		courseName = name;
 	}
-
+	
 	string GradeBook::getCourseName()
 	{
 		return courseName;
 	}
-
+	
 	void GradeBook::displayMessage()
 	{
 		cout << "Welcome to the grade book for\n" << getCourseName()
@@ -355,12 +355,12 @@ xxx.cpp文件名通常与接口文件名一样.
 	#include <string>
 	#include "GradeBook.h"
 	using namespace std;
-
+	
 	int main()
 	{
 		GradeBook gradeBook1("CS101 Introduction for C++ Programming");
 		GradeBook gradeBook2("CS102 Data Structure in C++");
-
+	
 		cout << "gradeBook1 created for course: " << gradeBook1.getCourseName()
 			<< "\ngradeBook2 created for course: " << gradeBook2.getCourseName()
 			<< endl;
@@ -376,7 +376,7 @@ xxx.cpp文件名通常与接口文件名一样.
 	#include <iostream>
 	#include <string>
 	using namespace std;
-
+	
 	class GradeBook
 	{
 	public:
@@ -395,19 +395,19 @@ xxx.cpp文件名通常与接口文件名一样.
 	#include <string>
 	#include "GradeBook.h"
 	using namespace std;
-
+	
 	GradeBook::GradeBook(string name)
 	{
 		setCourseName(name);
 	}
-
+	
 	void GradeBook::setCourseName(string name)
 	{
 		if (name.length() <= 25)	//string.length():返回string对象中字符的个数.
 		{						//此处为不能超过25个字符
 			courseName = name;
 		}
-
+	
 		if (name.length() > 25)	//超过25个字符
 		{
 			courseName = name.substr(0, 25); //此处为取前25个字符
@@ -424,25 +424,25 @@ xxx.cpp文件名通常与接口文件名一样.
 	#include <string>
 	#include "GradeBook.h"
 	using namespace std;
-
+	
 	int main()
 	{
 		GradeBook gradeBook1("CS101 Introduction to Programming in C++");
 		GradeBook gradeBook2("CS102 C++ Data Structures");
-
+	
 		cout << "gradBook1's initial course name is: "
 			<< gradeBook1.getCourseName()
 			<< "\ngradeBook2's initial course name is: "
 			<< gradeBook2.getCourseName() << endl;
-
+	
 		gradeBook1.setCourseName("CS101 C++ Programming");
-
+	
 		cout << "\ngradeBook1's course name is: "
 			<< gradeBook1.getCourseName()
 			<< "\ngradeBook2's course name is: "
 			<< gradeBook2.getCourseName() << endl;
 	}
-
+	
 	/*
 		结果为:
 		Name "CS101 Introduction to Programming in C++" exceeds maximum length(25).
@@ -450,7 +450,7 @@ xxx.cpp文件名通常与接口文件名一样.
 		
 		gradBook1's initial course name is: CS101 Introduction to Pro
 		gradeBook2's initial course name is: CS102 C++ Data Structures
-
+	
 		gradeBook1's course name is: CS101 C++ Programming
 		gradeBook2's course name is: CS102 C++ Data Structures
 	*/
@@ -498,7 +498,7 @@ xxx.cpp文件名通常与接口文件名一样.
 
 	#include <string>
 	using namespace std;
-
+	
 	class GradeBook
 	{
 	public:
@@ -517,12 +517,12 @@ xxx.cpp文件名通常与接口文件名一样.
 	#include <iomanip>
 	#include "GradeBoo.h"
 	using namespace std;
-
+	
 	GradeBook::GradeBook(string name)
 	{
 		setCourseName(name);
 	}
-
+	
 	void GradeBook::setCourseName(string name)
 	{
 		if (name.length() <= 25)
@@ -534,31 +534,31 @@ xxx.cpp文件名通常与接口文件名一样.
 				<< "Limiting courseName is first 25 characters.\n" << endl;
 		}
 	}
-
+	
 	string GradeBook::getCourseName()
 	{
 		return couseName;
 	}
-
+	
 	void GradeBook::displayMessage()
 	{
 		cout << "Welcome to the grade book for\n" << getCourseName() << "!\n"
 			<< endl;
 	}
-
+	
 	void GradeBook::determineClassAverage()
 	{
 		int total;
 		int gradeCounter;
 		int grade;
 		double average;
-
+	
 		total = 0;
 		gradeCounter = 0;
-
+	
 		cout << "Enter grade or -1 to quit: ";
 		cin >> grade;
-
+	
 		while (grade != -1)
 		{
 			total = total + grade;
@@ -567,7 +567,7 @@ xxx.cpp文件名通常与接口文件名一样.
 			cout << "Enter grade or -1 to quit: ";
 			cin >> grade;
 		}
-
+	
 		if (gradeCounter != 0)
 		{
 			average = static_cast<double>(total) / gradeCounter;
@@ -577,7 +577,7 @@ xxx.cpp文件名通常与接口文件名一样.
 				中的仍是一个int型数据.
 			强制类型转换运算符优先级仅次于圆括号.
 			*/
-
+	
 			cout << "\nTotal of all " << gradeCounter << "grades entered is "
 				<< total << endl;
 			cout << "Class average is " << setprecisions(2) << fixed << average
@@ -603,11 +603,11 @@ xxx.cpp文件名通常与接口文件名一样.
 **3 测试文件--->test.cpp**
 
 	#include "GradeBook.h"	//因为这个头文件包含了iostream等头文件
-
+	
 	int main()
 	{
 		GradeBook myGradeBook("CS101 C++ Programming");
-
+	
 		myGradeBook.displayMessage();
 		myGradeBook.determineClassAverage();
 	}
@@ -621,7 +621,7 @@ xxx.cpp文件名通常与接口文件名一样.
 	Enter grade or -1 to quit: 88
 	Enter grade or -1 to quit: 72
 	Enter grade or -1 to quit: -1
-
+	
 	Total of all 3 grades entered is 257
 	Class average is 85.67	//保留小数点后2位,85.66666四舍五入得到85.67.
 
@@ -655,13 +655,13 @@ float/double类型
 	#include <cmath>	//standard C++ math library
 	#include <iomanip>	//setw()/setprecision()等参数化的流运算符的头文件
 	using namespace std;
-
+	
 	int main()
 	{
 		double amount;
 		double principal = 1000;
 		doulbe rate = 0.05;	//也可以写成".05"
-
+	
 		cout << "Year" << setw(21) << "Amount on deposit" << endl;
 		/*
 		setw(number):设置下一个输出值占的域宽.仅对接下来的输出值有用.
@@ -696,7 +696,7 @@ float/double类型
 
 	#include <string>
 	using namespace std;
-
+	
 	class GradeBook
 	{
 	public:
@@ -721,7 +721,7 @@ float/double类型
 	#include <iomanip>
 	#include "GradeBoo.h"
 	using namespace std;
-
+	
 	GradeBook::GradeBook(string name)
 	{
 		setCourseName(name);
@@ -731,7 +731,7 @@ float/double类型
 		dCount = 0;
 		fCount = 0;
 	}
-
+	
 	void GradeBook::setCourseName(string name)
 	{
 		if (name.length() <= 25)
@@ -743,25 +743,25 @@ float/double类型
 				<< "Limiting courseName is first 25 characters.\n" << endl;
 		}
 	}
-
+	
 	string GradeBook::getCourseName()
 	{
 		return couseName;
 	}
-
+	
 	void GradeBook::displayMessage()
 	{
 		cout << "Welcome to the grade book for\n" << getCourseName() << "!\n"
 			<< endl;
 	}
-
+	
 	void GradeBook::inputGrades()
 	{
 		int grade;
 		
 		cout << "Enter the letter grades." << endl		//输入字母成绩
 			<< "Enter the EOF character to end input." << endl;
-
+	
 		while ((grade = cin.get()) != EOF)
 		{
 		/*
@@ -808,7 +808,7 @@ float/double类型
 			}
 		}
 	}
-
+	
 	void GradeBook::displayGradeReport()
 	{
 		cout << "\n\nNumbers of students who received each letter grade:"
@@ -823,11 +823,11 @@ float/double类型
 **3 测试文件--->test.cpp**
 
 	#include "GradeBook.h"	//因为这个头文件包含了iostream等头文件
-
+	
 	int main()
 	{
 		GradeBook myGradeBook("CS101 C++ Programming");
-
+	
 		myGradeBook.displayMessage();
 		myGradeBook.inputGrade();
 		myGradeBook.displayGradeReport();
@@ -837,7 +837,7 @@ float/double类型
 
 	Welcome to the grade book for
 	CS101 C++ Programming!
-
+	
 	Enter the letter grades.
 	Enter the EOF character is end input.
 	a
@@ -855,7 +855,8 @@ float/double类型
 	b
 	^Z	//Ctrl+z
 
-	
+
+​	
 	Numbers of students who received each letter grade:
 	A: 3
 	B: 2
@@ -869,7 +870,7 @@ float/double类型
 
 	#include <iostream>
 	using namespace std;
-
+	
 	int main()
 	{
 		cout << boolalpha << "true && false: " << (true && false);
@@ -976,7 +977,7 @@ srand()函数也是位于<cstdlib>头文件中.
 	#include <cstdlib>
 	#include <iomanip>
 	using namespace std;
-
+	
 	int main()
 	{
 		unsigned seed;
@@ -991,7 +992,7 @@ srand()函数也是位于<cstdlib>头文件中.
 				cout << endl;
 		}
 	}
-
+	
 	/*
 		输入种子:67,得到:
 			6 1 4 6 2
@@ -1008,7 +1009,7 @@ srand()函数也是位于<cstdlib>头文件中.
 根据机器时间来获取种子值,确保每次的种子都不一样.
 
 	#include <ctime>	//包含time函数原型
-
+	
 	srand(time(0));
 	/*
 		time(0):返回从格林尼治时间1970年1月1日起到现在的秒数.该值被转换成unsigned类型,
@@ -1020,7 +1021,7 @@ srand()函数也是位于<cstdlib>头文件中.
 	#include <iostream>
 	#include <ctime>
 	using namespace std;
-
+	
 	int main()
 	{
 		long n = 0;
@@ -1051,18 +1052,18 @@ enum枚举类型是一组由标识符表示的整型常量.
 	#include <cstdlib>
 	#include <ctime>
 	using namespace std;
-
+	
 	int rollDice();
-
+	
 	int main()
 	{
 		enum Status {CONTINUE, WON, LOST};
 		int myPoint;
 		Status gameStatus;	//枚举变量.可以取值为CONTINUE, WON, LOST.
-
+	
 		srand(time(0));	//以时间作为种子
 		int sumOfDice = rollDice();
-
+	
 		switch(sumOfDice)
 		{
 			case 7:
@@ -1081,7 +1082,7 @@ enum枚举类型是一组由标识符表示的整型常量.
 				cout << "Point is " << myPoint << endl;
 				break;
 		}
-
+	
 		while (gameStatus == CONTINUE)
 		{
 			sumOfDice = rollDice();
@@ -1091,18 +1092,18 @@ enum枚举类型是一组由标识符表示的整型常量.
 				if (sumOfDice == 7)
 					gameStatus = LOST;
 		}
-
+	
 		if (gameStatus == WON)
 			cout << "Player wins" << endl;
 		else
 			cout << "Player loses" << endl;
 	}
-
+	
 	int rollDice()
 	{
 		int die1 = 1 + rand() % 6;
 		int die2 = 1 + rand() % 6;
-
+	
 		int sum = die1 + die2;
 		cout << "Player rolled " << die1 << "+" << die2
 			<< " = " << sum << endl;
@@ -1200,12 +1201,12 @@ static变量指使用static声明的局部变量,会一直保留调用之后的�
 
 	#include <iostream>
 	using namespace std;
-
+	
 	inline double cube(const double side)	//const修饰符告诉编译器不修改变量side的值
 	{
 		return side * side * side;
 	}
-
+	
 	int main()
 	{
 		double sideValue;
@@ -1231,30 +1232,30 @@ static变量指使用static声明的局部变量,会一直保留调用之后的�
 
 	#include <iostream>
 	using namespace std;
-
+	
 	int squareByValue(int);	//函数原型,可以不带形参名.按值传递
 	void squareByReference(int &);	//引用传递:类型 &.
-
+	
 	int main()
 	{
 		int x = 2;
 		int z = 4;
-
+	
 		cout << "x = " << x << "before squareByValue\n";	//x = 2
 		cout << "Value returned by squareByValue: "
 			<< squareByValue(x) << endl;	//打出来4.
 		cout << "x = " << x << "after squareByValue\n";		//x = 2
-
+	
 		cout << "z = " << z << "before squareByReference" << endl;	//z = 4
 		squareByReference(z);
 		cout << "z = " << z << "after squareByReference" << endl;	//z = 16
 	}
-
+	
 	int squareByValue(int number)
 	{
 		return number *= number;
 	}
-
+	
 	void squareByReference(int &numberRef)	//形参引用在原型和定义出均需要"&"符号
 	{
 		numberRef *= numberRef;
@@ -1279,9 +1280,9 @@ static变量指使用static声明的局部变量,会一直保留调用之后的�
 
 	#include <iostream>
 	using namespace std;
-
+	
 	int boxVolume(int length = 1, int width = 1, int height = 1);	//默认实参在函数原型中指定
-
+	
 	int main()
 	{
 		cout << "The default box volume is: " << boxVolume();
@@ -1293,7 +1294,7 @@ static变量指使用static声明的局部变量,会一直保留调用之后的�
 			<< "width 5 and height 2 is: " << boxVolume(10, 5, 2)	//100
 			<< endl;
 	}
-
+	
 	int boxVolume(int length, int width, int height)	//不需要再指定默认实参值了
 	{
 		return length * width * height;
@@ -1309,9 +1310,9 @@ static变量指使用static声明的局部变量,会一直保留调用之后的�
 
 	#include <iostream>
 	using namespace std;
-
+	
 	int number = 7;	//全局变量
-
+	
 	int main()
 	{
 		double number = 10.5;	//局部变量
@@ -1331,19 +1332,19 @@ static变量指使用static声明的局部变量,会一直保留调用之后的�
 
 	#include <iostream>
 	using namespace std;
-
+	
 	int square(int x)	//形参为int类型
 	{
 		cout << "square of integer " << x << " is ";
 		return x * x;
 	}
-
+	
 	double square(double y)	//形参为double类型
 	{
 		cout << "square of double " <<　y << " is ";
 		return y * y;
 	}
-
+	
 	int main()
 	{
 		cout << square(7);	//会调用int形参的函数
@@ -1369,13 +1370,13 @@ PS:main函数不能被重载.
 	T maximun(T value1, T value2, T value3)	//函数maximum有三个参数.
 	{										//后续的例化T可以被真正的数据类型或自定义类型所代替
 		T maximumValue = value1;
-
+	
 		if (value2 > maximumValue)
 			maximumValue = value2;
-
+	
 		if (value3 > maximumValue)
 			maximumValue = value3;
-
+	
 		return maximumValue;
 	}
 
@@ -1384,22 +1385,22 @@ PS:main函数不能被重载.
 	#include <iostream>
 	#include "maximum.h"	//包含函数模板头文件
 	using namespace std;
-
+	
 	int main()
 	{
 		int int1, int int2, int int3;
-
+	
 		cout << "Input three integer value: ";
 		cin >> int1 >> int2 >> int3;
 		cout << "The maximum integer value is: "
 			<< maximum(int1, int2, int3);	//会将int代替函数模板中的T,并例化一个函数.
-
+	
 		doulbe double1, double2, double3;
 		cout << "\n\nInput three doulbe value: ";
 		cin >> double1 >> double2 >> double3;
 		cout << "The maximum doulbe value is: "
 			<< maximum(double1, double2, double3); //会将double代替函数模板中的T,并例化一个函数.
-
+	
 		char char1, char2, char3;
 		cout << "\n\nInput three char value: ";
 		cin >> char1 >> char2 >> char3;
@@ -1439,7 +1440,7 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 		int n[arraySize] = {1, 2, 3, 4, 5};
 		for (int i=0; i<arraySize; i++)
 			total += n[i];
-
+	
 		cout << "Total of array element: " << total << endl;
 	}
 
@@ -1450,7 +1451,7 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 静态局部数组:static应用于局部数组声明,数组就不会在每次函数被调用时都进行创建和初始化,也不会在该函数结束时被销毁.在大型数组时,可以提高性能.
 
 	const int arraySize = 10;
-
+	
 	void xxx_fun(xxx)
 	{
 		static int array[arraySize];	//声明静态局部数组.默认会被初始化为全0.
@@ -1472,7 +1473,7 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 	#include <iostream>
 	#include <iomanip>
 	using namespace std;
-
+	
 	void modifyArray(int [], int);	//数组传递给函数
 	/*
 	函数原型,可以写成:
@@ -1480,36 +1481,36 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 	但C++编译器会忽略函数原型中形参的变量名称.原型只是告诉编译器调用时实参的个数和每个实参的类型.
 	*/
 	void modifyElement(int);	//原型中省略形参变量名.
-
+	
 	int main()
 	{
 		const int arraySize = 5;
 		int a[arraySize] = {0, 1, 2, 3, 4};
 		cout << "Effects of passing entire array by reference: "
 			<< "\n\nThe values of the original array are:\n";
-
+	
 		for (int i=0; i<arraySize; i++)
 			cout << setw(3) << a[i];
 		cout << endl;
-
+	
 		modifyArray(a, arraySize);
 		cout << "The values of the modified array are:\n";
 		
 		for (int j=0; j<arraySize; j++)
 			cout << setw(3) << a[j];	//结果为:0 2 4 6 8
-
+	
 		cout << "\n\nEffects of passing entire array by value: "
 			<< "\n\na[3] before modifyElement: " << a[3] << endl;
 		modifyElement(a[3]);
 		cout << "na[3] after modifyElement: " << a[3] << endl;	//不变,仍为6
 	}
-
+	
 	void modifyArray(int b[], int sizeOfArray)	//C++是按引用传递数组到函数,因此会改变原数组值.
 	{
 		for (int k=0; k<sizeOfArray; k++)
 			b[k] *= 2;
 	}
-
+	
 	void modifyElement(int e)	//不会改变原来的值
 	{
 		cout << "Value of element in modifyElement: " << (e *= 2) << endl;
@@ -1518,7 +1519,7 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 2.防止被调用函数修改调用者的数组值.
 
 	void keepArray(const int []);	//函数原型.使用const防止修改调用者的数组值.
-
+	
 	void keepArray(const int b[])	//函数实现
 	{
 		...
@@ -1537,17 +1538,17 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 	#include <iostream>
 	#include <iomanip>
 	using namespace std;
-
+	
 	int main()
 	{
 		const int arraySize = 10;
 		int data[arraySize] = {34, 56, 4, 10, 77, 51, 93, 30, 5, 32};
 		int insertVal;
-
+	
 		cout << "Unsorted array:\n";
 		for (int i=0; i<arraySize; i++)
 			cout << setw(4) << data[i];
-
+	
 		//插入排序
 		for (int next=1; next<arraySize; next++)
 		{
@@ -1560,7 +1561,7 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 			}
 			data[insertPos] = insertVal;
 		}
-
+	
 		cout << "\nSorted array:\n";
 		for (int i=0; i<arraySize; i++)
 			cout << setw(4) << data[i];
@@ -1580,7 +1581,7 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 2.多维数组传递给函数
 
 	const int columns = 4;
-
+	
 	void printArray(const int a[][columns])	//形参为多维数组,除了第一个维大小不需要有,
 	{										//后面的所有维必须有大小.
 		...
@@ -1592,13 +1593,13 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 
 	#include <string>
 	using namespace std;
-
+	
 	class GradeBook
 	{
 	public:
 		static const int students = 10;	//静态常量
 		static const int tests = 3;
-
+	
 		GradeBook(string, const int [][tests]);
 		void setCourseName(string);
 		string getCourseName();
@@ -1620,7 +1621,7 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 	#include <iomanip>
 	#include "GradeBook.h"
 	using namespace std;
-
+	
 	GradeBook::GradeBook(string name, const int gradesArray[][tests])
 	{
 		setCourseName(name);
@@ -1629,7 +1630,7 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 			for (int test=0; test<tests; test++)
 				grades[student][test] = gradesArray[student][test];
 	}
-
+	
 	void GradeBook::setCourseName(string name)
 	{
 		if (name.length() <= 25)
@@ -1641,32 +1642,32 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 				<< "Limiting courseName is first 25 characters.\n" << endl;
 		}
 	}
-
+	
 	string GradeBook::getCourseName()
 	{
 		return couseName;
 	}
-
+	
 	void GradeBook::displayMessage()
 	{
 		cout << "Welcome to the grade book for\n" << getCourseName() << "!\n"
 			<< endl;
 	}
-
+	
 	void GradeBook::processGrades()
 	{
 		outputGrades();
-
+	
 		cout << "\nThe lowest grade in the grade book is " << getMinumum()
 			<< "\nThe highest grade in the grade book is " << getMaximun() << endl;
-
+	
 		outputBarChart();
 	}
-
+	
 	int GradeBook::getMinumum()
 	{
 		int lowGrade = 100;
-
+	
 		for (int student=0; student<students; student++)
 		{
 			for (int test=0; test<tests; test++)
@@ -1679,7 +1680,7 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 	int GradeBook::getMaximum()
 	{
 		int highGrade = 0;
-
+	
 		for (int student=0; student<students; student++)
 		{
 			for (int test=0; test<tests; test++)
@@ -1689,20 +1690,20 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 			}
 		}
 	}
-
+	
 	double GradeBook::getAverage(const int setOfGrades[], const int countOfGrades)
 	{
 		int total = 0;
 		for (int count=0; count<countOfGrades; count++)
 			total += setofGrades[count];
-
+	
 		return static_cast<double>(total) / countOfGrades;
 	}
-
+	
 	void GradeBook::outputBarChart()
 	{
 		cout << "\nOverall grade distribution: " << endl;
-
+	
 		const int frequencySize = 11;
 		int frequency[frequencySize] = {};	//初始化为0
 		for (int student=0; student<students; student++)
@@ -1717,14 +1718,14 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 				cout << "100: "
 			else
 				cout << count * 10 <<　"-" << (count*10 + 9) << ": ";
-
+	
 			for (int stars=0; stars<frequency[count]; start++)
 				cout << "*";
-
+	
 			cout << endl;
 		}
 	}
-
+	
 	void GradeBook::outputGrades()
 	{
 		cout << "\nThe grades are:\n\n";
@@ -1732,16 +1733,16 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 		
 		for (int test=0; test<tests; test++)
 			cout << "Test " << test + 1 << "  ";
-
+	
 		cout << "Average" << endl;
-
+	
 		for (int student=0; student<students; student++)
 		{
 			cout << "Student " << setw(2) << student + 1;
-
+	
 			for (int test=0; test<tests; test++)
 				cout << setw(8) << grades[student][test];
-
+	
 			double average = getAverage(grades[student], tests);
 			cout << setw(9) << setprecision(2) << fixed << average << endl;
 		}
@@ -1750,7 +1751,7 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 **3 测试文件--->test.cpp**
 
 	#include "GradeBook.h"	//因为这个头文件包含了iostream等头文件
-
+	
 	int main()
 	{
 		int gradeArray[GradeBook::students][GradeBook::tests] =
@@ -1770,9 +1771,9 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 			在其他函数中(比如此处),可以透过:类名::static变量来访问.即GradeBook::students.
 			Q:在其他函数中是否可以通过对象.static变量来访问呢???
 		*/
-
+	
 		GradeBook myGradeBook("CS101 Introduction to C++ Programming", gradeArray);
-
+	
 		myGradeBook.displayMessage();
 		myGradeBook.processGrades();
 	}
@@ -1789,19 +1790,19 @@ C++标准库类模板vector,表示一种更健壮的、有很多附加能力的�
 	#include <iomanip>
 	#include <vector>
 	using namespace std;
-
+	
 	void outputVector(const vecotr<int> &);
 	/*
 		vecotr<int>:表示一种能力更强大的数组.此处表示一种能力更强大的数组的引用,
 			并且不能修改其中的数组元素(const属性).
 	*/
 	void inputVecotr(vector<int> &);	//函数原型
-
+	
 	int main()
 	{
 		vector<int> integers1(7);	//创建存储int值的vector对象,integers1含有7个元素.
 		vector<int> integers2(10);	//创建存储int值的vector对象,integers2含有10个元素.
-
+	
 		cout << "Size of vector integers1 is " << integers1.size()
 			<< "\nvector after initialization:" << endl;
 		/*
@@ -1812,11 +1813,11 @@ C++标准库类模板vector,表示一种更健壮的、有很多附加能力的�
 		cout << "Size of vector integers2 is " << integers2.size()
 			<< "\nvector after initialization:" << endl;
 		outputVector(integers2);
-
+	
 		cout << "\nEnter 17 integers:" << endl;
 		inputVector(integers1);
 		inputVector(integers2);
-
+	
 		cout << "\nAfter input, the vectors contain:\n"
 			<< "integers1:" << endl;
 		outputVector(integers1);
@@ -1824,38 +1825,38 @@ C++标准库类模板vector,表示一种更健壮的、有很多附加能力的�
 		outputVector(integers2);
 		
 		cout << "\nEvaluating: integers1 != integers2" << endl;
-
+	
 		if (integers1 != integers2)
 			cout << "integers1 and integers2 are not equal!" << endl;
 		//vector<int>对象可以直接比较大小.内容(元素和大小)相同,则两个vector对象相等,否则不等.
-
+	
 		vector<int> integers3(integers1);
 		//创建一个vector3对象,并用integers1的一个副本初始化该对象.此时会调用vector的复制
 		//构造函数来执行复制操作
-
+	
 		cout << "Size of vector integers3 is " << integers3.size()
 			<< "\nvector after initialization:" << endl;
 		outputVector(integers3);
-
+	
 		cout << "\nAssigning integers2 to integers1:" << endl;
 		integers1 = integers2;	//可以直接使用赋值运算符将一个vector对象赋值给另一个vector对象
 		cout << "integers1:" << endl;
 		outputVector(integers1);
 		cout << "integers2:" << endl;
 		outputVector(integers2);
-
+	
 		cout << "\nEvaluating: integers1 == integers2" << endl;
 		if (integers1 == integers2)
 			cout << "integers1 and integers2 are equal" << endl;
-
+	
 		cout << "\nintegers1[5] is " << integers1[5];
 		//vector对象可以直接像数组一样取数组元素.同样也不提供边界检查.
-
+	
 		cout << "\n\nAssigning 1000 to integers1[5]" << endl;
 		integers1[5] = 1000;	//像数组一样赋值
 		cout << "integers1:" << endl;
 		outputVector(integers1);
-
+	
 		cout << "\nAttempt to assign 1000 to integers1.at(15)" << endl;
 		integers1.at(15) = 1000;
 		/*
@@ -1864,7 +1865,7 @@ C++标准库类模板vector,表示一种更健壮的、有很多附加能力的�
 			此处at(15):15超出了vector对象的长度,抛出异常.
 		*/
 	}
-
+	
 	void outputVector(const vector<int> &array)
 	{
 		size_t i;	//size_t:unsigned int类型.
@@ -1878,7 +1879,7 @@ C++标准库类模板vector,表示一种更健壮的、有很多附加能力的�
 		if (i % 4 != 0)
 			cout << endl;
 	}
-
+	
 	void inputVector(vector<int> &array)
 	{
 		for (size_t i=0; i<array.size(); i++)
@@ -2082,7 +2083,7 @@ PS:
 		else
 			throw invalid_argument("hour must be 0-23");
 	}
-
+	
 	void Time::setMinute(int m)
 	{
 		if (m >= 0 && m < 60)
@@ -2108,12 +2109,12 @@ PS:
 	{
 		return minute;
 	}
-
+	
 	unsigned int Time::getSecond() const	//const成员函数在定义和实现均需要有const关键字
 	{
 		return second;
 	}
-
+	
 	void Time::printUniversal() const
 	{
 		cout << setfill('0') << setw(2) << getHour() << ":"
@@ -2200,7 +2201,7 @@ PS:
 		: Time(hour, 0, 0)
 	{
 	}
-
+	
 	Time::Time(int hour, int minute)
 		: Time(hour, minute, 0)
 	{
@@ -2233,7 +2234,7 @@ PS:
 	#include <iostream>
 	#include "CreateAndDestroy.h"
 	using namespace std;
-
+	
 	CreateAndDestroy::CreateAndDestroy(int ID, string messageString)
 		: objectID(ID), message(messageString)	//初始化列表初始化类的数据成员
 	{
@@ -2348,7 +2349,7 @@ PS:析构的顺序:局部,static,全局.
 		: month(m), day(d), year(y)	//初始化列表
 	{
 	}
-
+	
 	void Date::print()
 	{
 		cout << month << "/" << day << "/" << year;
@@ -3765,8 +3766,8 @@ PS:后置操作会创建临时对象,对性能会造成很大影响.一般使用
 	/*
 		结果为:
 		The Array received has 7 elements. The contents are:
-           0           0           0           0
-           0           0           0
+	       0           0           0           0
+	       0           0           0
 		
 		The Array received has 3 elements. The contents are:
 		           0           0           0
@@ -4094,9 +4095,9 @@ public继承特点:
 	void BasePlusCommissionEmployee::print() const
 	{
 		cout << "base-salaried ";
-
+	
 		CommissionEmployee::print();	//调用基类的print()函数
-
+	
 		cout << "\nbase salary: " << getBaseSalary();
 	}
 
@@ -4952,7 +4953,7 @@ cout的put成员函数用于输出单个字符.
 		cout << "After input of EOF, cin.eof() is: " << cin.eof() << endl;
 		//到文件尾,值为1.
 	}
-
+	
 	/*结果为:
 	Before input, cin.eof() is: 0
 	Enter a sentence followed by end-of-file:
@@ -4990,7 +4991,7 @@ cout的put成员函数用于输出单个字符.
 		cout << "The string read with cin.get was: " << endl
 			<< buffer2 << endl;
 	}
-
+	
 	/*结果为:
 	Enter a sentence:
 	Constrasting string input with cin and cin.get
@@ -5044,7 +5045,7 @@ para1:跳过的字符个数; para2:指定结束符.且会将结束符从流中�
 		cin.get(buf, 1024, '/');
 		cout << buf << endl;
 	}
-
+	
 	/*结果为:
 		i like c/   i like c++/
 		i like c
@@ -5081,7 +5082,7 @@ para1:跳过的字符个数; para2:指定结束符.且会将结束符从流中�
 	...
 	cout.precision(4);	//保留小数点后4位
 	cout << var;	//输出变量,此时保留小数点后4位
-
+	
 	cout << setprecision(4) << var;	//保留小数点后4位
 
 #### 13.4.3 域宽(width, setw)
@@ -5193,7 +5194,7 @@ para1:跳过的字符个数; para2:指定结束符.且会将结束符从流中�
 			//通过"<<"将数据写入到文件.
 			cout << "?";
 		}
-
+	
 		outClientFile.close();	//显示关闭文件.程序退出,默认也会关闭.显示关闭会更好点.
 	}
 
@@ -5238,7 +5239,7 @@ para1:跳过的字符个数; para2:指定结束符.且会将结束符从流中�
 			//会跳过空格和换行,当到文件尾时返回空指针(bool值为false).
 			outputLine(account, name, balance);
 		}
-
+	
 		inClientFile.close();	//显示调用关闭比较好
 	}
 	
@@ -5952,7 +5953,7 @@ PS:
 	1.priority_queue没有提供重载的<,<=,>,>=,==和!=运算符;
 	2.无序关联容器没有提供重载的<,<=,>和>=运算符;
 	3.forward_list没有提供成员函数rbegin,rend,crbegin和crend.
-	
+
 **4.首类容器的通用typedef**
 
 首类容器中通用的typedef(用于为过长的类型名创建别名)主要用于基于模板的变量、函数参数以及返回的声明中使用.主要的typedef如下:
@@ -6504,14 +6505,14 @@ multimap用于快速存取key-value值对,以pair对象存取(multimap不支持[
 		/*
 		pairs.count(15):统计key为15的key-value的个数.
 		*/
-
+	
 		/* multimap查找某key对应的所有value */
 		multimap<int, double>::iterator iter;
 		iter = pairs.find(15);	/* find函数返回一个iterator,所有相同的key会连起来 */
 		for (int i = 0, len = pairs.count(15); i < len; i++, iter++) {
 			cout << iter->second << endl;
 		}
-
+	
 		pairs.insert(make_pair(30, 111.11));
 		pairs.insert(make_pair(10, 22.22));
 		pairs.insert(make_pair(25, 33.333));
@@ -6532,7 +6533,7 @@ map用于快速存取唯一的key-value值对,以pair对象存取.map中的key-v
 	#include <iostream>
 	#include <map>
 	using namespace std;
-
+	
 	int main()
 	{
 		map<int, double, less<int>> pairs;
@@ -6559,7 +6560,7 @@ map用于快速存取唯一的key-value值对,以pair对象存取.map中的key-v
 				cout << iter->first << "\t" << iter->second << "\n";
 			}
 		*/
-
+	
 		pairs[25] = 9999.99;	//下标引用key,如果key存在则会将value替换.
 		pairs[40] = 8765.43;	//下标引用key,key不存在则在map中插入新的key-value对.
 	
@@ -6708,9 +6709,71 @@ priority_queue按序插入元素和在头部删除元素.使用vector和deque实
 
 ### 15.8 bitset类
 
-略.
+c++的bitset类主要用于创建和操作位集和.
 
-***
+#### 15.8.1 bitset头文件
+
+```
+#include <bitset>
+using std::bitset;	// 或者直接使用using namespace std;
+```
+
+#### 15.8.2 bitset定义和初始化
+
+**1.bitset对象默认初始化**
+
+```
+bitset<n> b;	// b的位集和总共有n-bit,每个bit默认初始化为0
+bitset<32> bitset_vect;	// bitset_vec共有32-bit,每个bit均为0
+```
+
+**2.用unsigned值初始化bitset对象**
+
+```
+bitset<16> bitset_vec1(0xffff);		// bitset_vec1共有16-bit,bit0-15被初始化为1
+bitset<32> bitset_vec2(0xffff); 	// bitset_vec2共有32-bit,bit0-15被初始化为1,bit16-31被初始化为0
+bitset<128> bitset_vec3(0xffff);	// bitset_vec3共有128-bit,bit0-15被初始化为1,bit16-127被初始化为0
+```
+
+**3.用string对象初始化bitset对象**
+
+```
+string strval("1100");
+bitset<32> bitset_vec(strval);	// bitset_vec被初始化为:0b1100,共32-bit
+string str("1111111000000011001101");
+bitset<32> bitset_vec1(str, 5, 4); // 从str[5]开始,取4-bit来初始化bitset,此时的值为:0b1100
+bitset<32> bitset_vec2(str, str.size() - 4);	// 从str[str.size()-4]开始,没有指定长度即为一直到最后.此处为
+	取最后的4个字符,此时的值为:0b1101
+```
+
+#### 15.8.3 bitset的常用方法
+
+```
+bitset<n> b;	// 定义一个bitset对象
+b.set();		// 将b中所有的bit都置为1
+b.set(pos);		// 将b中第pos bit置为1
+b.reset();		// 将b中所有的bit都置为0
+b.reset(pos);	// 将b中第pos bit置为0
+b.flip();		// 将b中所有bit翻转
+b.flip(pos);	// 将b中第pos bit翻转
+b[pos]或b.at(pos);	// 获取b中第pos位的值
+b.test(pos);	// 测试b中第pos位是否为1,如果为1则返回true,否则返回false
+b.size();		// 返回b中bit的数量,即定义中的n
+b.count();		// 返回b中置为1的bit的数量
+b.any();		// 如果b中任意一个bit为1,返回true
+b.all();		// 如果b中所有的bit都为1,返回true
+b.none();		// 如果b中所有的bit都为0,返回true
+b == b1;		// 比较两个bitset对象是否相等
+b != b1;		// 比较两个bitset对象是否不相等
+b &= b1;		// b与b1按位与,结果保存在b中
+b |= b1;		// b与b1按位或,结果保存在b中
+b ^= b1;		// b与b1按位异或,结果保存在b中
+b >>= n;		// b中的bit右移n位
+b <<= n;		// b中的bit左移n位
+b.to_ulong();	// 将b转换为一个unsigned long的数据
+b.to_string();	// 将b转成一个字符串
+cout << b << endl;	// 输出bitset对象,输出的为"二进制格式"
+```
 
 ## Chapter 16.标准库算法
 
@@ -7012,7 +7075,7 @@ priority_queue按序插入元素和在头部删除元素.使用vector和deque实
 		runtime_error标准异常库类在头文件<stdexcept>中定义,是C++用于描述运行时错误的标准基类.
 		runtime_error派生于exception类(在头文件<exception>中定义).
 	*/
-
+	
 	class DivideByZeroException : public std::runtime_error
 	{	//表示DivideByZeroException以public形式派生于runtime_error
 	public:
