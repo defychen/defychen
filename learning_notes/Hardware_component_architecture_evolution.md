@@ -656,8 +656,6 @@ RDIMM(Registered DIMM):寄存型模组,主要用在服务器上,为了增加内�
 服务器用RDIMM,且是ECC的.
 ```
 
-
-
 ##### 3.1.1.2 UDIMM
 
 UDIMM(Unbuffered DIMM):无缓冲型模组,这是我们平时所用到的标准台式电脑DIMM,分有ECC和无ECC两种,一般是无ECC的.
