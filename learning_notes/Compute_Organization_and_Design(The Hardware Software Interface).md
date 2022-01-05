@@ -691,6 +691,47 @@ CPU通用寄存器和主存的速度对比如下:
 此时:CPU与主存之间直接数据传输方式变为--->CPU与cache之间数据传输,cache负责和主存直接数据传输.
 ```
 
+#### 5.3.2 多级cache存储结构
+
+1.多级cache存储结构如下图:
+
+![](images/multi-level_cache_structure.png)
+
+```
+特点:
+1.cache等级越高,速度越慢,容量越大;
+2.各个cache速度:
+	CPU register: < 1ns;
+	L1 cache: 1ns;
+	L2 cache: 3ns;
+	L3 cache: 12ns;
+	main memory: 65ns.
+```
+
+2.Cortex-A53各级cache硬件结构
+
+<img src="images/cortex-a53_cache_structure.png" style="zoom:80%;" />
+
+```
+1.L1 cache分为单独的instruction cache(ICache)和data cache(DCache),L1 Cache是CPU私有的,每个CPU都有一个L1 Cache;
+2.一个cluster内所有的CPU共享一个L2 Cache,L2 Cache不区分指令还是数据,都可以缓存;
+3.所有的cluster之间共享L3 cache,L3 cache通过总线与main memory相连.
+```
+
+#### 5.3.3 多级cache之间的配合
+
+<img src="images/multi-level_cache_coperation.png" style="zoom:80%;" />
+
+```
+1.CPU试图从地址addr load数据,首先查询L1 cache,看是否hit.hit直接将数据返回给CPU,miss则继续查找L2 cache;
+2.如果L2 cache hit,从将数据返回给L1 cache以及CPU;如果miss则需要从主存load数据;
+3.从main memory读取数据后,将数据返回给L2 cache、L1 cache以及CPU.
+上述的方法是inclusive cache,某一地址的数据可能存在多级cache中.
+PS:exclusive cache:保证某一地址的数据缓存只存在与多级cache中的其中一级,即任意地址的数据不可能同时存在L1和L2 cache中.
+```
+
+### 5.4 缓存映射方式
+
 
 
 ## Chapter n: 常用的队列调度算法
