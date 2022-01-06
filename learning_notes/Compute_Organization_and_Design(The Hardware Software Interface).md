@@ -732,6 +732,87 @@ PS:exclusive cache:保证某一地址的数据缓存只存在与多级cache中�
 
 ### 5.4 缓存映射方式
 
+cachline是cache和主存之间数据传输的最小单位.当CPU load一个字节的数据时,如果发生了cache miss,cache控制器会从主存中一次性load cacheline大小的数据到cache中.
+
+#### 5.4.1 直接映射缓存(direct mapped cache)
+
+**1.直接映射的结构**
+
+<img src="images/direct_mapped_cache_structure.png" style="zoom:80%;" />
+
+```
+假设cache大小为64B,cacheline大小为8B.
+1.cache中总共有8条cacheline,每条cacheline覆盖8B数据;
+2.直接映射方式每个地址的数据存放在cache中的固定cacheline位置;
+3.如果访问的地址依次是:0x00, 0x40, 0x80.由于这3个地址映射到同一条cacheline,每次都会发生cacheline的替换(该现象叫做cache颠簸(cache thrasing)).因此,直接映射的性能不是很好.
+```
+
+**2.直接映射实例1**
+
+<img src="images/direct_mapped_cache_example.png" style="zoom:80%;" />
+
+```
+假设cache大小为64B,cacheline大小为8B.
+1.offset:cacheline中的偏移,表示所需的数据从哪个byte开始,因为cacheline是8B,因此offset为3-bit;
+2.index:查找cache中的某一行cacheline,因为总共有8条cacheline,因此index为3-bit;
+3.tag:当通过index查找到某一行cacheline,需要匹配tag信息确定该cacheline是否是所需的cacheline,此处地址宽度为48-bit,因此tag为:48-3-3=42-bit;
+4.V:tag array中的V表示该cacheline有效与否.当通过index找到某行cacheline后,先检查V是否为valid,如果为valie再匹配tag;否则直接miss,访问memory;
+5.D:data array中的dirty bit,如果hit时发现D被置位了,此时需要将该数据刷回到memory中;否则直接将数据写入到data array中,将D置位即可.
+6.图中CPU需要load 0x654(0b110, 0101, 0100),load 1B:
+	index为0b010:访问cache中的第2条cacheline,如果此时V被置位,需要匹配tag,在tag array中存放的是0x19,刚好匹配.可以直接
+	data array中取出数据(假设数据为0x11223344556677),取出来的数据为:0x33(偏移4B)返回给CPU.
+```
+
+**3.直接映射实例2**
+
+<img src="images/direct_mapped_cache_example2.png" style="zoom:80%;" />
+
+```
+cache大小为512B,cacheline大小为:64B.
+1.offset: 6-bit;
+2.index: 3-bit(总共8条cacheline);
+3.tag: 48-6-3=39-bit
+```
+
+#### 5.4.2 组相联缓存(set associative cache)
+
+直接映射当访问的是同一条cacheline时,会发生cache颠簸.为了降低cache的颠簸,引入了组相联.
+
+**1.两路组相联结构**
+
+<img src="images/two_way_set_associative.png" style="zoom:80%;" />
+
+```
+两路即为两条way,表示一个set里面有2条way.
+如果访问的地址依次是:0x00, 0x40, 0x80.由于这3个地址映射到同一个set,此时0x00可以加载到way1,0x40可以加载到way0.0x00和0x40都缓存到了cache里,如果0x80来访问,此时就会发生替换.但很大程度上缓解了cache颠簸.
+组相联的缺点:硬件成本相比直接映射要高,硬件设计复杂度也要高.
+```
+
+**2.两路组相联实例**
+
+![](images/two_way_set_associative_example.png)
+
+```
+假设cache大小为64B,cacheline大小为8B.
+1.way数:2-way;
+2.set数:4-set,总共8条cacheline;
+3.offset:3-bit,因为cacheline是8B;
+4.index:2-bit,与set数对应,也叫set index;
+4.tag:会比较2-way中的每一个tag,任意一个相等则hit;
+5.V/D与直接映射一样.
+```
+
+#### 5.4.3 全相连缓存(full associative cache)
+
+<img src="images/full_associative_cache.png" style="zoom:80%;" />
+
+```
+1.所有的cacheline在同一个set里,因此不需要index索引;
+2.offset:3-bit,因为cacheline是8B;
+3.tag:48-3=45-bit,地址可以存放在cache里的任意一条cacheline里,因此在对比时需要比较所有cacheline的tag.
+	因此比较的开销很大,硬件成本很高.
+```
+
 
 
 ## Chapter n: 常用的队列调度算法
