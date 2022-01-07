@@ -813,7 +813,72 @@ cache大小为512B,cacheline大小为:64B.
 	因此比较的开销很大,硬件成本很高.
 ```
 
+#### 5.4.4 四路组相联实例
 
+32KB大小的cache,4路组相连,cacheline为32B.确定set数、offset、index以及tag占用bit(假设地址宽度48-bit).
+
+```
+1.总的cacheline数目: 32KB / 32B = 1K条;
+2.set数目: 1K / 4 = 256个set;
+3.offset:因为cacheline时32B,因此offset为:5-bit;
+4.index:因为set为256个,因此index为8-bit;
+5.tag:48-5-6=35-bit
+```
+
+<img src="images/4_way_set_associative.png" style="zoom:80%;" />
+
+#### 5.4.5 cache分配策略(cache allocation policy)
+
+**1.读分配(read allocation)**
+
+当CPU读数据时,发生cache miss.这种情况下,cache都会分配一个cacheline来缓存从memory读取的数据.
+
+默认情况下,cache都支持读分配.
+
+**2.写分配(write allocation)**
+
+当CPU写数据发生cache miss时,才会考虑写分配策略.主要分为2种:
+
+```
+1.如果不支持写分配,此时写操作数据会直接更新到memory;
+2.如果支持写分配,系统首先会从memory加载数据到cacheline中(相当于先做个读分配动作),然后更新cacheline中的数据.
+```
+
+#### 5.4.6 cache更新策略(cache update policy)
+
+cache更新策略指当写操作发生cache hit时,应该如何更新写数据.
+
+**1.写直通(write through)**
+
+写直通是指:当CPU执行store指令并在cache hit时,不仅将数据更新到cache中而且更新到memory中.此时cache和memory数据始终保持一致.
+
+**2.写回(write back)**
+
+写回是指:当CPU执行store指令并在cache hit时,只更新cache中的数据.
+
+```
+1.每个cacheline中有一个bit记录数据是否被修改过,称为dirty bit;
+2.当某行cacheline被替换或显示的clean操作时,数据才会通过write back更新到memory;
+3.memory中的数据可能是旧的数据,新的数据在cache中.此时cache和memory的数据可能不一致.
+```
+
+#### 5.4.7 写分配+写回实例
+
+64B大小的cache,8B cacheline.CPU需要从0x2a读取一个字节.此时cache的行为如下:
+
+<img src="images/ra_wb_operation1.png" style="zoom:80%;" />
+
+<img src="images/wa_wb_operation2.png" style="zoom:80%;" />
+
+```
+1.地址0x2a(0b101, 010),index为5.找到第5条cacheline;
+2.检查V为1,表示该cacheline为valid;
+3.匹配tag,发现为0x4,与0x2a的tag(0x00)不相等,发生cache miss.需要从memory的地址0x28(8B对齐)读取8B到该cacheline;
+4.由于该行cacheline的D(dirty bit)为1,需要通过write back写回到memory.因此先将数据通过write back写回到
+	0x128(0b100, 101, 000(8B对齐)==>0b1, 0010, 1010)地址;
+5.当write back操作结束后,我们将从memory中地址0x28(8B对齐)读取8B数据到该cacheline,清除dirty bit
+	(因为是读操作,cache中的数据和memory一致).然后通过offset找到0x52返回给CPU.
+```
 
 ## Chapter n: 常用的队列调度算法
 
