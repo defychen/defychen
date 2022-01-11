@@ -24,7 +24,7 @@ C++11使用nullptr取代0或NULL,是一个指针指向no value.
 NULL和nullptr的区别:
 
 	#include <iostream>
-	#include <stddef.h>		//C++中使用NULl必须包含的头文件
+	#include <stddef.h>		//C++中使用NULL必须包含的头文件
 	using namespace std;
 	
 	void foo(int)
@@ -52,26 +52,28 @@ NULL和nullptr的区别:
 		*/
 	}
 
-nullptr的类型是std::nullptr_t,定义于<cstddef>头文件.
+nullptr的类型是std::nullptr_t,定义于<iostream>头文件.要使用NULL需要包含<cstddef>头文件.
+
+PS:在C++中当需要使用NULL时,养成直接使用nullptr的习惯.
 
 #### 2.1.2 auto完成类型的自动推导
 
-auto是C语言的一个旧关键字,便是某变量为局部,因为变量默认就是局部的,从未被真正用过.
+auto是C语言的一个旧关键字,表示某变量为局部,因为变量默认就是局部的,因此从未被真正用过.
 
-1.普通自动推导
+**1.普通自动推导**
 
 	double f();
 	auto d = f();	//自动推导出d是double类型
 
-2.auto声明的变量必须初始化
+**2.auto声明的变量必须初始化**
 
 	auto i;		//错误,这样没办法做推导
 
-3.加上额外限定符
+**3.加上额外限定符**
 
 	static auto vat = 0.19;
 
-4.用于类型很长或表达式很复杂的情况
+**4.用于类型很长或表达式很复杂的情况**
 
 	vector<string> v;
 	...
@@ -83,6 +85,25 @@ auto是C语言的一个旧关键字,便是某变量为局部,因为变量默认�
 	/*
 		l是一个lambda类型,接收一个int参数,返回一个bool值.
 	*/
+
+**5.最常用的场景--->用于迭代器**
+
+1.旧的迭代器写法
+
+```
+for (vector<int>::const_iterator iter = vec.cbegin(); iter != vec.cend(); iter++) {
+	...
+}
+```
+
+2.使用auto的写法
+
+```
+for (auto iter = vec.cbegin(); iter != vec.cend(); iter++) {
+	/* 会自动推导出iter为vector<int>::const_iterator类型 */
+	...
+}
+```
 
 #### 2.1.3 一致性初始化和初值列的使用
 
@@ -126,7 +147,7 @@ auto是C语言的一个旧关键字,便是某变量为局部,因为变量默认�
 		P(int, int);
 		P(std::initializer_list<int>);	//可以接受一个初值列的构造函数
 	};
-
+	
 	P p(77, 5);		//调用P(int, int)
 	P q{77, 5};		//调用P(std::initializer_list<int>),因为初值列的优先级高
 	p r{77, 5, 43};	//调用P(std::initializer_list<int>)
@@ -146,7 +167,7 @@ auto是C语言的一个旧关键字,便是某变量为局部,因为变量默认�
 			...
 		}
 	};
-
+	
 	P x(77, 5);	//合法,调用P(int a, int b)
 	P y{77, 5};	//合法,调用P(int a, int b)
 	P z{77, 5, 42};	//合法,调用:explicit P(int a, int b, int c)
@@ -162,7 +183,7 @@ auto是C语言的一个旧关键字,便是某变量为局部,因为变量默认�
 	for (int i : {2, 3, 4, 5, 6, 7,, 8, 9}) {
 		std::cout << i << std::endl;
 	}
-
+	
 	std::vector<double> vec;
 	...
 	for (auto &elem : vec) {	//使用引用,可以改变原值,否则就是拷贝
@@ -187,7 +208,7 @@ auto是C语言的一个旧关键字,便是某变量为局部,因为变量默认�
 		explicit C(const std::string& s);
 		...
 	}
-
+	
 	std::vector<std::string> vs;
 	for (const C& elem : vs) {	//因为C为explicit,会报错.
 		std::cout << elem << std::endl;
@@ -212,7 +233,7 @@ auto是C语言的一个旧关键字,便是某变量为局部,因为变量默认�
 **2.字符串中间含有括号的写法**
 
 	R"delim(...)delim"	//delim表示字符序列(类似标签):表示字符串中间可带有括号的写法.
-
+	
 	/* 带括号的字符串写法 */
 	1.寻常字符串的编写
 		"a\\\n	b\\nc()\"\n	"
@@ -245,9 +266,9 @@ constexpr:将变量或函数声明为constexpr,表示为一个常量表达式(�
 	{
 		return x * x;
 	}
-
-	float a[sqaure(9)];	//传递了一个常量9,此时表示a有81个元素.
 	
+	float a[sqaure(9)];	//传递了一个常量9,此时表示a有81个元素.
+
 #### 2.1.9 新的template特性
 
 C++11起,tempalte可拥有"个数不定的template实参"的参数.成为variadic tempalte.
@@ -257,14 +278,14 @@ C++11起,tempalte可拥有"个数不定的template实参"的参数.成为variadi
 	void print()	//必须提供一个non-template的print()函数,只为了结束递归.
 	{
 	}
-
+	
 	template <typename T, typename... Types>
 	void print(const T &firstArg, const Types &...args)
 	{
 		std::cout << firstArg << std::endl;
 		print(args...);	//递归调用print,调用到最后需要调用non-template的重载函数print(),结束整个递归.
 	}
-
+	
 	//调用
 	print(7.4, "hello", std::bitset<16>(377), 42);
 	结果为:
@@ -280,7 +301,7 @@ C++11起,tempalte可拥有"个数不定的template实参"的参数.成为variadi
 
 	Template <typename T>
 	using Vec = std::vector<T, MyAlloc<T>>;	//使用using来为后面的模板命别名为Vec.
-
+	
 	Vec<int> coll;
 	--->等价于:
 		std::vector<int, MyAlloc<int>> coll;
@@ -294,7 +315,7 @@ C++11起,tempalte可拥有"个数不定的template实参"的参数.成为variadi
 	[]{
 		std::cout << "hello lambda" << std::endl;
 	}
-
+	
 	调用:
 	[]{
 		std::cout << "hello lambda" << std::endl;
@@ -476,7 +497,7 @@ C++所有异常都派生自基类exception,头文件为<exception>.
 	#include <vector>
 	#include <exception>
 	using namespace std;
-
+	
 	int main()
 	{
 		vector<int> v = {1, 2, 3};
@@ -527,7 +548,7 @@ Callable Object:可被某种方式调用其某些函数的对象.
 	{
 		C c;
 		std::shared_ptr<C> sp(new C);
-
+	
 		/* 使用bind()函数调用可调用对象 */
 		std::bind(func, 77, 33)();	//调用函数: func(77, 33)
 		std::bind(l, 77, 33)();		//调用lambda: l(77, 33)
@@ -541,7 +562,7 @@ Callable Object:可被某种方式调用其某些函数的对象.
 		*/
 		std::bind(&C::mem_func, sp, 77, 33)();
 		//此处调用: sp->mem_func(77, 33);
-
+	
 		/* 使用async()函数调用可调用对象(会在后台启动task) */
 		std::async(func, 42, 77);	//调用函数: func(77, 33)
 		std::async(l, 42, 77);		//调用lambda: l(77, 33)
@@ -606,7 +627,7 @@ pair重载的==, !=, <, >, <=, >=等符号,可以直接比较两个pair对象.�
 			return x.first == y.first && x.second == y.second;
 		}
 	};
-
+	
 	//使用方法为:
 	p1 == p2	//p1, p2为相同类型pair的两个对象
 
@@ -622,7 +643,7 @@ pair重载的==, !=, <, >, <=, >=等符号,可以直接比较两个pair对象.�
 
 	typedef std::pair<int, float> int_float_pair;
 	int_float_pair p(42, 3.14);
-
+	
 	std::get<0>(p)	//等价于p.first,获取p的第一个元素
 	std::get<1>(p)	//等价于p.second,获取p的第二个元素
 	std::tuple_size<int_float_pair>::value	//获取tuple的元素个数,此处为pair,结果为2
@@ -660,7 +681,7 @@ tuple为拥有任意数量个元素,且元素类型可以被单独指定.
 	#include <complex>	//复数
 	#include <string>
 	using namespace std;
-
+	
 	int main()
 	{
 		tuple<string, int, int, complex<double>> t;	//实例一个tuple对象,元素全部为默认值
@@ -670,12 +691,12 @@ tuple为拥有任意数量个元素,且元素类型可以被单独指定.
 		cout << get<0>(t1) << " ";	//获取第一个元素--->41
 		cout << get<1>(t1) << " ";	//获取第二个元素--->6.3
 		cout << get<2>(t1) << " ";	//获取第三个元素--->nico
-
+	
 		auto t2 = make_tuple(22, 44, "nico");
 		//auto自动推断tuple元素类型,t2的元素类型为(int, int, const char *)
-
+	
 		get<1>(t1) = get<1>(t2);	//给tuple某个元素赋值
-
+	
 		if (t1 < t2) {
 			t1 = t2;	//比较两个tuple并赋值
 		}
@@ -684,10 +705,10 @@ tuple为拥有任意数量个元素,且元素类型可以被单独指定.
 2.tuple元素的引用
 
 	std::string s;
-
+	
 	auto x = std::make_tuple(s);
 	std::get<0>(x) = "my value";	//可以更改x中的0元素值,但是不能更改s的值
-
+	
 	auto y = std::make_tuple(ref(s));	//tuple中的第一个元素为s的引用.ref(s)->表示s的引用
 	std::get<0>(y) = "my value";	//此时也会更改s的值
 
@@ -698,7 +719,7 @@ tuple为拥有任意数量个元素,且元素类型可以被单独指定.
 	float f;
 	std::string s;
 	std::tie(i, f, s) = t;	//tie(type...):表示某个tuple的引用,元素排布与tuple必须一致
-
+	
 	PS:
 		std::ignore--->忽略tuple中的某些元素
 	std::tuple<int, float, std::string> t(77, 1.1, "more light");
@@ -732,13 +753,13 @@ tuple不允许使用赋值语法来初始化.
 1.tuple_size<tuple_name>::value--->获得元素个数
 
 	typename std::tuple<int, float, std::string> tuple_type;
-
+	
 	cout << std::tuple_size<tuple_type>::value;	//结果为3
 
 2.tuple_element<idx, tuple_name>::type--->获得第idx个元素的类型(即get<>()的返回值类型)
 
 	typename std::tuple<int, float, std::string> tuple_type;
-
+	
 	cout << tuple_element<1, tuple_type>::type;	//结果为float
 
 3.tuple_cat()--->将多个tuple连接成一个tuple
@@ -754,7 +775,7 @@ tuple不允许使用赋值语法来初始化.
 	// printtuple.h
 	#include <tuple>
 	#include <iostream>
-
+	
 	template <int IDX, int MAX, typename... Args>
 	struct PRINT_TUPLE {	//默认该结构体例化需要3个参数
 		//结构体里的静态函数
@@ -764,14 +785,14 @@ tuple不允许使用赋值语法来初始化.
 				//直接调用静态函数,此处为递归调用
 		}
 	};
-
+	
 	//无操作的模板,用于结束递归
 	tempate <int MAX, typename... Args>
 	struct PRINT_TUPLE<MAX, MAX, Args...> { //指定结构体例化需要3个参数
 		static void print(std::ostream &strm, const std::tuple<Args...> &t) {
 		}
 	};
-
+	
 	//使用"<<"打印任何tuple
 	template <typename... Args>
 	std::ostream &operator << (std::ostream &strm, const std::tuple<Args...> &t)
@@ -789,13 +810,13 @@ tuple不允许使用赋值语法来初始化.
 	#include <iostream>
 	#include <string>
 	using namespace std;
-
+	
 	int main()
 	{
 		tuple<int, float, string> t(77, 1.1, "more light");
 		cout << "io: " << t << endl;
 	}
-
+	
 	//结果为: io: [77, 1.1, more light]
 
 ### 4.2 Smart Pointer(智能指针)
@@ -818,7 +839,7 @@ tuple不允许使用赋值语法来初始化.
 	#include <vector>
 	#include <memory>	//shared_ptr的头文件
 	using namespace std;
-
+	
 	int main()
 	{
 		shared_ptr<string> p_nico(new string("nico"));
@@ -838,10 +859,10 @@ tuple不允许使用赋值语法来初始化.
 					p_nico.reset(new string("nico"));	//用的比较少
 		*/
 		shared_ptr<string> p_jutta(new string("jutta"));
-
+	
 		(*p_nico)[0] = 'N';		//和一般指针用法一样,更改第一个字母为"N".
 		p_jutta->replace(0, 1, "J");	//替换第0个字符为"J".
-
+	
 		vector<shared_ptr<string>> who_made_coffee;
 		who_made_coffee.push_back(p_jutta);
 		/*
@@ -861,9 +882,9 @@ tuple不允许使用赋值语法来初始化.
 				jutta jutta	nico jutta nico
 		*/
 		cout << endl;
-
+	
 		*p_nico = "nicolai";	//更改共享指针的内容为"nicolai"
-
+	
 		for (auto ptr_iter : who_mode_coffer) {
 			cout << *ptr_iter << " ";
 		}
@@ -874,7 +895,7 @@ tuple不允许使用赋值语法来初始化.
 			shared_ptr的use_count方法统计某个shared_ptr所指对象的当前拥有者数量.
 			此处为4个,vector中有3个和p_jutta.
 		*/
-
+	
 		//结束时shared_ptr会自动调用默认的delete来删除指针.
 	}
 
@@ -909,7 +930,7 @@ tuple不允许使用赋值语法来初始化.
 	#include <fstream>
 	#include <memory>
 	#include <cstdio>
-
+	
 	class file_deleter {
 	private:
 		std::string filename;
@@ -922,7 +943,7 @@ tuple不允许使用赋值语法来初始化.
 			std::remove(filename.c_str());
 		}	//重载括号运算符
 	};
-
+	
 	int main()
 	{
 		std::shared_ptr<std::ofstream> fp(new std::ofstream("tmpfile.txt"),
@@ -955,14 +976,14 @@ weak_ptr的设计目的是为了配合shared_ptr而引入的一种smart pointer,
 	#include <memory>
 	#include <vector>
 	using namespace std;
-
+	
 	class person {
 	public:
 		string name;
 		shared_ptr<person> mother;
 		shared_ptr<person> father;
 		vector<shared_ptr<person>> kids;
-
+	
 		person(const string &n,
 			shared_ptr<person> m = nullptr,
 			shared_ptr<person> f = nullptr) :
@@ -970,13 +991,13 @@ weak_ptr的设计目的是为了配合shared_ptr而引入的一种smart pointer,
 			mother(m),
 			father(f)
 		{}
-
+	
 		~person()
 		{
 			cout << "delete" << name << endl;
 		}
 	};
-
+	
 	shared_ptr<person> init_family(const string &name)
 	{
 		shared_ptr<person> mom(new person(name + "'s mom"));
@@ -986,20 +1007,20 @@ weak_ptr的设计目的是为了配合shared_ptr而引入的一种smart pointer,
 		dad->kids.push_back(kid);
 		return kid;
 	}
-
+	
 	int main()
 	{
 		shared_ptr<person> p = init_family("nico");
-
+	
 		cout << "nico's famliy exists" << endl;
 		cout <<"- nico is shared " << p.use_count() << " times" << endl;
 		cout << "- name of 1st kid of nico's mom: "
 			<< p->mother->kids[0]->name << endl;
-
+	
 		p->init_family("jim");
 		cout << "jim's family exists" << endl;
 	}
-
+	
 	//结果为:
 		nico's famliy exists
 		- nico is shared 3 times
@@ -1021,7 +1042,7 @@ weak_ptr的设计目的是为了配合shared_ptr而引入的一种smart pointer,
 		shared_ptr<person> mother;
 		shared_ptr<person> father;
 		vector<weak_ptr<person>> kids;
-
+	
 		person(const string &n,
 			shared_ptr<person> m = nullptr,
 			shared_ptr<person> f = nullptr) :
@@ -1029,13 +1050,13 @@ weak_ptr的设计目的是为了配合shared_ptr而引入的一种smart pointer,
 			mother(m),
 			father(f)
 		{}
-
+	
 		~person()
 		{
 			cout << "delete" << name << endl;
 		}
 	};
-
+	
 	shared_ptr<person> init_family(const string &name)
 	{
 		shared_ptr<person> mom(new person(name + "'s mom"));
@@ -1045,11 +1066,11 @@ weak_ptr的设计目的是为了配合shared_ptr而引入的一种smart pointer,
 		dad->kids.push_back(kid);
 		return kid;
 	}
-
+	
 	int main()
 	{
 		shared_ptr<person> p = init_family("nico");
-
+	
 		cout << "nico's famliy exists" << endl;
 		cout <<"- nico is shared " << p.use_count() << " times" << endl;
 		//p.use_count()效率有时不高,C++标准库不推荐使用,仅在调试时使用.
@@ -1060,7 +1081,7 @@ weak_ptr的设计目的是为了配合shared_ptr而引入的一种smart pointer,
 				p->mother->kids[0].lock()->name.
 			避免不明确的行为发生.
 		*/
-
+	
 		p->init_family("jim");
 		cout << "jim's family exists" << endl;
 	}
@@ -1120,7 +1141,7 @@ class unique_ptr实现了独占式拥有,确保一个对象和其资源在同一
 1.访问成员(可以像普通指针一样访问)
 
 	std::unique_ptr<std::string> up(new std::string("nico"));
-
+	
 	(*up)[0] = 'N';
 	up->append("lai");
 	std::cout << *up << std::endl;
@@ -1136,15 +1157,15 @@ class unique_ptr实现了独占式拥有,确保一个对象和其资源在同一
 	...
 	std::string *sp = up.release();
 		//放弃拥有的对象,返回该对象给到普通指针(今后由普通指针负责释放资源).
-
+	
 	if (up) {	//和普通指针一样,判断是否为empty
 		...
 	}
-
+	
 	if (up != nullptr) {	//判断非空
 		...
 	}
-
+	
 	if (up.get() != nullptr) {	//up.get()--->拿到unique_ptr内的raw_pointer,判断非空
 		...
 	}
@@ -1181,7 +1202,7 @@ class unique_ptr实现了独占式拥有,确保一个对象和其资源在同一
 	#include <cstring>	// for strerror()
 	#include <cerrno>	// for errno
 	using namespace std;
-
+	
 	class dir_closer {
 	public:
 		void operator() (DIR *dp)	// DIR是dirent.h中的结构体
@@ -1191,7 +1212,7 @@ class unique_ptr实现了独占式拥有,确保一个对象和其资源在同一
 			}
 		}
 	};
-
+	
 	int main()
 	{
 		unique_ptr<DIR, dir_closer> p_dir(opendir("."));
