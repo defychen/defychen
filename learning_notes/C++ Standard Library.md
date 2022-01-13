@@ -297,7 +297,9 @@ C++11起,tempalte可拥有"个数不定的template实参"的参数.成为variadi
 
 在variadic template中,sizeof...(args)会得到实参的个数.
 
-**3.Alias Template(或者叫Template Typedef)**
+**3.Alias Template(或者叫Template Typedef/类型别名模板)**
+
+在传统的C/C++中,使用typedef可以为类型定义一个别名,但是没办法为模板定义一个新的名称(因为模板不是类型).从C++11开始,可以使用using定义模板别名.
 
 	Template <typename T>
 	using Vec = std::vector<T, MyAlloc<T>>;	//使用using来为后面的模板命别名为Vec.
@@ -305,6 +307,31 @@ C++11起,tempalte可拥有"个数不定的template实参"的参数.成为variadi
 	Vec<int> coll;
 	--->等价于:
 		std::vector<int, MyAlloc<int>> coll;
+
+实例:
+
+```
+template<typename T, typename U, int value>
+class suck_type {
+public:
+	T a;
+	U b;
+	suck_type() : a (value), b(value) {}
+};
+template<typename T>
+using new_type = suck_type<vector<int>, T, 1>;	// 使用using来定义模板别名
+```
+
+**4.template的默认参数**
+
+C++11可以指定模板的默认参数(即默认的模板类型).
+
+```
+template<typename T = int, typename U = int>	// 模板的默认参数类型是int
+auto add(T x, U y) -> decltype(x + y) {
+	return x + y;
+}
+```
 
 #### 2.1.10 Lambda
 
@@ -404,16 +431,42 @@ lambda中[]可以指明一个captue用来处理外部作用域未被传递给实
 decltype让编译器找到表达式的类型(类似typeof,但是比typeof更好).
 
 	std::map<std::string, float> coll;
-	decltype<coll>::value_type elem;
+	decltype(coll)::value_type elem;
 	/*
-		decltype<coll>:找到coll的类型.
+		decltype(coll):找到coll的类型(std::map<std::string, float>),可以用于声明相同类型的不同变量,适用于类型名
+		比较长的变量声明.
+	*/
+	cout << typeid(coll).name() << endl;
+	/*
+		typeid(coll).name():获取变量var的类型名称,位于<typeinfo>头文件中.
 	*/
 
 decltype的应用:
 
 	让函数的返回类型取决于某个表达式对实参的处理:
 	template<typename T1, typename T2>
-	auto add(T1 x, T2 y) -> decltype(x+y);	//函数的返回类型由x+y的值决定.
+	auto add(T1 x, T2 y) -> decltype(x+y) {
+		/*
+			auto:此处表示自动推导,在C++11中auto的推导是根据变量值进行类型推导.
+			此处的解析为:根据x+y的值用auto推导出一个类型,然后decltype将该类型作为返回类型.
+			PS:因为C++11的auto不能用来声明函数的返回值,所以增加了一个decltype(x+y)的尾随返回类型,此时auto才可以放在
+			函数返回的位置.
+		*/
+		return x + y;
+	}
+
+C++14的更新:
+
+从C++14开始,auto可以用于函数的返回值,因此上述可以写成:
+
+```
+template<typename T1, typename T2>
+auto add(T1 x, T2 y) {
+	return x + y;
+}
+```
+
+
 
 #### 2.1.12 带领域的(Scoped) Enumeration
 

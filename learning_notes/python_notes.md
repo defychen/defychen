@@ -43,7 +43,7 @@ python使用最广的解释器是CPython.
 
 	name = raw_input('Please enter your name:')	#提示输入,输入的信息会放到name这一变量中
 	print 'hello,', name						#打印出"hello, ...(用户输入的信息)"
-	
+
 raw_input()读取的内容永远是以字符串的形式返回,如果需要整数必须:
 
 	birth = int(raw_input('Please input your date of birth'))	
@@ -137,7 +137,7 @@ Python用"True、Flase"表示布尔值,也用"and/or/not"做与、或、非运�
 	True and False		// False
 	True or True		// True
 	not False			// True
-
+	
 	1.连续的判断用"and, or, not";
 	2.大于某值而小于另一个值(e.g. 50 < a < 60).
 	if (50 < a < 60) and (53 < b < 63) \
@@ -175,7 +175,7 @@ python 3.x的除法
 		10 // 3		//结果为:3
 	3.取余
 		10 % 3		//结果为:1
-	
+
 
 ### 2.2 字符串和编码
 
@@ -318,7 +318,7 @@ replace函数用于替换对应的字符串.
 	/*单个字符构成一个字符串的方法---"+"*/
 	k = 'a' + 'b' + 'c'
 	print 'k value: %s' % k		//得到字符串abc
-
+	
 	k = '12345678'	//k表示一个字符串
 	v = int(k[6:8] + k[4:6] + k[2:4] + k[0:2], 16)
 	//k[6:8]:表示取k字符串的第6、第7两个字符,即78; "+"表示将所取的字符串连接起来变成一个长字符串
@@ -434,7 +434,7 @@ list可实现队列,但是效率很低(因为要移动元素).使用collections.
 	names = ['Michael', 'Bob', 'Tracy']
 	for name in names:
 		print(name)		#依次打印names中的每一个元素
-
+	
 	range(101)	#生成0-100的整型序列
 	range(1, 11) //从1开始到11(不包括11).即为: 1,2,3,4,5,6,7,8,9,10
 	range(0, 30, 5) //从0开始到30(不包括),步长为5.即为:0,5,15,20,25.
@@ -538,7 +538,7 @@ set只存储key,不存储value.使用"set([])"标识.
 		s2 = set([2, 3, 4])
 		s1 & s2		/*数学意义上的交集,显示为"set([2, 3])"*/
 		s1 | s2		/*数学意义上的并集,显示为"set([1, 2, 3, 4])"*/
-
+	
 		a = set('abracadabra')	//字符串是一个list,此时a为:{'r', 'd', 'a', 'b', 'c'}
 		b = set('alacazam')		// 此时b为:{'z', 'l', 'a', 'c', 'm'}
 		a - b	//在a中但不在b中,结果为:{'r', 'd', 'b'}
@@ -707,7 +707,7 @@ str.format(),增强了字符串格式化的功能,使用{:}来替换%.
 
 	print('{:,}'.format(123456789))	//结果为:123,456,789--->每3位分隔一下
 	print('{:_}'.format(123456789))	//结果为:123_456_789--->每3位分隔一下
-	
+
 PS: python 3.6开始支持数字下划线"_",即:
 
 	123_456_789:表示数字123456789--->方便阅读.
@@ -840,7 +840,7 @@ PS: python 3.6开始支持数字下划线"_",即:
 		nx = x + step * math.cos(angle)		/*math module的cos函数"math.cos(angle)"*/
 		ny = y - step * math.sin(angle)
 		return nx, ny	/*返回nx, ny两个值.会组成一个tuple"(nx, ny)"*/
-
+	
 	// 调用(返回值赋给两个变量)
 	x, y = move(100, 100, 60, math.pi / 6)
 	print(x, y)	/*打印"151.961524227 70.0"*/
@@ -861,7 +861,7 @@ PS: python 3.6开始支持数字下划线"_",即:
 	//调用
 	power(5)	/*会使用默认参数计算5的平方*/
 	power(5, 2)	/*明确给出计算5的平方*/
-
+	
 	//多个默认参数:学生注册
 	def enroll(name, gender, age=6, city='Beijing'):	/*两个默认参数*/
 		print('name: %s' % name)
@@ -880,7 +880,7 @@ PS: python 3.6开始支持数字下划线"_",即:
 		return L	
 	//正常调用不会有问题,因为不使用默认参数
 	add_end([1, 2, 3])	/*显示为[1, 2, 3, 'END']*/
-
+	
 	//使用默认参数调用有问题
 	add_end()	/*显示为['END']*/
 	add_end()	/*再调用依次显示为['END', 'END'].会不断往后面添加'END'*/
@@ -935,11 +935,11 @@ list/tuple作为参数的函数定义,非可变参数.
 		print('name: %s' % name)
 		print('age: %d' %age)
 		print('other:', kw)	/*输出other时不知道类型,使用这种方式比较好*/
-
+	
 	//调用
 	person('Michael', 30)	/*关键字参数没传,为空的dict.*/
 		/*显示为:name: Micheal age: 30 other: {}/
-
+	
 	person('Bob', 35, city='Beijing')	/*显示为:前面+other: {'city':'Beijing'}---为dict*/
 	person('Adam', 45, gender='M', job='Engineer')
 		/*显示为:前面+other: {'gender':'M', 'job':'Engineer'}*/
@@ -961,7 +961,7 @@ list/tuple作为参数的函数定义,非可变参数.
 	func(1, 2, 3, 'a', 'b')	/*args=('a', 'b'),其他一样*/
 	func(1, 2, 3, 'a', 'b', x=99)
 		/*args=('a', 'b'); kw={'x':99}*/
-
+	
 	//比较常用的
 	args=(1, 2, 3, 4)
 	kw={'x':99}
@@ -1003,7 +1003,7 @@ list/tuple作为参数的函数定义,非可变参数.
 			return product	/*返回最终的积*/
 		return fact_iter(num - 1, num * product)		
 		/*返回递归函数本身,num-1和num*product在调用前被计算,且return中不含表达式*/
-
+	
 	def fact(n):
 		return fact_iter(n, 1)	/*为尾递归函数*/
 
@@ -1170,7 +1170,7 @@ list/tuple/dict/str(字符串)等可迭代对象都可以用"for...in"来实现�
 		print ch
 
 #### 4.2.5 可迭代对象判断
-	
+
 	from collections import Iterable	/*从collections模块引入Iterable*/
 	/*
 		python 3.x之后使用"from collections import Iterable"会报"DeprecationWarning: Using or
@@ -1223,7 +1223,7 @@ python内置的enumerate()函数可以将一个list变成索引-元素对,这样
 #### 4.3.1 创建列表
 
 1.传统方法
- 
+
 	L = []
 	for x in range(1, 11):
 		L.append(x * x)	/*生成[1, 4, 9, ..., 100]*/
@@ -1251,7 +1251,7 @@ python内置的enumerate()函数可以将一个list变成索引-元素对,这样
 		s.lower():将str字符串的字符变成小写
 		s.upper():将str字符串的字符变成大写
 	*/
-	
+
 #### 4.3.4 实例--->list中包含字符串和整数,仅将字符串转成小写打印
 
 	L = ['Hello', 'World', 18, 'IBM', 'Apple']
@@ -1452,12 +1452,12 @@ reduce()函数接收两个参数.一个函数,一个list.函数从list中取两�
 
 	from functools import reduce	//python 3.x后,reduce不再在built-in function里.需要import
 	reduce(f, [x1, x2, x3, x4]) = f(f(f(x1, x2), x3), x4)
-
+	
 	//求和
 	def add(x, y):
 		return x + y
 	reduce(add, [1, 3, 5, 7, 9])	//最终值为:25.也可以用python内置的sum()函数
-
+	
 	//把序列1, 3, 5, 7, 9变成整数13579
 	def fn(x, y):
 		return x * 10 + y
@@ -1471,13 +1471,13 @@ reduce()函数接收两个参数.一个函数,一个list.函数从list中取两�
 	
 	def char2num(s):
 		return {'0':0, '1':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9}[s]
-
+	
 	reduce(fn, map(char2num, '13579'))	//结果为:13579
-
+	
 	//使用lambda函数简化
 	def char2num(s):
 		return {'0':0, '1':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9}[s]
-
+	
 	def str2int(s):
 		return reduce(lambda x, y: x * 10 + y, map(char2num, s)) //---lambda para: expression
 
@@ -1487,7 +1487,7 @@ reduce()函数接收两个参数.一个函数,一个list.函数从list中取两�
 		name = name.lower()
 		name = name.replace(name[0], name[0].upper())
 		return name
-
+	
 	L1 = ['adam', 'LISA', 'barT']
 	L2 = list(map(normalize, L1))
 	print(L2)
@@ -1501,15 +1501,15 @@ filter()接收一个函数和一个list.filter会将函数依次作用于list中
 	//删掉偶数,保留奇数
 	def is_odd(n):
 		return n % 2 == 1
-
+	
 	list(filter(is_odd, [1, 2, 4, 5, 6, 9, 10, 15]))	//结果为:[1, 5, 9, 15]
-
+	
 	//删掉空字符串
 	def not_empty(s):
 		return s and s.strip()	
 		/*strip:用于移除字符串头尾指定的字符(默认为空格:e.g.' ').此处空字符串会返回False*/
 	filter(not_empty, ['A', '', 'B', None, 'C', ' '])
-
+	
 	//尝试下:s = '' print s;以及s = ' ' print s
 
 **1.实例--->用filter求素数**
@@ -1551,7 +1551,7 @@ filter()接收一个函数和一个list.filter会将函数依次作用于list中
 
 	def is_palindrome(n):
 		return int(str(n)[::-1]) == n	//str(n)[::-1]:相当于reverse,翻转字符串.
-
+	
 	output = filter(is_palindrome, range(1,1000))
 	print('1~1000:', list(output))
 
@@ -1606,10 +1606,10 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 		if u1 < u2:
 			return -1
 		return 0
-
+	
 	sorted(['bob', 'about', 'Zoo', 'Credit'], cmp_ignore_case)
 	//结果为:['about', 'bob', 'Credit', 'Zoo']
-	
+
 2.python 3.x实现
 
 	print(sorted(['bob', 'about', 'Zoo', 'Credit'], key = lambda x : x.upper()))
@@ -1637,7 +1637,7 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 		return t[0].upper()
 	def by_score(t):
 		return -t[1]
-
+	
 	L1 = sorted(L, key=by_name)
 	L2 = sorted(L, key=by_score)
 	print(L1)	//[('Adam', 92), ('Bart', 66), ('Bob', 75), ('Lisa', 88)] 
@@ -1654,7 +1654,7 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 		该操作的目的:按照非重复字符串长度的升序排序:
 		结果为:['aaaa', 'foo', 'abab', 'bar', 'card']
 	*/
-
+	
 	li = [[1, 7], [1, 5], [2, 4], [1, 1]]
 	li.sort()
 	print(li)	// [[1, 1], [1, 5], [1, 7], [2, 4]],默认按照第0维进行排序
@@ -1689,7 +1689,7 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 				ax = ax + n
 			return ax
 		return sum	//返回函数名,相关的变量和参数保存在该返回函数中.称为"闭包(closure)"
-
+	
 	//调用
 	f = lazy_sum(1, 3, 5, 7, 9)	/*可变参数的调用方式*/
 		//此时f相当于函数名"sum".因此如果需要得到结果,必须显示调用下:f()
@@ -1755,15 +1755,15 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 
 	list(map(lambda x : x * x, [1, 2, 3, 4, 5, 6, 7, 8, 9]))
 	//lambda x : x * x---匿名函数(lambda para : expression(only one expression))
-
+	
 	f = lambda x : x * x	//将匿名函数赋值给一个变量
 	f(5)	//通过该变量来调用匿名函数,结果为25
-
+	
 	//匿名函数作为返回值返回
 	def build(x, y):
 		return lambda: x * x + y * y	
 		//此处省略了para,正常的为"return lambda x, y: x * x + y * y"
-
+	
 	def make_incrementor(n):
 		return lambda x: x + n
 	f = make_incrementor(42) // 42会被传递给n,从而形成一个以x为形参,return x + 42的函数,返回的是函数.
@@ -1803,7 +1803,7 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 	@log
 	def now():
 		print('2020-08-11')
-
+	
 	now()
 	/*
 		结果为:
@@ -1894,7 +1894,7 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 	def fast(x, y):
 		time.sleep(0x0012)
 		return x + y
-
+	
 	@metric
 	def slow(x, y, z):
 		time.sleep(0.1234)
@@ -1978,10 +1978,10 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 	#!/usr/bin/env python3		//指定使用python3
 	# -*- coding: utf-8	-*-
 	//表示该文件使用utf-8编码(文件存在使用utf-8编码,读入内存使用unicode编码)
-
+	
 	'a test module'				//注释文档
 	__author__ = 'Defy Chen'	//作者
-
+	
 	import sys
 	/*
 		导入"sys"模块,使用sys变量指向sys模块.sys模块的变量argv为存储所有命令行参数的list.
@@ -1996,14 +1996,14 @@ sorted函数为排序函数,从小到大.排序规则是"x>y返回1;x<y返回-1;
 			print('Hello, %s!' % args[1])
 		else:
 			print('Too many arguments!')
-
+	
 	if __name__ == '__main__':
 		/*
 			直接运行./hello.py,python中的特殊变量"__name__"就会置为"__main__"
 			而在其他地方导入时,就会判断失败.用于测试该模块的正确性.
 		*/
 		test()
-
+	
 	//执行
 	./hello.py defy		//打印出:Hello, defy!
 	//在交互环境下,导入hello模块
@@ -2024,7 +2024,7 @@ import xxx as yyy:给导入的模块xxx起别名yyy,为了更好的编写代码.
 		import StringIO	//失败再导入StringIO.后面的代码均可以用StringIO正常工作
 	2.python 3.x使用:
 	from io import StringIO	//因为python 3.x没有cStringIO,是从io中import进来的.
-
+	
 	//example
 	try:
 		import json	#python >= 2.6	//注释"#",2.6中有json的库
@@ -2038,7 +2038,7 @@ import xxx as yyy:给导入的模块xxx起别名yyy,为了更好的编写代码.
 	abc, x123, PI	//公开的(public)变量或者函数名,可以直接引用
 	__xxx__		//特殊变量(e.g.__author__,__name__,___doc__等).自己的变量一般不这么定义
 	_xxx或__xxx	//非公开的(private)的函数或变量(e.g._abc, __abc).不应该引用private函数或变量
-
+	
 	def _private_1(name):	//定义private的函数,细节被隐藏
 		return('Hello, %s' % name)
 	def _private_2(name):	//细节被隐藏
@@ -2097,7 +2097,7 @@ PS:外部不需要引用的函数全部定义为private,只有外部需要引用
 	>>>import sys
 	>>>sys.path    //为一个list
 	//添加自己的搜索目录
-
+	
 	1.方法1
 	>>>import sys
 	>>>sys.path.append('pathname')    //运行时修改,结束后失效
@@ -2148,7 +2148,7 @@ python只把含有__init__.py文件的目录当成包.包的作用可以用于�
 			self.score = score
 		def print_score(self):	//类方法,self不用传,如果有其他参数,按照正常函数传递即可.
 			print '%s: %s' % (self.name, self.score)
-
+	
 	//调用
 	bart = Student('Bart Simpson', 59)	//实例一个对象
 	lisa = Student('Lisa Simpson', 87)	//不需要传递self参数
@@ -2175,13 +2175,13 @@ python只把含有__init__.py文件的目录当成包.包的作用可以用于�
 				self.__score = score
 			else:
 				raise ValueError('bad score')	//抛出错误
-	
+
 ### 7.1 继承和多态
 
 	class Animal(object):	//定义一个父类
 		def run(self):
 			print 'Animal is running...'
-
+	
 	class Dog(Animal):		//Dog类继承自Animal
 		def run(self):
 			print 'Dog is running...'	//子类run在调用中会覆盖父类的run方法---多态
@@ -2192,7 +2192,7 @@ python只把含有__init__.py文件的目录当成包.包的作用可以用于�
 	def run_twice(animal):	//参数接受Animal对象,可以是父类,也可以是父类派生的子类
 		animal.run()
 		animal.run()
-
+	
 	run_twice(Animal())	//传入Animal对象,调用Animal的run方法
 	run_twice(Dog())	//传入Dog对象(也是Animal对象),按照多态会调用Dog的run方法
 	run_twice(Cat())	//传入Cat对象(也是Animal对象),按照多态会调用Cat的run方法
@@ -2204,7 +2204,7 @@ python只把含有__init__.py文件的目录当成包.包的作用可以用于�
 	type(None)
 	type(abs)	//判断函数
 	type(a)		//判断类(a = Animal())
-	
+
 常用在if判断中:
 
 	1.python 2.x用types.String/ListType等来判断某种类型:
@@ -2215,7 +2215,7 @@ python只把含有__init__.py文件的目录当成包.包的作用可以用于�
 	2.python 3.x直接使用str/int/list来判断某种类型:
 	print (type('abc') == str)	//返回True
 	print (type(123) == int)	//返回True
-
+	
 	//使用isinstance()更简单
 	isinstance(d, Dog)	//判断d是否为Dog类,如果是返回True.否则返回False
 
@@ -2231,7 +2231,7 @@ python只把含有__init__.py文件的目录当成包.包的作用可以用于�
 		@property	//单独的"@property"相当于getter_xxx.将get方法变成属性
 		def score(self):	//此处相当于"getter_score(self)"
 			return self.__score
-
+	
 		@score.setter	//"@xxx.setter"相当于"setter_xxx",将set方法变成属性
 		def score(self, value):	//此处相当于"setter_score(self, value)"
 			if not isinstance(value, int):
@@ -2239,7 +2239,7 @@ python只把含有__init__.py文件的目录当成包.包的作用可以用于�
 			if value < 0 or value > 100:
 				raise ValueError('score must between 0 ~ 100!')
 			self.__score = value
-
+	
 	//实例化
 	s = Student()
 	s.score = 60	//实际转化为s.set_score(60)
@@ -2263,14 +2263,14 @@ python只把含有__init__.py文件的目录当成包.包的作用可以用于�
 
 	class Animal(object):
 		pass
-
+	
 	class Mammal(Animal):	//哺乳类继承自动物类
 		pass
 	
 	class Runnable(object):	//能跑的类
 		def run(self):
 			print 'running...'
-
+	
 	class Dog(Mammal, Runnable):	//多重继承(Mammal类和Runnable类)
 		pass
 
@@ -2299,7 +2299,7 @@ python只把含有__init__.py文件的目录当成包.包的作用可以用于�
 		
 	//打印类实例
 	>>>print Student('Michael')   //会得到"Student object (name: Michael)"
-
+	
 	//直接敲变量还是会不好看
 	>>>s = Student('Michael')
 	>>>s       //依然会不好看"<__main__.Student object at 109afb190>"
@@ -2322,7 +2322,7 @@ python只把含有__init__.py文件的目录当成包.包的作用可以用于�
 					//以前的记录"StopIteration();---后面有分号".但是测试过有没有都正确.没有";"比较和常规.
 			return self.a	//返回下一个值
 		/* python 3.x改为使用__next__(self):--->其他都一样. */
-
+	
 	//调用
 	>>>for n in Fib():
 	...		print n
@@ -2338,7 +2338,7 @@ python只把含有__init__.py文件的目录当成包.包的作用可以用于�
 	>>>Hello = type('Hello', (object, ), dict(hello=fn))   #创建Hello class
 	>>>h = Hello
 	>>>h.hello()     #打印出"Hello, world"
-
+	
 	//2)通过type创建class的方法(type()函数中各参数说明)
 	para 1.class的名称---首字母大写的字符串
 	para 2.继承tuple---只有一个父类需要写成:(object, )---后面带逗号
@@ -2428,7 +2428,7 @@ Python的"pdb"以单步方式执行代码.
 			print 'Error!'
 		finally:
 			print 'finally...'
-
+	
 	main()	//调用
 
 ### 8.2 调用堆栈
@@ -2522,15 +2522,15 @@ logging还可以将错误记录到日志文件,见后面的logging模块.
                 datefmt='%a, %d, %b %Y %H:%M:%S',
                 filename='ci_debug.log',
                 filemode='w')
-	/*filename:表示输出的log放置到"ci_debug.log"文件中*/
-	logging.debug('This is debug message')
-	logging.info('This is info message')
-	loggin.warning('This is warning message')
-
-	则在./ci_debug.log文件中内容为:
-	...(一些前缀) DEBUG This is debug message
-	...(一些前缀) INFO This is info message
-	...(一些前缀) WARNING This is warning message
+    /*filename:表示输出的log放置到"ci_debug.log"文件中*/
+    logging.debug('This is debug message')
+    logging.info('This is info message')
+    loggin.warning('This is warning message')
+    
+    则在./ci_debug.log文件中内容为:
+    ...(一些前缀) DEBUG This is debug message
+    ...(一些前缀) INFO This is info message
+    ...(一些前缀) WARNING This is warning message
 
 **方法 4---pdb**
 
@@ -2582,7 +2582,7 @@ pdb.set_trace():设置一个断点
 	f = open('./defy/test.txt', 'r')	//'r':表示读. 如果文件不存在会抛出"IOError"错误
 	f.read()	//一次性把内容全部读到内存,使用字符串"str"对象表示
 	f.close()	//关闭文件.出错会抛出"IOError"
-	
+
 保证无论出错与否都能关闭文件:
 
 	// method 1
@@ -2617,7 +2617,7 @@ pdb.set_trace():设置一个断点
 	import codecs		//编码自动转换模块
 	with codecs.open('./defy/gbk.txt', 'rb', 'gbk') as f:	//gbk编码转换
 		f.read()
-	
+
 ### 9.2 写文件
 
 	f = open('./defy/test.txt', 'w')	//w:写文本文件; 'wb':写二进制文件
@@ -2654,7 +2654,7 @@ pdb.set_trace():设置一个断点
 		if s == '': //读到空(没有内容了)
 			break
 		print(s.strip())
-
+	
 	/*结果为:
 		Hello!
 		Hi!
@@ -2696,21 +2696,21 @@ pdb.set_trace():设置一个断点
 	*/
 	3)os.path.isfile('/user/defy/test.txt') 
 	//判断"/user/defy/test.txt"是否是一个存在的文件,如果是返回True,否则返回False.
-
+	
 	//拆分路径
 	os.path.split('/user/defy/testdir/file.txt')
 	/*拆分得到('/user/defy/testdir', 'file.txt')---最后一级为文件名*/
 	//得到扩展名
 	os.path.splitext('/user/defy/testdir/file.txt')
 	/*得到('/user/defy/testdir/file', '.txt')---最后一级为扩展名*/
-
+	
 	//测试指定文件是否存在
 	if os.path.exists('/user/defy/testdir/file.txt'): //文件存在为true,不存在为false.
 
 实例---列出当前目录下的所有目录或所有.py文件
 
 	[x for x in os.listdir('.') if os.path.isdir(x)]	//列出所有目录
-
+	
 	[x for x in os.listdir('.') if os.path.isfile(x) and os.path.splitext(x)[1] == '.py']
 	//列出所有的.py文件---os.path.splitext(x)返回的为tuple,因此"os.path.splitext(x)[1]"
 	//相当于取后面的扩展名
@@ -2792,9 +2792,9 @@ os.system(cmd):执行linux下的shell命令.返回命令执行状态.
 
 	#!/usr/bin/env python
 	# -*- coding:utf-8 -*-
-
+	
 	import random
-
+	
 	print(random.random()) 		//随机产生[0, 1)之间的数(e.g. 0.189xxx)
 	print(random.randint(1, 6)) //随机产生[1,6]之间的整数(e.g. 2)
 	print(random.randrange(1, 3)) //随机产生[1, 3)之间的整数(e.g. 1)
@@ -2804,7 +2804,7 @@ os.system(cmd):执行linux下的shell命令.返回命令执行状态.
 	print(random.choice(("abc", "123", "liu"))) //从tuple中随机取出一个元素(e.g."liu")
 	print(random.sample("hello", 3)) //从列表中随机取出3个元素(e.g.'l', 'h', 'o')
 	print(random.uniform(1, 10)) //随机产生指定区域的浮点数(e.g.1.2919)
-
+	
 	items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
 	print("洗牌前:", items) //洗牌前: [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
 	random.shuffle(items)  //random.shuffle(list):将列表中的所有元素随机排序
@@ -2908,7 +2908,7 @@ root_dir:需要打包的源文件/目录.
 
 	import shutil
 	shutil.make_archive('mytar', 'gztar', root_dir='copytree_test')
-
+	
 	ls -l
 	-rw-r--r--. 1 root   root      0 May 14 21:12 mytar.tar.gz
 
@@ -2937,7 +2937,7 @@ root_dir:需要打包的源文件/目录.
 		tar.add('/usr/defy/test2.log', arcname='test2.log')
 		//将'/usr/defy/test2.log'文件以test2.log名字放到压缩包中
 		tar.close() //关闭创建的压缩包
-
+	
 		//解压
 		tar = tarfile.open('mytar.tar', 'r')
 		tar.extractall() //可设置解压的地址
@@ -3043,13 +3043,13 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 		assert file_name.split('.')[-1] == 'json'
 		with open(file_name, 'w') as fd:
 			json.dump(data, fd)
-
+	
 	def load_json(file_name):
 		assert file_name.split('.')[-1] == 'json'
 		with open(file_name, 'r') as fd:
 			data = json.load(fd)
 			return data
-
+	
 	data = {'name':'0.jpg', 'weight':50, 'height':50}
 	// 保存为json文件
 	save_json('./data.json', data)
@@ -3083,7 +3083,7 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 	#子进程执行的函数代码
 	def run_proc(name):
 		print 'Run child process %s (%s)...' % (name, os.getpid())
-
+	
 	if __name__ == '__main__':
 		/*
 			直接运行"./hello.py",python中的特殊变量"__name__"就会置为"__main__"在其他地方导入时,
@@ -3104,14 +3104,14 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 
 	from multiprocessing import Pool
 	import os, time, random
-
+	
 	def long_time_task(name):
 		print 'Run task %s (%s)...' % (name, os.getpid())
 		start = time.time()		//得到当前时间,为秒数
 		time.sleep(random.random() * 3)	//random.random()---得到随机值(0~1); time.sleep()进程睡眠
 		end = time.time()
 		print 'Task %s runs %0.2f seconds.' % (name, (end - start))	//得到运行时间
-
+	
 	if __name__ == '__main__':
 		print 'Parent process %s.' % os.getpid()
 		p = Pool()		//创建一个进程池p
@@ -3122,7 +3122,7 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 		p.close()	//join之前必须调用close,然后就不能再继续添加新的进程了
 		p.join()
 		print 'All subprocess done.'
-
+	
 	//结果
 	Parent process 669.
 	Waiting for all subprocess done...
@@ -3149,14 +3149,14 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 			print 'Put %s to queue...' % value
 			q.put(value)		//队列写数据"q.put(...)"
 			time.sleep(random.random())
-
+	
 	#读数据进程执行的代码
 	def read(q):
 		while True:		//死循环
 			value = q.get(True)	//参数True会导致:如果队列中没有数据则调用线程暂停,直至有数据才继续
 								//如果为False会导致:如果队列中为空,会引发异常.所以一般为True
 			print 'Get %s from queue.' % value
-
+	
 	if __name__ == '__main__':
 		#父进程创建Queue,并传给子进程
 		q = Queue()		//创建Queue
@@ -3193,13 +3193,13 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 			print 'thread %s >>> %s' % (threading.current_thread().name, n)
 			time.sleep(1)
 		print 'thread %s ended.' % threading.current_thread().name
-
+	
 	print 'thread %s is running...' % threading.current_thread().name
 	t = threading.Thread(target=loop, name='LoopThread')	//创建线程.Target=线程函数名;name=传递的线程名
 	t.start()		//启动线程
 	t.join()		//等待子线程结束
 	print 'thread %s ended.' % threading.current_thread().name
-
+	
 	//结果:
 	thread MainThread is running...		//主线程名字默认为"MainThread"
 	thread LoopThread is running...		//如果没有指定name,系统默认名字为"Thread-1", "Thread-2",...	
@@ -3219,7 +3219,7 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 	
 	#银行存款
 	balance = 0
-
+	
 	lock = threading.Lock()		//线程锁
 	
 	def change_it(n):
@@ -3227,7 +3227,7 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 		global balance	//明确说明在函数中使用之前定义的全局变量balance
 		balance = balance + n
 		balance = balance - n
-
+	
 	def run_thread(n):		//线程带参数n
 		for i in range(1000):
 			#change_it函数会修改全局变量,加锁后只允许单线程执行,保护该资源
@@ -3236,7 +3236,7 @@ python中的commands模块用于调用linux下的shell命令.有3种方法:
 				change_it(n)	//调用修改全局变量的函数
 			finally:		//finally中的代码肯定会执行,此处目的是释放锁
 				lock.release()	//释放锁
-
+	
 	t1 = threading.Thread(target=fun_thread, args=(5,))		//创建带参数的线程
 	t2 = threading.Thread(target=fun_thread, args=(8,))
 	t1.start()		//启动线程t1
@@ -3267,7 +3267,7 @@ Python的hashlib提供了常用的摘要算法(MD5, SHA1等).
 		从python 3.x开始,md5.update('xxx'.encode('utf-8'))--->要将字符串编码成utf-8的编码.
 	*/
 	print md5.hexdigest()		//md5.hexdigest()---开始计算得到md5值
-
+	
 	//结果为:d26a53750bc40b38b65a520292f69306
 
 分块多次调用update(),最终的md5值都是一样的:
@@ -3287,7 +3287,7 @@ Python的hashlib提供了常用的摘要算法(MD5, SHA1等).
 	sha1.update('how to use sha1 in '.encode('utf-8'))
 	sha1.update('python hashlib?'.encode('utf-8'))
 	print sha1.hexdigest()		//计算得到sha1值
-
+	
 	//结果为:b752d34ce353e2916e943dc92501021c8f6bca8c
 
 **SHA1:生成的长度是40个16进制的字符串(40*4 = 160 bit = 20 byte).**
@@ -3459,11 +3459,11 @@ socket:表示打开了一个网络连接.
 		#create a new threading to deal with TCP connection
 		t = threading.Thread(target=tcplink, args=(sock, addr))
 		t.start()
-
+	
 	//客户端程序:echo_client.py
 	#!/usr/bin/python
 	import socket
-
+	
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	#create connect
 	s.connect(('127.0.0.1', 9999))
@@ -3508,7 +3508,7 @@ socket:表示打开了一个网络连接.
 		/*
 			s.sendto(data.encode(), addr):para1:需要发送的数据;para2:IP+port.data需要转成字节流.
 		*/
-
+	
 	//客户端:udp_client.py
 	#!/usr/bin/python
 	import socket, time
@@ -3520,7 +3520,7 @@ socket:表示打开了一个网络连接.
 		#receive data
 		print s.recv(1024).decode()	//客户端接收数据使用"s.recv(1024)",接收纯数据.需要转成str.
 	s.close()
-	
+
 ***
 
 ## 15 常用的第三方模块
@@ -3556,7 +3556,7 @@ pip:python中安装第三方模块的包管理工具,通过它,就能安装编�
 		右键"我的电脑"->属性->高级系统设置->环境变量->在"系统变量"的Path后面添加:
 		xxx;G:\Programs (x86)\Python\Python3.7;;G:\Programs (x86)\Python\Python3.7\Scripts
 		//前面一个为Python程序的目录,后一个为pip程序(命令)的目录(安装后会在python的scripts目录中)
-		
+
 **2.PIL**
 
 PIL:Python Imaging Library.是Python平台的图像处理标准库.
@@ -3647,10 +3647,10 @@ Python下载地址[Python下载地址](https://www.python.org/downloads/)
 
 	#!/usr/bin/python
 	# -*- coding: utf-8 -*-
-
+	
 	from PIL import Image, ImageDraw, ImageFont, ImageFilter
 	import random //随机数模块
-
+	
 	#generate random character
 	def rndChar():
 		rndSeed = random.randint(1,3)	//产生[1,3]的随机整数
@@ -3671,18 +3671,18 @@ Python下载地址[Python下载地址](https://www.python.org/downloads/)
 	def rndColor2():
 		return (random.randint(32, 127), random.randint(32, 127), random.randint(32, 127))
 		//验证码字体的颜色
-
+	
 	#240 * 60
 	width = 60 * 4 //验证码宽: 240
 	height = 60 //验证码高: 60
-
+	
 	image = Image.new('RGB', (width, height), (255, 255, 255))
 		/*
 		para1:mode,此处表示为RGB模式;
 		para2:size
 		para3:color
 		*/
-
+	
 	#create font objects
 	font = ImageFont.truetype('/usr/defychen/arial.ttf', 36)
 		/*
@@ -3691,7 +3691,7 @@ Python下载地址[Python下载地址](https://www.python.org/downloads/)
 			下面拷贝到所需要的路径.
 		para2:字体大小.此处为36号
 		*/
-
+	
 	#create Draw object
 	draw = ImageDraw.Draw(image) //相当于一个画笔.可以画点/写文字
 	#fill each pixel
@@ -3703,7 +3703,7 @@ Python下载地址[Python下载地址](https://www.python.org/downloads/)
 				para1:点坐标.(x, y):一个list
 				para2:fill=填充的颜色坐标(x, x, x)
 			*/
-
+	
 	#print the text
 	for t in range(4):
 		draw.text((60 * t + 10, 10), rndChar(), fill=rndColor2(), font = font)
@@ -3714,7 +3714,7 @@ Python下载地址[Python下载地址](https://www.python.org/downloads/)
 				para3:填充颜色坐标.
 				para4:字体.
 		*/
-
+	
 	#fuzzy processing(模糊处理)
 	image2 = image.filter(ImageFilter.BLUR)
 	image2.save('/usr/defychen/code.jpg', 'jpeg')
@@ -3725,7 +3725,7 @@ Python下载地址[Python下载地址](https://www.python.org/downloads/)
 
 	#!/usr/bin/python
 	# -*- coding: utf-8 -*-
-
+	
 	width = 60 * 4 //宽度
 	heigth = 60 //高度
 	from PIL import Image
@@ -3759,9 +3759,9 @@ ImageDraw.Draw(image):创建一个用来对image进行操作的对象.后续的�
 
 	#!/usr/bin/python
 	# -*- coding: utf-8 -*-
-
+	
 	from PIL import Image, ImageDraw
-
+	
 	width = 60 * 4
 	height = 60
 	
@@ -3772,7 +3772,7 @@ ImageDraw.Draw(image):创建一个用来对image进行操作的对象.后续的�
 	drawObject.line([60, 20, 180, 20], fill = 128) //画一条横线
 	drawObject.line((180, 20), (180, 40), "black") //画一条竖线.颜色为黑色
 	drawObject.line((60, 40) + (180, 40), fill = "yellow") //画一条横线.颜色为黄色
-
+	
 	im.save('/usr/defychen/code.jpg', 'jpeg')
 
 **3.drawObject.ellipse([x1, y1, x2, y2], options)**
@@ -3814,7 +3814,7 @@ subprocess模块中定义了一个Popen类,用于创建子进程.
 	sout:是一些标准输出的信息,是个文件对象.要读取需要"obj.stdout.read()"
 	serr:是一些标准错误的信息(一些string信息)
 	*/
-
+	
 	#!/usr/bin/python
 	# -*- coding:utf-8 -*-
 	import subprocess
@@ -3832,7 +3832,7 @@ subprocess模块中定义了一个Popen类,用于创建子进程.
 
 	#!/usr/bin/python
 	# -*- coding:utf-8 -*-
-
+	
 	import subprocess
 	import os
 	class Shell(object):
@@ -3841,12 +3841,12 @@ subprocess模块中定义了一个Popen类,用于创建子进程.
 				stderr=subporcess.STDOUT) //linux下shell=True必须有
 			sout, serr = res.communicate()
 			return res.returncode, sout, serr, res.pid
-
+	
 	shell = Shell()
 	fp = open('/usr/defychen/ip.txt', 'r')
 	ipList = fp.readlines()
 	fp.close()
-
+	
 	fp = open('/usr/defychen/ping.txt', 'a')
 	print ipList
 	for i in ipList:
@@ -3858,7 +3858,7 @@ subprocess模块中定义了一个Popen类,用于创建子进程.
 		else:
 			w = i + ': 1'
 			fp.write(w + '\n')
-
+	
 	fp.close()
 
 ### 15.4 platform模块
@@ -3929,7 +3929,7 @@ requests模块主要用于网络访问.由于使用人性化,因此它比urlib,u
 	#print file		//打印文件路径名,可以验证windows下文件识别
 	with open(file, 'w') as f:	//以写的方式打开文件,如果不带r(转义)会报错.
 		f.write(res.text.encode('gbk', 'ignore'))	//将响应的html消息写入到文件中.
-	
+
 
 ***
 
@@ -3941,7 +3941,7 @@ Python的re模块就是正则表达式(Regular Expressions).
 
 ### 16.1 常用的字符含义
 
-	.		匹配任意字符,除换行符"\n"之外	a.c			abc(匹配可以为a,b...任意字符)
+	.		匹配任意字符,除换行符"\n"之外;如果需要匹配包含"\n"在内的任意字符,可以使用[\s\S].
 	*		匹配前一个字符0次或者多次		abc*		ab;abccc(匹配"c"0次或多次)--->匹配尽量多的字符
 	+		匹配前一个字符1次或多次		abc+		abc;abccc(匹配"c"1次或多次)
 	?		匹配前一个字符0次或1次			abc?		ab;abc(匹配"c"0次或1次)--->匹配尽量少的字符
@@ -3951,7 +3951,7 @@ Python的re模块就是正则表达式(Regular Expressions).
 	{m,n}	匹配前一个字符m到n次			ab{1,2}c	abc;abbc(b出现1次或者2次)
 	()		匹配括号中的表达式				(abc)		abc(匹配abc)
 	[]		表示一组字符
-
+	
 	\s		匹配空白字符					a\sc		a c(中间一个空白字符)
 	\S		匹配非空白字符				a\S			axc(x不能为空白字符)
 	\d		匹配数字(0-9)					a\dc		a1c(\d为一个数字0-9)
@@ -4039,7 +4039,7 @@ re.match从字符串的起始位置开始匹配一个模式,如果起始位置�
 	The second result of match:  smarter than
 		--->(.*?):前面的.*表示匹配前一个字符(为任意字符)多次,(?)表示匹配尽量少的字符
 	The result list of match:  ('Fat cats', 'smarter than')
-
+	
 	/*测试:
 	m = re.match(r'(.*) are (.*?)', line)
 	此时m.group(2)为空,因为可以匹配零次,后面也没限制;
@@ -4056,7 +4056,7 @@ re.match从字符串的起始位置开始匹配一个模式,如果起始位置�
 	import re
 	total_data = ['0.0012', '5e-04']
 	res_data = []
-
+	
 	regex = r'\d+\.?\d*'	//能匹配类似"0.0012"的数据
 	regex1 = r'\d+(e-\d+)?'	//能匹配类似"5e-04"此类的科学计数法的数据
 	for data in total_data:
@@ -4090,11 +4090,11 @@ re.match从字符串的起始位置开始匹配一个模式,如果起始位置�
 	*/
 	print(re.sub(".*b.*", "", test_str))	//留下3个空行,因为"\n"没被替换
 	/*
-
+	
 		aaa
-
+	
 		aaa
-
+	
 	*/
 	print(re.sub(".*b.*\n", "", test_str))	//最后一行不匹配,因为没有"\n"
 	/*
@@ -4107,7 +4107,7 @@ re.match从字符串的起始位置开始匹配一个模式,如果起始位置�
 	/*
 		aa
 		aaa
-
+	
 	*/
 	print(re.sub("\n?.*b.*", "", test_str))	//清掉第一行的内容,第一行的"\n"没有被替换.留下第一行空行
 	/*
@@ -4131,7 +4131,7 @@ re.match从字符串的起始位置开始匹配一个模式,如果起始位置�
 			)+((.*b.*)$)?|(
 			(.*b.*)$)|(^(.*b.*)$)
 	*/
-
+	
 	test_str = "aba\naaa\naba\naaa\naba"
 	print(re.sub(pattern, "", test_str)	//此时结果正确了
 	/*
@@ -4239,7 +4239,7 @@ enumearte函数遍历序列中的元素以及他们的下标:
 	for param in params:	#从list中提取出每一个元素
 		if eval('%s(obj, devices)' % param):	#提取出来的param替换s,构成调用函数
 			# e.g. open_keys_test(obj, devices)
-		
+
 eval()函数返回值:成功返回0;失败返回非0
 
 ### 17.3 max(list)函数
@@ -4269,7 +4269,7 @@ sum(list, num)对list进行求和后再加上num(num可省略)
 	sum([0, 1, 2]) //结果为3
 	sum((2, 3, 4), 1) //tuple计算总和后再加1.结果为:10
 	sum([0, 1, 2, 3, 4], 2) //list计算总和后再加2.结果为:12
-	
+
 ### 17.5 len()函数
 
 len(list)返回字符、list、tuple等的长度或元素个数.
@@ -4408,17 +4408,17 @@ python的zip()函数可以将两个list中的元素打包成一个一个的tuple
 		-t				Special Speed Train
 		-k				Speed Train
 		-z				Directly to the Destination
-
+	
 	Example:
 		tickets Beijing Shanghai 2018-04-19
 		tickets -dg Chengdu Nanjing 2018-04-19
 	""" //结束指示符.两个中间的即为DocString
-
+	
 	print (__doc__) //直接使用"__doc__",是得到整个程序的DocString,即在"""..."""的内容
 	/*可以直接打印出:
 	Usage:
-        tickets [-gdtkz] <from> <to> <date>
-
+	    tickets [-gdtkz] <from> <to> <date>
+	
 	Options:
 	        -h, --help      Display Help Menu
 	        -g                      High Speed Railway
@@ -4430,9 +4430,9 @@ python的zip()函数可以将两个list中的元素打包成一个一个的tuple
 	Example
 	        tickets Beijing Shanghai 2018-04-19
 	        tickets -dg Chengdu Nanjing 2018-04-19
-
+	
 	*/
-
+	
 	2.在函数中的说明信息
 	def inputxy():
 		"""
@@ -4441,7 +4441,7 @@ python的zip()函数可以将两个list中的元素打包成一个一个的tuple
 		print("Hello world")
 	inputxy() //调用函数
 	print(inputxy.__doc__) //打印函数的说明信息(e.g.函数名.__doc__)
-
+	
 	/*会得到:
 		Hello world
 		This is the test doc.
@@ -4462,7 +4462,7 @@ docopt:Python 3的命令行参数解析工具.
 		<xxx>:形成dict中的元素值.
 			(e.g.命令行输入:成都.则在字典中有:{'<from>':'成都', ...})
 	*/
-
+	
 	Options:
 		-h, --help		Display Help Menu
 		-g				High Speed Train
@@ -4470,19 +4470,19 @@ docopt:Python 3的命令行参数解析工具.
 		-t				Special Speed Train
 		-k				Speed Train
 		-z				Directly to the Destination
-
+	
 	Example:
 		tickets Beijing Shanghai 2018-04-19
 		tickets -dg Chengdu Nanjing 2018-04-19
 	""" //结束指示符.两个中间的即为DocString
-
+	
 	from docopt from docopt //导入docopt(命令行解析工具)
 	
 	def cli():
 		"""command-line interface"""
 		arguments = docopt(__doc__)
 		print(arguments)
-
+	
 	if __name__ == '__main__':
 		cli()
 
@@ -4515,7 +4515,7 @@ docopt:Python 3的命令行参数解析工具.
 	print(bar)	//打印出10,因为__all__中含有该变量
 	print(baz)	//输出baz函数的地址,因为__all__中含有该函数
 	print(baz())	//输出baz函数调用结果(即'baz'),因为__all__中含有该函数
-
+	
 	print(waz)	//会报错"NameError: name 'waz' is not defined.".因为__all__中没有该变量或函数
 	PS:如果foo.py文件中"__all__ = ['bar', 'baz']"去掉或注释,则运行正常.
 
@@ -4537,7 +4537,7 @@ docopt:Python 3的命令行参数解析工具.
 			/*self:指代实例自身,任何调用均不需要传递该参数; name和root为调用者传进来的参数*/
 			self.testCaseName = name
 			self.webRoot = root
-
+	
 	args = []
 	args.append(name)			/*list末尾增加name元素*/
 	args.append(self.webRoot)	/*list末尾增加webRoot元素*/
@@ -4554,7 +4554,7 @@ docopt:Python 3的命令行参数解析工具.
 	import os
 	import subprocess
 	import platform
-
+	
 	/*
 		Q:类名如果取名为auto_adb和文件名相同,后续的:
 		from common.auto_adb import auto_adb
@@ -4589,19 +4589,19 @@ docopt:Python 3的命令行参数解析工具.
 				print('Please install ADB driver and config the environ variable')
 				print('xxxx')
 				exit(1)
-
+	
 		def get_screen(self):
 			process = os.popen(self.adb_path + 'shell wm size')
 				//相当于执行"adb shell wm size".执行后的结果会放到process中
 			output = process.read() //将执行的结果read出来
 			return output
-
+	
 		def run(self, raw_command):
 			command = '{} {}'.format(self.adb_path, raw_command) //由adb path和command构成完整的命令
 			process = os.popen(command)
 			output = process.read() //将执行的结果read出来
 			return output
-
+	
 		def test_device(self):
 			print('check device is connected or not...')
 			command_list = [self.path, 'devices']
@@ -4622,7 +4622,7 @@ docopt:Python 3的命令行参数解析工具.
 			print('adb output:')
 			for each in output:
 				print(each.decode('utf-8'))
-
+	
 		def test_density(self): //获得手机屏幕的密度
 			process = subprocess.Popen(self.adb_path + 'shell wm density')
 				//相当于执行"adb shell wm density".执行后的结果会放到process中
@@ -4633,15 +4633,15 @@ docopt:Python 3的命令行参数解析工具.
 			process = subprocess.Popen(self.adb_path + 'shell getprop ro.product.device')
 			output = process.read()
 			return output
-
+	
 		def test_device_os(self): //获得android系统版本
 			process = subprocess.Popen(self.adb_path + 'shell getprop ro.build.version.release')
 			output = process.read()
 			return output
-
+	
 		def adb_path(self): //获得adb路径
 			return self.adb_path
-			
+
 **config.py**
 
 	# -*- coding:utf-8 -*-
@@ -4652,7 +4652,7 @@ docopt:Python 3的命令行参数解析工具.
 	from common.auto_adb import auto_adb
 	
 	adb = auto_adb.adb()
-
+	
 	def open_accordant_config():
 		'''
 		调用配置文件
@@ -4664,7 +4664,7 @@ docopt:Python 3的命令行参数解析工具.
 			path=sys.path[0], //sys.path[0]:得到当前文件的路径.相当于pwd
 			screen_size=screen_size //对应的屏幕分辨率,用于选择配置文件
 		)
-
+	
 		//从当前目录直接获取配置文件
 		here = sys.path[0] //当前路径(pwd)
 		for file in os.listdir(here): //listdir:列出当前路径下的所有文件(包括目录)
@@ -4673,7 +4673,7 @@ docopt:Python 3的命令行参数解析工具.
 				with open(file_name, 'r') as f:	//打开文件
 					print("Load config file from {}".format(file_name))
 					return json.load(f) //json对象的load
-
+	
 		//读取根据分辨率查找到的配置文件
 		if os.path.exists(config_file):
 			with open(config_file, 'r') as f:
@@ -4684,7 +4684,7 @@ docopt:Python 3的命令行参数解析工具.
 				//使用默认的配置文件
 				print("Load default config")
 				return json.load(f)
-
+	
 	def _get_screen_size():
 		size_str = abd.get_screen() //得到的字符结果为"Physical size: 1080x1920"
 		m = re.search(r'(\d+)x(\d+)', size_str) //匹配到"1080x1920"
@@ -4692,7 +4692,7 @@ docopt:Python 3的命令行参数解析工具.
 			return '{heigth}x{width}'.format(heigth=m.group(2), width=m.group(1))
 			//return为"1920x1080"
 		return '1920x1080'
-		
+
 **debug.py**
 
 	# -*- coding: utf-8 -*-
@@ -4705,7 +4705,7 @@ docopt:Python 3的命令行参数解析工具.
 	else:
 		os.chdir(os.getcwd().replace('/common', '')) //将最后的common替换为空,相当于移动到上一层目录
 		path_split = '/'
-
+	
 	try:
 		from common.auto_adb import auto_adb
 	except Exception as ex: //捕获异常(Exception当作ex,用于输出)
@@ -4715,17 +4715,17 @@ docopt:Python 3的命令行参数解析工具.
 		exit(1)
 	screenshot_backup_dir = 'screenshot_backups'
 	adb = auto_adb.adb()
-
+	
 	def make_debug_dir(screenshot_backup_dir):
 		if not os.path.isdir(screenshot_backup_dir):
 			os.mkdir(screenshot_backup_dir) //创建目录,权限为0777
-
+	
 	def backup_screenshot(ts):
 		make_debug_dir(screenshot_backup_dir)
 		shutil.copy('{}{}autojump.png'.format(os.getcwd(), path_split),
 				os.path.join(os.getcwd(), screenshot_backup_dir, 
 								str(ts), '.png'))
-
+	
 	def save_debug_screenshot(ts, im, piece_x, piece_y, board_x, board_y):
 		'''
 		对debug图片加上注释
@@ -4744,7 +4744,7 @@ docopt:Python 3的命令行参数解析工具.
 		del draw
 		im.save(os.path.join(os.getcwd(), screenshot_backup_dir, 
 						'#' + str(ts) + '.png'))
-
+	
 	def dump_device_info():
 		'''
 		显示设备信息
@@ -4779,7 +4779,7 @@ docopt:Python 3的命令行参数解析工具.
 	import os, sys
 	from PIL import Image
 	from io import StringIO
-
+	
 	try:
 		from common.auto_adb import auto_adb
 	except Exception as ex:
@@ -4789,7 +4789,7 @@ docopt:Python 3的命令行参数解析工具.
 		exit(1)
 	adb = auto_adb.adb() //使用auto_adb.py中的adb()类
 	SCREENSHOT_WAY = 3 //截图方法(总共0-3 四种)
-
+	
 	def pull_screenshot():
 		'''
 		获取屏幕截图,0 1 2 3 四种方法
@@ -4841,11 +4841,11 @@ docopt:Python 3的命令行参数解析工具.
 **wechat_jump_auto.py**
 
 	# -*- coding: utf-8 -*-
-
+	
 	import math, re, random, sys, time
 	from PIL import Image //Python Image Library(python图像库)
 	from six.moves import input //
-
+	
 	if sys.version_info.major != 3:
 		print('Please use python version 3.x')
 		exit(1) //退出
@@ -4861,10 +4861,10 @@ docopt:Python 3的命令行参数解析工具.
 	adb = auto_adb.adb() //使用auto_adb.py中的adb()类
 	
 	VERSION = "1.1.4"
-
+	
 	DEBUG_SWITCH = True //for debug
 	adb.test_device()
-
+	
 	config = config.open_accordant_config() //从config的json文件中取到配置信息
 	under_game_score_y = config['under_game_score_y']
 	// 长按的时间系数
@@ -4880,7 +4880,7 @@ docopt:Python 3的命令行参数解析工具.
 		matches =re.search(r'\d+', density_str) //提取到数字
 		density_val = int(matches.group(0)) //拿到第一个值
 		head_diameter = density_val / 8 //为什么是"/8"????
-
+	
 	def set_button_position(im):
 		'''
 		设置滑动的起始和终点坐标
@@ -4895,7 +4895,7 @@ docopt:Python 3的命令行参数解析工具.
 		after_otp = int(random.uniform(top - 200, top + 200))
 		after_left = int(random.uniform(left - 200, left + 200))
 		swipe_x1, swipe_y1, swipe_x2, swipe_y2 = left, top, after_left, after_top
-
+	
 	def jump(distance, delta_piece_y):
 		'''
 		根据得到的距离计算出按压的时间(不知道是如何计算得到的)
@@ -4909,7 +4909,7 @@ docopt:Python 3的命令行参数解析工具.
 		press_time *= press_coefficient
 		press_time = max(press_time, 200) //200ms为最小的按压时间
 		press_time = int(press_time)
-
+	
 		cmd = 'shell input swipe {x1} {y1} {x2} {y2} {duration}'.format(
 				x1 = swipe_x1,
 				y1 = swipe_y1,
@@ -4920,7 +4920,7 @@ docopt:Python 3的命令行参数解析工具.
 		print(cmd)
 		adb.run(cmd) //执行滑动操作(其中有滑动时间,即为按压时间)
 		return press_time
-
+	
 	def find_piece_and_board(im):
 		'''
 		找到关键坐标
@@ -4946,7 +4946,7 @@ docopt:Python 3的命令行参数解析工具.
 			if scan_start_y: //该值不为0,跳出循环
 				break
 		print('start can Y axis: {}'.format(scan_start_y))
-
+	
 		//从scan_start_y开始扫描,棋子位于屏幕的上半部分(1/3~2/3)
 		for i in range(scan_star_y, int(h * 2 / 3)):
 			for j in range(scan_x_border, w - scan_x_border): 
@@ -4962,7 +4962,7 @@ docopt:Python 3的命令行参数解析工具.
 		bottom_x = [x for x, y in points if y == piece_y_max] //最低那条线的点的横坐标
 		if not bottom_x: //判断list是否为空
 			return 0, 0, 0, 0, 0
-
+	
 		piece_x = int(sum(bottom_x) / len(bottom_x)) //求x值的中间值
 		piece_y = piece_y_max - piece_base_height_1_2 //上移棋子底盘高度的一半
 		
@@ -4972,19 +4972,19 @@ docopt:Python 3的命令行参数解析工具.
 		else: //棋子在屏幕的右边
 			board_x_start = 0 //从屏幕的最左边(0)作为棋盘扫描的起点
 			board_x_end = board_x //终点为棋子的中心
-
+	
 		for i in range(int(h / 3), int(h * 2 / 3)): //高度的1/3~2/3
 			last_pixel = im_pixel[0, i] //保存像素点,用于判断
 			if board_x or board_y:
 				break
 			board_x_sum = 0
 			board_x_c = 0
-
+	
 			for j in range(int(board_start), int(board_x_end)): //扫描x坐标
 				pixel = im_pixel[j, i]
 				if abs(j - piece_x) < piece_body_width: //宽度差小于棋子的宽度,重新增加
 					continue
-
+	
 				/*
 				1.检查当前像素与背景像素有差别;
 				2.检查y轴下面的5个像素,防止干扰*/
@@ -5001,7 +5001,7 @@ docopt:Python 3的命令行参数解析工具.
 				board_x = board_x_sum / board_x_c //求的棋盘宽度方向上的中点
 		
 		last_pixel = im_pixel[board_x, i]
-
+	
 		center_x = w / 2 + (24 / 1080) * w //游戏的对称中心计算方法
 		center_y = h / 2 + (17 / 1920) * h //游戏的对称中心计算方法
 		if piece_x > center_x: //棋子在游戏对称中心的右边
@@ -5017,11 +5017,11 @@ docopt:Python 3的命令行参数解析工具.
 		else:
 			board_y = round(-(25.5 / 43.5) * (board_x - center_x) + center_y)
 			delta_piece_y = piece_y - round(-(25.5 / 43.5) * (piece_x - center_x) + center_y)
-
+	
 		if not all((board_x, board_y)):
 			return 0, 0, 0, 0, 0
 		return piece_x, piece_y, board_x, board_y, delta_piece_y
-
+	
 	def yes_or_no():
 		'''
 		检查是否已经为启动程序做好准备
@@ -5036,7 +5036,7 @@ docopt:Python 3的命令行参数解析工具.
 				exit(0) //exit(0):无错误退出程序. exit(1):有错误退出程序
 			else:
 				print('请重新输入')
-
+	
 	def main():
 		'''
 		main函数
@@ -5045,10 +5045,10 @@ docopt:Python 3的命令行参数解析工具.
 		print('激活窗口并按Ctrl+C组合键退出')
 		debug.dump_device_info()
 		screenshot.check_screenshot()
-
+	
 		i, next_rest, next_rest_time = (0, random.randrange(3, 10),
 										random.randrange(5, 10))
-
+	
 		while True:
 			im = screenshot.pull_screenshot() //抓到截图
 			//从截取的图片中获取棋子和board的位置
@@ -5061,7 +5061,7 @@ docopt:Python 3的命令行参数解析工具.
 			jump(math.sqrt((board_x - piece_x) ** 2 + (board_y - piece_y) ** 2), delta_piece_y)
 			if DEBUG_SWITH: //debug开关打开
 				debug.save_debug_screenshot(ts, im, piece_x, piece_y, board_x, board_y)
-
+	
 				debug.backup_screenshot(ts)
 			im.close()
 			i += 1
@@ -5076,7 +5076,7 @@ docopt:Python 3的命令行参数解析工具.
 											random.randrange(10, 16))
 			//为了保证截图的稳定性,多延迟一会
 			time.sleep(random.uniform(1.2, 1.4)) //取1.2~1.4之间的随机浮点数
-
+	
 	if __name__ == '__main__':
 		try:
 			yes_or_no()
