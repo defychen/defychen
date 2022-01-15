@@ -7263,9 +7263,111 @@ $			匹配字符串末尾--->e.g. 要匹配以字符"b"结尾的字符串,可以
 \.		匹配"."这个字符--->e.g a\.txt 结果为:a.txt
 ```
 
-### 22.3 regex_match的使用
+### 22.2 regex_match的使用
 
+regex_match用于判断一个正则表达式是否匹配整个字符串序列,主要用于验证文本.regex_match如果匹配整个字符串才会返回true,否则返回false.
 
+```
+#include <iostream>
+#include <regex>
+#include <vector>
+using namespace std;
+
+int main()
+{
+	string pattern("\\d{3}-\\d{8}|\\d{4}-\\d{7}");
+	/*
+		C++中直接写成"\d"会当成一个字符d,前面的"\"用于取消后面的转义,因此需要写成"\\d",此时才能正确表示"\d"匹配数字.
+			在python中,常用r'\d',此时的r表示取消字符串中的转义.因此不需要加那么多反斜线.
+		此处为匹配"3位数字-8位数字"或者"4位数字-7位数字"
+	*/
+	regex re(pattern);	// 定义regex变量re,并用pattern初始化
+	vector<string> str{
+		"010-12345678",
+		"0319-9876543",
+		"021-123456789"
+	};
+	for (auto tmp : str) {
+		bool ret = regex_match(tmp, re);
+        /*
+        	regex_match:
+        		param1:字符串;
+        		param2:正则表达式
+        	判断param2(正则表达式)是否完全匹配整个字符串.是则返回true,否则返回false.
+        */
+        if (ret)
+        	cout << tmp << " can match!" << endl;
+        else
+        	cout << tmp << "cannot match!" << endl;
+	}
+	return 0;
+}
+
+// 结果为:
+010-12345678 can match!
+0319-9876543 can match!
+021-123456789 cannot match!
+```
+
+### 22.3 regex_search的使用
+
+regex_search是搜索匹配,即搜索字符串中是否存在符合正则表达式的子字符串.存在返回true,否则返回false.
+
+```
+#include <iostream>
+#include <regex>
+#include <vector>
+using namespace std;
+
+int main()
+{
+	vector<string> str{
+		"# aaaaaaa",
+		"die_num_per_socket		, 0		# die number",
+		"pcie_num_per_socket	, 1		# pcie number of each socket"
+	};
+	
+	std::regex re("(\\w+)\\s*(,)\\s*(\\w+)");
+	/*
+		"\\w":表示匹配字符(A-Z,a-z,0-9,_),避免转义.
+		此处表示的匹配规则是:
+			第一个括号:至少1个字符(A-Z,a-z,0-9,_),可以有多个;
+			接下来:是0个或多个空格--->"\\s"表示空格;
+			第二个括号:一个",";
+			接下来:是0个或多个空格--->"\\s"表示空格;
+			第三个括号:至少1个字符(A-Z,a-z,0-9,_),可以有多个.
+	*/
+	std::smatch regex_match;	//用于存放regex_search之后的结果
+	string match_str;
+	string match_value;
+	for (auto &str_elem : str) {
+		if (regex_search(str_elem, regex_match, re)) {
+			/*
+				regex_search:
+					param1:字符串;
+					param2:存放regex_search之后的结果,为std::smatch的变量;
+					param3:正则表达式
+				判断param1中是否存在param2(正则表达式)匹配的子字符串.是则返回true,否则返回false.
+				匹配成功的结果放在regex_match中,这个类似python中的list:
+					regex_match[0]:表示整个匹配的字符串;
+					regex_match[1]:存放第一个括号匹配的子字符串;
+					... //以此类推
+			*/
+			match_str = regex_match[1];
+			match_value = regex_match[3];
+			cout << match_str << " " << match_value << endl;
+		}
+	}
+	return 0;
+}
+// 结果为:
+die_num_per_socket 0
+pcie_num_per_socket 1
+```
+
+### 22.4 regex_replace的使用
+
+略.
 
 ## Chapter 23. 编程问题记录
 
