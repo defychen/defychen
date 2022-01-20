@@ -880,6 +880,50 @@ cache更新策略指当写操作发生cache hit时,应该如何更新写数据.
 	(因为是读操作,cache中的数据和memory一致).然后通过offset找到0x52返回给CPU.
 ```
 
+### 5.5 源代码性能对比分析
+
+**1.源代码1**
+
+```
+int arr[10][128];
+
+for (int i = 0; i < 10; i++) {
+	for (int j = 0; j < 128; j++) {
+		arr[i][j] = 1;
+	}
+}
+```
+
+**2.源代码2**
+
+```
+int arr[10][128];
+
+for (int i = 0; i < 128; i++) {
+	for (int j = 0; j < 10; j++) {
+		arr[j][i] = 1;
+	}
+}
+```
+
+**3.性能分析**
+
+假设L1 cacheline是64B,采用写分配和写回策略.arr内存首地址是64B对齐.
+
+```
+1.代码1分析:
+	1.当执行arr[0][0]=1时,L1 cache会发生miss.此时会从主存中读取arr[0][0]到arr[0][15]的数据到cache中(共64B);
+	2.当执行arr[0][1]=1到arr[0][15]=1都会在L1 cache中hit;
+	3.当执行arr[0][16]=1时,此时会再次cache miss;
+	4.总体上说这种初始化方法的cache hit rate很高.
+2.代码2分析:
+	1.当执行arr[0][0]=1时,L1 cache会发生miss.此时会从主存中读取arr[0][0]到arr[0][15]的数据到cache中(共64B);
+	2.由于循环第2次执行的是arr[1][0]=1,L1 cache还是miss,以知道arr[9][0]=1都是miss;
+	3.当执行arr[0][1]=1,如果L1 cacheline够大,第1步读回来的数据还在L1中会cache hit.如果发生了替换,那就需要重新读内存;
+	4.总体上说,这种初始化方法对于cache的使用不友好.
+3.因此,建议程序代码按照源代码1的方式写.
+```
+
 ## Chapter n: 常用的队列调度算法
 
 常用的队列调度算法为:SP(strict priority,严格优先级),RR(Round Robin,循环调度),WRR(Weighted Round Robin,加权循环调度算法).
