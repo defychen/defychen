@@ -194,7 +194,7 @@ PS:无论是什么结构,从软件角度,每个device都拥有一个专属的、
 
 ### 3.2.1 StreamID
 
-	1.每个StreamID对应一个逻辑上的device;
+	1.每个StreamID对应一个逻辑上的device(在PCIe中一般使用BDF号[15:0]作为SID);
 	2.每个SMMU拥有独立的StreamID空间,不同的SMMU之间的StreamID可以相同;
 	3.一个device可以发出多个StreamID,可以认为是多个逻辑device;
 	4.StreamID用于索引Stream Table Entry(STE),对应per-device configuration;
@@ -205,7 +205,9 @@ PS:无论是什么结构,从软件角度,每个device都拥有一个专属的、
 
 	1.进一步细分同一个逻辑device发出的transaction,区分不同的地址翻译上下文(context);
 	2.仅适用于S1.如果SMMU不支持S1,则SubstreamID不作为输入;如果一个StreamID只包含一个context,则
-		SubStreamID也可以不支持.
+		SubStreamID也可以不支持;
+	3.SubStreamID等同于PCIe里的PASID,一般OS会将进程ID直接写入PCIe的PASID,因此SubStreamID可能会
+		与进程ID直接挂钩.
 
 StreamID和SubStreamID通过SMMU_IDR1寄存器配置.
 
@@ -439,6 +441,17 @@ S1与S2的初始查找级数的要求不一样.
 
 ![](images/4kb_lookup_level_s2_view.png)
 
+## 3.7 SMMU command queue与event queue
+
+软件系统通过cmdq和eventq来与SMMU打交道,这两个queue都是循环队列.
+
+```
+cmdq:用于软件与SMMU硬件交互,软件将命令写到cmdq,SMMU从cmdq中读取命令处理;
+eventq:用于SMMU发生软件配置错误的状态信息记录,SMMU将配置错误信息写到eventq中,软件通过读取event获得
+	配置错误信息并进行错误配置的处理.
+```
+
+![](images/smmu_cmdq_eventq.png)
 
 # 4. 延伸: ARMv8-A
 
