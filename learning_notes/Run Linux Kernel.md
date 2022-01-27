@@ -270,11 +270,11 @@ linux内核提供了barrier()函数用于让编译器保证其之前的内存访
 		str r0, [addr1]
 		//将寄存器r0的值保存到addr1的地址中.str/ldr指令操作memory第二个参数的格式"[addr]"
 		ldr r1, [addr2]	//取addr2中的值放到寄存器r1中
-
+	
 	Core B:
 		str r2, [addr2]	//将寄存器r2的值保存到addr2的地址中
 		ldr r3, [addr1]	//取addr1中的值放到寄存器r3中
-
+	
 	/*
 		因为没有任何同步措施.Core A的寄存器r1和Core B的寄存器r3可能得到以下4种结果:
 		1)r1得到旧的值,r3也得到旧的值;
@@ -288,14 +288,14 @@ linux内核提供了barrier()函数用于让编译器保证其之前的内存访
 	Core A:
 		str r0, [msg]	//写r0中的新数据到msg地址
 		str r1, [flag]	//flag用来标志新数据可以读
-
+	
 	Core B:
 	  poll_loop:
 		ldr r1, [flag]	//取flag地址中的数据到r1
 		cmp r1, #0		//比较r1中的值与立即数0是否相等.即判断flag有没有置位
 		beq	poll_loop	//与0相等,表示没有置位.跳到poll_loop循环.判断不相等的指令:bne
 		ldr r0, [msg]	//不相等,读取msg地址的数据到r0
-
+	
 	/*
 		Core B可能读取不到最新的数据.因为Core B可能因为乱序执行的原因先读入msg,然后读取flag.处理器并不
 		知道msg和flag存在数据依赖性.
@@ -305,7 +305,7 @@ linux内核提供了barrier()函数用于让编译器保证其之前的内存访
 		str r0, [msg]	//写r0中的新数据到msg地址
 	+	dmb				//保证两条store指令的执行顺序
 		str r1, [flag]	//flag用来标志新数据可以读
-
+	
 	Core B:
 	  poll_loop:
 		ldr r1, [flag]	//取flag地址中的数据到r1
@@ -354,7 +354,7 @@ cache使用的地址编码方式和主存储器的类似,因此处理器可以�
 			主存储器来获得数据,并将数据填充到相应的cache line中.
 	4.VIPT(virtual Index physical Tag):虚拟的Index和物理的Tag--->现在用的比较少了;
 	  PIPT(physical Index physical Tag):物理的Index和物理的Tag--->ARM现在的处理器都用这种方式.
-	
+
 ## 1.6 cache映射方式---direct mapping, set-associative, fully-associative
 
 ### 1.6.1 direct mapping(直接映射)
@@ -450,7 +450,7 @@ cache以cache line为单位划分,地址可以映射到cache中的任意一条ca
 		完成地址翻译后,再用物理标记域来匹配cache line.但也会有可能出现多个cache组映射到同一个物理地址上;
 	PIPT(Physical Index Physical Tag):使用物理地址索引域和物理地址标记域.需要查找1级TLB进行虚实转换,
 		如果未命中,还需要到2级或者页表去查找,很耗时间.
-
+	
 	//使用场合
 	D-cache:由于PIPT耗时,而现在处理器频率越来越高,D-cache也只能使用VIPT.
 	I-cache:因为I-cache通常是只读的,不需要进行写操作,也就不会出现多条表项引起的一致性错误.因此I-cache一
@@ -742,7 +742,7 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 
 	[调用关系:start_kernel()->setup_arch()->setup_machine_fdt()->early_init_dt_scan_nodes()
 		->early_init_dt_scan_memory()]
-
+	
 	/*
 		start_kernel:位于./init/main.c/start_kernel()--->该函数由汇编代码调用.e.g../arch/arm/
 			kernel/head-common.S调用.该函数会做一些初始化:init_IRQ(),tick_init()...
@@ -753,14 +753,40 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 			call_back,在early_init_dt_scan_nodes中会依次调用该call back,遍历
 			arch/arm/boot/dts/vexpress-v2p-ca9.dts文件,最终找到memory的节点.
 	*/
-
+	
 	int __init early_init_dt_scan_memory(unsigned long node, const char *uname,
 					int depth, void *data)
 	{
-		...
-		/* we are scanning "memory" nodes only */
+		const char *type = of_get_flat_dt_prop(node, "device_type", NULL);
+		/*
+			of_get_flat_dt_prop函数原型:
+			const void *__init of_get_flat_dt_prop(unsigned long node, const char *name, int *size)	
+				param1:节点node;
+				param2:DTS文件中的成员名(e.g. "device_type"/"reg"等);
+				param3:DTS文件中成员的大小传出来,此处用指针传递.
+					device_type = "memory";	// 这种没有大小,直接传一个NULL接口;
+					reg = <0x60000000 0x40000000>;	// 这种<base size>,传一个int &即可.
+				retval:返回指向成员变量的第一个值的指针.
+					e.g. 指向"memory"或指向0x60000000的void *指针.
+		*/
+		const __be32 *reg, *endp;	// __be:big endian(大段); le: littel endian(小端)
+		int l;
+		
+		/* We are scanning "memory" nodes only */
 		if (type == NULL || strcmp(type, "memory") != 0)
-		return 0;
+			return 0;
+	
+		reg = of_get_flat_dt_prop(node, "linux,usable-memory", &l);
+		if (reg == NULL)
+			reg = of_get_flat_dt_prop(node, "reg", &l);
+			/*
+				匹配dts文件中的"reg",获取到base和size的信息.
+				此处执行完后的结果为:
+					reg:指向0x60000000的指针;
+					l:里面的值为0x40000000.
+			*/
+		if (reg == NULL)
+			return 0;
 		...
 		while ((endp - reg) >= (dt_root_addr_cells + dt_root_size_cells)) {
 			u64 base, size;
@@ -776,7 +802,7 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 			early_init_dt_add_memory_arch(base, size);	//得到内存的base和size信息.
 			//通过early_init_dt_add_memory_arch()->memblock_add()函数添加到memblock子系统中.
 		}
-
+	
 		return 0;
 	}
 
@@ -908,7 +934,7 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 		__end_rodata:只读数据段结束.
 		kernel的代码段从_stext开始,到_init_end结束.
 	*/
-
+	
 	//得到代码段起始和只读数据段的结束
 	extern int _stext;
 	extern int __end_rodata;
@@ -916,7 +942,7 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 	u32 mem_start, mem_end;
 	mem_start = __pa(&_stext);		//转成物理地址
 	mem_end = __pa(&__end_rodata);	//转成物理地址
-
+	
 	mem_start &= 0x0FFFFFFF;
 	mem_start |= 0xA0000000;	//转成DMA地址
 	mem_end &= 0x0FFFFFFF;
@@ -955,7 +981,7 @@ DDR(Dual Data Rate SDRAM):其初始化一般是在BIOS或bootloader中,BIOS或bo
 		ZONE_PADDING(_pad2_)
 		spinlock_t		lru_lock;	//对zone中LRU链表保护的自旋锁
 		struct lruvec		lruvec;	//LRU链表集合
-
+	
 		ZONE_PADDING(_pad3_)
 		atomic_long_t		vm_stat[NR_VM_ZONE_STAT_ITEMS];	//zone计数
 	} ____cacheline_internodealigned_in_smp;
@@ -1061,7 +1087,7 @@ bootmem_init()->调用find_limits()函数,然后计算出min_low_pfn、max_low_p
 	{
 		return (void *)__phys_to_virt(x);
 	}
-
+	
 	/*如果是为简单的no mmu的kernel,其转换简单如下:---线性映射即是如此*/
 	static inline phys_addr_t __virt_to_phys(unsigned long x)
 	{
@@ -1103,10 +1129,12 @@ linux内存管理分为几个zone(e.g. ZONE_NORMAL, ZONE_HIGHMEM等).
 		struct list_head	free_list[MIGRATE_TYPES];
 		/*
 			MIGRATE_TYPES:定义块类型.
-			free_list为一个链表头.
+			free_list为空闲页面块的双链表.该链表具体如下图.
 		*/
-		unsigned long		nr_free;
+		unsigned long		nr_free;	// 该区域中的空闲页面块数量
 	};
+
+![](images/free_page_management.png)
 
 #### 2.1.6.3 MIGRATE_TYPES的数据结构(./include/linux/mmzone.h)
 
@@ -1265,7 +1293,98 @@ ARM64的内核内存布局如下:
 
 ## 2.4 分配物理页面
 
-伙伴系统是linux内核中最基本的内存分配系统.
+### 2.4.1 内核页面分配与回收API
+
+| 分配页面的API                     | 描述                                             |
+| --------------------------------- | ------------------------------------------------ |
+| alloc_page(gfp_mask)              | 分配一个页面,返回struct page的指针               |
+| alloc_pages(gfp_mask, order)      | 分配2^order个页面,返回第一个struct page的指针    |
+| __get_free_page(gfp_mask)         | 分配一个页面,且返回页面的逻辑地址(即虚拟地址)    |
+| __get_free_pages(gfp_mask, order) | 分配2^order个页面,返回页面的逻辑地址(即虚拟地址) |
+| get_zeroed_page(gfp_mask)         | 分配1个页面,数据清零,返回逻辑地址(即虚拟地址)    |
+| get_dma_pages(gfp_mask, order)    | 分配2^order个适合DMA操作的页面                   |
+
+| 回收页面的API             | 描述                                           |
+| ------------------------- | ---------------------------------------------- |
+| __free_pages(page, order) | 释放2^order个页面,param1为struct page的指针    |
+| free_pages(addr, order)   | 释放2^order个页面,param1为逻辑地址(即虚拟地址) |
+| free_page(addr)           | 释放2^order个页面,param为逻辑地址(即虚拟地址)  |
+
+PS:内核中通常不与上述函数打交道,一般使用kmalloc()、vmalloc()、kmem_cache_alloc()函数.这些函数的底层也是调用上述函数.
+
+### 2.4.2 空闲页面的管理
+
+#### 2.4.2.1 物理内存空间的描述
+
+内核将物理内存空间分为3个层次:节点(Node)、区域(Zone)和页面(page).
+
+```
+Node位于物理内存空间的最高层,Node中包含了多个Zone,一个Zone中包含了多个page.
+PS:下图中的pg_data_t即为一个Node.
+```
+
+![](images/node_zone_page_relationship.png)
+
+#### 2.4.2.2 空闲页面的管理
+
+空闲页面管理如下:
+
+![](images/free_page_management1.png)
+
+```
+Node下管理着多个Zone,Zone下面管理着一个page数组(数组大小为11,分别存放着1个page, 2个page...10个page的链表头).
+```
+
+### 2.4.3 伙伴算法
+
+#### 2.4.3.1 Buddy System
+
+Buddy System(伙伴系统)是一种内存分配算法.
+
+```
+1.作用:尽可能的减少外部碎片(external fragmentation),同时允许快速分配与回收物理页面;
+2.实现方法:根据空闲块(由连续的空闲页组成)的大小不同(1 page->2^10个page),组织成不同的链表(由free_list链表)进行管理.
+	e.g. 2个page的空闲块在一个链表; 2个page的空闲块在另一个链表.
+```
+
+![](images/free_page_allocation.png)
+
+页面请求实例:
+
+```
+如果需要请求分配4个连续page时：
+1.检查zone->free_area[2](存放2^2个page的链表)链表里是否还有空闲块(该链表的每个节点都是大小为4个page);
+2.如果该链表存在空闲块,直接分配给用户;
+3.如果该链表不存在空闲块,向下一个级别的链表中查找.即查找zone->free_area[3](存放2^3个page的链表),如果存在空闲块,将该页面块
+	分配成2个大小为4个page的块,一个分配给请求者,另外一个插入到zone->free_area[2](存放2^2个page的链表)中;
+4.通过这种方式,可以避免分配大的空闲块,而此时存在有满足需求的小页面块,从而减少外部碎片.
+```
+
+#### 2.4.3.2 伙伴算法实例
+
+假设系统内存只有32个页面RAM,物理页面使用情况如下图:
+
+![](images/buddy_algorithm_example.png)
+
+页面组织如下图:
+
+![](images/free_page_management2.png)
+
+```
+1.order=1(即free_area[0])的共有5个节点;
+2.order=2(即free_area[1])的共有3个节点;	--->为什么最上面一行的4个page没有放在4个连续page的链表中???没想明白
+3.order=3(即free_area[2])的为空;
+4.order=4(即free_area[3])的共有1个节点;
+5.其他order的都为空.
+```
+
+**1.页面分配过程**
+
+
+
+**2.页面回收过程**
+
+
 
 ### 2.4.1 内核内存分配
 
@@ -1290,3 +1409,4 @@ GFP:__get_free_pages()的缩写,因为内存分配最终调用__get_free_pages()
 	GFP_KERNEL:最常用,内核内存的正常分配,它可能睡眠;
 	GFP_ATOMIC:常用于从中断处理和进程上下文之外的其他代码中分配内存,不能睡眠;
 	GFP_USER:用来从用户空间分配内存页,可能睡眠;
+
