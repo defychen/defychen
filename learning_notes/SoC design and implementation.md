@@ -95,15 +95,23 @@ ESL(Electronic System Level):电子系统级.利用系统级建模,可以有效�
 
 # Chapter 2 SoC设计流程
 
+## 2.1 软硬件协同设计
+
+同样的功能软硬件实现的优缺点如下:
+
+![](images/hw_sw_design_feature.png)
+
+## 2.2 SoC芯片设计流程
+
+![](images/chip_design_flow.png)
 
 
 
+### 2.2.1 硬件设计定义说明(Hardware Design Specification)
 
+硬件设计定义说明描述了芯片总体架构、规格参数、模块划分、使用的总线,以及各模块的详细定义等.
 
-
-
-
-
+### 2.2.2 模块设计及IP复用(Module Design & IP Reuse)
 
 
 
