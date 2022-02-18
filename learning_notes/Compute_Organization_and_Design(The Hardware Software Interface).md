@@ -924,6 +924,10 @@ for (int i = 0; i < 128; i++) {
 3.因此,建议程序代码按照源代码1的方式写.
 ```
 
+## Chapter 6 从客户端到云的并行处理器
+
+
+
 ## Chapter n: 常用的队列调度算法
 
 常用的队列调度算法为:SP(strict priority,严格优先级),RR(Round Robin,循环调度),WRR(Weighted Round Robin,加权循环调度算法).
