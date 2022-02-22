@@ -68,9 +68,103 @@ Crossbar/Ring/Mesh--->待补充.
 | Don’t Care                | 表示该域段可以设置为任何值,包括非法值和保留值.任何组件收到的包中如果包含设为Don’t care的域段,都必须忽略该域段 |
 | Inapplicable              | 表示该域段值不会用于信息处理                                 |
 
+## 1.3 传输类型
 
+### 1.3.1 Read的request
 
+#### 1.3.1.1 特点
 
+```
+1.Requester会获得一个数据响应;
+2.会导致数据在系统其它agents之间的搬移;
+3.会导致Requester中cacheline状态的改变;
+4.会导致系统中其它Requesters的cacheline状态改变.
+```
+
+#### 1.3.1.2 Read包含的request类型
+
+```
+ReadNoSnp
+ReadOnce
+ReadOnceCleanInvalid
+ReadOnceMakeInvalid
+ReadClean
+ReadNotSharedDirty
+ReadShared
+ReadUnique
+```
+
+### 1.3.2 Dataless的request
+
+#### 1.3.2.1 特点
+
+```
+1.Requester不会获得一个数据响应;
+2.会导致数据在系统其它agents之间的搬移;
+3.会导致Requester中cacheline状态的改变;
+4.会导致系统中其它Requesters的cacheline状态改变.
+```
+
+#### 1.3.2.2 Dataless包含的request类型
+
+```
+CleanUnique
+MakeUnique
+Evict
+StashOnceUnique
+StashOnceShared
+CleanShared
+CleanSharedPersist
+CleanInvalid
+MakeInvalid
+```
+
+### 1.3.3 Write的request
+
+#### 1.3.3.1 特点
+
+```
+1.Requester会提供一个数据响应;
+2.会导致数据在系统其它agents之间的搬移;
+3.会导致Requester中cacheline状态的改变;
+4.会导致系统中其它Requesters的cacheline状态改变.
+```
+
+#### 1.3.3.2 Write包含的request类型
+
+```
+WriteNoSnpPtl
+WriteNoSnpFull
+WriteUniquePtl
+WriteUniqueFull
+WriteUniquePtlStash
+WriteUniqueFullStash
+WriteBackPtl
+WriteBackFull
+WriteCleanFull
+WriteEvictFull
+```
+
+### 1.3.4 Atomic的request
+
+#### 1.3.4.1 特点
+
+```
+1.Requester会提供一个数据响应;
+2.在有些命令中,Requester会得到一份数据响应;
+3.会导致数据在系统其它agents之间的搬移;
+4.会导致Requester中cacheline状态的改变;
+5.会导致系统中其它Requesters的cacheline状态改变.
+```
+
+#### 1.3.4.2 Atomic包含的request类型
+
+```
+AtomicStore
+AtomicLoad
+AtomicSwap
+AtomicCompare
+```
 
 
 
