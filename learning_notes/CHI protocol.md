@@ -278,7 +278,86 @@ CHI定义的cache状态如下:
 
 #### 1.4.2.2 Cacheline状态
 
+```
+I态:Invalid,表示该cacheline无效,cacheline的数据不在当前cache中;
 
+UC态:Unique Clean,该cacheline的数据只在当前cache中,且和memory的数据一致.可以不知会其它RN就对该cacheline的数据进行修改.在收到snoop请求时,该cacheline不需要返回数据给HN或fwd data给其他RN;
+
+UCE:Unique Clean Empty,该cacheline的数据只在当前cache中,但是所有的数据都是无效的,可以不知会其它RN就对该cacheline的数据进行修改.在收到snoop请求时,该cacheline不能返回数据给HN或fwd data给其他RN--->因为数据是无效的;
+
+UD:Unique Dirty,该cacheline的数据只在当前cache中,且和memory的数据不一致,已经被修改过了.如果该cacheline的数据不用了,那需要写回到下级cache或memory,可以不知会其它RN就对该cacheline的数据进行修改.在收到snoop请求时,该cacheline必须返回数据给HN或fwd data给其他RN;
+
+UDP:Unique Dirty Partial,该cacheline的数据只在当前cache中,且和memory的数据不一致,部分被修改且有效.如果该cacheline的数据不用了,那需要和下级cache或memory的数据merge成一个完整有效的cacheline,可以不知会其它RN就对该cacheline的数据进行修改.在收到snoop请求时,该cacheline必须返回数据给HN(HN来merge成一个完整的cacheline),但不能直接将数据fwd给Requester;
+
+SC:Shared Clean,其它cache可能也存在该cacheline的拷贝;该cacheline可能已经被修改了(数据改变了,但是状态没改变).当不需要该cacheline数据时,cache没有义务必须将该数据写回到memory,必须对其它cache中的该cacheline进行无效后,获得U态才能将该cacheline进行改写.在收到snoop请求时,该cacheline在RetToSrc没有置位时不需要返回数据;如果RetToSrc置位,则需要返回数据,可以直接fwd数据给Requester;
+
+SD:Shared Dirty,其它cache可能也存在该cacheline的拷贝;该cacheline相对于memory已经被修改了.当该cacheline不需要的时候,cache需要将它写回到下游cache或memory;必须对其它cache的该cacheline进行无效后,获得U态后才能将该cacheline进行改写.在收到snoop请求时,该cacheline必须返回数据给HN和fwd data给Requester.
+```
+
+#### 1.4.2.3 各状态的解析
+
+```
+1.UC态和UD态:Requester发出Read Unique后获取的是UC态(HA记录的是E态),一般数据写入该cacheline,cacheline状态就会变为UD态;
+2.UCE态:
+	a.Requester故意产生UCE态,在Requester对cacheline写数据前,为了节省系统带宽,Requester获得UCE态而不是UC态,就可以对该cacheline进行写操作;
+	--->Requester发出CleanUnique/MakeUnique获取的是UCE态(HA记录的是E态),因为不需要数据,一旦数据写入该cacheline,cacheline状态就会变为UD态;
+	b.如果Requester已经有该cacheline的拷贝(SC态),且正在申请获取写权限(获取U态),但是在获得写权限之前该数据已经被失效掉了,这样会使得该cacheline变为UCE态;---???
+3.UDP态:UCE态写进行partial写就会变为UDP态;
+4.SC态:Requester发出Read Shared后获取的是SC态;
+5.SD态:cache1中的cacheline是UD态,Requester2发出Read Shared后获取数据是从cache1直接fwd过来的,此时cache1的cacheline状态变为SD态,cache2中的cacheline的状态变为SC态.
+```
+
+## 1.5 组件分类命名
+
+### 1.5.1 RN---Request Node
+
+RN(Request Node):产生协议transactions,包含读和写.进一步分类如下:
+
+| classification | Functions                                                    |
+| -------------- | ------------------------------------------------------------ |
+| RN-F           | 全一致性请求节点<br />1.包含硬件一致性cache<br />2.允许产生所有协议定义的transactions<br />3.支持所有的snoop transactions |
+| RN-D           | IO一致性请求节点<br />1.不包含硬件一致性cache<br />2.可以接收DVM操作<br />3.可以产生协议定义的一部分transactions |
+| RN-I           | IO一致性请求节点<br />1.不包含硬件一致性cache<br />2.不能接受DVM操作<br />3.可以产生一部分协议定义的transactions<br />4.不要求具有snoop功能 |
+
+### 1.5.2 HN---Home Node
+
+HN(Home Node):位于ICN内,用于接收来自于RN产生的transactions.进一步分类为:
+
+| classification | Functions                                                    |
+| -------------- | ------------------------------------------------------------ |
+| HN-F           | 用于接收所有的请求操作(除了DVM操作)<br />1.PoC点,通过监听RN-Fs,管理各Master一致性,完成所有的snoop响应后,发送一个响应给发出请求的RN<br />2.PoS点,用于管理多个memory请求的顺序<br />3.可能包含目录或监听过滤,以此来减少大量的snoop request |
+| HN-I           | 处理有限的一部分协议定义的Request请求<br />1.PoS点,管理访问IO subsystem的顺序<br />2.不包含PoC点,也不能处理snoop请求 |
+| MN             | 用于接收来自RN发送的DVM操作,完成相应的操作后返回一个响应     |
+
+### 1.5.3 SN---Slave Node
+
+SN(Slave Node):用于接收来自于HN的请求,完成相应的操作并返回一个响应.进一步分类为:
+
+| classification | Functions                                                    |
+| -------------- | ------------------------------------------------------------ |
+| SN-F           | 1.指的是Normal memory<br />2.可以处理Non-snoop读写请求、atomic请求、以及这些命令的其它形式、CMO请求 |
+| SN-I           | 1.指的是Peripheral或Normal Memory<br />2.可以处理Non-snoop读写请求、atomic操作、以及这些命令的其它形式、CMO请求 |
+
+#### 1.5.4 各协议节点在ICN的连接
+
+![](images/protocol_node_example.png)
+
+## 1.6 读数据来源
+
+在基于CHI的系统中,读请求的数据可以来源于以下3个地方:
+
+```
+1.Cache within ICN:直接从cache中返回;
+2.Slave Node:两种方式返回
+	1.SN返回的读数据先发送给HN,再有HN转发给原始的Requester;
+	2.DMT(Direct Memory Transfer):SN直接将数据返回给原始的Requester.
+3.Peer RN-F:两种方式返回
+	1.SN返回的读数据先发送给HN,再有HN转发给原始的Requester;
+	2.DCT(Direct Cache Transfer):Peer RN-F直接将数据返回给原始的Requester.
+		PS:DCT方式中,Peer RN-F需要通知HN它已经将数据发送给原始的Requester,某些情况下还需要将一份拷贝数据发给HN.
+```
+
+![](images/data_source_for_read_request.png)
 
 
 
