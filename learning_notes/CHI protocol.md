@@ -1,6 +1,6 @@
 # CHI protocol
 
-# Chapter 1. CHI基本概念介绍
+# Chapter 1 CHI基本概念介绍
 
 CHI协议是AMBA的第5代协议,可以说是ACE协议的进化版,将所有的信息传输采用包(packet)的形式来完成.packet里分各个域段来传递不同信息,本质是用于解决多个CPU(RN-F)之间的数据一致性问题.
 
@@ -358,6 +358,121 @@ SN(Slave Node):用于接收来自于HN的请求,完成相应的操作并返回�
 ```
 
 ![](images/data_source_for_read_request.png)
+
+# Chapter 2 Transactions
+
+协议层主要的东西是transactions,因此有时候也叫协议层.
+
+transactions章节的内容主要包含:传输通道和相关重要的域段、各transaction类型的传输结构、传输响应类型、cache状态转换等.
+
+## 2.1 传输通道和域段
+
+### 2.1.1 传输通道
+
+| Channel | RN channel designation                                       | SN channel designation                                       |
+| ------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| REQ     | TXREQ. Outbound Request                                      | RXREQ. Inbound Request                                       |
+| WDAT    | TXDAT. Outbound Data<br />Used for write data, atomic data, snoop data, forward data | RXDAT. Inbound Data.<br />Used for write data, atomic data   |
+| SRSP    | TXRSP. Outbound Response.<br />Used for snoop response and completion acknowledge | —                                                            |
+| CRSP    | RXRSP. Inbound Response.<br />Used for response from completer | TXRSP. Outbound Response.<br />Used for responses from the completer |
+| RDAT    | RXDAT. Inbound Data.<br />Used for read data, atomic data    | TXDAT. Outbound Data.<br />Used for read data, atomic data   |
+| SNP     | RXSNP. Inbound Snoop Request                                 | —                                                            |
+
+### 2.1.2 各通道域段信息
+
+#### 2.1.2.1 Request通道域段
+
+| Field          | Description                                                  |
+| -------------- | ------------------------------------------------------------ |
+| QoS            | Quality of Service priority. 总共有16个等级的QoS.            |
+| TgtID          | Target ID.用于packet在ICN上的路由                            |
+| SrcID          | Source ID.用于packet在ICN上的路由                            |
+| TxnID          | Transaction ID. 每个SrcID发出的每个transaction都是通过TxnID进行标识,相当于transaction的身份证. |
+| LPID           | Logical Process ID.用于标识Cluster内的逻辑处理器(一个Cluster可能有4个Core,每个Core用不同的ID标识). |
+| ReturnNID      | Return Node ID. 表示带数据的响应应该送到的节点ID.--->还不清楚如何使用??? |
+| ReturnTxnID    | Return Transaction ID.--->如何使用???                        |
+| StashNID       | Stash Node ID.标识Stash的目的节点.                           |
+| StashNIDValid  | Stash Node ID valid.表明StashNID是valid.                     |
+| StashLPID      | Stash Logic Processor ID.标识Stash的目的逻辑处理器.          |
+| StashLPIDValid | Stash Logic Processor ID valid.表明StashLPID是valid.         |
+| Opcode         | Request opcode.                                              |
+| Addr           | CHI支持的PA的位宽:44-bit到52-bit;支持的VA的位宽:49-bit到53-bit.<br />对于Req通道中的addr直接表示地址信息,Snp通道与Req通道存在不同. |
+| NS             | Non-secure. Req通道中用于指定操作是安全还是非安全的.<br />1.Read、Dataless、Write、Atomic transaction指定设置安全或非安全;<br />2.PrefetchTgt transaction中的DVMOp和PCrdReturn中不用该域段,必须为0. |
+| Size           | Data Size.决定了Req访问多少Bytes.编码如下:<br />0x0--->1Bytes;<br />0x1--->2 Bytes;<br />0x2--->4 Bytes;<br />0x3--->8 Bytes;<br />0x4--->16 Bytes;<br />0x5--->32 Bytes;<br />0x6--->64 Bytes;<br />0x7--->128 Bytes(协议中是reserved,可以自定义)<br />PS:Snp的transaction中不包含size域段,因此所有的Snp data传输的都是64 Bytes. |
+| AllowRetry     | 用于Retry(重传)机制.                                         |
+| PCrdType       | Protocol Credit Type.用于Retry的机制中.                      |
+| ExpCompAck     | Expect CompAck.指示transaction是否需要一个Completion Acknowledge message(完成确认信息). |
+| MemAttr        | 内存属性.                                                    |
+| SnpAttr        | Snoop属性.                                                   |
+| SnoopMe        | 指示HN(Home Node)需要决定是否要发送一个Snoop到RN.            |
+| LikelyShared   | 提供一个allocation的hint给到下游cache.                       |
+| Excl           | Excluvise access.排他性的访问.                               |
+| Order          | Order Requirement.--->怎么使用???                            |
+| Endian         | Endianness.表明data packet中的数据是小端.                    |
+| TraceTag       | Trace Tag.主要用于debug、tracing、系统性能的检测.            |
+| RSVDC          | User Defined.用户自定义.                                     |
+
+#### 2.1.2.2 Snoop通道域段
+
+| Field          | Description                                                  |
+| -------------- | ------------------------------------------------------------ |
+| QoS            | Quality of Service priority. 总共有16个等级的QoS.            |
+| SrcID          | Source ID.用于packet在ICN上的路由                            |
+| TxnID          | Transaction ID. 每个SrcID发出的每个transaction都是通过TxnID进行标识,相当于transaction的身份证. |
+| FwdNID         | Forward Node ID.表示带数据的响应应该送到的节点ID.--->还不清楚如何使用??? |
+| FwdTxnID       | Forward Transaction ID. 填充Req带过来的ID.                   |
+| StashLPID      | Stash Logic Processor ID.标识Stash的目的逻辑处理器.          |
+| StashLPIDValid | Stash Logic Processor ID valid.表明StashLPID是valid.         |
+| Opcode         | Snoop opcode.                                                |
+| Addr           | Snoop request中,除了SnpDVMPOp.Add[(43-51):6]用于Snoop cacheline(Snoop以cacheline为粒度).<br />1.Addr[5:4]标识transaction要访问的critical chunk;<br />2.DVMOp操作中,Addr信息是用于携带DVM操作的相关信息;<br />3.PCrdReturn transaction的addr域段必须为0;<br />4.因为Snoop以cacheline为粒度,因此不需要size域段. |
+| NS             | Non-secure. Req通道中用于指定操作是安全还是非安全的.<br />1.Read、Dataless、Write、Atomic transaction指定设置安全或非安全;<br />2.PrefetchTgt transaction中的DVMOp和PCrdReturn中不用该域段,必须为0. |
+| VMIDExt        | Virtual Machine ID Extension.VMID的扩展.                     |
+| DoNotGoToSD    | Do Not Go To SD state.控制Snoopee的SD状态.                   |
+| DoNotDataPull  | Do Not Data Pull.用于Stash.                                  |
+| RetToSrc       | Return to Source.                                            |
+| TraceTag       | Trace Tag.主要用于debug、tracing、系统性能的检测.            |
+
+#### 2.1.2.3 Data通道域段
+
+| Field      | Description                                                  |
+| ---------- | ------------------------------------------------------------ |
+| QoS        | Quality of Service priority. 总共有16个等级的QoS.            |
+| TgtID      | Target ID.用于packet在ICN上的路由                            |
+| SrcID      | Source ID.用于packet在ICN上的路由                            |
+| TxnID      | Transaction ID.<br />dat通道中的TxnID是直接使用Resp中的DBID. |
+| HomeNID    | Home Node ID.标识CompAck应该送到的节点.                      |
+| DBID       | Data Buffer ID.<br />对于读操作,HN回了rdat后,如果需要再回一个Resp,此时dat通道中的DBID域段会作为回Resp中的TxnID;<br />对于写操作应该没什么用. |
+| Opcode     | Data opcode.                                                 |
+| RespErr    | Response Error status.指示与数据传输相关的错误状态.          |
+| Resp       | Response status.指示与数据传输相关的cacheline状态.           |
+| FwdState   | Forward state.指示与Forward相关的cacheline状态.              |
+| DataPull   | Data Pull.--->暂时没用到....                                 |
+| DataSource | Data Source.表明rdat中的数据源.                              |
+| CCID       | Critical Chunk ID.标识一个transaction内的data packets.       |
+| DataID     | Data ID.标识一个transaction内的data packets.                 |
+| BE         | Byte Enable.                                                 |
+| Data       | Data payload.                                                |
+| DataCheck  | Data Check.对data packet进行纠错.                            |
+| Poison     | Poison.                                                      |
+| TraceTag   | Trace Tag.主要用于debug、tracing、系统性能的检测.            |
+| RSVDC      | User Defined.用户自定义.                                     |
+
+#### 2.1.2.4 Response通道域段
+
+| Field    | Description                                         |
+| -------- | --------------------------------------------------- |
+| QoS      | Quality of Service priority. 总共有16个等级的QoS.   |
+| TgtID    | Target ID.用于packet在ICN上的路由                   |
+| SrcID    | Source ID.用于packet在ICN上的路由                   |
+| TxnID    | Transaction ID.将Req发过来的txnid填充进行返回给Req. |
+| DBID     | Data Buffer ID.                                     |
+| PCrdType | Protocol Credit Type.                               |
+| Opcode   | Response opcode.                                    |
+| RespErr  | Response Error status.指示与数据传输相关的错误状态. |
+| Resp     | Response status.指示与数据传输相关的cacheline状态.  |
+| FwdState | Forward state.指示与Forward相关的cacheline状态.     |
+| DataPull | Data Pull.--->暂时没用到....                        |
+| TraceTag | Trace Tag.主要用于debug、tracing、系统性能的检测.   |
 
 
 
