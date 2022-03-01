@@ -365,9 +365,7 @@ SN(Slave Node):用于接收来自于HN的请求,完成相应的操作并返回�
 
 transactions章节的内容主要包含:传输通道和相关重要的域段、各transaction类型的传输结构、传输响应类型、cache状态转换等.
 
-## 2.1 传输通道和域段
-
-### 2.1.1 传输通道
+## 2.1 传输通道
 
 | Channel | RN channel designation                                       | SN channel designation                                       |
 | ------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -378,9 +376,9 @@ transactions章节的内容主要包含:传输通道和相关重要的域段、�
 | RDAT    | RXDAT. Inbound Data.<br />Used for read data, atomic data    | TXDAT. Outbound Data.<br />Used for read data, atomic data   |
 | SNP     | RXSNP. Inbound Snoop Request                                 | —                                                            |
 
-### 2.1.2 各通道域段信息
+## 2.2 各通道域段信息
 
-#### 2.1.2.1 Request通道域段
+### 2.2.1 Request通道域段
 
 | Field          | Description                                                  |
 | -------------- | ------------------------------------------------------------ |
@@ -412,7 +410,7 @@ transactions章节的内容主要包含:传输通道和相关重要的域段、�
 | TraceTag       | Trace Tag.主要用于debug、tracing、系统性能的检测.            |
 | RSVDC          | User Defined.用户自定义.                                     |
 
-#### 2.1.2.2 Snoop通道域段
+### 2.2.2 Snoop通道域段
 
 | Field          | Description                                                  |
 | -------------- | ------------------------------------------------------------ |
@@ -432,7 +430,7 @@ transactions章节的内容主要包含:传输通道和相关重要的域段、�
 | RetToSrc       | Return to Source.                                            |
 | TraceTag       | Trace Tag.主要用于debug、tracing、系统性能的检测.            |
 
-#### 2.1.2.3 Data通道域段
+### 2.2.3 Data通道域段
 
 | Field      | Description                                                  |
 | ---------- | ------------------------------------------------------------ |
@@ -448,7 +446,7 @@ transactions章节的内容主要包含:传输通道和相关重要的域段、�
 | FwdState   | Forward state.指示与Forward相关的cacheline状态.              |
 | DataPull   | Data Pull.--->暂时没用到....                                 |
 | DataSource | Data Source.表明rdat中的数据源.                              |
-| CCID       | Critical Chunk ID.标识一个transaction内的data packets.       |
+| CCID       | Critical Chunk ID.标识一个transaction内的data packets.--->现在基本不关心了. |
 | DataID     | Data ID.标识一个transaction内的data packets.                 |
 | BE         | Byte Enable.                                                 |
 | Data       | Data payload.                                                |
@@ -457,7 +455,7 @@ transactions章节的内容主要包含:传输通道和相关重要的域段、�
 | TraceTag   | Trace Tag.主要用于debug、tracing、系统性能的检测.            |
 | RSVDC      | User Defined.用户自定义.                                     |
 
-#### 2.1.2.4 Response通道域段
+### 2.2.4 Response通道域段
 
 | Field    | Description                                         |
 | -------- | --------------------------------------------------- |
@@ -474,7 +472,176 @@ transactions章节的内容主要包含:传输通道和相关重要的域段、�
 | DataPull | Data Pull.--->暂时没用到....                        |
 | TraceTag | Trace Tag.主要用于debug、tracing、系统性能的检测.   |
 
+## 2.3 关键域段解析
 
+### 2.3.1 addr
+
+CHI协议支持的地址范围:
+
+```
+PA:地址范围44-bit到52-bit;
+VA:地址范围49-bit到53-bit.
+```
+
+Req和Snp packet的地址范围:
+
+```
+Req:addr[(MPA-1):0]--->MPA:max PA,Req对应的地址位宽为44-bit到52-bit;
+Snp:addr[(MPA-1):3]--->MPA:max PA,Snp对应的地址位宽为41-bit到49-bit.
+```
+
+PS:Snoop request的大小是以cacheline为粒度的,因此snp通道里不包含size信息.
+
+### 2.3.2 Memory Attribute
+
+memattr是有EWA(Early Write Acknowledge)、Device、Cacheable和Allocate组成的.
+
+| MemAttr[3:0] | Description                                                  |
+| ------------ | ------------------------------------------------------------ |
+| [3]          | Allocate hint bit. Indicates whether or not the cache receiving the transaction is recommended to allocate the transaction:<br/>0    Recommend that it does not allocate.<br/>1    Recommend that it allocates. |
+| [2]          | Cacheable bit. Indicates a Cacheable transaction for which the cache, when present, must be looked up in servicing the transaction:<br/>0 Non-cacheable. Looking up a cache is not required.<br/>1 Cacheable. Looking up a cache is required. |
+| [1]          | Device bit. Indicates if the memory type associated with the transaction is Device or Normal:<br/>0 Normal memory type.<br/>1 Device memory type. |
+| [0]          | Early Write Acknowledge bit. Specifies the Early Write Acknowledge status for the transaction:<br/>0 Early Write Acknowledge not permitted.<br/>1 Early Write Acknowledge permitted. |
+
+#### 2.3.2.1 EWA---Early Write Acknowledge
+
+EWA用于指示写完成信号从哪个节点返回--->对读写均有效.
+
+```
+1.EWA置位,写完成信号可以来自中间节点(如：HN),也可以来自endpoint(最终节点),来自中间节点的完成信号必须提供同样的Comp响应来保证;
+2.EWA不置位,写完成响应必须来自最终节点;
+3.如果不实现EWA功能的话,写完成响应必须来自endpoint.
+```
+
+EWA置位情况与transaction类型有关:
+
+```
+1.ReadNoSnpSep、ReadNoSnp、WriteNoSnp、CMO、Atomic transaction可以采用任意值--->即不关心,均由endpoint返回完成信号;
+2.除了上述的操作外的所有Read、Dataless和Write transaction必须将EWA置位;
+3.在DVMOp或PcrdReturn transaction中该域段不使用,需要固定为0;
+4.在PrefetchTgt中不适用,可以为任意值.
+```
+
+#### 2.3.2.2 Device
+
+Device域段指示访问的memory属性是Device还是Normal.
+
+**1.Device Memory Type**
+
+Device memory type空间必须用于地址相关性的memory空间,当然用于地址不相关性的空间也允许.
+
+访问Device memory type空间的特点:
+
+```
+1.访问Device memory type空间读使用ReadNoSnp,写使用WriteNoSnpFull/WriteNoSnpPtl;
+	1.Read操作不能读到比要求更多的数据,且数据必须来自endpoint,不能来自同地址write操作的中间节点;
+	2.写操作不能merge,不能将多笔访问不同地址的请求组合成一笔,也不能将访问同一个地址的多个不同请求组合
+		成一个;
+	3.写操作的完成信号可以来自于中间节点,但需要写数据对endpoint节点可见;
+2.CMO和Atomic操作允许访问Device空间;
+3.PrefetchTgt不允许访问Device空间,不关心该bit可以为任意值.
+```
+
+**2.Normal Memory Type**
+
+Normal memory type空间只能用于地址不相关的memory空间,不能用于地址相关的memory空间.
+
+访问Normal memory type空间的特点:
+
+```
+1.EWA的读数据可以来自同地址write操作的中间节点;
+2.写操作可以被merge;
+3.任何Read、Dataless、Write、PrefetchTgt、Atomic transaction类型都可以去访问Normal memory空间.
+```
+
+#### 2.3.2.3 cacheable
+
+cacheable域段用于指示一个transaction是否需要执行cache查找.
+
+```
+1.cacheable被置位,transaction必须执行cache查找;
+2.cacheable没有被置位,transaction必须访问endpoint节点.
+```
+
+cacheable域段特点:
+
+```
+1.对于任何的Device memory transaction,不能置位;
+2.除了ReadNoSnpSep和ReadNoSnp,其他的Read transaction必须置位;
+3.除了CMO操作,其他Dataless操作必须置位;
+4.除了WriteNoSnpFull和WriteNoSnpPtl,其他的Write transaction必须置位;
+5.ReadNoSnpSep、ReadNoSnp、WriteNoSnpFull、WriteNoSnpPtl访问Normal memory空间时,该域段可以为任		意值--->不关心;
+6.在CMO和Atomic transactions中可以为任意值;
+7.在DVMOp和PCrdReturn transaction中必须为0;
+8.在PrefetchTgt中不会用到该值,可以为任意值.
+```
+
+#### 2.3.2.4 Allocate
+
+allocate域段是cache缓存分配指示,它指示一笔transaction是否推荐缓存到cache中.
+
+```
+1.allocate置位,出于性能考虑,建议该笔transaction的数据应该被缓存到cache中,但也可以不bypass cache;
+2.allocate不置位,出于性能考虑,建议该笔transaction的数据bypass cache,但其实也可以缓存到cache中.sa
+```
+
+allocate域段特点:
+
+```
+1.cacheable被置位的transaction,allocate可以被被置位;
+2.WriteEvictFull操作必须置位,如果WriteEvictFull的allocate没有被置位,RN会将其转换为Evict操作;
+3.Device memory transaction不能置位;
+4.Normal memory中的Non-cacheable transaction不能置位;
+5.DVMOp、PCrdReturn和Evict操作中不使用该域段,但必须设置为0;
+6.PrefetchTgt不使用该域段,可以为任意值.
+```
+
+## 2.4 LikelyShared
+
+LikelyShared是一种cache分配指示.在置位时指示requested data可能在其它RN节点中也共享着.是为了性能提供的一种指示作用.
+
+LikeyShared的特点:
+
+```
+1.可以被置位包含的请求:ReadClean、ReadNotSharedDirty、ReadShared、StashOnceUnique、
+	StashOnceShared、WriteUniquePtl、WriteUniqueFull、WriteUniquePtlStash、
+	WriteUniqueFullStash、WriteBackFull、WriteCleanFull、WriteEvictFull,除此之外的其他Read
+	和Write操作不能被置位;
+2.Dataless和Atomic操作中不能被置位;
+3.DVMOp和PCrdReturn transaction中不使用该域段,但需要设置为0;
+4.PrefetechTgt transaction中不使用该域段,可以为任意值.
+```
+
+## 2.5 Snoop Attribute
+
+Snoop Attribute(SnpAttr)指示一笔transaction是否需要snoop,有Non-snoopable和Snoopable两种.
+
+| SnpAttr | Snoop attribute |
+| ------- | --------------- |
+| 0       | Non-snoopable   |
+| 1       | Snoopable       |
+
+不同的transaction的snoop属性:
+
+| Transaction                                                  | Non-snoopable | Snoopable |
+| ------------------------------------------------------------ | ------------- | --------- |
+| ReadNoSnp, ReadNoSnpSep                                      | Y             | -         |
+| ReadOnce*, ReadClean, ReadShared, ReadNotSharedDirty, ReadUnique | -             | Y         |
+| CleanUnique, MakeUnique, StashOnce                           | -             | Y         |
+| CleanShared, CleanSharedPersist, CleanInvalid, MakeInvalid   | Y             | Y         |
+| Evict                                                        | -             | Y         |
+| WriteNoSnp                                                   | Y             | -         |
+| WriteBack, WriteClean, WriteEvictFull                        | -             | Y         |
+| WriteUnique                                                  | -             | Y         |
+| Atomic transactions                                          | Y             | Y         |
+| DVMOp                                                        | 必须设置为0   |           |
+| PrefetchTgt                                                  | 可以为任意值  |           |
+
+PS:HN发送给SN的CMO、ReadNoSnpSep和ReadNoSnp的SnpAttr域值必须设置为0.
+
+## 2.6 Transaction attribute combinations
+
+![](images/transaction_attribute_combination.png)
 
 
 
