@@ -641,7 +641,153 @@ PS:HN发送给SN的CMO、ReadNoSnpSep和ReadNoSnp的SnpAttr域值必须设置为
 
 ## 2.6 Transaction attribute combinations
 
+transaction属性组合是由memattr、snpattr、likelyshared、order等域段组合而成.
+
+```
+有时会出现nGnRnE:
+G:Gathering--->表示多个memory的访问是否可以合并;
+R:Re-ordering--->表示内存访问指令的重排;
+E:Early Write Acknowledgement.参考"2.3.2.1".
+```
+
 ![](images/transaction_attribute_combination.png)
+
+### 2.6.1 Device nRnE
+
+特点:
+
+```
+1.写响应必须从最终节点获得;
+2.读数据必须从最终节点获得;
+3.读数据不能得到比预期要求的更多;
+4.读操作不能被预取;
+5.写操作不能被merged;
+6.写操作不能写大于原始transaction的地址范围;
+7.来自同源的所有读和写transaction去往同一个endpoint必须要保序.
+```
+
+### 2.6.2 Device nRE
+
+特点:
+
+```
+1.写响应可以从中间节点获得--->此条与Device nRnE不一样;
+2.读数据必须从最终节点获得;
+3.读数据不能得到比预期要求的更多;
+4.读操作不能被预取;
+5.写操作不能被merged;
+6.写操作不能写大于原始transaction的地址范围;
+7.来自同源的所有读和写transaction去往同一个endpoint必须要保序.
+```
+
+### 2.6.3 Device RE
+
+特点:
+
+```
+1.写响应可以从中间节点获得--->此条与Device nRnE不一样;
+2.读数据必须从最终节点获得;
+3.读数据不能得到比预期要求的更多;
+4.读操作不能被预取;
+5.写操作不能被merged;
+6.写操作不能写大于原始transaction的地址范围;
+7.来自同源的读和写transaction发往同一个endpoint不需要保序--->不一样;
+8.来自同源的读和写transaction发往有交叠地址的需要保序.
+```
+
+### 2.6.4 Normal Non-cacheable Non-bufferable
+
+特点:
+
+```
+1.写响应必须来自最终节点;
+2.读数据必须来自最终节点;
+3.写操作可以被merged;
+4.同一个源的读和写transactions发往有交叠地址的需要保序.
+```
+
+### 2.6.5 Normal Non-cacheable Bufferable
+
+特点:
+
+```
+1.写响应可以从中间节点返回;
+2.写transaction必须对最终节点及时可见,但没有机制能够决定何时写transaction可以被最终节点可见;
+3.读数据可以从几个地方获取:
+	1.最终节点;
+	2.正在发往最终节点的写transaction,如果数据是从写transaction中获得,那么它必须来自最近的写transaction,
+		而且数据不能被后期读缓存起来.
+4.写操作可以被merged;
+5.同一个源的读和写transactions发往有交叠地址的需要保序.
+```
+
+### 2.6.6 Write-back No-allocate
+
+特点:
+
+```
+1.写响应可以从中间节点返回;
+2.写transaction不要求对最终节点可见;
+3.读数据可以从中间cahce获得;
+4.读操作可以prefetch预取;
+5.写可以被merged;
+6.读和写transaction需要查找cache;
+7.同一个源的读和写transactions发往有交叠地址的需要保序;
+8.No-allocate只是一种cache分配暗示,为了性能考虑,建议不缓存到cache中,但是也可以被allocate到cache中.
+```
+
+### 2.6.7 Write-back Allocate
+
+特点:
+
+```
+1.写响应可以从中间节点返回;
+2.写transaction不要求对最终节点可见;
+3.读数据可以从中间cahce获得;
+4.读操作可以prefetch预取;
+5.写可以被merged;
+6.读和写transaction需要查找cache;
+7.同一个源的读和写transactions发往有交叠地址的需要保序;
+8.Allocate只是一种cache分配暗示,为了性能考虑,建议缓存到cache中,但是也可以不allocate到cache中.
+```
+
+## 2.7 dataid
+
+dataid域段是以16 B为单位,即每隔16 Byte dataid的值需要加1.与addr[~:4]对应.
+
+| dataid | data width(128-bit)      | data width(256-bit)      | data width(512-bit)    |
+| ------ | ------------------------ | ------------------------ | ---------------------- |
+| 0x0    | data[127:0]--->16 Byte   | data[255:0]--->32 Byte   | data[511:0]--->64 Byte |
+| 0x1    | data[255:128]--->16 Byte | reserved                 | reserved               |
+| 0x2    | data[383:256]--->16 Byte | data[511:256]--->32 Byte | reserved               |
+| 0x3    | data[511:384]--->16 Byte | reserved                 | reserved               |
+
+```
+对于req中的size可以达到128Byte,甚至于256Byte的情况,此时dataid的值为:
+1.对于req中的size为64 Byte,data的值为0x4;
+2.对于req中的size为128 Byte,data的值为0x0和0x4;
+3.对于req中的size为256 Byte,data的值为0x0、0x4、0x8、0xC(每个表示64 Byte).
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
