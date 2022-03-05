@@ -769,9 +769,30 @@ dataid域段是以16 B为单位,即每隔16 Byte dataid的值需要加1.与addr[
 3.对于req中的size为256 Byte,data的值为0x0、0x4、0x8、0xC(每个表示64 Byte).
 ```
 
+## 2.8 Request Retry
 
+为了防止request transactions将req通道堵住,CHI协议提供了一种request retry机制.当Completer无法接收request transaction时,可以发RetryAck响应.除了PrefetchTgt和PCrdReturn,其它命令都可以被Retry.
 
+特点:
 
+```
+1.除了PrefetchTgt,Requester需要记录所有已发送的request(因为需要确保收到RetryAck时重新再次发送该req);
+2.除了PrefetchTgt,其他的request需要将allowretry域段置位,即允许retry;
+3.Completer通常是在没有足够空间来存放当前的request transaction时,才会对request进行retry.如果
+	earlier transactions完成并释放了资源,就可以发送PCrdGrant响应告知request重新发送request;
+4.Requester收到PCrdGrant后,重发reques时不能将allowretry域段置位,因为该request一定可以保证能被接收;
+5.由于ICN可能reorder PCrdGrant和RetryAck,会导致Requester先收到PCrdGrant后收到RetryAck,Requester
+	需要记录已经收到的P-Crdit,当收到RetryAck后才能发该请求;
+6.P-Credit和transaction之间没有固定的关系.如果Requester收到多个RetryAck,但只收到一个PCrdGrant,
+	Requester可以自由选择一个被retry的transaction来消耗这个P-Credit;
+7.Requester重新发送请求时,需要注意的域段总结:
+	AlloRetry不能置位;
+	PCrdType必须设置为Retry response中的值.
+```
+
+retry的流程图:
+
+![](images/transaction_retry_flow.png)
 
 
 
