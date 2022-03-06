@@ -596,7 +596,7 @@ allocate域段特点:
 6.PrefetchTgt不使用该域段,可以为任意值.
 ```
 
-## 2.4 LikelyShared
+### 2.3.3 LikelyShared
 
 LikelyShared是一种cache分配指示.在置位时指示requested data可能在其它RN节点中也共享着.是为了性能提供的一种指示作用.
 
@@ -612,7 +612,7 @@ LikeyShared的特点:
 4.PrefetechTgt transaction中不使用该域段,可以为任意值.
 ```
 
-## 2.5 Snoop Attribute
+### 2.3.4 Snoop Attribute
 
 Snoop Attribute(SnpAttr)指示一笔transaction是否需要snoop,有Non-snoopable和Snoopable两种.
 
@@ -639,7 +639,7 @@ Snoop Attribute(SnpAttr)指示一笔transaction是否需要snoop,有Non-snoopabl
 
 PS:HN发送给SN的CMO、ReadNoSnpSep和ReadNoSnp的SnpAttr域值必须设置为0.
 
-## 2.6 Transaction attribute combinations
+### 2.3.5 Transaction attribute combinations
 
 transaction属性组合是由memattr、snpattr、likelyshared、order等域段组合而成.
 
@@ -652,7 +652,7 @@ E:Early Write Acknowledgement.参考"2.3.2.1".
 
 ![](images/transaction_attribute_combination.png)
 
-### 2.6.1 Device nRnE
+#### 2.3.5.1 Device nRnE
 
 特点:
 
@@ -666,7 +666,7 @@ E:Early Write Acknowledgement.参考"2.3.2.1".
 7.来自同源的所有读和写transaction去往同一个endpoint必须要保序.
 ```
 
-### 2.6.2 Device nRE
+#### 2.3.5.2 Device nRE
 
 特点:
 
@@ -680,7 +680,7 @@ E:Early Write Acknowledgement.参考"2.3.2.1".
 7.来自同源的所有读和写transaction去往同一个endpoint必须要保序.
 ```
 
-### 2.6.3 Device RE
+#### 2.3.5.3 Device RE
 
 特点:
 
@@ -695,7 +695,7 @@ E:Early Write Acknowledgement.参考"2.3.2.1".
 8.来自同源的读和写transaction发往有交叠地址的需要保序.
 ```
 
-### 2.6.4 Normal Non-cacheable Non-bufferable
+#### 2.3.5.4 Normal Non-cacheable Non-bufferable
 
 特点:
 
@@ -706,7 +706,7 @@ E:Early Write Acknowledgement.参考"2.3.2.1".
 4.同一个源的读和写transactions发往有交叠地址的需要保序.
 ```
 
-### 2.6.5 Normal Non-cacheable Bufferable
+#### 2.3.5.5 Normal Non-cacheable Bufferable
 
 特点:
 
@@ -721,7 +721,7 @@ E:Early Write Acknowledgement.参考"2.3.2.1".
 5.同一个源的读和写transactions发往有交叠地址的需要保序.
 ```
 
-### 2.6.6 Write-back No-allocate
+#### 2.3.5.6 Write-back No-allocate
 
 特点:
 
@@ -736,7 +736,7 @@ E:Early Write Acknowledgement.参考"2.3.2.1".
 8.No-allocate只是一种cache分配暗示,为了性能考虑,建议不缓存到cache中,但是也可以被allocate到cache中.
 ```
 
-### 2.6.7 Write-back Allocate
+#### 2.3.5.7 Write-back Allocate
 
 特点:
 
@@ -751,7 +751,7 @@ E:Early Write Acknowledgement.参考"2.3.2.1".
 8.Allocate只是一种cache分配暗示,为了性能考虑,建议缓存到cache中,但是也可以不allocate到cache中.
 ```
 
-## 2.7 dataid
+### 2.3.6 dataid
 
 dataid域段是以16 B为单位,即每隔16 Byte dataid的值需要加1.与addr[~:4]对应.
 
@@ -769,7 +769,7 @@ dataid域段是以16 B为单位,即每隔16 Byte dataid的值需要加1.与addr[
 3.对于req中的size为256 Byte,data的值为0x0、0x4、0x8、0xC(每个表示64 Byte).
 ```
 
-## 2.8 Request Retry
+### 2.3.7 Request Retry
 
 为了防止request transactions将req通道堵住,CHI协议提供了一种request retry机制.当Completer无法接收request transaction时,可以发RetryAck响应.除了PrefetchTgt和PCrdReturn,其它命令都可以被Retry.
 
@@ -794,11 +794,184 @@ retry的流程图:
 
 ![](images/transaction_retry_flow.png)
 
+## 2.4 Transaction Structure
+
+根据transaction的不同可以分类为:Read、Dataless、Write、Atomic、Other、Snoop等.
+
+### 2.4.1 Read Transactions
+
+#### 2.4.1.1 Snoop reads excluding ReadOnce
+
+除了ReadOnce之外,snoopable读操作如下:
+
+```
+ReadClean
+ReadNotSharedDirty
+ReadShared
+ReadUnique
+PS:ReadOnce类的(ReadOnce,ReadOnceCleanInvalid,ReadOnceMakeInvalid)的保序和CompAck与上面的不一样,后面单独描述.
+```
+
+snoopable读操作通常是RN-F发出,用于获取其它RN或SN的数据,该数据会被cache所缓存.
+根据数据来源的不同可以分为以下三类:
+
+**1.Read transaction structure with DMT**
+
+DMT(Direct Memory Transfer)用于当数据可以直接从SN发送给原始Requester,传输结构如下图:
+
+![](images/snoopable_read_dmt_structure.png)
 
 
 
 
 
+需要遵循的原则如下:
+
+```
+1.Completer必须收到读请求后,才能发送相应的CompData;
+2.Requester必须收到至少一个CompData后,才能发送CompAck.在issueC之前,是必须全部收到数据包后,才能发送;
+3.必须所有带txnid的Response都返回后,Requester才能重复利用该txnid;
+4.HN只有满足以下条件才能发送DMT请求给SN-F:
+	1.Snoop请求不需要发送;
+	2.如果snoop请求已经发送了,所有的snoop响应都已经回来,且没有Dirty数据;
+	3.如果snoop响应包含有Partial Dirty数据,Partial Dirty数据必须写到SN-F,且收到completion响应后,HN才能发送DMT请求;
+	4.如果是Forwarding类型的snoop请求,只有没有forward传输给Requester,HN才允许发送DMT请求.
+5.HN可以同时使能DMT和DCT,但是必须等DCT响应回来后,才能发送DMT请求给SN-F.
+```
+
+**2.Read transaction structure with DCT**
+
+DCT(Direct Cache Transfer)用于被snoop的RN-F可以直接返回数据给原始Requester,传输结构如下图:
+
+![](images/snoopable_read_dct_structure.png)
+
+需要遵循的原则如下:
+
+```
+1.Completer必须收到snoop请求后,才能发送CompData;
+2.Requester必须收到至少一个CompData后,才能发送CompAck.在issueC之前,是必须全部收到数据包后,才能发送.
+```
+
+**3.Read transaction structure without Direct Data Transfer**
+
+除了DMT和DCT,read transaction中的数据可以由HN提供,传输结构如下图:
+
+![](images/snoopable_read_structure_without_direct_data_transfer.png)
+
+需要遵循的原则如下:
+
+```
+1.Requester必须收到至少一个CompData后,才能发送CompAck.在issueC之前,是必须全部收到数据包后,才能发送.
+```
+
+#### 2.4.1.2 ReadNoSnp, ReadOnce
+
+ReadNoSnp和ReadOnce两者都有可选的保序需求和可选的CompAck.
+
+```
+1.保序:ReadNoSnp和ReadOnce要求具有保序功能(order域段被置上),HN需要确保当前保序transaction对于后续的保序transactions
+	是可见的;
+2.CompAck:ReadNoSnp和ReadOnce将ExpCompAck置位,那么它们将支持DMT和分离的Comp与Data响应.
+```
+
+ReadNoSnp和ReadOnce的区别:
+
+```
+1.ReadNoSnp不会去snoop其它master,只是简单的执行读传输流程,所获得的数据可以直接来自SN,也可以来自ICN;
+2.ReadOnce需要去snoop其它master,但是Requester不会缓存该数据,同样它所获得的数据可以直接来自SN,也可以来自ICN.
+```
+
+**1.ReadNoSnp and ReadOnce structure with DMT**
+
+传输结构如下图:
+
+![](images/ReadNoSnp_and_ReadOnce_DMT_structure.png)
+
+需要遵循的原则如下:
+
+```
+1.如果Requester置起order域,那么HN必须通过CRSP通道返回ReadReceipt,表示保序已经在HN上建立;
+2.如果HN往SN发送ReadNoSnp操作时置起order域,那么SN也需要返回ReadReceipt表示该笔transaction已经接收,不会被Retry了;
+3.使用DMT的ReadNoSnp和ReadOnce命令在HN上的生命周期可以通过SN发送的ReadReceipt来缩短,即HN收到ReadReceipt后,就可以提前
+	释放这些命令的资源,不需要等到后续的CompAck.
+```
+
+**2.ReadOnce structure with DCT**
+
+传输结构如下图:
+
+![](images/ReadOnce_DCT_structure.png)
+
+需要遵循的原则如下:
+
+```
+1.ReadNoSnp不需要snoop transaction,所以就没有DCT说法了;
+2.ReadOnce DCT传输需要被snoop的RN返回response表示当前DCT是否成功进行.
+```
+
+**3.ReadNoSnp and ReadOnce structure without Direct Data transfer**
+
+传输结构如下图:
+
+![](images/ReadNoSnp_and_ReadOnce_structure_without_direct_data_transfer.png)
+
+需要遵循的原则如下:
+
+```
+1.ReadReceipt必须在相应的请求接收后才能发送,返回ReadReceipt和CompData之间的顺序无要求;
+2.CompData必须在响应的请求接收后才能发送;
+3.CompAck必须在requester接收至少一个CompData之后才能发送,Requester发送CompAck可以不需要等待ReadReceipt;
+4.Completer发送ReadReceipt不能等待CompAck.
+```
+
+**4.order、CompAck、DMT、DCT对ReadNoSnp和ReadOnce的影响**
+
+| order[1:0] | ExpCompAck | DMT  | DCT  | Notes                                                        |
+| ---------- | ---------- | ---- | ---- | ------------------------------------------------------------ |
+| 0b00       | 0          | Y    | Y    | 不需要通知HN该transaction是否结束.对于DMT,HN必须获得ReadReceipt响应,确保SN不会Retry该transaction |
+| 0b00       | 1          | Y    | Y    | 不需要通知HN该transaction是否结束.对于DMT,HN可以通过的SNReadReceipt或RN的CompAck知道该transaction是否被Retry |
+| 0b01       | -          | -    | -    | Not permitted                                                |
+| 0b10或0b11 | 0          | N    | Y    | 对于DCT,HN通过SnpRespFwded或SnpRespDataFwded响应来决定该transaction的结束 |
+| 0b10或0b11 | 1          | Y    | Y    | 对于DMT,HN使用CompAck来决定该transaction结束.<br />对于DCT,HN使用SnpRespFwd或SnpRespDataFwd响应来决定该transaction结束 |
+
+#### 2.4.1.3 Read with separate Non-data and Data-only responses
+
+从issueC开始,对于所有的读类型transaction.CHI支持分离的来自HN的non-data response和来自HN或SN的Data-only response.但下列transaction不支持该特性:
+
+```
+Atomic transactions
+Exclusive tranctions
+Ordered ReadNoSnp and ReadOnce* transactions without CompAck
+PS:该特性主要针对ReadNoSnp和ReadOnce请求类型.
+```
+
+分离的Non-data和Data-only响应有以下两种方式:
+
+**1.Comp来自HN,Data来自SN**
+
+![](images/com_from_home_and_data_from_slave.png)
+
+**2.Comp和Data都来自HN**
+
+![](images/com_and_data_from_home.png)
+
+PS:对于非保序的带CompAck的ReadOnce*和ReadNoSnp命令,requester发送CompAck不需要等待DataSepResp.
+
+**3.分离的Comp和Data响应需要遵循的原则**
+
+```
+1.DataSepResp和RespSepData必须在completer接收到相应的请求后才能发送,RespSepData只能由HN发送,DataSepResp可以由SN或
+	HN发送;
+2.在ReadNoSnp和ReadOnce*中,对于无保序的请求,CompAck可以不等待data返回就发送;对于有保序的请求,CompAck必须等待data返回
+	后才发送;
+3.Completer不能等待收到CompAck后才发送Data;
+4.ReadNoSnpSep必须在HN收到所有的Snoop响应后,由HN发往SN;SN在收到ReadNoSnpSep后,必须返回Readreceipt,表明该笔
+	transaction不会被retry;
+5.SN不能发送分离的comp响应给HN,对于保序的ReadOnce*和ReadNoSnp请求,HN通过收到CompAck可以知道该transaction已经结束;
+6.对于保序的ReadOnce和ReadNoSnp命令,如果采用分离的Comp和Data响应,HN不能发送ReadReceipt响应给requester,因为HN发送
+	的RespSepData响应已经蕴含了ReadReceipt;
+7.在所有可以使用分离回data和comp响应的地方,也都可以使用CompData响应.
+```
 
 
 
