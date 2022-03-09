@@ -973,11 +973,30 @@ PS:对于非保序的带CompAck的ReadOnce*和ReadNoSnp命令,requester发送Com
 7.在所有可以使用分离回data和comp响应的地方,也都可以使用CompData响应.
 ```
 
+### 2.4.2 Dataless Transactions
 
+Dataless transactions的主要功能如下:
 
+```
+1.获取对cache的写权限,主要的req:CleanUnique、MakeUnique;
+2.cache维护(即CMO操作),主要的req:CleanShared、CleanSharedPersist、CleanInvalid、Makeinvalid;
+3.更新snoop filter的状态,主要的req:Evict;
+4.将数据移到更接近的地方,方便可预见的将来使用,主要的req:StashOnceUnique、StashOnceShared.
+```
 
+传输结构如下图:
 
+![](images/snoopable_dataless_transactions_structure.png)
 
+需要遵循的原则如下:
+
+```
+1.Completer必须在收到dataless请求后,才能发送Comp;
+2.Requester必须在收到Comp后,才能发送CompAck;
+3.CleanUnique、MakeUnique一定需要置起ExpCompAck,此时Requester在收到Comp后需要发送CompAck;
+4.CleanShared、CleanSharedPersist、CleanInvalid、Makeinvalid、Evict、StashOnceUnique、StashOnceShared等请求
+	不能置ExpCompAck,因此Requester收到Comp后也不需要回CompAck.
+```
 
 
 
