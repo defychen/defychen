@@ -998,13 +998,32 @@ Dataless transactions的主要功能如下:
 	不能置ExpCompAck,因此Requester收到Comp后也不需要回CompAck.
 ```
 
+### 2.4.3 Write Transactions
 
+#### 2.4.3.1 WriteNoSnp
 
+当对某个地址进行写操作,且不需要监听其它master是否有该地址的数据时,可以用WriteNoSnp命令.
 
+```
+1.对于WriteNoSnp req,completer可以返回CompDBID,也可以将Comp和DBID分开返回;
+2.Comp表示该transaction可以被其它Requester观察到,DBID表示该Completer有足够data buffer接收写数据;
+3.WriteNoSnp包含的请求:WriteNoSnpPtl, WriteNoSnpFull.
+```
 
+传输结构如下图:
 
+![](images/writenosnp_transaction_structure_options.png)
 
+需要遵循的原则如下:
 
+```
+1.分离的DBID和Comp,或者CompDBID都必须在Completer收到相应的请求后,才能由Completer发送;
+2.Reuqester只有在收到CompDBID或DBIDResp后,才能发送写数据;
+3.如果Comp和DBID分开发送,Requester等到DBIDResp后,就需要发送写数据,不能等到Comp之后才发送;DBIDResp和Comp对于Requester的接收和Completer的发送都是in any order(即可以乱序发送或接收);
+4.Completer允许在收到WriteData后才发送Comp响应.
+```
+
+#### 2.4.3.2 WriteUnique
 
 
 
