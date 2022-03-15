@@ -1025,6 +1025,50 @@ Dataless transactions的主要功能如下:
 
 #### 2.4.3.2 WriteUnique
 
+当对某个地址进行写操作,且需要监听其它master时,可以使用WriteUnique命令.
+
+```
+1.riteUnique命令可以使用分离的Comp和DBID响应,或CompDBID响应;
+2.如果ExpCompAck域段置位,那么WriteUnique需要发送CompAck来结束命令;
+3.issueC开始,有一个取巧方式是CompAck和Data可以组合为NCBWrDataCompAck一块发送,省的发两次.
+	PS:NCBWriteDataCompAck需要等到DBID和Comp都收到才能发送.
+```
+
+![](images/writeunique_flow_1.png)
+
+![](images/writeunique_flow_2.png)
+
+需要遵循的原则如下:
+
+```
+1.分离的DBID和Comp,或者CompDBID都必须在Completer收到相应的请求后,才能由Completer发送;
+2.Reuqester只有在收到CompDBID或DBIDResp后,才能发送写数据;
+3.如果Comp和DBID分开发送,Requester等到DBIDResp后,就需要发送写数据,不能等到Comp之后才发送;DBIDResp和Comp对于Requester的接收和Completer的发送都是in any order(即可以乱序发送或接收);
+4.WriteUnique中Completer不能在等到WriteData后才发送Comp响应.这样回面临死锁风险:
+	比如:Data是以NCBWrDataCompAck的形式返回:
+	1.Requester发送NCBWrDataCompAck需要收到DBID和Comp,因此需要等待Completer发送的Comp;
+	2.Completer如果发送Comp需要等待Requester发送的Data(即NCBWrDataCompAck),就造成等待死锁.
+5.Requester必须在收到Comp或CompDBIDResp后才能发送CompAck.
+```
+
+#### 2.4.3.3 CopyBack
+
+CopyBack操作包括WriteBackFull、WriteBackPartial、WriteCleanFull、WriteEvcitFull(WriteClean和WriteEvict没有partial操作).
+
+```
+1.除了WriteEvictFull命令,CopyBack操作通常用于更新主存或下游cache;
+2.WriteEvictFull单单用于更新下游cache,该命令产生的效果不会超过它的snoop domain.
+```
+
+![](images/copyback_transaction_structure.png)
+
+需要遵循的原则如下:
+
+```
+1.Comp和DBID必须一起返回,即为CompDBIDResp;
+2.Requester收到CompDBIDResp后,表明Completer可以接收该命令的,而且在该命令结束前,不会接收到同地址的snoop命令.
+```
+
 
 
 
