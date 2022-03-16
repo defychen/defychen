@@ -1034,6 +1034,8 @@ Dataless transactions的主要功能如下:
 	PS:NCBWriteDataCompAck需要等到DBID和Comp都收到才能发送.
 ```
 
+传输结构如下图:
+
 ![](images/writeunique_flow_1.png)
 
 ![](images/writeunique_flow_2.png)
@@ -1060,6 +1062,8 @@ CopyBack操作包括WriteBackFull、WriteBackPartial、WriteCleanFull、WriteEvc
 2.WriteEvictFull单单用于更新下游cache,该命令产生的效果不会超过它的snoop domain.
 ```
 
+传输结构如下图:
+
 ![](images/copyback_transaction_structure.png)
 
 需要遵循的原则如下:
@@ -1069,7 +1073,47 @@ CopyBack操作包括WriteBackFull、WriteBackPartial、WriteCleanFull、WriteEvc
 2.Requester收到CompDBIDResp后,表明Completer可以接收该命令的,而且在该命令结束前,不会接收到同地址的snoop命令.
 ```
 
+### 2.4.4 Atomic Transactions
 
+Atomic操作可以分为两类:
+
+```
+1.一类是返回只有completion响应(即只有DBID+Comp(合并或分开)),e.g. AtomicStore;
+2.一类是返回有completion和Data响应(即有DBID+CompData),e.g. AtomicLoad/AtomicSwap/AtomicCompare;
+3.Atomic总共就4个操作:AtomicStore、AtomicLoad、AtomicSwap、AtomicCompare.
+```
+
+传输结构如下图:
+
+![](images/atomic_flow.png)
+
+需要遵循的原则如下:
+
+```
+1.对于AtomicStore操作,允许Completer分开返回DBID和Comp响应,或组合的CompDBID;
+2.对于AtomicLoad/AtomicSwap/AtomicCompare操作,Completer只能返回DBIDResp,Comp是通过CompData返回的;
+3.图中的can wait表示completer允许等到Data之后再发送Comp,这样做的话,就是使用Comp来传递原子操作结果或数据接收是否有错误;
+4.Requester在收到DBIDResp或CompDBIDRes之后,就可以发送Data,不能等CompData或Comp响应;
+5.Completer在返回read data时可以采用两种方式--->针对AtomicLoad/AtomicSwap/AtomicCompare:
+	1.在收到命令之后的任何节点返回Read data;
+	2.直到收到所有的write data之后再返回read data.
+```
+
+Atomic操作的self-snoop--->在Atomic操作中,CHI协议允许Requester对自己进行self-snooping.
+
+```
+1.如果SnoopMe域段置位,则允许self-snooping;
+2.如果RN在发送Atomic操作之前无法失效掉自己的cacheline的话,则需要self-snooping,主要目的:
+	1.失效掉自己的cache line拷贝;
+	2.如果cache line是Dirty,则获取一份拷贝;
+3.HN收到SnoopMe置位的Atomic操作时,如果Requester里该cache line有数据,则必须发送snoop请求,反之可以不需要;如果SnoopMe为0,
+	则不能发送snoop给Requester;
+4.HN发送给Requester的snoop命令可以是SnpUnique或SnpCleanInvalid;
+5.如果Atomic命令的SnoopMe置位,则RN可以同时并行发送同地址的CopyBack命令和Atomic操作,不需要等待同地址的其中某个操作完成后再
+	发送下一个.
+```
+
+### 2.4.5 Other Transactions
 
 
 
