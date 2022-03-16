@@ -1113,7 +1113,444 @@ Atomic操作的self-snoop--->在Atomic操作中,CHI协议允许Requester对自�
 	发送下一个.
 ```
 
-### 2.4.5 Other Transactions
+### 2.4.5 Miscellaneous request types(混杂的请求类型)
+
+混杂的transaction主要包含以下2种:
+
+```
+1.DVM;
+2.PrefetchTgt.
+```
+
+#### 2.4.5.1 DVM
+
+DVM是Distributed Virtual Memory的缩写.
+
+传输结构如下图:
+
+![](images/dvm_transaction_structure.png)
+
+需要遵循的原则如下:
+
+```
+1.Completer必须收到相应的请求命令后才能发送DBIDResp;
+2.Requester必须收到DBIDResp之后才能发送WriteData;
+3.Completer必须收到Data后才能发送Comp响应.
+```
+
+#### 2.4.5.2 PrefetchTgt
+
+PrefetchTgt是由RN直接发给SN,SN收到该命令可以采用两种做法:
+
+```
+1.去主存取数据,并将数据缓存起来,等待接下来同地址的读请求;
+2.直接将命令丢弃掉,不做任何处理.
+```
+
+传输结构如下图:
+
+![](images/prefetchtgt_transaction_structure.png)
+
+需要遵循的原则如下:
+
+```
+1.Requester在发送完PrefetchTgt命令后,马上释放资源;
+2.SN不会将PrefetTgt命令retry;
+3.SN可以将PrefetchTgt命令丢弃掉,不做任何处理.
+```
+
+### 2.4.6 Transaction Retry sequence
+
+retry的特点:
+
+```
+1.除了PCrdReturn和PrefetchTgt命令,其它request命令都可以被retry;
+2.Request命令第一次发送时是不带Protocol Credit（P-Credit）;
+3.如果该命令不能被Completer接收,Completer必须发送RetryAck响应表明暂时无法接收该命令,等到有合适的Credit后再发;
+4.当Completer可以接收的话,发送PCrdGrant响应给Requester.
+```
+
+CHI协议允许Requester决定被retry的命令是否重发.
+
+#### 2.4.6.1 Retry sequence
+
+Requester决定被retry的命令重发,此时必须携带PCrdGrant的Credit,确保该命令肯定能被接收.
+
+传输结构如下图:
+
+![](images/transaction_retry_sequence.png)
+
+需要遵循的原则如下:
+
+```
+1.Completer必须收到相应的请求命令后才能发送RetryAck;
+2.Completer必须收到相应的请求命令后才能发送PCrdGrant;
+3.Completer发送和Requester接收的RetryAck和PCrdGrant之间的顺序没有要求;
+4.Requester必须收到RetryAck和PCrdGrant之后,才能重新发送带Credit的transaction.
+```
+
+#### 2.4.6.2 Not retrying a transaction
+
+如果Requester在收到RetryAck和PCrdGrant后,并不想重新发送被retry的transaction,可以使用PCrdReturn命令将P-Credit返回给Completer,这样相当于发了一笔空操作.
+
+传输结构如下图:
+
+![](images/cancelled_transaction_sequence.png)
+
+### 2.4.7 Snoop transactions
+
+Snoop操作是由HN发给RN的transaction,交互方式分为:
+
+```
+1.如果是RN-F(e.g. L3)需要接收所有的Snoop transaction;
+2.如果是RN-D(e.g. SMMU)要只接收SnpDVMOp transaction;
+3.RN-F和RN-D在收到snoop request(除了DVMOp Sync)时,必须要及时返回snoop响应,不能和其它oustanding requests有任何的
+	完成依赖关系.
+```
+
+Snoop transaction的传输结构分为几种:
+
+```
+1.Snoop with response to Home
+2.Snoop with Data to Home
+3.Snoop with Data return to Requester and response to Home
+4.Snoop with Data return to Requester and Data to Home
+5.Snoop DVM operation and response to Misc Node
+```
+
+Snoop transaction也可用于Stash类型的传输,分为:
+
+```
+1.Stashing snoop with Data from Home
+2.Stashing snoop with Data using DMT
+```
+
+#### 2.4.7.1 Snoop with response without Data to Home
+
+RN在收到Snoop请求后只需要回SnpResp即可,SnpResp是不携带数据的response.
+
+传输结构如下图:
+
+![](images/snoop_transaction_with_response_to_home.png)
+
+需要遵循的原则如下:
+
+```
+RN必须在收到相应的Snoop请求后才能发送SnpResp响应.
+```
+
+#### 2.4.7.2 Snoop with response with Data to Home
+
+RN在收到Snoop请求后需要回SnpRespData,SnpRespData是携带数据的response.
+
+该种类型的snoop请求包含如下几种:
+
+```
+1.SnpOnceFwd,SnpOnce
+2.SnpCleanFwd,SnpClean
+3.SnpNotSharedDirtyFwd,SnpNotSharedDirty
+4.SnpSharedFwd,SnpShared
+5.SnpUniqueFwd,SnpUnique
+6.SnpCleanShared
+7.SnpCleanInvalid
+```
+
+传输结构如下图:
+
+![](images/snoop_transaction_with_data_to_home.png)
+
+需要遵循的原则如下:
+
+```
+1.RN可以通过SnpRespData和SnpRespDataPtl响应返回数据;
+2.同样的SnpRespData*只有在RN收到相应的snoop请求后才能发送.
+```
+
+#### 2.4.7.3 Snoop with Data forwarded to Requester without or with Data to Home
+
+RN收到此种Snoop请求的处理流程如下:
+
+```
+1.Snoop的RN将forward数据通过CompData opcode走WDAT通道返回给Requester;
+2.因为forward是DCT传输,被snoop的RN需要通知HN是否DCT成功,有两种方式:
+	1.被snoop RN单单只回通过SRSP通道将SnpRespFwded opcode告知HN;
+	2.被snoop RN将数据和响应都都回给HN,此时通过WDAT通道将SnpRespDataFwded opcode告知HN.
+```
+
+传输结构如下图:
+
+![](images/snoop_with_data_forwarded_to_request_with_response_to_home.png)
+
+![](images/snoop_with_data_forwarded_to_request_with_data_to_home.png)
+
+需要遵循的原则如下:
+
+```
+1.被snoop的RN只有在收到相应的snoop请求后,才能发送SnpRespFwded或SnpRespDataFwded响应,CompData同理;
+2.被snoop的RN发SnpRespDataFwded或SnpRespFwded与CompData可以为任何顺序;
+3.Requester只有收到Data的第一笔数据后,才能发送CompAck.
+```
+
+#### 2.4.7.4 Stash Snoop
+
+Stash Snoop当前使用的主要包含2种请求类型:
+
+```
+SnpUniqueStash
+SnpStashShared
+```
+
+**1.SnpUniqueStash**
+
+传输结构如下图:
+
+![](images/SnpUniqueStash_flow.png)
+
+需要遵循的原则如下:
+
+```
+1.SnpUniqueStash发到RN后,由于是Unique操作,RN需要将数据返回给HN,此时其opcode为:SnpRespData;
+2.RN在回SnpRespData中,同时蕴含读操作,因此其opcode最终为:SnpRespData_Read;
+3.后续的步骤就是读操作的步骤.
+```
+
+**2.SnpStashShared**
+
+传输结构如下图:
+
+![](images/SnpStashShared_flow.png)
+
+需要遵循的原则如下:
+
+```
+1.SnpStashShared发到RN后,由于是Shared操作,RN不需要将数据返回给HN,此时其opcode为:SnpResp;
+2.RN在回SnpResp中,同时蕴含读操作,因此其opcode最终为:SnpResp_Read;
+3.HN采用DMT的方式向RN-F提供读数据,因此提供数据的流程为:
+	1.HN发ReadNoSnp给SN(e.g. memory);
+	2.SN通过RDAT将CompData返回给RN;
+	3.RN负责回一个CompAck给到HN,表示操作结束.
+```
+
+#### 2.4.7.5 Snoop DVMOp
+
+传输结构如下图:
+
+![](images/SnpDVMOp_transaction_flow.png)
+
+需要遵循的原则如下:
+
+```
+1.ICN需要发送两个opcode为SnpDVMOp的snoop request;
+2.被snoop的RN需要接收到两个snoop请求后,才能发送SnpResp响应.
+```
+
+## 2.5 传输响应类型
+
+除了PrefetchTgt,每一笔request transaction都会产生一个或多个响应,有一些响应可能还带有数据(通过RDAT通道传输,e.g. CompData).主要的响应类型如下:
+
+### 2.5.1 Completion response
+
+除了PCrdReturn和PrefetchTgt,其它request transaction都需要completion response标识requester完成.
+
+```
+1.完成响应通常是由Completer发送的,是传输的最后一笔message,用于结束一笔request transaction;
+2.对于Requester中置位了ExpCompAck,需要发送CompAck响应来结束该笔transaction;
+3.完成响应表示request transaction已经到达PoS或PoC点,它们会对系统中其它requester发送的同地址requests进行保序.
+```
+
+#### 2.5.1.1 Read and Atomic transaction completion
+
+**1.完成响应的来源**
+
+```
+1.Read transactions完成响应要么来自CompData(RDAT通道),要不分离的响应RespSepData(CRSP通道)和数据DataSepResp(RDAT通道);
+2.此处的Atomic包含的请求是:AtomicLoad、AtomicSwap、AtomicCompare,这些请求的的完成信号来自CompData(RDAT通道).
+```
+
+**2.Resp域段信息**
+
+CompData和DataSepResp完成信号的Resp域包含了如下信息--->这两个均从RDAT通道返回:
+
+```
+1.Cache state：the final permitted state of the cache line at the Requester for all reads except
+	ReadNoSnp and ReadOnce*;
+2.Pass Dirty：Indicates if the responsibility for updating memory is passed to the Requester. The
+	assertion of the PassDirty bit is shown by _PD in the response name.
+```
+
+**3.特点**
+
+```
+1.当使用分离的Comp和Data响应时,RespSepData(CRSP通道)中也有Resp域段,此时的Resp域可以设置为0(没什么用),也可以和DataSepResp
+	中的Resp域一样--->以DataSepResp中的Resp域段为主;
+2.如果完成响应含有error indication,那么cache state可以为任意值.
+```
+
+#### 2.5.1.2 Dataless transaction completion
+
+**1.完成响应的来源**
+
+```
+Dataless transaction完成响应是来自Comp.
+```
+
+**2.Resp域段信息**
+
+Comp的Resp域包含了如下信息:
+
+```
+1.Cache state：The final state the cache line is permitted to be in at the Requester，except for CMO
+	transaction. For CMO transactions，the cache state field value is ignored and the cache state
+	remains unchanged;
+2.Pass Dirty：Dateless transactions do not pass responsibility for a Dirty cache line.
+```
+
+**3.特点**
+
+```
+如果完成响应含有error indication,那么cache state可以为任意值.
+```
+
+#### 2.5.1.3 Write and Atomic transaction completion
+
+**1.完成响应的来源**
+
+PS:此处的Atomic请求特指AtomicStore.
+
+```
+Write and AtomicStore完成响应是来自Comp或CompDBID.
+```
+
+**2.Resp域段信息**
+
+```
+1.Write和Atomic transaction没有传递cache state和pass dirty信息,在Comp和CompDBIDResp响应中的Resp域必须全部设置为0;
+2.所有的cache state和pass dirty信息使用WriteData中的Resp域段传递.
+```
+
+**3.特点**
+
+```
+1.Comp:用于分离的Comp和DBIDResp返回响应;
+2.CompDBIDResp:用于组合完成响应;
+3.Non-CopyBack Write(e.g. WriteUnique)和AtomicStore的Comp和DBIDResp响应可以分开回,也可以组合的CompDBIDResp返回;
+4.对于CopyBack Write(e.g. WriteBack)只能组合的CompDBIDResp响应返回.
+```
+
+#### 2.5.1.4 Miscellaneous transaction completion
+
+对于DVMOp transaction的Comp中的Resp域段必须设置为0.
+
+### 2.5.2 WriteData response
+
+WriteData response是Write request和DVMOp transactions的一部分.
+
+**1.特点**
+
+```
+1.Requester在收到DBIDResp响应后就可以将WriteData发往Completer;
+2.WriteData response是通过WDAT通道传输的.
+```
+
+**2.write data response的类型**
+
+```
+1.CopyBackWrData类型特点:
+	1.用于CopyBack transactions(e.g. WriteBack);
+	2.传输一致性数据从RN的cache到ICN;
+	3.包含WriteData响应发送之前的cache line状态信息.
+2.NonCopyBackWrData类型特点:
+	1.用于WriteUnique和WriteNoSnp transactions;
+	2.用于DVMOp transaction;
+	3.响应中的cache state必须是I态.
+3.NCBWrDataCompAck类型特点:
+	1.用于WriteUnique transactions;
+	2.组合NonCopyBackWrData和CompAck;
+	3.响应中的cache state必须是I态.
+```
+
+**3.Resp域段信息**
+
+```
+1.Cache state:
+	1.指示在WriteData响应发送之前的cache line状态信息;
+	2.这个状态信息不同于Requester最开始发送request时的cacheline状态信息,因为在发送request和发送WriteData之间可能会收到
+		同地址的snoop请求,snoop请求可能会将cache line状态改变;
+2.Pass Dirty:
+	1.指示Requester是否将pass dirty传递给其它人,Pass Dirty bit置位的话在响应名字上会带有_PD;
+3.在Write transaction完成后,Requester的cache line状态信息不是由WriteData响应中cache state信息决定的,而是由
+	transaction opcode决定该transaction完成后cache line是有效或无效;
+4.WriteBack或WriteEvictFull的opcode类型完成后cacheline状态必须是I态;
+5.WriteCleanFull的opcode类型完成后cacheline状态可以保持clean态;
+6.如果WriteData的RespErr域指示有data error,WriteData响应的cache line状态可以为任意值.
+```
+
+**4.WriteDataCancel说明**
+
+Requester在发送WriteUniquePtl、WriteUniquePtlStash、WriteNoSnpPtl之后,Requester可以选择取消该transaction的进行.在收到DBIDResp后Requester发送WriteDataCancel用于通知HN取消该transaction.
+
+WriteDataCancel规则如下:
+
+```
+1.只能用于WriteUniquePtl、WriteUniquePtlStash和WriteNoSnpPtl(non-cacheable类型)等请求类型;
+2.不能用于Device memory type的WriteNoSnp transaction;
+3.所有原先打算传送的data packets必须发送;
+4.WriteNoSnpPtl transaction不管是发送取消还是非取消的数据,都必须是等到DBIDResp,而不能等Comp;
+5.WriteUniquePtl和WriteUniquePtlStash transactions不管是发送取消还是非取消的数据,都必须是等到DBIDResp,而不能等Comp;
+6.对external interfaces可见的WriteDataCancel message必须将BE和Data域的值设置为0(表示数据全部无效).
+	External interfaces包括:
+	1.External RN to ICN;
+	2.ICN to an external SN.
+```
+
+### 2.5.3 Snoop response
+
+snoop response可以带或不带data.
+
+**1.Resp域段信息**
+
+```
+1.Cache state: the final state of the cache line at the snooped node after sending the Snoop response;
+2.Pass Dirty: Indicates that the responsibility for updating memory is passed to the Requester or ICN.
+	Pass Dirty must only be asserted for a Snoop response with data. The assertion of the Pass Dirty
+	bit is shown by _PD in the response name.
+```
+
+**2.FwdState域段信息**
+
+```
+该域段用于DCT传输,用于指示DCT传送给Requester的CompData中的cache state和pass dirty信息,即等于CompData的Resp域的值.
+```
+
+如果RespErr域指示有个错误,此时的处理要求是:
+
+```
+1.如果是Snoop response with data,此时cacheline state必须是合法的值;
+2.如果是Snoop response without data,此时cacheline state可以为任意值.
+```
+
+### 2.5.4 Miscellaneous reponse
+
+Miscellaneous reponse的Resp和RespErr域段必须设置为0(没有任何意义).主要包含的response如下:
+
+```
+1.CompAck:
+	1.Requester收到完成响应之后就可以发送;
+	2.用于Read、Dataless、WriteUnique等transaction;
+2.RetryAck:
+	1.用于Completer在缺乏资源来接收request时,发送给Requester;
+	2.除了PCrdReturn和PrefetchTgt,其余request都可以被Retry;
+3.PCrdGrant:
+	1.传递P-Credit,Requester收到后可以重新发送被Retry的命令;
+4.ReadReceipt:
+	1.HN对要求保序(Order)的请求返回的保序保证;
+	2.SN发送ReadReceipt表示它已经接收read request,不会发送RetryAck响应;
+	3.只用于ReadNoSnp、ReadNoSnpSep、ReadOnce*等request类型;
+5.DBIDResp:
+	1.用于Write和Atomic transaction,告知Request此时Completer有足够的资源来接收WriteData响应.
+```
+
+## 2.6 Cache state transitions--->cache状态的转换
 
 
 
