@@ -81,6 +81,8 @@ PS:爬取网站数据时,应该遵守Robots协议.
 		pip install bs4	//BeautifulSoup位于bs4的库中
 	使用方法:
 		from bs4 import BeautifulSoup
+	pycharm安装:
+		// pycharm中直接搜索"bs4"即可找到.
 
 ### 2.2 Anaconda+Jupyter的使用
 
@@ -128,7 +130,7 @@ PS:在安装Anaconda时将Python3也加入到了Windows的Path变量中,且会�
 	#!/usr/bin/python
 	# -*- coding: utf-8 -*-
 	
-	import requests
+	import requests	// requests需要安装,pycharm中直接搜索"requests"即可找到.
 	link = "http://www.santostang.com/"	//此处为爬取唐松的页面,是他自己写的页面,是为了避免商业纠纷
 	headers = {'User-Agent' : 'Mozilla/5.0 (Windows; U; Widows NT 6.1; en-US; rv:1.9.1.6)
 				Gecko/2009/12/01 Firefox/3.5.6'}	//此处使用headers伪装成浏览器访问
@@ -176,8 +178,8 @@ PS:在安装Anaconda时将Python3也加入到了Windows的Path变量中,且会�
 			Gecko/2009/12/01 Firefox/3.5.6'}	//此处使用headers伪装成浏览器访问
 	r = request.get(link, headers = headers)
 	
-	soup = BeautifulSoup(r.text, "lxml")
-	//因为r.text里面存放的是HTML代码,BeautifulSoup主要用于解析HTML代码.并将其转为soup对象.
+	soup = BeautifulSoup(r.text, "lxml") // lxml需要安装,pycharm中直接搜索"lxml"即可找到.
+	//因为r.text里面存放的是HTML代码,BeautifulSoup主要用于解析HTML代码.并将其转为soup对象.去掉了很多html东西,更好解析网页.
 	title = soup.find("h1", class_="post-title").a.text.strip()
 	/*
 	在查找标题时,使用右键->审查元素->在弹出的页面中点击左上角的鼠标键按钮->点击第一个标题,就会显示
@@ -680,7 +682,7 @@ Selenium是一个用于Web应用程序测试的工具.Selenium测试直接运行
 	//用于NoSuchElementException的异常
 	from selenium.webdriver.support.wait import WebDriverWait //用于设置等待时间
 	import time
-
+	
 	browser_path = r'D:\Program Files (x86)\360 browser\360Chrome\Chrome\Application
 		\360chrome.exe'
 	url = r'https://item.jd.com/100000875011.html' //请求的网页
