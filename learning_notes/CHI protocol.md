@@ -1647,45 +1647,14 @@ Snoop的cache状态切换需要注意以下几点:
 
 ![](images/snp_invalid_cache_state_transitions.png)
 
+### 2.6.8 Stash type snoops
 
+暂略.
 
+[参考:4.8 Stash type snoops](https://aijishu.com/a/1060000000125634)
 
+### 2.6.9 Forwarding type snoops
 
+暂略.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+[参考:4.9 Forwarding type snoops](https://aijishu.com/a/1060000000125634)
