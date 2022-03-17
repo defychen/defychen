@@ -1550,7 +1550,134 @@ Miscellaneous reponse的Resp和RespErr域段必须设置为0(没有任何意义)
 	1.用于Write和Atomic transaction,告知Request此时Completer有足够的资源来接收WriteData响应.
 ```
 
-## 2.6 Cache state transitions--->cache状态的转换
+## 2.6 Cache state transitions--->cache状态的切换
+
+### 2.6.1 Silence cache state transitions
+
+Silence cache state transitions主要针对内部事件,cache可以悄悄转换而不用通知系统中的其他master.
+
+![](images/silent_cache_state_transitions.png)
+
+解析如下:
+
+```
+1.cache eviction:
+	UC->I:当前cacheline状态是UC(Unique Clean)态,当将数据通过Evict或WriteEvictFull从当前cache evict
+		到下级cache或memory就变成了I态;
+	UCE->I:当前cacheline状态是UCE(Unique Clean Empty)态,当发Evict操作时,因为数据是Empty,数据不用,
+		直接就可以变成了I态;
+	SC->I:当前cacheline状态是SC(Shared Clean)态,当发Evict操作时,数据不用,直接变成I态.
+2.Local Sharing:
+	UC->SC:如果共享在local,直接将状态从UC切到SC即可;
+	UD->SD:如果共享在local,直接将状态从UD切到SD即可.
+3.Store:
+	UC->UD:因为已经拿到了U态,可以直接更改数据.无论是full还是partial写,都是变成UD态;
+	UCE->UDP/UD:当RN发CleanUnique/MakeUnique拿到UCE态后,如果是partial写,就变成UDP态,full写就变成UD态;
+	UDP->UD:如果在UDP的基础上写整cacheline数据就变成UD态.
+4.Cache Invalidate:
+	UD/UDP->I:当收到Invalidate时,cache需要将数据Evict到下一级,同时将状态切为I态;
+```
+
+### 2.6.2 Read request transactions
+
+![](images/read_cache_state_transitions.png)
+
+![](images/read_cache_state_transitions1.png)
+
+解析如下:
+
+```
+1.ReadNoSnp、ReadOnce*:
+	对于CompData或RespSepData+DataSepResp(分离的Comp+Data),直接忽略Data域段中的cache state,最终的状态为I态;
+2.ReadClean:
+	因为是要变成Clean的状态,因为最终的状态为SC或UC态;
+3.ReadNotSharedDirty:
+	最终变成SC态:其他Cache中有数据,且是Clean,此时HA通过RDAT中的Resp域段回的是SC态;
+	最终变成UC态:其他Cache中没有数据(Unique),且是Clean,此时HA通过RDAT中的Resp域段回的是UC态;
+	最终变成UD态:其他Cache中没有数据(Unique),且是Clean,此时HA通过RDAT中的Resp域段回的是UC态.但是数据后面会被更改.
+	不能变成SD态:因为NotSharedDirty.
+4.ReadShared:
+	最终变成SC态:其他Cache中有数据,且是Clean,此时HA通过RDAT中的Resp域段回的是SC态;
+	最终变成UC态:其他Cache中没有数据(Unique),且是Clean,此时HA通过RDAT中的Resp域段回的是UC态;
+	最终变成SD态:其他Cache中有数据,且是Clean,此时HA通过RDAT中的Resp域段回的是SC态.但是数据后面被更改了变成SD态;
+	最终变成UD态:其他Cache中没有数据(Unique),且是Clean,此时HA通过RDAT中的Resp域段回的是UC态.但是数据后面会被更改.
+5.ReadUnique:
+	如果本身状态是I/SC态,此时变成UC/UD态;
+	如果本身状态时SD态,此时变成UD态.
+```
+
+### 2.6.3 Dataless request transactions
+
+![](images/dataless_cache_state_transitions.png)
+
+### 2.6.4 Write request transactions
+
+![](images/write_cache_state_transitions.png)
+
+![](images/write_cache_state_transitions1.png)
+
+### 2.6.5 Atomic transactions
+
+![](images/atomic_cache_state_transitions.png)
+
+### 2.6.6 Other request transactions
+
+DVMOp和PrefetchTgt requests没有任何的cache state transitions.
+
+### 2.6.7 Snoop request transactions
+
+Snoop的cache状态切换需要注意以下几点:
+
+```
+1.RN在UC态被Snoop返回不带data的SnpResp;
+2.在收到snoop request之前,RN silent transition到SC或I态时,返回不带data的SnpResp.
+```
+
+![](images/snponce_cache_state_transitions.png)
+
+![](images/snponce_cache_state_transitions1.png)
+
+![](images/snpclean_cache_state_transitions.png)
+
+![](images/snpclean_cache_state_transitions1.png)
+
+![](images/snpunique_cache_state_transitions.png)
+
+![](images/snpcleanshared_cache_state_transitions.png)
+
+![](images/snp_invalid_cache_state_transitions.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
