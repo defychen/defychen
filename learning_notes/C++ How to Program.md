@@ -7133,9 +7133,9 @@ cout << b << endl;	// 输出bitset对象,输出的为"二进制格式"
 
 ## Chapter 21. string类和字符串流处理的深入剖析
 
-### 21.12 字符串流处理
+### 21.1 字符串流处理
 
-#### 21.12.2 stringstream的使用实例
+#### 21.1.2 stringstream的使用实例
 
 stringstream一般用于string和int类型相互转换.
 
@@ -7230,6 +7230,97 @@ stringstream一般用于string和int类型相互转换.
 		cout << "transform \"34\" " << dec << string_to_int("34") << endl;
 		return 0;
 	}
+
+### 21.2 int与string的转换
+
+#### 21.2.1 int转换为string
+
+**1.sprintf**
+
+1.函数原型
+
+```
+#include <stdio.h>	// 头文件
+int sprintf(char *buffer, const char *format, [argument]...)
+/*
+	param1:char型指针,转换目标字符串的缓冲区;
+	param2:格式化字符串(e.g. 源int型数据是整型,需要转换为16进制的字符串,此时可以填入:%x)
+	param3...:可选参数,可以是任意类型的数据.
+    retval:返回字符串的长度(strlen).
+*/
+```
+
+2.实例
+
+```
+int aa = 30;
+char a[8];
+int length = sprintf(a, "%05X", aa);
+cout << a << endl;	//结果为:0001E
+```
+
+**2.stringstream**
+
+待完善.
+
+```
+#include <sstream>	//要使用stringstream必须包含<sstream>和<iostream>
+#include <string>
+```
+
+**3.boost库**
+
+boost库中的lexical_cast用于将10进制转换为string类型.
+
+```
+int aa = 30;
+string a = boost::lexical_cast<string>(aa);
+cout << s << endl;	// "30"
+```
+
+**4.to_string函数**
+
+C++11新增的---->这个非常好用,推荐使用.
+
+```
+string to_string(int val);
+string to_string (long val);
+string to_string (long long val);
+string to_string (unsigned val);
+string to_string (unsigned long val);
+string to_string (unsigned long long val);
+string to_string (float val);
+string to_string (double val);
+string to_string (long double val);
+```
+
+#### 21.2.2 string转换为int
+
+**1.sscanf**
+
+```
+int i;
+sscanf("17","%D",&i);
+cout<<i<<endl; // 17
+
+sscanf("17","%X",&i);
+cout<<i<<endl; // 23
+
+sscanf("0X17","%X",&i);
+cout<<i<<endl; // 23
+```
+
+**2.stringstream**
+
+待完成.
+
+**4.boost库的lexical_cast**
+
+```
+string s = "17";
+int i = boost::lexical_cast<int>(s);
+cout << i << endl;	// 17
+```
 
 ***
 
