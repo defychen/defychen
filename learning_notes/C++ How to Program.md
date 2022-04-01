@@ -7273,12 +7273,7 @@ cout << a << endl;	//结果为:0001E
 
 **2.stringstream**
 
-待完善.
-
-```
-#include <sstream>	//要使用stringstream必须包含<sstream>和<iostream>
-#include <string>
-```
+参考21.1字符串流处理
 
 **3.boost库**
 
@@ -7324,7 +7319,7 @@ cout<<i<<endl; // 23
 
 **2.stringstream**
 
-待完成.
+参考21.1字符串流处理
 
 **4.boost库的lexical_cast**
 
@@ -7332,6 +7327,34 @@ cout<<i<<endl; // 23
 string s = "17";
 int i = boost::lexical_cast<int>(s);
 cout << i << endl;	// 17
+```
+
+### 21.3 字符数组char[]与string的相互转化
+
+#### 21.3.1 char[]转string
+
+```
+char a[] = "123456";
+std::string buffer1(a);	//直接取char数组名就可以转换为string类型
+std::string buffer2 = a;	//将char数组名赋值给string变量也可以
+cout << buffer1 << endl;
+cout << buffer2 << endl;
+```
+
+#### 21.3.2 string转char[]
+
+```
+char buf[10];
+string str("ABCDEFG");
+// 方法1:通过string的copy方法
+int length = str.copy(buf, strlen(buf) - 1);
+	// 拷贝最大的size为:strlen(buf) - 1,最后一个必须要留给'\0'
+buf[length] = '\0';
+cout << buf << endl;
+
+// 方法2:通过strcpy()进行拷贝--->C语言的拷贝方法
+strcpy(buf, str.c_str());	// 也可以使用:strcpy(buf, str.c_str(), 10);
+cout << buf << endl;
 ```
 
 ***
