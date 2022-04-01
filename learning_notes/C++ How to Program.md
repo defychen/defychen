@@ -7141,6 +7141,18 @@ stringstream一般用于string和int类型相互转换.
 
 **1.clear()和str()使用**
 
+1.clear()和str()的说明
+
+```
+ss.clear();		// 用于清除ss的状态位,每次输入后(ss << string/int),ss的good位会被置上.避免下次再次执行
+				// "ss << string/int"再次接收string/int数据.因此如果要再次接收,必须执行"ss.clear()"
+ss.str();		// 将ss转换为字符串,可以直接输出: cout << ss.str() << endl;
+ss.str("");		// 将ss转换为空串,相当于清空stringstream流.
+PS:因此,一般ss.clear()和ss.str("")一起使用.
+```
+
+2.使用实例
+
 	#include <iostream>
 	#include <sstream>	//要使用stringstream必须包含<sstream>和<iostream>
 	#include <string>
@@ -7166,7 +7178,7 @@ stringstream一般用于string和int类型相互转换.
 			cout << value << " ";
 		}
 	<2>	ss.str(""); //将stringstream流清空,读写指针会移动到0的位置
-	<3>	ss.clear(); //用于设置stringstream的good位,如果没有调用ss.clear(),ss不会再接收其他的输入
+	<3>	ss.clear(); //用于设置stringstream的good位(清空状态位),如果没有调用ss.clear(),ss不会再接收其他的输入
 		cout << "\nss size:" << ss.str().length(); //ss.str().length():获取ss字符串的长度
 		cout << "\nPlease input thress integers: " << endl; //input 4 5 6
 		getline(cin, strIn);
