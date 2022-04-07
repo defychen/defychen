@@ -515,7 +515,7 @@ xxx.cpp文件名通常与接口文件名一样.
 
 	#include <iostream>
 	#include <iomanip>
-	#include "GradeBoo.h"
+	#include "GradeBook.h"
 	using namespace std;
 	
 	GradeBook::GradeBook(string name)
@@ -584,8 +584,8 @@ xxx.cpp文件名通常与接口文件名一样.
 				<< endl;
 			/*
 			1.参数化的流运算符:
-				1.setprecision(2):名为参数化的流运算符(带有参数2).指定后面double类型变量
-				average输出时的精度(即显示小数后2位数字(四舍五入原则));
+				1.setprecision(2):名为参数化的流运算符(带有参数2).指定后面double类型变量average输出时的精度(即显示小数后
+					2位数字(四舍五入原则));
 				2.不显示指定浮点精度时,默认的浮点数精度为6位数字的精度;
 				3.参数化的流运算符包含的头文件为:#include <iomanip>.
 			2.无参数化的流运算符:
