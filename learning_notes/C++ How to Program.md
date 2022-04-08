@@ -969,7 +969,7 @@ rand()函数生成的是伪随机数,即程序每次重新执行生成相同的�
 
 srand()函数:接受一个unsigned int实参,作为rand()函数的种子,可以使程序每次重新执行时生成不同的随机数.
 
-srand()函数也是位于<cstdlib>头文件中.
+srand()函数也是位于\<cstdlib>头文件中.
 
 #### 6.4.3 实例
 
@@ -1068,7 +1068,7 @@ enum枚举类型是一组由标识符表示的整型常量.
 		{
 			case 7:
 			case 11:
-				gameStatus = WON;	//此处不能直接赋值2(虽然值是一样的),否则会出现编译错误.
+				gameStatus = WON;	//此处不能直接赋值1(虽然值是一样的),否则会出现编译错误.
 									//必须赋枚举中的常量.
 				break;
 			case 2:
@@ -1256,7 +1256,7 @@ static变量指使用static声明的局部变量,会一直保留调用之后的�
 		return number *= number;
 	}
 	
-	void squareByReference(int &numberRef)	//形参引用在原型和定义出均需要"&"符号
+	void squareByReference(int &numberRef)	//形参引用在原型和定义处均需要"&"符号
 	{
 		numberRef *= numberRef;
 	}
@@ -1409,6 +1409,177 @@ PS:main函数不能被重载.
 	}
 
 PS:1.618--->黄金比例.
+
+### 6.14 类模板
+
+#### 6.14.1 limit_queue的类模板
+
+**1.limit_queue的类模板定义**
+
+```
+template<class/typname T, uint32_t MAX>
+class limit_queue {
+public:
+	std::deque<T> m_queue;
+public:
+	bool try_push(const T &e)
+	{
+		if (m_queue.size() < MAX) {
+			m_queue.push_back(e);
+			return true;
+		}
+		return false;
+	}
+	
+	bool try_pop(T &e)
+	{
+		if (m_queue.size() > 0) {
+			e = m_queue.front();
+			m_queue.pop_front();
+			return true;
+		}
+		return false;
+	}
+	
+	bool is_full()
+	{
+		return m_queue.size() >= MAX;
+	}
+	
+	bool peek(T &e)
+	{
+		if (m_queue.empty())
+			return false;
+		e = m_queue.front();
+		return true;
+	}
+	
+	T front()
+	{
+		assert(m_queue.size() > 0);
+		return m_queue.front();
+	}
+	
+	bool empty()
+	{
+		return m_queue.empty();
+	}
+	
+	void push(const T &e)
+	{
+		assert(!is_full());
+		m_queue.push_back(e);
+	}
+	
+	void pop()
+	{
+		assert(m_queue.size() > 0);
+		m_queue.pop_front();
+	}
+	
+	uint32_t size()
+	{
+		return m_queue.size();
+	}
+	
+	void clear()
+	{
+		m_queue.clear();
+	}
+};
+```
+
+**2.实例化**
+
+```
+limit_queue<int, 20> m_limit_queue;
+```
+
+**3.函数模板与类模板区别**
+
+```
+1.函数模板可以直接将类型传入,会自动推导;
+2.类模板必须通过<type, type>指定模板类型.
+```
+
+#### 6.14.2 delay buffer类模板
+
+**1.delay buffer类模板定义**
+
+```
+template<class/typename T, uint32_t MAX>
+class latency_buf {
+public:
+	class latency_entry {
+	public:
+		T m_entry;	/* delay buffer存储的类型 */
+		uint32_t m_latency;	/* 需要delay的cycle */
+		uint64_t m_cycle;	/* 存储到delay buffer的cycle时间 */
+	public:
+		latency_entry(T entry, uint32_t latency, uint64_t cycle)
+		{
+			m_entry = entry;
+			m_latency = latency;
+			m_cycle = cycle;
+		}
+		~latency_entry()
+		{		
+		}
+	};
+	deque<latency_entry> m_latency_buf_deque;
+public:
+	latency_buf()
+	{
+		m_latency_buf_deque.clear();
+	}
+	
+	~latency_buf()
+	{}
+	
+	bool empty()
+	{
+		return m_latency_buf_deque.empty();
+	}
+	
+	bool is_full()
+	{
+		return m_latency_buf_deque.size() >= MAX;
+	}
+	
+	void push(T entry, uint32_t latency, uint64_t cycle)
+	{
+		latency_entry latency_entry(entry, latency, cycle);
+		m_latency_buf_deque.push_back(latency_entry);
+	}
+	
+	bool pop(T &entry, uint64_t cycle)
+	{
+		latency_entry latency_entry = m_latency_buf_deque.front();
+		if ((latency_entry.m_cycle + latency_entry.m_delay) <= cycle) {
+			entry = latency_entry.m_entry;
+			m_latency_buf_deque.pop_front();
+			return true;
+		}
+		return false;
+	}
+	
+	bool peek(T &entry, uint64_t cycle)
+	{
+		latency_entry latency_entry = m_latency_buf_deque.front();
+		if ((latency_entry.m_cycle + latency_entry.m_delay) <= cycle) {
+			entry = latency_entry.m_entry;
+			return true;
+		}
+		return false;
+	}
+};
+```
+
+**2.实例化**
+
+```
+latency_buf<type, 20> m_latency_buf;
+```
 
 ***
 
