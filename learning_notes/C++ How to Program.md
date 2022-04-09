@@ -1753,8 +1753,8 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 
 	const int columns = 4;
 	
-	void printArray(const int a[][columns])	//形参为多维数组,除了第一个维大小不需要有,
-	{										//后面的所有维必须有大小.
+	void printArray(const int a[][columns])	//形参为多维数组,除了第一个维大小不需要有,后面的所有维必须有大小.
+	{										//这样子能够直到第一维数组的地址.
 		...
 	}
 
@@ -1770,6 +1770,16 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 	public:
 		static const int students = 10;	//静态常量
 		static const int tests = 3;
+		/*
+			1.类中的变量使用static修饰表示静态变量,静态变量在定义时如果没有被显示的初始化,会有默认初始化的值;
+			2.static变量属于类,而不属于某个具体的对象,是所有对象共享的.即如果创建了多个对象,多个对象共享同一个static变量;
+			3.static变量的访问:
+				1.通过类名::变量名访问:
+						GradeBook::tests
+				2.通过对象来访问:
+						GradeBook grade_book(xxx);
+						grade_book.tests...
+		*/
 	
 		GradeBook(string, const int [][tests]);
 		void setCourseName(string);
@@ -1847,6 +1857,7 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 					lowGrade = grades[student][test];
 			}
 		}
+		return lowGrade;
 	}
 	int GradeBook::getMaximum()
 	{
@@ -1860,6 +1871,7 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 					highGrade = grades[student][test];
 			}
 		}
+		return highGrade;
 	}
 	
 	double GradeBook::getAverage(const int setOfGrades[], const int countOfGrades)
@@ -1953,7 +1965,7 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 
 C++标准库类模板vector,表示一种更健壮的、有很多附加能力的数组.
 
-标准类模板vector在头文件<vector>中定义,属于std名字空间.
+标准类模板vector在头文件\<vector>中定义,属于std名字空间.
 
 实例:
 
@@ -2726,9 +2738,9 @@ PS:析构的顺序:局部,static,全局.
 	Date object destructor for date7/24/1949
 	/*
 		析构的顺序:
-			1.成员对象宿主类对象;
-			2.成员对象;
-			3.传递给成员对象的对象.
+			1.成员对象宿主类对象--->e.g. Employee的对象;
+			2.成员对象--->e.g. Employee类中的Date类实例(birthDate和hireDate);
+			3.传递给成员对象的对象--->e.g. Date类的两个实例(birth和hire).
 	*/
 
 PS:
@@ -2984,7 +2996,7 @@ this指针的特点:
 	1.类的static数据成员是所有对象共享;
 	2.类的static成员函数(public)可以使用:
 		类名::成员函数--->进行访问.
-	3.类的static数据成员和成员函数不依赖于类而存在.
+	3.类的static数据成员和成员函数不依赖于类的对象而存在.
 
 **实例---static数据成员和成员函数**
 
@@ -3022,7 +3034,8 @@ this指针的特点:
 	using namespace std;
 	
 	unsigned int Employee::count = 0;
-	//在类的实现中初始化static成员变量.此时前面不能有static关键字.
+	// static成员变量在类实现中的初始化有点像成员函数的实现(e.g. 变量类型 类名::变量名 = xxx),前面不能
+	// 有static关键字(仅在定义处有).
 	
 	unsigned int Employee::getCount()	//static成员函数的实现,此时前面也不能有static关键字
 	{									//否则表示该函数仅在该文件中可见.
@@ -3238,21 +3251,21 @@ this指针的特点:
 
 该函数必须为非static成员函数.且带有一个参数.
 
-	e.g.自定义String类,需要比较String类的两个对象x,y.x<y就会被处理成:x.operator(y).该成员函数声明为:
+	e.g.自定义String类,需要比较String类的两个对象x,y.x<y就会被处理成:x.operator<(y).该成员函数声明为:
 	class String
 	{
 	public:
 		bool operator<(const String &) const;
 		...
 	};
-	PS:因为x<y,其做操作数x是String类的对象.因此该运算符重载函数可以作为类的成员函数.
+	PS:因为x<y,其中x是String类的对象.因此该运算符重载函数可以作为类的成员函数.
 
 **2.作为非成员函数的二元重载运算符**
 
 此时的函数一般为类的友元函数.且接受两个参数(其中一个为类的对象或者对象的引用,不然就没有重载的必要).
 
 	e.g.自定义String类,需要比较String类的两个对象x,y.x<y就会被处理成:operator(x,y).该成员函数声明为:
-	bool operator(const String &, const String &);
+	friend bool operator(const String &, const String &);
 
 ### 10.4 重载>>和<<
 
@@ -3267,7 +3280,7 @@ this指针的特点:
 	class PhoneNumber
 	{
 		friend std::ostream &operator<<(std::ostream &, const PhoneNumber &);
-		//重载>>为友元函数.接受两个参数,前一个为ostream对象的引用,后一个为定义类对象的引用
+		//重载<<为友元函数.接受两个参数,前一个为ostream对象的引用,后一个为类对象的常量引用
 		friend std::istream &operator>>(std::istream &, PhoneNumber &);
 	private:
 		std::string areaCode;
@@ -3341,7 +3354,7 @@ this指针的特点:
 		bool operator!() const;
 		...
 	};
-	PS:因为!s,其做操作数s是String类的对象.因此该运算符重载函数可以作为类的成员函数.
+	PS:因为!s,其中s是String类的对象.因此该运算符重载函数可以作为类的成员函数.
 
 **2.作为非成员函数的一元重载运算符**
 
@@ -3362,26 +3375,26 @@ this指针的特点:
 				d1.operator++();
 			该运算符函数原型为:
 				Date &operator++();	//前置按引用返回Date对象,因为前置返回的值为真实更新后的值.
-		2.非成员函数实现调用:
+		2.非成员函数实现调用--->为friend函数:
 			产生的函数调用为:
 				operator++(d1);
 			函数原型为:
-				Date &operator++(Date &);
+				friend Date &operator++(Date &);
 
 **2.后置自增:**
 
-	假想Date对象d1的天数+1,前置自增"d1++"的实现:
+	假想Date对象d1的天数+1,后置自增"d1++"的实现:
 		1.非static成员函数实现调用:
 			产生的函数调用为:
 				d1.operator++(0);	//带一个0参数仅仅用于区分前置和后置的标记.没有其他含义.
 			该运算符函数原型为:
 				Date operator++(int);
 				//后置按值返回Date对象,因为后置返回为更新前的值(一般为一个临时对象),且耗空间.
-		2.非成员函数实现调用:
+		2.非成员函数实现调用--->为friend函数:
 			产生的函数调用为:
 				operator++(d1, 0);	//带一个0参数仅仅用于区分前置和后置的标记.没有其他含义.
 			函数原型为:
-				Date operator++(Date &, int);
+				friend Date operator++(Date &, int);
 
 PS:后置操作会创建临时对象,对性能会造成很大影响.一般使用前置会好一点.
 
@@ -3596,7 +3609,7 @@ PS:后置操作会创建临时对象,对性能会造成很大影响.一般使用
 
 **5.C++11使用列表初始化动态分配的数组**
 
-	int *gradesArray = new int[10]{};	//后面带的{}表示初始化列表,用分号分隔
+	int *gradesArray = new int[10]{};	//后面带的{}表示初始化列表,用逗号","分隔
 
 **6.使用delete[]释放动态分配的数组内存**
 
@@ -3659,7 +3672,7 @@ PS:后置操作会创建临时对象,对性能会造成很大影响.一般使用
 	Array::Array(int ArraySize)
 	:size(ArraySize > 0 ? ArraySize :
 	throw invalid_argument("Array size must be greater than 0")),
-	ptr(new int[size])
+	ptr(new int[size]())	// 也可以ptr(new int[size])--->后面没有括号,没有进行初始化.
 	{
 		for (size_t i = 0; i < size; ++i)
 			ptr[i] = 0;
@@ -3667,7 +3680,7 @@ PS:后置操作会创建临时对象,对性能会造成很大影响.一般使用
 	
 	Array::Array(const Array &arrayToCopy)
 	:size(arrayToCopy.size),
-	ptr(new int[size])
+	ptr(new int[size]())	// 也可以ptr(new int[size])--->后面没有括号,没有进行初始化.
 	{
 		for (size_t i = 0; i < size; i++)
 			ptr[i] = arrayToCopy.ptr[i];
