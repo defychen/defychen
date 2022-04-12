@@ -1754,7 +1754,7 @@ C++对数组不提供边界检查机制(e.g.访问了越界了(c[5]),不会产�
 	const int columns = 4;
 	
 	void printArray(const int a[][columns])	//形参为多维数组,除了第一个维大小不需要有,后面的所有维必须有大小.
-	{										//这样子能够直到第一维数组的地址.
+	{										//这样子能够知道第一维数组的地址.
 		...
 	}
 
@@ -2561,8 +2561,8 @@ PS:析构的顺序:局部,static,全局.
 
 ### 9.7 const对象和const成员函数
 
-	1.const对象可以仅可以调用const成员函数,调用non-const成员函数就会报错;
-	2.non-const对象可以都可以调用(const成员函数和non-const成员函数均可以调用).
+	1.const对象仅可以调用const成员函数,调用non-const成员函数就会报错;
+	2.non-const对象对于const成员函数和non-const成员函数均可以调用.
 
 ### 9.8 某个类的对象作为另一个类的成员
 
@@ -3037,7 +3037,7 @@ this指针的特点:
 	// static成员变量在类实现中的初始化有点像成员函数的实现(e.g. 变量类型 类名::变量名 = xxx),前面不能
 	// 有static关键字(仅在定义处有).
 	
-	unsigned int Employee::getCount()	//static成员函数的实现,此时前面也不能有static关键字
+	unsigned int Employee::getCount()	//static成员函数的实现,此时前面不能有static关键字
 	{									//否则表示该函数仅在该文件中可见.
 		return count;
 	}
@@ -3091,6 +3091,9 @@ this指针的特点:
 	
 			cout << "Number of employees after objects are instantiated is "
 				<< Employee::getCount();
+			/*
+				类中static变量和函数的调用"类名::static变量/static函数名"
+			*/
 	
 			cout << "\n\nEmployee 1:"
 				<< e1.getFirstName() << " " << e1.getLastName()
@@ -4138,8 +4141,8 @@ public继承特点:
 		void setBaseSalary(double);
 		double getBaseSalary() const;
 	
-		double earnings() const;
-		void print() const;
+		double earnings() const; // 与基类相同的成员函数,会自动覆盖基类的成员函数.
+		void print() const; // 与基类相同的成员函数,会自动覆盖基类的成员函数.
 	private:
 		double baseSalary;
 	};
@@ -4269,7 +4272,7 @@ public继承特点:
 	
 	double BasePlusCommissionEmployee::earnings() const
 	{
-		return getBaseSalary + CommissionEmployee::earnings();
+		return getBaseSalary() + CommissionEmployee::earnings();
 		/*
 			使用CommissionEmployee::earnings();调用基类的earnings函数.
 			格式为"基类类名::基类成员函数"
@@ -4340,7 +4343,7 @@ public继承特点:
 
 #### 12.2.2 virtual函数声明
 
-对于相同的基类成员函数,在不同的派生类中功能不一样.为了达到使用指向派生类的基类指针去调用不同的派生类的成员函数.可以在基类中将该成员函数声明为virtual类.
+对于相同的基类成员函数,在不同的派生类中功能不一样.为了达到使用指向派生类的基类指针去调用不同的派生类的成员函数.可以在基类中将该成员函数声明为virtual函数.
 
 	1.在基类中声明virtual成员函数形式:
 		virtual void draw() const;
@@ -4348,7 +4351,7 @@ public继承特点:
 	override关键词进行检查:
 		virtual void draw() const override;
 		/*
-		1.派生类中也是用virtual关键词;
+		1.派生类中也使用virtual关键词;
 		2.派生类中后面使用override关键词,用于检查基类中是否存在一个相同函数签名的成员函数,不存在就报错.
 			达到检查的目的;
 		*/
@@ -4509,7 +4512,8 @@ public继承特点:
 		void setBaseSalary(double);
 		double getBaseSalary() const;
 	
-		virtual double earnings() const override;	//派生类头文件也添加virtual,可读性好
+		virtual double earnings() const override;	//派生类头文件也添加virtual,可读性好.后面加上override关键字,
+			// 会检查基类是否存在相同的函数签名,不存在直接报错.主要用于检查.良好的编程习惯.在实现中virtual和override都要去掉.
 		virtual void print() const override;
 	private:
 		double baseSalary;
@@ -4616,7 +4620,16 @@ public继承特点:
 
 **2.final成员函数和类**
 
-略.
+在C++11之前,派生类可以覆盖基类的任何virtual函数.从C++11开始,增加了final关键字.
+
+```
+1.基类中声明为final的virtual函数不能被重写:
+	virtual func(param) final;	// 基类中声明为final的virtual函数不能被重写.
+2.声明为final的类不能被继承:
+	class my_class final { // 在基类声明后面添加final关键字,表示该类不能被继承,否则会出现编译错误.
+		xxx
+	};
+```
 
 ### 12.3 抽象类和纯virtual函数
 
@@ -5016,7 +5029,7 @@ public继承特点:
 				类型Employee *向下强制转换为类型BasePlusCommissionEmployee *.如果employeePtr指向
 				的对象是一个BasePlusCommissionEmployee对象,则将该地址赋给指针derivedPtr,否则,
 				derivedPtr赋值为nullptr.
-				因此:dynamic_cast具有基对象的类型检查功能.
+				因此:dynamic_cast具有基对象的类型检查功能.检查通过才会正确赋值,否则直接赋值nullptr.
 				static_cast:直接进行强制类型转换.
 			*/
 			if (derivedPtr != nullptr)
@@ -5034,8 +5047,8 @@ public继承特点:
 		{
 			cout << "deleting object of " << typeid(*employeePtr).name() << endl;
 			/*
-			typeid(*employeePtr):返回一个type_info类对象的引用.用于获得一些参数类型的一些信息;
-			typeid(*employeePtr).name():获得参数类型的名称(e.g.class BasePlusCommissionEmployee).
+			typeid(*employeePtr):返回一个type_info类对象的引用.用于获取一些类的信息.
+			typeid(*employeePtr).name():获取类的名称(e.g.class BasePlusCommissionEmployee).
 			typeid包含在<typeinfo>头文件中.
 			*/
 			delete employeePtr;
@@ -5109,7 +5122,7 @@ cout的put成员函数用于输出单个字符.
 
 	cout.put('A');	//输出字符'A'
 	cout.put('A').put('B').put('\n'); //输出AB以及一个换行符
-	cout.put(65);	//输出65所带的ASCII字符(即:A).
+	cout.put(65);	//输出65所表示的ASCII字符(即:A).
 
 ### 13.3 输入流
 
@@ -5169,7 +5182,7 @@ cout的put成员函数用于输出单个字符.
 		cin.get(buffer2, SIZE);
 		/*
 			cin.get(buffer, SIZE, "\n");
-			para1:指定存放的buffer;	para2:读取的字符最大个数; para3:制定分隔符,默认为"\n",可不写.
+			para1:指定存放的buffer;	para2:读取的字符最大个数; para3:指定分隔符,默认为"\n",可不写.
 			cin.get():读取时不会丢弃前面的空白字符.
 		*/
 		cout << "The string read with cin.get was: " << endl
@@ -5218,10 +5231,10 @@ para1:跳过的字符个数; para2:指定结束符.且会将结束符从流中�
 	int main()
 	{
 		char buf[1024];
-		cin.get(buf, 10, '/');	//流前面的直到'/'的字符已经被get走.
+		cin.get(buf, 10, '/');	//提取流前面的10个字符,直到'/'的字符就结束(且'/'字符仍会存在流中)
 		cout << buf << endl;
 		memset(buf, 0, sizeof(buf));
-		cin.ignore(100, 'i');	//忽略get走后的紧接着的100个字符.且当前位置的'i'也被删除.
+		cin.ignore(100, 'i');	//忽略get走后的紧接着的100个字符,直到遇到'i'字符就结束,且当前位置的'i'也会被删除.
 		cin.putback('i');	//将'i'插入到当前指针的位置.
 	
 		char peek = cin.peek();	//返回当前位置的字符,即'i'.
@@ -5247,7 +5260,7 @@ para1:跳过的字符个数; para2:指定结束符.且会将结束符从流中�
 	*/
 ### 13.4 流操纵符
 
-流操纵符的使用需要包含<iomanip>头文件.
+流操纵符的使用需要包含\<iomanip>头文件.
 
 #### 13.4.1 整数的基数设置:dec, oct, hex, setbase
 
@@ -5516,7 +5529,7 @@ para1:跳过的字符个数; para2:指定结束符.且会将结束符从流中�
 				}
 				inClientFile >> account >> name >> balance;
 			}
-			inClientFile.clear();
+			inClientFile.clear(); // 必须要清掉输入流
 			inClientFile.seekg(0);
 			request = getRequest();
 		}
@@ -5536,7 +5549,7 @@ para1:跳过的字符个数; para2:指定结束符.且会将结束符从流中�
 		do {
 			cout << "\n? ";
 			cin >> request;
-		} while (request < ZERO_BALANCE && request > END); //不在范围内就重新输入
+		} while (request < ZERO_BALANCE || request > END); //不在范围内就重新输入
 		return request;
 	}
 	
@@ -5647,6 +5660,11 @@ para1:跳过的字符个数; para2:指定结束符.且会将结束符从流中�
 	void ClientData::setLastName(const string &lastNameString)
 	{
 		int length = lastNameString.size();
+		/*
+			string的length()和size()函数的功能是一样的(没有区别),获取字符串的长度.
+				length是C++的沿用;
+				size()和STL匹配.
+		*/
 		length = (length < 15 ? length : 14);
 		lastNameString.copy(lastName, length);
 		/*
@@ -5710,6 +5728,9 @@ para1:跳过的字符个数; para2:指定结束符.且会将结束符从流中�
 			outCredit.write(reinterpret_cast<const char *>(&blankClient),
 				sizeof(ClientData));
 			//使用reinterpret_cast运算符转换指针类型(ClientData *)为const char*类型.
+			/*
+				因为一个类中只有数据成员属于实例的对象,因此此处是将对象的数据成员写入文件(按数据成员声明顺序).
+			*/
 		}
 	}
 
@@ -6615,7 +6636,7 @@ multiset位于<set>,允许出现重复的关键字.
 
 ### 15.6.2 关联容器set
 
-set位于<set>,仅有唯一的关键字.如果插入一个重复的关键字,则会忽略该关键字.
+set位于\<set>,仅有唯一的关键字.如果插入一个重复的关键字,则会忽略该关键字.
 
 	#include <array>
 	#include <iostream>
@@ -6661,7 +6682,7 @@ set位于<set>,仅有唯一的关键字.如果插入一个重复的关键字,则
 
 ### 15.6.3 关联容器multimap
 
-multimap用于快速存取key-value值对,以pair对象存取(multimap不支持[]操作符).multimap允许多个key对应一个value.头文件为:#include <map>.
+multimap用于快速存取key-value值对,以pair对象存取(multimap不支持[]操作符).multimap允许多个key对应一个value.头文件为:#include \<map>.
 
 	#include <iostream>
 	#include <map>
@@ -6712,7 +6733,7 @@ multimap用于快速存取key-value值对,以pair对象存取(multimap不支持[
 
 ### 15.6.4 关联容器map
 
-map用于快速存取唯一的key-value值对,以pair对象存取.map中的key-value一对一映射.位于<map>.
+map用于快速存取唯一的key-value值对,以pair对象存取.map中的key-value一对一映射.位于\<map>.
 
 	#include <iostream>
 	#include <map>
@@ -6742,6 +6763,7 @@ map用于快速存取唯一的key-value值对,以pair对象存取.map中的key-v
 			iter = pairs.begin();
 			while (iter != pairs.end()) {
 				cout << iter->first << "\t" << iter->second << "\n";
+				iter++;
 			}
 		*/
 	
@@ -6767,7 +6789,7 @@ map用于快速存取唯一的key-value值对,以pair对象存取.map中的key-v
 
 #### 15.7.1 适配器stack
 
-stack:后进先出.可以使用deque,vector,list等来实现.头文件<stack>.
+stack:后进先出.可以使用deque,vector,list等来实现.头文件\<stack>.
 
 	#include <iostream>
 	#include <stack>
@@ -6833,7 +6855,7 @@ stack:后进先出.可以使用deque,vector,list等来实现.头文件<stack>.
 
 #### 15.7.2 适配器queue
 
-queue:队列,先进先出.可以用list或deque(默认)来实现.头文件<queue>.
+queue:队列,先进先出.可以用list或deque(默认)来实现.头文件\<queue>.
 
 	#include <iostream>
 	#include <queue>
