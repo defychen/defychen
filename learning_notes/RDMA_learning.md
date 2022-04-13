@@ -39,6 +39,10 @@ RDMA(Remote Direct Memory Access)远程直接内存访问.通过RDMA,本端节�
 
 ### 1.2.1 传统网络
 
+![](images/data_transfer_by_nic_stack.png)
+
+#### 1.2.1.1 传统网络的传输流程
+
 传统网络中通过节点A给节点B发消息,实际上做的是“把节点A内存中的一段数据,通过网络链路搬移到节点B的内存中”.这一过程无论是发端还是收段,都需要CPU的指挥和控制(包括网卡的控制、中断的处理、报文的封装和解析等等).整个过程如下:![](images/traditional_access_for_network.png)
 
 ```
@@ -56,7 +60,27 @@ RDMA(Remote Direct Memory Access)远程直接内存访问.通过RDMA,本端节�
 PS:整个过程对CPU有较强的依赖.
 ```
 
+#### 1.2.1.2 存在的问题
+
+```
+1.传输需要进行多次内存拷贝(e.g. application->OS->NIC的数据搬运),延迟会大幅增加;
+2.中断处理需要CPU参与,极为影响性能;
+3.内核协议栈是软件操作,性能低下,且大幅占用CPU.
+```
+
+#### 1.2.1.3 内核协议栈
+
+![](images/data_transfer_kernel_protocol_stack.png)
+
+#### 1.2.1.4 CPU消耗分布
+
+在传统的网络传输中,数据拷贝和协议栈(TCP/IP stack)的处理消耗了大量的CPU时间和资源.
+
+![](images/cpu_consumption_by_network.png)
+
 ### 1.2.2 RDMA
+
+#### 1.2.2.1 RDMA传输流程
 
 RDMA的整个过程如下:
 
@@ -69,6 +93,16 @@ RDMA的整个过程如下:
 	对端的RDMA网卡收到报文后,剥离各层报文头和校验码,通过DMA将数据直接拷贝到用户空间内存中.
 PS:使用了RDMA技术时,两端的CPU几乎不用参与数据传输过程(只参与控制面).
 ```
+
+#### 1.2.2.2 Traditional TCP DMA v.s RDMA
+
+![](images/Traditional_TCP_receiving_data.png)
+
+<img src="images/Traditional_TCP_sending_data.png" style="zoom:80%;" />
+
+![](images/rdma_receiving_data.png)
+
+<img src="images/rdma_sending_data.png"  />
 
 ## 1.3 RDMA的优势
 
@@ -118,60 +152,7 @@ PS:通信领域提的最多的性能指标是:带宽和时延.
 RDMA具有高带宽、低时延的特性.
 ```
 
-# 1. RDMA简介
-
-## 1.1 传统的数据传输
-
-![](images/data_transfer_by_nic_stack.png)
-
-### 1.1.1 传统的数据传输存在的问题:
-
-```
-1.传输需要进行多次内存拷贝(e.g. application->OS->NIC的数据搬运),延迟会大幅增加;
-2.中断处理需要CPU参与,极为影响性能;
-3.内核协议栈是软件操作,性能低下,且大幅占用CPU.
-```
-
-### 1.1.2 内核协议栈
-
-![](images/data_transfer_kernel_protocol_stack.png)
-
-### 1.1.3 CPU消耗分布
-
-在传统的网络传输中,数据拷贝和协议栈(TCP/IP stack)的处理消耗了大量的CPU时间和资源.
-
-![](images/cpu_consumption_by_network.png)
-
-## 1.2 RDMA
-
-### 1.2.1 DMA
-
-DMA(Direct memory access,直接内存访问)是一种能力,允许设备与内存之间直接进行数据搬运,而不需要CPU参与.
-
-![](images/dma_transfer_data.png)
-
-```
-1.传统模式:通过CPU进行数据copy来移动数据(e.g. CPU将内存中的数据从Buffer1移动到Buffer2中);
-2.DMA模式:DMA Engine通过硬件将数据从Buffer1移动到Buffer2,而不需要CPU的参与,大大降低了CPU Copy的开销.
-```
-
-### 1.2.2 RDMA
-
-RDMA(Remote direct memory access,远程直接访问内存).利用RDMA技术通过网络将数据直接传入另一台服务器(设备)的某一块内存区域,这种方法几乎不需要消耗本地和对端服务器的CPU资源.
-
-![](images/rdma_flow.png)
-
-在实现上,RDMA实际上是一种智能网卡与软件架构充分优化的远端内存直接高速访问技术.将RDMA协议固化于硬件(即网卡)上,以及支持Zero-copy和Kernel bypass这两种途径来达到高性能的远程直接数据存取的目标.
-
-### 1.2.3 Traditional TCP DMA v.s RDMA
-
-![](images/Traditional_TCP_receiving_data.png)
-
-<img src="images/Traditional_TCP_sending_data.png" style="zoom:80%;" />
-
-![](images/rdma_receiving_data.png)
-
-<img src="images/rdma_sending_data.png"  />
+## 1.4 RDMA协议
 
 ### 1.2.4 RDMA 三种不同的硬件实现
 
