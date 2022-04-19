@@ -222,6 +222,63 @@ RoCE的演进归纳为:
 
 ![](images/rdma_coherient.png)
 
+## 1.5 标准组织
+
+### 1.5.1 IBTA
+
+成立于1999年,负责制定和维护Infiniband协议标准.IBTA独立于各个厂商,通过赞助技术活动和推动资源共享来将整个行业整合在一起,并且通过线上交流、营销和线下活动等方式积极推广IB和RoCE.
+
+```
+IBTA的主要成员:博通,HPE,IBM,英特尔,Mellanox和微软等,华为也是IBTA的会员.
+```
+
+### 1.5.2 OFA
+
+成立于2004年的非盈利组织,负责开发、测试、认证、支持和分发独立于厂商的开源跨平台infiniband协议栈,2010年开始支持RoCE.负责开发维护RDMA/Kernel bypass应用的OFED(OpenFabrics Enterprise Distribution)软件栈,保证其与主流软硬件的兼容性和易用性.OFED软件栈包括驱动、内核、中间件和API等.
+
+### 1.5.3 IBTA和OFA的关系
+
+```
+1.IBTA主要负责开发、维护和增强Infiniband协议标准;
+2.OFA负责开发和维护Infiniband协议和上层应用API.
+```
+
+## 1.6 开发社区
+
+### 1.6.1 linux社区
+
+开发维护linux内核的RDMA子系统(即RDMA驱动).
+
+```
+RDMA驱动代码位于: drivers/infiniband/目录下.
+```
+
+### 1.6.2 RDMA社区
+
+RDMA社区特指用户态社区.对于上层用户(即应用程序),IB提供了一套与Socket套接字类似的接口---libibverbs.
+
+
+
+### 1.6.3 UCX
+
+UCX是一个建立在RDMA等技术之上的用于数据处理和高性能计算的通信框架,RDMA是其底层核心之一.
+
+```
+UCX可以将其理解为是位于应用和RDMA API之间的中间件,向上层用户又封装了一层更易开发的接口.
+```
+
+![](images/ucx_architecture.png)
+
+## 1.7 硬件厂商
+
+### 1.7.1 Mellanox
+
+IB领域的领头羊,协议标准制定、软硬件开发和生态建设都能看到Mellanox的身影,其在社区和标准制定上拥有最大的话语权.目前最新一代的网卡是支持200Gb/s的ConnextX-6系列.
+
+### 1.7.2 华为
+
+鲲鹏920芯片已经支持100Gb/s的RoCE协议,技术上在国内处于领先地位.但是距离Mellanox还有比较长的路要走.
+
 # 2. IB(Infiniband)
 
 ## 2.1 IB简介
