@@ -257,7 +257,17 @@ RDMA驱动代码位于: drivers/infiniband/目录下.
 
 RDMA社区特指用户态社区.对于上层用户(即应用程序),IB提供了一套与Socket套接字类似的接口---libibverbs.
 
+#### 1.6.2.1 用户态驱动---rdma-core
 
+RDMA社区在内核层基础上维护了一套用户态驱动,即rdma-core.
+
+[RDMA用户态驱动](https://github.com/linux-rdma/rdma-core)
+
+#### 1.6.2.2 RDMA性能测试用例---perftest
+
+RDMA社区维护了一个功能强大的用于测试RDMA性能的工具,即perftest.
+
+[perftest测试用例](https://github.com/linux-rdma/perftest)
 
 ### 1.6.3 UCX
 
